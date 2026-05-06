@@ -44,8 +44,6 @@ public class DragFromUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
                 out pos
             );
             indicatorRect.localPosition = pos;
-
-            //Debug.Log($"{name} → OnDrag: indicator following cursor at {pos}");
         }
     }
 
@@ -61,7 +59,15 @@ public class DragFromUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
             Vector3 worldPos = Camera.main.ScreenToWorldPoint(
                 new Vector3(eventData.position.x, eventData.position.y, 10f)
             );
-            Instantiate(prefabToSpawn, worldPos, Quaternion.identity);
+            GameObject obj = Instantiate(prefabToSpawn, worldPos, Quaternion.identity);
+
+            // 🔑 Inject EditingPanel reference at spawn time
+            GameObject panel = GameObject.Find("EditingPanel");
+            PrefabInteraction interaction = obj.GetComponent<PrefabInteraction>();
+            if (interaction != null && panel != null)
+            {
+                interaction.SetEditingPanel(panel);
+            }
         }
         else
         {
@@ -80,5 +86,4 @@ public class DragFromUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
             Debug.Log($"{name} → no drag indicator found to destroy");
         }
     }
-
 }

@@ -19,12 +19,12 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
     public void OnBeginDrag(PointerEventData eventData)
     {
         originalPos = transform.position;
-        Debug.Log($"{name} → OnBeginDrag fired at {originalPos}");
+        //Debug.Log($"{name} → OnBeginDrag fired at {originalPos}");
     }
 
     public void OnDrag(PointerEventData eventData)
     {
-        Debug.Log($"{name} → OnDrag fired at screen position {eventData.position}");
+        //Debug.Log($"{name} → OnDrag fired at screen position {eventData.position}");
 
         Vector3 worldPos = Camera.main.ScreenToWorldPoint(
             new Vector3(eventData.position.x, eventData.position.y, 10f)

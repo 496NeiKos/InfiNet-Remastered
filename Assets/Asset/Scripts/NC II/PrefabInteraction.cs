@@ -4,17 +4,11 @@ using UnityEngine.InputSystem; // new Input System
 public class PrefabInteraction : MonoBehaviour
 {
     private SystemUnitController controller;
+    private GameObject editingPanel;
 
-    [SerializeField] private GameObject editingPanel; // assign in scene, not prefab
-
-    void Start()
+    void Awake()
     {
         controller = GetComponent<SystemUnitController>();
-
-        if (editingPanel == null)
-        {
-            Debug.LogError("EditingPanel reference not set in Inspector!");
-        }
     }
 
     void Update()
@@ -23,10 +17,7 @@ public class PrefabInteraction : MonoBehaviour
         {
             if (IsMouseOver())
             {
-                Debug.Log($"{name} → Right click detected, opening editor panel");
-
                 controller.ShowDetail();
-
                 if (editingPanel != null)
                 {
                     editingPanel.SetActive(true);
@@ -40,6 +31,12 @@ public class PrefabInteraction : MonoBehaviour
         Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
         RaycastHit2D hit = Physics2D.Raycast(ray.origin, ray.direction);
         return hit.collider != null && hit.collider.gameObject == gameObject;
+    }
+
+    // 🔑 Called by DragFromUI after instantiation
+    public void SetEditingPanel(GameObject panel)
+    {
+        editingPanel = panel;
     }
 
     // Called by Close button
