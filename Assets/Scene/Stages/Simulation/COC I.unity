@@ -627,6 +627,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
   workspaceArea: {fileID: 695228954}
   hardwareArea: {fileID: 521331425}
+  editingPanel: {fileID: 614233790}
 --- !u!1 &400996644
 GameObject:
   m_ObjectHideFlags: 0
@@ -2566,8 +2567,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1841800806526968484, guid: 97104a4f772b1744f920322696378627, type: 3}
-        m_TargetAssemblyTypeName: PrefabInteraction, Assembly-CSharp
+      - m_Target: {fileID: 343451549}
+        m_TargetAssemblyTypeName: GameManager, Assembly-CSharp
         m_MethodName: CloseEditor
         m_Mode: 1
         m_Arguments:

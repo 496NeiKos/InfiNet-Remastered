@@ -13,14 +13,13 @@ public class DragFromUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
     [Header("Canvas Reference")]
     public Canvas canvas;
 
-    private GameObject dragIndicator;   // temporary image indicator
+    private GameObject dragIndicator;
     private RectTransform indicatorRect;
 
     public void OnBeginDrag(PointerEventData eventData)
     {
         Debug.Log($"{name} → OnBeginDrag: creating drag indicator");
 
-        // Create a temporary image indicator
         dragIndicator = new GameObject("DragIndicator");
         dragIndicator.transform.SetParent(canvas.transform, false);
 
@@ -51,7 +50,6 @@ public class DragFromUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
     {
         Debug.Log($"{name} → OnEndDrag: drag ended");
 
-        // Dropped in Workspace → spawn prefab
         if (RectTransformUtility.RectangleContainsScreenPoint(workspaceArea, eventData.position, eventData.pressEventCamera))
         {
             Debug.Log($"{name} → dropped in Workspace, spawning prefab");
@@ -59,31 +57,23 @@ public class DragFromUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
             Vector3 worldPos = Camera.main.ScreenToWorldPoint(
                 new Vector3(eventData.position.x, eventData.position.y, 10f)
             );
-            GameObject obj = Instantiate(prefabToSpawn, worldPos, Quaternion.identity);
 
-            // 🔑 Inject EditingPanel reference at spawn time
-            GameObject panel = GameObject.Find("EditingPanel");
-            PrefabInteraction interaction = obj.GetComponent<PrefabInteraction>();
-            if (interaction != null && panel != null)
-            {
-                interaction.SetEditingPanel(panel);
-            }
+            GameObject spawned = Instantiate(prefabToSpawn, worldPos, Quaternion.identity);
+
+            // NOTE: PrefabInteraction no longer needs editingPanel injected here —
+            // it reads it from GameManager.Instance.editingPanel at runtime.
+            // This log confirms the spawn worked correctly.
+            Debug.Log($"{name} → spawned {spawned.name} at {worldPos}");
         }
         else
         {
             Debug.Log($"{name} → dropped outside Workspace, no prefab spawned");
         }
 
-        // ✅ Always destroy the temporary indicator
         if (dragIndicator != null)
         {
-            Debug.Log($"{name} → destroying drag indicator");
             Destroy(dragIndicator);
             dragIndicator = null;
-        }
-        else
-        {
-            Debug.Log($"{name} → no drag indicator found to destroy");
         }
     }
 }
