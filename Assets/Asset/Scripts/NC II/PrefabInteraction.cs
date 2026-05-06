@@ -1,41 +1,54 @@
 ﻿using UnityEngine;
+using UnityEngine.InputSystem; // new Input System
 
 public class PrefabInteraction : MonoBehaviour
 {
-    public GameObject editingPanel;       // UI panel prefab
-    public GameObject detailedPrefab;     // detailed version of this hardware
+    private SystemUnitController controller;
 
-    private GameObject activeDetail;
+    [SerializeField] private GameObject editingPanel; // assign in scene, not prefab
+
+    void Start()
+    {
+        controller = GetComponent<SystemUnitController>();
+
+        if (editingPanel == null)
+        {
+            Debug.LogError("EditingPanel reference not set in Inspector!");
+        }
+    }
 
     void Update()
     {
-        if (Input.GetMouseButtonDown(1)) // right click
+        if (Mouse.current.rightButton.wasPressedThisFrame)
         {
             if (IsMouseOver())
             {
                 Debug.Log($"{name} → Right click detected, opening editor panel");
-                OpenEditor();
+
+                controller.ShowDetail();
+
+                if (editingPanel != null)
+                {
+                    editingPanel.SetActive(true);
+                }
             }
         }
     }
 
     private bool IsMouseOver()
     {
-        // Raycast from mouse to check if this prefab was clicked
-        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
         RaycastHit2D hit = Physics2D.Raycast(ray.origin, ray.direction);
         return hit.collider != null && hit.collider.gameObject == gameObject;
     }
 
-    private void OpenEditor()
+    // Called by Close button
+    public void CloseEditor()
     {
-        // Show editing panel
-        editingPanel.SetActive(true);
-
-        // Spawn detailed prefab inside the panel (magnified version)
-        if (activeDetail == null)
+        controller.ShowSnapshot();
+        if (editingPanel != null)
         {
-            activeDetail = Instantiate(detailedPrefab, editingPanel.transform);
+            editingPanel.SetActive(false);
         }
     }
 }
