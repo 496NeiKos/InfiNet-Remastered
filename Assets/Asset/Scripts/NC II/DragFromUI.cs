@@ -45,7 +45,7 @@ public class DragFromUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
             );
             indicatorRect.localPosition = pos;
 
-            Debug.Log($"{name} → OnDrag: indicator following cursor at {pos}");
+            //Debug.Log($"{name} → OnDrag: indicator following cursor at {pos}");
         }
     }
 

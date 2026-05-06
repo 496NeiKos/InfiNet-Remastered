@@ -11,6 +11,8 @@ GameObject:
   - component: {fileID: 168160560977165521}
   - component: {fileID: 2748452050790346741}
   - component: {fileID: 2348670716774135780}
+  - component: {fileID: 8731543936453371572}
+  - component: {fileID: 1841800806526968484}
   m_Layer: 12
   m_Name: CPU
   m_TagString: Untagged
@@ -138,3 +140,27 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 1, y: 1}
   m_EdgeRadius: 0
+--- !u!114 &8731543936453371572
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1820356063017265982}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5a21ef8c32910ef4cb1c2160aa25145e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DragPrefab
+--- !u!114 &1841800806526968484
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1820356063017265982}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fa1aa9c3dff636b4a96cd407c467e7de, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'
