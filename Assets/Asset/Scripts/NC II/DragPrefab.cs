@@ -13,12 +13,22 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
         workspaceArea = GameManager.Instance.workspaceArea;
         hardwareArea = GameManager.Instance.hardwareArea;
         Debug.Log($"{name} → DragPrefab script initialized. Workspace={workspaceArea?.name}, Hardware={hardwareArea?.name}");
+
+        // Try to load any previously saved state
+        if (HardwareStateManager.Instance != null)
+        {
+            IHardwareState hardwareState = GetComponent<IHardwareState>();
+            if (hardwareState != null)
+                HardwareStateManager.Instance.LoadHardwareState(hardwareState);
+        }
     }
 
     public void OnBeginDrag(PointerEventData eventData)
     {
-        // Block dragging while the editing panel is open
-        if (GameManager.Instance != null && GameManager.Instance.IsEditorOpen)
+        // Only block drag if:
+        // 1. Editor is open AND
+        // 2. This prefab is NOT a child of the detail view
+        if (GameManager.Instance != null && GameManager.Instance.IsEditorOpen && !IsInDetailView())
         {
             _isDragging = false;
             return;
@@ -45,9 +55,16 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
 
         Debug.Log($"{name} → OnEndDrag fired at screen position {eventData.position}");
 
+        // Check if dropped in hardware area (destruction zone)
         if (RectTransformUtility.RectangleContainsScreenPoint(hardwareArea, eventData.position, eventData.pressEventCamera))
         {
-            Debug.Log($"{name} → Dropped in HardwareArea, destroying prefab");
+            Debug.Log($"{name} → Dropped in HardwareArea, saving state and destroying prefab");
+
+            // ✅ SAVE STATE before destroying
+            IHardwareState hardwareState = GetComponent<IHardwareState>();
+            if (hardwareState != null && HardwareStateManager.Instance != null)
+                HardwareStateManager.Instance.SaveHardwareState(hardwareState);
+
             Destroy(gameObject);
         }
         else if (!RectTransformUtility.RectangleContainsScreenPoint(workspaceArea, eventData.position, eventData.pressEventCamera))
@@ -59,5 +76,17 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
         {
             Debug.Log($"{name} → Dropped in Workspace, keeping position");
         }
+    }
+
+    private bool IsInDetailView()
+    {
+        Transform current = transform.parent;
+        while (current != null)
+        {
+            if (current.name == "DetailGroup")
+                return true;
+            current = current.parent;
+        }
+        return false;
     }
 }
