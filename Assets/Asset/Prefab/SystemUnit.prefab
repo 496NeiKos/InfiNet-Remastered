@@ -230,9 +230,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 64a32b5fe1612204f904fb7c4643e0a9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SystemUnitStateManager
-  motherboard: {fileID: 2184435562815504394, guid: 98dc32422793c3843b30c178e858d87a, type: 3}
-  hdd: {fileID: 5509405175417626978, guid: 50ba32af9fdf1544e9d7a46649d4994d, type: 3}
-  psu: {fileID: 2184435562815504394, guid: 6967d178116867d41ade41057d2dad51, type: 3}
   hardwareId: SystemUnit_0
 --- !u!1 &1903797031517656051
 GameObject:
@@ -460,6 +457,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: PSU
       objectReference: {fileID: 0}
+    - target: {fileID: 2184435562815504394, guid: 6967d178116867d41ade41057d2dad51, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4150317972622649885, guid: 6967d178116867d41ade41057d2dad51, type: 3}
       propertyPath: m_SortingOrder
       value: 2
@@ -525,6 +526,10 @@ PrefabInstance:
     - target: {fileID: 2184435562815504394, guid: 98dc32422793c3843b30c178e858d87a, type: 3}
       propertyPath: m_Name
       value: Motherboard
+      objectReference: {fileID: 0}
+    - target: {fileID: 2184435562815504394, guid: 98dc32422793c3843b30c178e858d87a, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4150317972622649885, guid: 98dc32422793c3843b30c178e858d87a, type: 3}
       propertyPath: m_SortingOrder

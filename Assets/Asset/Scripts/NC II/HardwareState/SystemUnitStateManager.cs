@@ -2,20 +2,22 @@ using UnityEngine;
 
 /// <summary>
 /// Handles save/load state for SystemUnit hardware.
-/// Tracks which components (Motherboard, HDD, PSU, etc.) are active.
+/// Now tracks slot states instead of just component active/inactive.
+///
+/// Saves:
+/// - Which child is in which slot
+/// - That child's full state (recursively)
+///
+/// Loads:
+/// - Instantiates children in slots
+/// - Restores their states
 /// </summary>
 public class SystemUnitStateManager : MonoBehaviour, IHardwareState
 {
-    [SerializeField] private GameObject motherboard;
-    [SerializeField] private GameObject hdd;
-    [SerializeField] private GameObject psu;
-    // Add more components here as needed
-
-    /// <summary>
-    /// Unique ID for this system unit instance.
-    /// Can be set in Inspector or auto-generated on Start.
-    /// </summary>
     [SerializeField] private string hardwareId = "SystemUnit_0";
+
+    private HardwareSlotManager _slotManager;
+    private HardwareEditLock _editLock;
 
     private void Start()
     {
@@ -23,24 +25,29 @@ public class SystemUnitStateManager : MonoBehaviour, IHardwareState
         if (string.IsNullOrEmpty(hardwareId))
             hardwareId = $"SystemUnit_{GetInstanceID()}";
 
+        // Get slot manager
+        _slotManager = GetComponent<HardwareSlotManager>();
+        _editLock = GetComponent<HardwareEditLock>();
+
+        if (_slotManager == null)
+            Debug.LogWarning($"[SystemUnitStateManager] No HardwareSlotManager found on {name}");
+
         // Try to load any previously saved state
         if (HardwareStateManager.Instance != null)
             HardwareStateManager.Instance.LoadHardwareState(this);
     }
 
-    public string GetHardwareId()
-    {
-        return hardwareId;
-    }
+    public string GetHardwareId() => hardwareId;
 
     public HardwareStateData SaveState()
     {
         HardwareStateData stateData = new HardwareStateData("SystemUnit");
 
-        // Save the active state of each component
-        stateData.SetBool("motherboard_active", motherboard != null ? motherboard.activeInHierarchy : false);
-        stateData.SetBool("hdd_active", hdd != null ? hdd.activeInHierarchy : false);
-        stateData.SetBool("psu_active", psu != null ? psu.activeInHierarchy : false);
+        // Save all slot states through the slot manager
+        if (_slotManager != null)
+        {
+            _slotManager.SaveAllSlotStatesToStateData(stateData);
+        }
 
         Debug.Log($"[SystemUnitStateManager] Saved state for {hardwareId}");
         return stateData;
@@ -54,15 +61,11 @@ public class SystemUnitStateManager : MonoBehaviour, IHardwareState
             return;
         }
 
-        // Restore the active state of each component
-        if (motherboard != null)
-            motherboard.SetActive(stateData.GetBool("motherboard_active", true));
-
-        if (hdd != null)
-            hdd.SetActive(stateData.GetBool("hdd_active", true));
-
-        if (psu != null)
-            psu.SetActive(stateData.GetBool("psu_active", true));
+        // Load all slot states through the slot manager
+        if (_slotManager != null)
+        {
+            _slotManager.LoadAllSlotStates();
+        }
 
         Debug.Log($"[SystemUnitStateManager] Loaded state for {hardwareId}");
     }
@@ -73,5 +76,13 @@ public class SystemUnitStateManager : MonoBehaviour, IHardwareState
             HardwareStateManager.Instance.ClearHardwareState(hardwareId);
 
         Debug.Log($"[SystemUnitStateManager] Cleared state for {hardwareId}");
+    }
+
+    public bool IsEditable()
+    {
+        if (_editLock == null)
+            return true;
+
+        return !_editLock.IsAnyLocked();
     }
 }

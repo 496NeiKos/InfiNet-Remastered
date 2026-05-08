@@ -55,12 +55,68 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
 
         Debug.Log($"{name} → OnEndDrag fired at screen position {eventData.position}");
 
-        // Check if dropped in hardware area (destruction zone)
+        bool isChild = IsInDetailView();
+
+        // If this is a child, it can ONLY be dropped to:
+        // 1. Its designated slot
+        // 2. Hardware area (destroy it)
+        if (isChild)
+        {
+            // Try to find parent slot manager
+            HardwareSlotManager parentSlotManager = GetComponentInParent<HardwareSlotManager>();
+            if (parentSlotManager != null)
+            {
+                // Check if dropped on parent's slot (reinstall)
+                if (TryDropOnParentSlot(parentSlotManager, eventData))
+                {
+                    return;
+                }
+            }
+
+            // Otherwise, only allow hardware area drop
+            if (RectTransformUtility.RectangleContainsScreenPoint(hardwareArea, eventData.position, eventData.pressEventCamera))
+            {
+                Debug.Log($"{name} → Child dropped in HardwareArea, removing from slot and destroying");
+
+                // Remove from parent slot first
+                if (parentSlotManager != null)
+                {
+                    IHardwareState childState = GetComponent<IHardwareState>();
+                    string childName = childState != null ? childState.GetHardwareId() : name;
+
+                    // Find which slot contains this child
+                    foreach (var slotType in GetAllSlotTypes(parentSlotManager))
+                    {
+                        SlotContainer slot = parentSlotManager.GetSlotByType(slotType);
+                        if (slot != null && slot.GetInstalledChild() == gameObject)
+                        {
+                            parentSlotManager.RemovePrefabFromSlot(slotType);
+                            break;
+                        }
+                    }
+                }
+
+                // Save state before destroying
+                IHardwareState hardwareState = GetComponent<IHardwareState>();
+                if (hardwareState != null && HardwareStateManager.Instance != null)
+                    HardwareStateManager.Instance.SaveHardwareState(hardwareState);
+
+                Destroy(gameObject);
+                return;
+            }
+
+            // Invalid drop location for child
+            Debug.Log($"{name} → Child dropped in invalid location, snapping back");
+            transform.position = originalPos;
+            return;
+        }
+
+        // If this is a parent (in workspace), handle as before
         if (RectTransformUtility.RectangleContainsScreenPoint(hardwareArea, eventData.position, eventData.pressEventCamera))
         {
-            Debug.Log($"{name} → Dropped in HardwareArea, saving state and destroying prefab");
+            Debug.Log($"{name} → Parent dropped in HardwareArea, saving state and destroying");
 
-            // ✅ SAVE STATE before destroying
+            // Save state before destroying
             IHardwareState hardwareState = GetComponent<IHardwareState>();
             if (hardwareState != null && HardwareStateManager.Instance != null)
                 HardwareStateManager.Instance.SaveHardwareState(hardwareState);
@@ -69,13 +125,33 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
         }
         else if (!RectTransformUtility.RectangleContainsScreenPoint(workspaceArea, eventData.position, eventData.pressEventCamera))
         {
-            Debug.Log($"{name} → Dropped outside Workspace, snapping back");
+            Debug.Log($"{name} → Parent dropped outside Workspace, snapping back");
             transform.position = originalPos;
         }
         else
         {
-            Debug.Log($"{name} → Dropped in Workspace, keeping position");
+            Debug.Log($"{name} → Parent dropped in Workspace, keeping position");
         }
+    }
+
+    /// <summary>
+    /// Check if dropped on parent's slot (reinstall child).
+    /// </summary>
+    private bool TryDropOnParentSlot(HardwareSlotManager parentSlotManager, PointerEventData eventData)
+    {
+        // This is simplified — in a full implementation, you'd raycast to find the specific slot
+        // For now, we just check if it's still over the parent
+        // TODO: Implement proper slot detection on drop
+        return false;
+    }
+
+    /// <summary>
+    /// Get all slot types from a manager (helper).
+    /// </summary>
+    private System.Collections.Generic.List<string> GetAllSlotTypes(HardwareSlotManager manager)
+    {
+        var states = manager.GetAllSlotStates();
+        return new System.Collections.Generic.List<string>(states.Keys);
     }
 
     private bool IsInDetailView()

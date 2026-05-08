@@ -16,6 +16,14 @@ public class PrefabInteraction : MonoBehaviour
     {
         if (Mouse.current.rightButton.wasPressedThisFrame)
         {
+            // ✅ NEW: Check if prefab is locked (installed in parent)
+            HardwareEditLock editLock = GetComponent<HardwareEditLock>();
+            if (editLock != null && editLock.IsAnyLocked())
+            {
+                Debug.LogWarning($"{name} → Cannot edit: This hardware is installed in a parent. Uninstall first.");
+                return;
+            }
+
             // Block right-click while the editing panel is open
             if (GameManager.Instance != null && GameManager.Instance.IsEditorOpen)
             {
