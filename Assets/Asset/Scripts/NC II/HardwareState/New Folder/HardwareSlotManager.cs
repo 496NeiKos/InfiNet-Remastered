@@ -5,8 +5,11 @@ using UnityEngine;
 /// Manages all installation slots in a parent hardware's DetailGroup.
 /// Orchestrates: installation, removal, validation, state management.
 ///
-/// Attach to the ROOT of any hardware that can have child installations
-/// (e.g., SystemUnit, Motherboard, etc.)
+/// KEY BEHAVIOR:
+/// - When a child is removed from slot: child GameObject is DESTROYED
+/// - When state loads and child should be installed: child is INSTANTIATED and installed
+/// - State determines what should exist in DetailGroup
+/// - Prefab default has all children, state determines which stay/leave
 /// </summary>
 public class HardwareSlotManager : MonoBehaviour
 {
@@ -129,70 +132,36 @@ public class HardwareSlotManager : MonoBehaviour
         if (childLock != null)
             childLock.Lock();
 
-        // Notify state manager
-        if (HardwareStateManager.Instance != null)
-        {
-            IHardwareState parentState = GetComponent<IHardwareState>();
-            if (parentState != null)
-                HardwareStateManager.Instance.SaveHardwareState(parentState);
-        }
+        // ✅ Save parent state immediately
+        SaveParentState();
 
         return true;
     }
 
     /// <summary>
-    /// Remove a prefab from a specific slot (does NOT destroy it).
+    /// Remove a prefab from a specific slot and DESTROY it.
     /// </summary>
     /// <param name="slotType">Type of slot to remove from</param>
-    /// <returns>The removed child GameObject, or null if slot was empty</returns>
-    public GameObject RemovePrefabFromSlot(string slotType)
+    public bool RemovePrefabFromSlot(string slotType)
     {
         SlotContainer slot = GetSlotByType(slotType);
         if (slot == null)
-            return null;
+            return false;
 
         GameObject removed = slot.RemoveChild();
         if (removed == null)
         {
             Debug.LogWarning($"[HardwareSlotManager] Slot {slotType} is already empty");
-            return null;
+            return false;
         }
 
-        // Unlock the child (allow editing after removal)
-        HardwareEditLock childLock = removed.GetComponent<HardwareEditLock>();
-        if (childLock != null)
-            childLock.Unlock();
+        Debug.Log($"[HardwareSlotManager] Removed and destroying child from slot {slotType}");
 
-        // Notify state manager
-        if (HardwareStateManager.Instance != null)
-        {
-            IHardwareState parentState = GetComponent<IHardwareState>();
-            if (parentState != null)
-                HardwareStateManager.Instance.SaveHardwareState(parentState);
-        }
+        // ✅ DESTROY the child immediately
+        Destroy(removed);
 
-        return removed;
-    }
-
-    // ── Validation ─────────────────────────────────────────────────────────
-
-    /// <summary>
-    /// Check if a prefab can be dropped into a slot.
-    /// Validates: slot type match + not locked in another parent.
-    /// </summary>
-    public bool CanDropInSlot(string prefabName, string slotType)
-    {
-        SlotContainer slot = GetSlotByType(slotType);
-        if (slot == null)
-            return false;
-
-        // Slot type must match
-        if (!slot.CanAcceptPrefab(prefabName))
-            return false;
-
-        // Slot must be empty
-        if (!slot.IsSlotEmpty())
-            return false;
+        // ✅ Save parent state immediately (slot now reflects removal)
+        SaveParentState();
 
         return true;
     }
@@ -206,9 +175,14 @@ public class HardwareSlotManager : MonoBehaviour
     public Dictionary<string, string> GetAllSlotStates()
     {
         Dictionary<string, string> states = new Dictionary<string, string>();
-
+        Debug.Log($"[HardwareSlotManager] LoadAllSlotStates called, checking {slots.Count} slots");
         foreach (KeyValuePair<string, SlotContainer> kvp in slots)
         {
+            string slotType = kvp.Key;
+            SlotContainer slot = kvp.Value;
+            GameObject currentChild = slot.GetInstalledChild();
+
+            Debug.Log($"[HardwareSlotManager] Checking slot {slotType}: currentChild = {(currentChild != null ? currentChild.name : "null")}");
             states[kvp.Key] = kvp.Value.GetSlotState();
         }
 
@@ -216,7 +190,11 @@ public class HardwareSlotManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Restore all slots from saved state (for loading).
+    /// Load and restore all slots from saved state.
+    /// 
+    /// KEY LOGIC:
+    /// - If state says slot should be EMPTY: Destroy the child if it exists
+    /// - If state says slot should have child: Instantiate and install it
     /// </summary>
     public void LoadAllSlotStates()
     {
@@ -228,36 +206,72 @@ public class HardwareSlotManager : MonoBehaviour
             return;
 
         HardwareStateData stateData = HardwareStateManager.Instance.GetHardwareStateData(parentState.GetHardwareId());
-        if (stateData == null)
-        {
-            Debug.Log($"[HardwareSlotManager] No saved state found for {parentState.GetHardwareId()}, using defaults");
-            return;
-        }
 
-        // Restore each slot from state
+        // For each slot, check what state says it should contain
         foreach (KeyValuePair<string, SlotContainer> kvp in slots)
         {
             string slotType = kvp.Key;
             SlotContainer slot = kvp.Value;
 
-            // Get saved prefab name for this slot (or "" if empty)
+            // Get what's currently in the slot
+            GameObject currentChild = slot.GetInstalledChild();
+
+            // Get what state says should be there
             string stateKey = $"slot_{slotType}_installed";
-            string installedPrefabName = stateData.GetString(stateKey, "");
+            string savedPrefabName = stateData != null ? stateData.GetString(stateKey, "") : "";
 
-            // If slot should have a child, instantiate and install it
-            if (!string.IsNullOrEmpty(installedPrefabName))
+            // ✅ KEY LOGIC: Sync current state with saved state
+
+            if (string.IsNullOrEmpty(savedPrefabName))
             {
-                InstallPrefabInSlot(installedPrefabName, slotType);
-
-                // Load that child's state too
-                GameObject installedChild = slot.GetInstalledChild();
-                if (installedChild != null)
+                // State says: slot should be EMPTY
+                if (currentChild != null)
                 {
-                    IHardwareState childState = installedChild.GetComponent<IHardwareState>();
-                    if (childState != null)
+                    // But slot has a child → DESTROY it
+                    Debug.Log($"[HardwareSlotManager] State says slot {slotType} should be empty, destroying child");
+
+                    GameObject removed = slot.RemoveChild();
+                    if (removed != null)
+                    {
+                        Destroy(removed);
+                    }
+                }
+                else
+                {
+                    // Slot is already empty → OK
+                    Debug.Log($"[HardwareSlotManager] Slot {slotType} is empty (as per state)");
+                }
+            }
+            else
+            {
+                // State says: slot should have a child
+                if (currentChild != null && currentChild.name == savedPrefabName)
+                {
+                    // Correct child is already there → OK
+                    Debug.Log($"[HardwareSlotManager] Slot {slotType} already has correct child {savedPrefabName}");
+
+                    // Load that child's state too
+                    IHardwareState childState = currentChild.GetComponent<IHardwareState>();
+                    if (childState != null && HardwareStateManager.Instance != null)
                     {
                         HardwareStateManager.Instance.LoadHardwareState(childState);
                     }
+                }
+                else if (currentChild != null)
+                {
+                    // Wrong child is there → destroy it and install correct one
+                    Debug.Log($"[HardwareSlotManager] Slot {slotType} has wrong child, replacing");
+                    GameObject removed = slot.RemoveChild();
+                    if (removed != null)
+                        Destroy(removed);
+
+                    InstallPrefabInSlot(savedPrefabName, slotType);
+                }
+                else
+                {
+                    // Slot is empty but should have child → instantiate and install
+                    Debug.Log($"[HardwareSlotManager] Slot {slotType} should have {savedPrefabName}, installing");
+                    InstallPrefabInSlot(savedPrefabName, slotType);
                 }
             }
         }
@@ -287,10 +301,23 @@ public class HardwareSlotManager : MonoBehaviour
                 {
                     HardwareStateData childStateData = childState.SaveState();
                     string childStateKey = $"slot_{slotType}_state";
-                    // Store child state as nested data (serialized as JSON or flattened)
                     stateData.SetString(childStateKey, JsonUtility.ToJson(childStateData));
                 }
             }
+        }
+    }
+
+    /// <summary>
+    /// Helper: Save parent state immediately when slots change.
+    /// Called after InstallPrefabInSlot or RemovePrefabFromSlot.
+    /// </summary>
+    private void SaveParentState()
+    {
+        IHardwareState parentState = GetComponent<IHardwareState>();
+        if (parentState != null && HardwareStateManager.Instance != null)
+        {
+            HardwareStateManager.Instance.SaveHardwareState(parentState);
+            Debug.Log($"[HardwareSlotManager] Saved parent state after slot change");
         }
     }
 }

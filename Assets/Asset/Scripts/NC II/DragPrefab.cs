@@ -81,16 +81,21 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
                 // Remove from parent slot first
                 if (parentSlotManager != null)
                 {
-                    IHardwareState childState = GetComponent<IHardwareState>();
-                    string childName = childState != null ? childState.GetHardwareId() : name;
-
-                    // Find which slot contains this child
+                    // Find which slot contains this child and remove it
                     foreach (var slotType in GetAllSlotTypes(parentSlotManager))
                     {
                         SlotContainer slot = parentSlotManager.GetSlotByType(slotType);
                         if (slot != null && slot.GetInstalledChild() == gameObject)
                         {
                             parentSlotManager.RemovePrefabFromSlot(slotType);
+
+                            // ✅ KEY FIX: Save parent state IMMEDIATELY after slot change
+                            IHardwareState parentState = parentSlotManager.GetComponent<IHardwareState>();
+                            if (parentState != null && HardwareStateManager.Instance != null)
+                            {
+                                HardwareStateManager.Instance.SaveHardwareState(parentState);
+                                Debug.Log($"[DragPrefab] Saved parent state after removing child from slot");
+                            }
                             break;
                         }
                     }
@@ -116,7 +121,7 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
         {
             Debug.Log($"{name} → Parent dropped in HardwareArea, saving state and destroying");
 
-            // Save state before destroying
+            // ✅ KEY FIX: Save parent state with current slot configuration
             IHardwareState hardwareState = GetComponent<IHardwareState>();
             if (hardwareState != null && HardwareStateManager.Instance != null)
                 HardwareStateManager.Instance.SaveHardwareState(hardwareState);
