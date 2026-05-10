@@ -2,58 +2,87 @@
 
 public class SystemUnitController : MonoBehaviour
 {
-    public GameObject snapshotGroup;
-    public GameObject detailGroup;
+    [Header("Editing Panel View")]
+    public GameObject systemUnitSide;
 
-    private Vector3 _detailOriginalLocalPos;
-    private Quaternion _detailOriginalLocalRot;
-    private Transform _detailOriginalParent;
+    [Header("Cover & Hardware")]
+    public GameObject systemUnitCover;
+    public GameObject systemUnitHardwareComponents;
+
+    private Vector3 _sideOriginalLocalPos;
+    private Quaternion _sideOriginalLocalRot;
 
     void Start()
     {
-        ShowSnapshot();
-    }
-
-    public void ShowSnapshot()
-    {
-        snapshotGroup.SetActive(true);
-        detailGroup.SetActive(false);
-    }
-
-    public void ShowDetail()
-    {
-        snapshotGroup.SetActive(false);
-        detailGroup.SetActive(true);
+        // Default: side view hidden, root sprite is always visible
+        systemUnitSide.SetActive(false);
     }
 
     public void ShowDetailAtCenter()
     {
-        snapshotGroup.SetActive(true);
+        _sideOriginalLocalPos = systemUnitSide.transform.localPosition;
+        _sideOriginalLocalRot = systemUnitSide.transform.localRotation;
 
-        _detailOriginalParent = detailGroup.transform.parent;
-        _detailOriginalLocalPos = detailGroup.transform.localPosition;
-        _detailOriginalLocalRot = detailGroup.transform.localRotation;
+        // Center on the editing panel
+        if (GameManager.Instance != null && GameManager.Instance.editingPanel != null)
+        {
+            RectTransform rect = GameManager.Instance.editingPanel.GetComponent<RectTransform>();
+            if (rect != null)
+            {
+                Vector3 panelCenter = rect.TransformPoint(
+                    new Vector3(rect.rect.center.x, rect.rect.center.y, 0f)
+                );
+                panelCenter.z = 0f;
 
-        Vector3 center = Camera.main.ViewportToWorldPoint(
-            new Vector3(0.5f, 0.5f, Mathf.Abs(Camera.main.transform.position.z))
-        );
-        center.z = 0f;
+                systemUnitSide.transform.position = panelCenter;
+                systemUnitSide.transform.rotation = Quaternion.identity;
+            }
+        }
 
-        detailGroup.transform.SetParent(null, true);
-        detailGroup.transform.position = center;
-        detailGroup.transform.rotation = Quaternion.identity;
+        // Cover starts active (blocking hardware)
+        if (systemUnitCover != null)
+            systemUnitCover.SetActive(true);
 
-        detailGroup.SetActive(true);
+        // Hardware components start disabled (hidden behind cover)
+        if (systemUnitHardwareComponents != null)
+            systemUnitHardwareComponents.SetActive(false);
+
+        systemUnitSide.SetActive(true);
     }
 
     public void HideDetail()
     {
-        detailGroup.SetActive(false);
+        systemUnitSide.SetActive(false);
 
-        if (_detailOriginalParent != null)
-            detailGroup.transform.SetParent(_detailOriginalParent, false);
+        systemUnitSide.transform.localPosition = _sideOriginalLocalPos;
+        systemUnitSide.transform.localRotation = _sideOriginalLocalRot;
+    }
 
-        detailGroup.transform.localPosition = _detailOriginalLocalPos;
-        detailGroup.transform.localRotation = _detailOriginalLocalRot;
+    /// <summary>
+    /// Called when the cover is removed (all screws unscrewed).
+    /// </summary>
+    public void RemoveCover()
+    {
+        if (systemUnitCover != null)
+            systemUnitCover.SetActive(false);
+
+        if (systemUnitHardwareComponents != null)
+            systemUnitHardwareComponents.SetActive(true);
+
+        Debug.Log("[SystemUnitController] Cover removed, hardware components revealed");
+    }
+
+    /// <summary>
+    /// Called when the cover is put back on.
+    /// </summary>
+    public void AttachCover()
+    {
+        if (systemUnitCover != null)
+            systemUnitCover.SetActive(true);
+
+        if (systemUnitHardwareComponents != null)
+            systemUnitHardwareComponents.SetActive(false);
+
+        Debug.Log("[SystemUnitController] Cover attached, hardware components hidden");
     }
 }

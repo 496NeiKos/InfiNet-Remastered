@@ -3,24 +3,11 @@ using UnityEngine;
 
 /// <summary>
 /// Serializable container for hardware state.
-/// Stores the data needed to reconstruct a hardware device's state.
 /// </summary>
 [System.Serializable]
 public class HardwareStateData
 {
-    /// <summary>
-    /// Type of hardware (e.g., "SystemUnit", "HDD", "GPU").
-    /// Used to know which handler to instantiate on load.
-    /// </summary>
     public string hardwareType;
-
-    /// <summary>
-    /// Generic key-value pairs for flexible state storage.
-    /// Examples:
-    ///   "motherboard_active" -> "true"
-    ///   "hdd_count" -> "2"
-    ///   "psu_wattage" -> "750"
-    /// </summary>
     public Dictionary<string, string> stateValues = new Dictionary<string, string>();
 
     public HardwareStateData(string type)
@@ -28,57 +15,37 @@ public class HardwareStateData
         hardwareType = type;
     }
 
-    /// <summary>
-    /// Helper to set a bool value in state.
-    /// </summary>
-    public void SetBool(string key, bool value)
-    {
-        stateValues[key] = value.ToString();
-    }
-
-    /// <summary>
-    /// Helper to get a bool value from state.
-    /// </summary>
-    public bool GetBool(string key, bool defaultValue = false)
-    {
-        if (stateValues.TryGetValue(key, out string value))
-            return bool.Parse(value);
-        return defaultValue;
-    }
-
-    /// <summary>
-    /// Helper to set an int value in state.
-    /// </summary>
-    public void SetInt(string key, int value)
-    {
-        stateValues[key] = value.ToString();
-    }
-
-    /// <summary>
-    /// Helper to get an int value from state.
-    /// </summary>
-    public int GetInt(string key, int defaultValue = 0)
-    {
-        if (stateValues.TryGetValue(key, out string value))
-            return int.Parse(value);
-        return defaultValue;
-    }
-
-    /// <summary>
-    /// Helper to set a string value in state.
-    /// </summary>
+    public void SetBool(string key, bool value) => stateValues[key] = value.ToString();
+    public void SetInt(string key, int value) => stateValues[key] = value.ToString();
     public void SetString(string key, string value)
     {
-        stateValues[key] = value;
+        // Allow saving empty string (means "slot is empty")
+        stateValues[key] = value ?? "";
+    }
+
+    public bool GetBool(string key, bool defaultValue = false)
+    {
+        if (stateValues.TryGetValue(key, out string v) && bool.TryParse(v, out bool result))
+            return result;
+        return defaultValue;
+    }
+
+    public int GetInt(string key, int defaultValue = 0)
+    {
+        if (stateValues.TryGetValue(key, out string v) && int.TryParse(v, out int result))
+            return result;
+        return defaultValue;
     }
 
     /// <summary>
-    /// Helper to get a string value from state.
+    /// Returns null if the key has never been written.
+    /// Returns "" if the key was explicitly saved as empty (slot removed).
+    /// Returns the name if a prefab was saved there.
     /// </summary>
-    public string GetString(string key, string defaultValue = "")
+    public string GetString(string key, string defaultValue = null)
     {
         if (stateValues.TryGetValue(key, out string value))
             return value;
-        return defaultValue;
+        return defaultValue; // null = key never existed
     }
 }

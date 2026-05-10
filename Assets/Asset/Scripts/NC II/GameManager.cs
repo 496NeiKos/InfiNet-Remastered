@@ -11,13 +11,12 @@ public class GameManager : MonoBehaviour
 
     public static GameManager Instance { get; private set; }
 
-    /// <summary>
-    /// True while the editing panel is open.
-    /// All workspace interaction scripts check this before doing anything.
-    /// </summary>
     public bool IsEditorOpen { get; private set; } = false;
 
     private PrefabInteraction _activeInteraction;
+
+    private Transform _prefabOriginalParent;
+    private Vector3 _prefabOriginalWorldPos;
 
     private void Awake()
     {
@@ -29,21 +28,22 @@ public class GameManager : MonoBehaviour
         Instance = this;
     }
 
-    /// <summary>
-    /// Called by PrefabInteraction when the user right-clicks a prefab.
-    /// Keeps the workspace snapshot visible, moves the detail group to
-    /// screen centre, and shows the editing panel.
-    /// </summary>
     public void OpenEditor(PrefabInteraction interaction)
     {
-        // Close any previously open editor first (handles rapid switching)
         if (_activeInteraction != null && _activeInteraction != interaction)
             _activeInteraction.OnEditorClosed();
 
         _activeInteraction = interaction;
         IsEditorOpen = true;
 
-        // Tell the prefab to show its detail view centred on screen
+        // Save original parent and position before reparenting
+        _prefabOriginalParent = interaction.transform.parent;
+        _prefabOriginalWorldPos = interaction.transform.position;
+
+        // Reparent prefab to editing panel
+        interaction.transform.SetParent(editingPanel.transform, true);
+
+        // Show detail centered on the editing panel
         _activeInteraction.ShowDetailCentered();
 
         if (editingPanel != null)
@@ -52,16 +52,16 @@ public class GameManager : MonoBehaviour
             Debug.LogError("GameManager: editingPanel is not assigned in the Inspector!");
     }
 
-    /// <summary>
-    /// Called by the Close button in the EditingPanel.
-    /// Wire the Close button's OnClick → GameManager → CloseEditor().
-    /// </summary>
     public void CloseEditor()
     {
         IsEditorOpen = false;
 
         if (_activeInteraction != null)
         {
+            // Return prefab to its original parent and position
+            _activeInteraction.transform.SetParent(_prefabOriginalParent, true);
+            _activeInteraction.transform.position = _prefabOriginalWorldPos;
+
             _activeInteraction.OnEditorClosed();
             _activeInteraction = null;
         }
