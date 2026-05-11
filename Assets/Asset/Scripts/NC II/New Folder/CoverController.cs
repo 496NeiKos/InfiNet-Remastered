@@ -2,9 +2,8 @@
 
 /// <summary>
 /// Controls the system unit cover panel.
-/// Checks if all screws are unscrewed before allowing cover removal.
-/// Cover slides to the right when clicked (if unlocked).
-/// Click again to slide back and re-screw.
+/// Opens if all screws unscrewed. Can reopen/close freely while unscrewed.
+/// Does NOT auto-rescrew on close — user must manually screw each one.
 /// </summary>
 public class CoverController : MonoBehaviour
 {
@@ -38,14 +37,12 @@ public class CoverController : MonoBehaviour
     {
         if (!_isSliding) return;
 
-        // Smoothly slide cover to target position
         transform.localPosition = Vector3.MoveTowards(
             transform.localPosition,
             _targetPosition,
             slideSpeed * Time.deltaTime
         );
 
-        // Check if reached target
         if (Vector3.Distance(transform.localPosition, _targetPosition) < 0.01f)
         {
             transform.localPosition = _targetPosition;
@@ -53,17 +50,12 @@ public class CoverController : MonoBehaviour
 
             if (_isOpen)
             {
-                // Cover fully opened → reveal hardware
                 if (systemUnitController != null)
                     systemUnitController.RemoveCover();
             }
         }
     }
 
-    /// <summary>
-    /// Called when user clicks the cover.
-    /// Wire this to a click detector or call from DetailViewManager.
-    /// </summary>
     public void OnCoverClicked()
     {
         if (_isOpen)
@@ -97,17 +89,14 @@ public class CoverController : MonoBehaviour
         _targetPosition = _closedPosition;
         _isSliding = true;
 
-        // Hide hardware components while cover slides back
+        // Hide hardware components
         if (systemUnitController != null)
             systemUnitController.AttachCover();
 
-        // Re-screw all screws
-        if (screw1 != null) screw1.Rescrew();
-        if (screw2 != null) screw2.Rescrew();
-        if (screw3 != null) screw3.Rescrew();
-        if (screw4 != null) screw4.Rescrew();
+        // ✅ Do NOT re-screw. Screws stay in whatever state they are.
+        // User must manually drag screws from hardware area to re-screw.
 
-        Debug.Log("[CoverController] Closing cover and re-screwing...");
+        Debug.Log("[CoverController] Closing cover (screws unchanged)");
     }
 
     private bool AllScrewsUnscrewed()
@@ -125,5 +114,4 @@ public class CoverController : MonoBehaviour
     }
 
     public bool IsOpen() => _isOpen;
-    public bool AreAllScrewsUnscrewed() => AllScrewsUnscrewed();
 }

@@ -14,16 +14,17 @@ public class SystemUnitController : MonoBehaviour
 
     void Start()
     {
-        // Default: side view hidden, root sprite is always visible
-        systemUnitSide.SetActive(false);
+        if (systemUnitSide != null)
+            systemUnitSide.SetActive(false);
     }
 
     public void ShowDetailAtCenter()
     {
+        if (systemUnitSide == null) return;
+
         _sideOriginalLocalPos = systemUnitSide.transform.localPosition;
         _sideOriginalLocalRot = systemUnitSide.transform.localRotation;
 
-        // Center on the editing panel
         if (GameManager.Instance != null && GameManager.Instance.editingPanel != null)
         {
             RectTransform rect = GameManager.Instance.editingPanel.GetComponent<RectTransform>();
@@ -39,11 +40,9 @@ public class SystemUnitController : MonoBehaviour
             }
         }
 
-        // Cover starts active (blocking hardware)
         if (systemUnitCover != null)
             systemUnitCover.SetActive(true);
 
-        // Hardware components start disabled (hidden behind cover)
         if (systemUnitHardwareComponents != null)
             systemUnitHardwareComponents.SetActive(false);
 
@@ -52,37 +51,23 @@ public class SystemUnitController : MonoBehaviour
 
     public void HideDetail()
     {
+        if (systemUnitSide == null) return;
+
         systemUnitSide.SetActive(false);
 
         systemUnitSide.transform.localPosition = _sideOriginalLocalPos;
         systemUnitSide.transform.localRotation = _sideOriginalLocalRot;
     }
 
-    /// <summary>
-    /// Called when the cover is removed (all screws unscrewed).
-    /// </summary>
     public void RemoveCover()
     {
-        if (systemUnitCover != null)
-            systemUnitCover.SetActive(false);
-
         if (systemUnitHardwareComponents != null)
             systemUnitHardwareComponents.SetActive(true);
-
-        Debug.Log("[SystemUnitController] Cover removed, hardware components revealed");
     }
 
-    /// <summary>
-    /// Called when the cover is put back on.
-    /// </summary>
     public void AttachCover()
     {
-        if (systemUnitCover != null)
-            systemUnitCover.SetActive(true);
-
         if (systemUnitHardwareComponents != null)
             systemUnitHardwareComponents.SetActive(false);
-
-        Debug.Log("[SystemUnitController] Cover attached, hardware components hidden");
     }
 }

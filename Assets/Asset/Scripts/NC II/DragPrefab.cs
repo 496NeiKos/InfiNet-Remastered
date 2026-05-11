@@ -24,10 +24,16 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
 
     public void OnBeginDrag(PointerEventData eventData)
     {
-        if (GameManager.Instance != null && GameManager.Instance.IsEditorOpen && !IsInEditingPanel())
+        if (GameManager.Instance != null && GameManager.Instance.IsEditorOpen)
         {
-            _isDragging = false;
-            return;
+            // When editor is open, only allow dragging for child hardware
+            // inside the hardware components container (e.g., Motherboard in slot)
+            // Block: root prefab, system unit side, cover, screws handled by ScrewController
+            if (!IsInstalledHardwareChild())
+            {
+                _isDragging = false;
+                return;
+            }
         }
 
         _isDragging = true;
@@ -99,9 +105,17 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
     }
 
     /// <summary>
-    /// Check if this prefab is inside the editing panel view.
-    /// Walks up the parent chain looking for the EditingPanel.
+    /// Check if this GameObject is a hardware child installed in a SlotContainer
+    /// inside the hardware components area. Only these should be draggable
+    /// when the editing panel is open.
     /// </summary>
+    private bool IsInstalledHardwareChild()
+    {
+        // Walk up to see if we're inside a SlotContainer
+        SlotContainer parentSlot = GetComponentInParent<SlotContainer>();
+        return parentSlot != null;
+    }
+
     private bool IsInEditingPanel()
     {
         if (GameManager.Instance == null || GameManager.Instance.editingPanel == null)

@@ -49,11 +49,7 @@ GameObject:
   - component: {fileID: 2748452050790346741}
   - component: {fileID: 2348670716774135780}
   - component: {fileID: 1841800806526968484}
-  - component: {fileID: -454234875230872722}
   - component: {fileID: 8731543936453371572}
-  - component: {fileID: 7088098607904918678}
-  - component: {fileID: 5678339267214320962}
-  - component: {fileID: 8987857212520419118}
   m_Layer: 12
   m_Name: Motherboard
   m_TagString: Untagged
@@ -196,20 +192,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   editingPanel: {fileID: 0}
---- !u!114 &-454234875230872722
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1820356063017265982}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 571ac7054db94574db12158aa34bf473, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SystemUnitController
-  snapshotGroup: {fileID: 8746556434320140618}
-  detailGroup: {fileID: 937456850590635898}
 --- !u!114 &8731543936453371572
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -222,45 +204,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5a21ef8c32910ef4cb1c2160aa25145e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DragPrefab
---- !u!114 &7088098607904918678
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1820356063017265982}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 64a32b5fe1612204f904fb7c4643e0a9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SystemUnitStateManager
-  hardwareId: Motherboard_0
---- !u!114 &5678339267214320962
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1820356063017265982}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: acf0ec89c7a076c47957490b548e3407, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::HardwareSlotManager
-  prefabRegistry: {fileID: 0}
-  detailGroup: {fileID: 937456850590635898}
---- !u!114 &8987857212520419118
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1820356063017265982}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 277b6d6f0d3c65748bee71456699ba2d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::HardwareEditLock
 --- !u!1 &1903797031517656051
 GameObject:
   m_ObjectHideFlags: 0

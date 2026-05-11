@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: 4364059855719302617}
   m_Layer: 12
   m_Name: Screw1
-  m_TagString: Untagged
+  m_TagString: Screw
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -170,8 +170,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ScrewController
   screwedSprite: {fileID: 2946290848948124243, guid: 65302be2e818aa84faf7feb6e3ce3c18, type: 3}
-  unscrewedSprite: {fileID: -8509433006997830299, guid: 4a18ead2d832b38498683e8b90ba8e58, type: 3}
-  unscrewDuration: 2
+  pendingSprite: {fileID: 8227254658316489142, guid: adfea4553fc64f341a95d6fb5be0b3b7, type: 3}
+  emptySprite: {fileID: 7368833634316579776, guid: bfe439adba61c234a82ab5110f06c7b3, type: 3}
+  screwdriverDuration: 2
+  coverController: {fileID: 9081154834298143754}
 --- !u!1 &937456850590635898
 GameObject:
   m_ObjectHideFlags: 0
@@ -834,7 +836,7 @@ GameObject:
   - component: {fileID: 6073756353321823529}
   m_Layer: 12
   m_Name: Screw4
-  m_TagString: Untagged
+  m_TagString: Screw
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -989,8 +991,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ScrewController
   screwedSprite: {fileID: 2946290848948124243, guid: 65302be2e818aa84faf7feb6e3ce3c18, type: 3}
-  unscrewedSprite: {fileID: -8509433006997830299, guid: 4a18ead2d832b38498683e8b90ba8e58, type: 3}
-  unscrewDuration: 2
+  pendingSprite: {fileID: 8227254658316489142, guid: adfea4553fc64f341a95d6fb5be0b3b7, type: 3}
+  emptySprite: {fileID: 7368833634316579776, guid: bfe439adba61c234a82ab5110f06c7b3, type: 3}
+  screwdriverDuration: 2
+  coverController: {fileID: 9081154834298143754}
 --- !u!1 &5168367792473903378
 GameObject:
   m_ObjectHideFlags: 0
@@ -1006,7 +1010,7 @@ GameObject:
   - component: {fileID: 5647892806824230929}
   m_Layer: 12
   m_Name: 'Screw2 '
-  m_TagString: Untagged
+  m_TagString: Screw
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1161,8 +1165,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ScrewController
   screwedSprite: {fileID: 2946290848948124243, guid: 65302be2e818aa84faf7feb6e3ce3c18, type: 3}
-  unscrewedSprite: {fileID: -8509433006997830299, guid: 4a18ead2d832b38498683e8b90ba8e58, type: 3}
-  unscrewDuration: 2
+  pendingSprite: {fileID: 8227254658316489142, guid: adfea4553fc64f341a95d6fb5be0b3b7, type: 3}
+  emptySprite: {fileID: 7368833634316579776, guid: bfe439adba61c234a82ab5110f06c7b3, type: 3}
+  screwdriverDuration: 2
+  coverController: {fileID: 9081154834298143754}
 --- !u!1 &6557963363061177325
 GameObject:
   m_ObjectHideFlags: 0
@@ -1178,7 +1184,7 @@ GameObject:
   - component: {fileID: 4510992254209033801}
   m_Layer: 12
   m_Name: Screw3
-  m_TagString: Untagged
+  m_TagString: Screw
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1333,8 +1339,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ScrewController
   screwedSprite: {fileID: 2946290848948124243, guid: 65302be2e818aa84faf7feb6e3ce3c18, type: 3}
-  unscrewedSprite: {fileID: -8509433006997830299, guid: 4a18ead2d832b38498683e8b90ba8e58, type: 3}
-  unscrewDuration: 2
+  pendingSprite: {fileID: 8227254658316489142, guid: adfea4553fc64f341a95d6fb5be0b3b7, type: 3}
+  emptySprite: {fileID: 7368833634316579776, guid: bfe439adba61c234a82ab5110f06c7b3, type: 3}
+  screwdriverDuration: 2
+  coverController: {fileID: 9081154834298143754}
 --- !u!1 &7372706424193945778
 GameObject:
   m_ObjectHideFlags: 0
@@ -1511,6 +1519,10 @@ PrefabInstance:
       propertyPath: m_SortingOrder
       value: 2
       objectReference: {fileID: 0}
+    - target: {fileID: 5678339267214320962, guid: 76e8fcee477b76840b228edce3bf7004, type: 3}
+      propertyPath: hardwareComponents
+      value: 
+      objectReference: {fileID: 7406871904502106796}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1519,6 +1531,11 @@ PrefabInstance:
 --- !u!4 &5390354309055229864 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 168160560977165521, guid: 76e8fcee477b76840b228edce3bf7004, type: 3}
+  m_PrefabInstance: {fileID: 5231792490033288057}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &7406871904502106796 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3337573370464491989, guid: 76e8fcee477b76840b228edce3bf7004, type: 3}
   m_PrefabInstance: {fileID: 5231792490033288057}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &7879102614225987014
