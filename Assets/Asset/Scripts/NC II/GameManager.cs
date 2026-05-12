@@ -36,14 +36,11 @@ public class GameManager : MonoBehaviour
         _activeInteraction = interaction;
         IsEditorOpen = true;
 
-        // Save original parent and position before reparenting
         _prefabOriginalParent = interaction.transform.parent;
         _prefabOriginalWorldPos = interaction.transform.position;
 
-        // Reparent prefab to editing panel
         interaction.transform.SetParent(editingPanel.transform, true);
 
-        // Show detail centered on the editing panel
         _activeInteraction.ShowDetailCentered();
 
         if (editingPanel != null)
@@ -52,13 +49,29 @@ public class GameManager : MonoBehaviour
             Debug.LogError("GameManager: editingPanel is not assigned in the Inspector!");
     }
 
+    /// <summary>
+    /// Called by the Close button.
+    /// If inner panel is open, close inner panel first.
+    /// If inner panel is closed, close the main editing panel.
+    /// </summary>
     public void CloseEditor()
     {
+        // Check if there's an inner panel open — close that first
+        if (_activeInteraction != null)
+        {
+            DetailViewManager dvm = _activeInteraction.GetComponent<DetailViewManager>();
+            if (dvm != null && dvm.IsInnerPanelOpen)
+            {
+                dvm.CloseInnerPanel();
+                return; // Don't close main panel yet
+            }
+        }
+
+        // Close the main editing panel
         IsEditorOpen = false;
 
         if (_activeInteraction != null)
         {
-            // Return prefab to its original parent and position
             _activeInteraction.transform.SetParent(_prefabOriginalParent, true);
             _activeInteraction.transform.position = _prefabOriginalWorldPos;
 

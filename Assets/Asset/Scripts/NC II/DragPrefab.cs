@@ -26,11 +26,25 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
     {
         if (GameManager.Instance != null && GameManager.Instance.IsEditorOpen)
         {
-            // When editor is open, only allow dragging for child hardware
-            // inside the hardware components container (e.g., Motherboard in slot)
-            // Block: root prefab, system unit side, cover, screws handled by ScrewController
+            // Block ALL dragging when inner panel is open
+            DetailViewManager dvm = GetComponentInParent<DetailViewManager>();
+            if (dvm != null && dvm.IsInnerPanelOpen)
+            {
+                _isDragging = false;
+                return;
+            }
+
+            // When editor is open, only allow dragging for installed hardware children
             if (!IsInstalledHardwareChild())
             {
+                _isDragging = false;
+                return;
+            }
+
+            // ✅ Check if this hardware has screws that must be removed first
+            if (!AreAllScrewsEmpty())
+            {
+                Debug.Log($"{name} → Cannot uninstall: screws are still attached. Unscrew them first.");
                 _isDragging = false;
                 return;
             }
@@ -105,13 +119,29 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
     }
 
     /// <summary>
-    /// Check if this GameObject is a hardware child installed in a SlotContainer
-    /// inside the hardware components area. Only these should be draggable
-    /// when the editing panel is open.
+    /// Check if all ScrewControllers on this prefab are in Empty state.
+    /// If the prefab has no screws, returns true (no restriction).
+    /// Searches in children (including inactive) for ScrewControllers.
     /// </summary>
+    private bool AreAllScrewsEmpty()
+    {
+        ScrewController[] screws = GetComponentsInChildren<ScrewController>(true);
+
+        // No screws = no restriction
+        if (screws.Length == 0)
+            return true;
+
+        foreach (ScrewController screw in screws)
+        {
+            if (!screw.IsEmpty())
+                return false;
+        }
+
+        return true;
+    }
+
     private bool IsInstalledHardwareChild()
     {
-        // Walk up to see if we're inside a SlotContainer
         SlotContainer parentSlot = GetComponentInParent<SlotContainer>();
         return parentSlot != null;
     }

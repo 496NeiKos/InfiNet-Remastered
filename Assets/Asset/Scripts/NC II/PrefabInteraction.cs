@@ -16,7 +16,12 @@ public class PrefabInteraction : MonoBehaviour
     {
         if (Mouse.current.rightButton.wasPressedThisFrame)
         {
-            // ✅ NEW: Check if prefab is locked (installed in parent)
+            // If this prefab is installed in a slot (child of a parent in editing panel),
+            // let the parent's DetailViewManager handle the right-click instead
+            if (IsInstalledInSlot())
+                return;
+
+            // Check edit lock
             HardwareEditLock editLock = GetComponent<HardwareEditLock>();
             if (editLock != null && editLock.IsAnyLocked())
             {
@@ -45,6 +50,16 @@ public class PrefabInteraction : MonoBehaviour
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// Check if this prefab is currently inside a SlotContainer.
+    /// If yes, DetailViewManager handles right-click, not PrefabInteraction.
+    /// </summary>
+    private bool IsInstalledInSlot()
+    {
+        SlotContainer slot = GetComponentInParent<SlotContainer>();
+        return slot != null;
     }
 
     private bool IsMouseOver()

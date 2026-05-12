@@ -172,7 +172,7 @@ MonoBehaviour:
   screwedSprite: {fileID: 2946290848948124243, guid: 65302be2e818aa84faf7feb6e3ce3c18, type: 3}
   pendingSprite: {fileID: 8227254658316489142, guid: adfea4553fc64f341a95d6fb5be0b3b7, type: 3}
   emptySprite: {fileID: 7368833634316579776, guid: bfe439adba61c234a82ab5110f06c7b3, type: 3}
-  screwdriverDuration: 2
+  screwdriverDuration: 1
   coverController: {fileID: 9081154834298143754}
 --- !u!1 &937456850590635898
 GameObject:
@@ -205,6 +205,7 @@ Transform:
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 4147673106250778730}
+  - {fileID: 3124057519005440906}
   m_Father: {fileID: 168160560977165521}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &3732646060171073966
@@ -291,14 +292,14 @@ Transform:
   m_GameObject: {fileID: 1060398562398413382}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.1, y: 0, z: 0}
-  m_LocalScale: {x: 0.4, y: 0.4, z: 0.4}
+  m_LocalPosition: {x: -0.06928333, y: -0.03846667, z: 0}
+  m_LocalScale: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 9210005538243695543}
   - {fileID: 6184289109500633927}
   - {fileID: 5675605121253242182}
-  m_Father: {fileID: 4147673106250778730}
+  m_Father: {fileID: 5703201339709561871}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1087269168915327669
 GameObject:
@@ -333,7 +334,6 @@ Transform:
   m_LocalScale: {x: 0.8333334, y: 0.8333334, z: 0.8333334}
   m_ConstrainProportionsScale: 1
   m_Children:
-  - {fileID: 3124057519005440906}
   - {fileID: 747107795036342784}
   - {fileID: 6925240337316150021}
   - {fileID: 3544850945555143481}
@@ -729,6 +729,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DetailViewManager
   coverController: {fileID: 9081154834298143754}
+  innerEditingPanel: {fileID: 0}
 --- !u!1 &2754773823974629885
 GameObject:
   m_ObjectHideFlags: 0
@@ -993,7 +994,7 @@ MonoBehaviour:
   screwedSprite: {fileID: 2946290848948124243, guid: 65302be2e818aa84faf7feb6e3ce3c18, type: 3}
   pendingSprite: {fileID: 8227254658316489142, guid: adfea4553fc64f341a95d6fb5be0b3b7, type: 3}
   emptySprite: {fileID: 7368833634316579776, guid: bfe439adba61c234a82ab5110f06c7b3, type: 3}
-  screwdriverDuration: 2
+  screwdriverDuration: 1
   coverController: {fileID: 9081154834298143754}
 --- !u!1 &5168367792473903378
 GameObject:
@@ -1167,7 +1168,7 @@ MonoBehaviour:
   screwedSprite: {fileID: 2946290848948124243, guid: 65302be2e818aa84faf7feb6e3ce3c18, type: 3}
   pendingSprite: {fileID: 8227254658316489142, guid: adfea4553fc64f341a95d6fb5be0b3b7, type: 3}
   emptySprite: {fileID: 7368833634316579776, guid: bfe439adba61c234a82ab5110f06c7b3, type: 3}
-  screwdriverDuration: 2
+  screwdriverDuration: 1
   coverController: {fileID: 9081154834298143754}
 --- !u!1 &6557963363061177325
 GameObject:
@@ -1341,7 +1342,7 @@ MonoBehaviour:
   screwedSprite: {fileID: 2946290848948124243, guid: 65302be2e818aa84faf7feb6e3ce3c18, type: 3}
   pendingSprite: {fileID: 8227254658316489142, guid: adfea4553fc64f341a95d6fb5be0b3b7, type: 3}
   emptySprite: {fileID: 7368833634316579776, guid: bfe439adba61c234a82ab5110f06c7b3, type: 3}
-  screwdriverDuration: 2
+  screwdriverDuration: 1
   coverController: {fileID: 9081154834298143754}
 --- !u!1 &7372706424193945778
 GameObject:
@@ -1509,11 +1510,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 937456850590635898, guid: 76e8fcee477b76840b228edce3bf7004, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1820356063017265982, guid: 76e8fcee477b76840b228edce3bf7004, type: 3}
       propertyPath: m_Name
       value: Motherboard
+      objectReference: {fileID: 0}
+    - target: {fileID: 2245074796273777282, guid: 76e8fcee477b76840b228edce3bf7004, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2748452050790346741, guid: 76e8fcee477b76840b228edce3bf7004, type: 3}
       propertyPath: m_SortingOrder
