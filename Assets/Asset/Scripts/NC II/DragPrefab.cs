@@ -26,7 +26,6 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
     {
         if (GameManager.Instance != null && GameManager.Instance.IsEditorOpen)
         {
-            // Block ALL dragging when inner panel is open
             DetailViewManager dvm = GetComponentInParent<DetailViewManager>();
             if (dvm != null && dvm.IsInnerPanelOpen)
             {
@@ -34,17 +33,22 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
                 return;
             }
 
-            // When editor is open, only allow dragging for installed hardware children
             if (!IsInstalledHardwareChild())
             {
                 _isDragging = false;
                 return;
             }
 
-            // ✅ Check if this hardware has screws that must be removed first
             if (!AreAllScrewsEmpty())
             {
-                Debug.Log($"{name} → Cannot uninstall: screws are still attached. Unscrew them first.");
+                Debug.Log($"{name} → Cannot uninstall: screws are still attached.");
+                _isDragging = false;
+                return;
+            }
+
+            if (!AreAllCablesDetached())
+            {
+                Debug.Log($"{name} → Cannot uninstall: cables are still connected.");
                 _isDragging = false;
                 return;
             }
@@ -101,7 +105,6 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
             return;
         }
 
-        // Parent prefab in workspace
         if (RectTransformUtility.RectangleContainsScreenPoint(
             hardwareArea, eventData.position, eventData.pressEventCamera))
         {
@@ -118,25 +121,33 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
         }
     }
 
-    /// <summary>
-    /// Check if all ScrewControllers on this prefab are in Empty state.
-    /// If the prefab has no screws, returns true (no restriction).
-    /// Searches in children (including inactive) for ScrewControllers.
-    /// </summary>
     private bool AreAllScrewsEmpty()
     {
         ScrewController[] screws = GetComponentsInChildren<ScrewController>(true);
-
-        // No screws = no restriction
-        if (screws.Length == 0)
-            return true;
+        if (screws.Length == 0) return true;
 
         foreach (ScrewController screw in screws)
         {
             if (!screw.IsEmpty())
                 return false;
         }
+        return true;
+    }
 
+    /// <summary>
+    /// Check if all CableSlots on this prefab are Uninstalled.
+    /// If no cable slots, returns true.
+    /// </summary>
+    private bool AreAllCablesDetached()
+    {
+        CableSlot[] slots = GetComponentsInChildren<CableSlot>(true);
+        if (slots.Length == 0) return true;
+
+        foreach (CableSlot slot in slots)
+        {
+            if (slot.IsInstalled())
+                return false;
+        }
         return true;
     }
 
