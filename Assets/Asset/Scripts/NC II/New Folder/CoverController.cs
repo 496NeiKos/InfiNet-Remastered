@@ -2,8 +2,9 @@
 
 /// <summary>
 /// Controls the system unit cover panel.
-/// Opens if all screws unscrewed. Can reopen/close freely while unscrewed.
-/// Does NOT auto-rescrew on close — user must manually screw each one.
+/// 
+/// Opening: hardware shown IMMEDIATELY, interactable after slide finishes.
+/// Closing: hardware stays visible during slide, hidden after slide finishes.
 /// </summary>
 public class CoverController : MonoBehaviour
 {
@@ -21,10 +22,13 @@ public class CoverController : MonoBehaviour
     [SerializeField] private float slideSpeed = 5f;
 
     private bool _isOpen = false;
+    private bool _isSliding = false;
+    private bool _isOpening = false; // true = opening, false = closing
     private Vector3 _closedPosition;
     private Vector3 _openPosition;
     private Vector3 _targetPosition;
-    private bool _isSliding = false;
+
+    public bool IsSliding => _isSliding;
 
     private void Start()
     {
@@ -48,24 +52,31 @@ public class CoverController : MonoBehaviour
             transform.localPosition = _targetPosition;
             _isSliding = false;
 
-            if (_isOpen)
+            // Animation finished
+            if (_isOpening)
             {
+                // Opening finished — hardware already visible, now interactable
+                Debug.Log("[CoverController] Cover fully open, hardware interactable");
+            }
+            else
+            {
+                // Closing finished — NOW hide hardware
                 if (systemUnitController != null)
-                    systemUnitController.RemoveCover();
+                    systemUnitController.AttachCover();
+
+                Debug.Log("[CoverController] Cover fully closed, hardware hidden");
             }
         }
     }
 
     public void OnCoverClicked()
     {
+        if (_isSliding) return;
+
         if (_isOpen)
-        {
             CloseCover();
-        }
         else
-        {
             TryOpenCover();
-        }
     }
 
     private void TryOpenCover()
@@ -77,8 +88,13 @@ public class CoverController : MonoBehaviour
         }
 
         _isOpen = true;
+        _isOpening = true;
         _targetPosition = _openPosition;
         _isSliding = true;
+
+        // Show hardware IMMEDIATELY
+        if (systemUnitController != null)
+            systemUnitController.RemoveCover();
 
         Debug.Log("[CoverController] Opening cover...");
     }
@@ -86,17 +102,13 @@ public class CoverController : MonoBehaviour
     private void CloseCover()
     {
         _isOpen = false;
+        _isOpening = false;
         _targetPosition = _closedPosition;
         _isSliding = true;
 
-        // Hide hardware components
-        if (systemUnitController != null)
-            systemUnitController.AttachCover();
+        // ✅ Do NOT hide hardware yet — wait until animation finishes
 
-        // ✅ Do NOT re-screw. Screws stay in whatever state they are.
-        // User must manually drag screws from hardware area to re-screw.
-
-        Debug.Log("[CoverController] Closing cover (screws unchanged)");
+        Debug.Log("[CoverController] Closing cover...");
     }
 
     private bool AllScrewsUnscrewed()

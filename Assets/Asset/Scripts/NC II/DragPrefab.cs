@@ -33,6 +33,14 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
                 return;
             }
 
+            // ✅ Block drag while cover is sliding
+            CoverController cover = GetComponentInParent<CoverController>();
+            if (cover != null && cover.IsSliding)
+            {
+                _isDragging = false;
+                return;
+            }
+
             if (!IsInstalledHardwareChild())
             {
                 _isDragging = false;
@@ -134,10 +142,6 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
         return true;
     }
 
-    /// <summary>
-    /// Check if all CableSlots on this prefab are Uninstalled.
-    /// If no cable slots, returns true.
-    /// </summary>
     private bool AreAllCablesDetached()
     {
         CableSlot[] slots = GetComponentsInChildren<CableSlot>(true);

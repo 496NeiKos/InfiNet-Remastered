@@ -11,10 +11,10 @@ using UnityEngine.EventSystems;
 ///
 /// Transitions:
 ///   Screwed  + Screwdriver (2s hold) → Empty
-///   Empty    + Screw drag (tag "Screw") → Pending (instant, only if cover closed)
+///   Empty    + Screw DROPPED on it   → Pending (only if cover closed)
 ///   Pending  + Screwdriver (2s hold) → Screwed
 ///   Pending  + Drag to hardware area → Empty
-///   Pending  + Drag to another empty screw → source becomes Empty, target becomes Pending
+///   Pending  + Drag to another empty screw → source Empty, target Pending
 /// </summary>
 public class ScrewController : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
@@ -40,8 +40,6 @@ public class ScrewController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
     private bool _isDragging = false;
     private GameObject _dragVisual;
     private RectTransform _hardwareArea;
-
-    // Track our own drag visual so we can ignore it in OnTriggerEnter2D
     private GameObject _ownDragVisual;
 
     public System.Action<ScrewController> OnStateChanged;
@@ -62,6 +60,7 @@ public class ScrewController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
     {
         if (!_isScrewdriverTouching) return;
 
+        // Screwdriver on Screwed → unscrew to Empty
         if (_state == ScrewState.Screwed)
         {
             _currentProgress += Time.deltaTime;
@@ -73,6 +72,7 @@ public class ScrewController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
             }
         }
 
+        // Screwdriver on Pending → screw to Screwed
         if (_state == ScrewState.Pending)
         {
             _currentProgress += Time.deltaTime;
@@ -89,7 +89,7 @@ public class ScrewController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        // Screwdriver → start timer
+        // Screwdriver contact → start timer (works on Screwed and Pending)
         if (other.CompareTag("Screwdriver"))
         {
             if (_state == ScrewState.Screwed || _state == ScrewState.Pending)
@@ -98,27 +98,8 @@ public class ScrewController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
             }
         }
 
-        // Screw from hardware area OR pending screw from another hole
-        if (other.CompareTag("Screw"))
-        {
-            // Ignore our OWN drag visual
-            if (other.gameObject == _ownDragVisual) return;
-
-            if (_state != ScrewState.Empty)
-            {
-                Debug.Log($"[ScrewController] {name}: cannot place screw, state is {_state}");
-                return;
-            }
-
-            if (coverController != null && coverController.IsOpen())
-            {
-                Debug.Log($"[ScrewController] {name}: cannot place screw, cover is open");
-                return;
-            }
-
-            SetState(ScrewState.Pending);
-            Destroy(other.gameObject);
-        }
+        // NOTE: "Screw" tag contact NO LONGER installs instantly.
+        // Installation only happens on DROP via ScrewDrag.OnEndDrag().
     }
 
     private void OnTriggerExit2D(Collider2D other)
@@ -127,6 +108,27 @@ public class ScrewController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         {
             _isScrewdriverTouching = false;
         }
+    }
+
+    // ── Public: Called by ScrewDrag when screw is DROPPED on this hole ────
+
+    /// <summary>
+    /// Called by ScrewDrag.OnEndDrag() when a screw is dropped on this hole.
+    /// Only works if state is Empty and cover is closed.
+    /// </summary>
+    public bool TryPlaceScrew()
+    {
+        if (_state != ScrewState.Empty)
+            return false;
+
+        if (coverController != null && coverController.IsOpen())
+        {
+            Debug.Log($"[ScrewController] {name}: cannot place screw, cover is open");
+            return false;
+        }
+
+        SetState(ScrewState.Pending);
+        return true;
     }
 
     // ── Drag (Pending screw movement/removal) ─────────────────────────────
@@ -150,10 +152,10 @@ public class ScrewController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         // Immediately show empty sprite (screw is being picked up)
         SetStateVisualOnly(ScrewState.Empty);
 
-        // Create drag visual tagged "Screw" so other empty holes can accept it
+        // Create drag visual tagged "Screw" so other empty holes can accept on drop
         _dragVisual = new GameObject("PendingScrewDrag");
         _dragVisual.tag = "Screw";
-        _ownDragVisual = _dragVisual; // Track it so we ignore it in our own trigger
+        _ownDragVisual = _dragVisual;
 
         SpriteRenderer sr = _dragVisual.AddComponent<SpriteRenderer>();
         sr.sprite = pendingSprite;
@@ -193,17 +195,12 @@ public class ScrewController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         }
         _isDragging = false;
 
-        // Check if drag visual was already consumed by another screw hole
-        // (Destroy was called by the other ScrewController's OnTriggerEnter2D)
-        bool wasConsumed = _dragVisual == null;
-
-        // Clean up drag visual if still exists
-        CleanupDrag();
-
-        if (wasConsumed)
+        // Check if dropped on another empty screw hole
+        ScrewController targetScrew = FindScrewAtPosition(eventData.position);
+        if (targetScrew != null && targetScrew != this && targetScrew.TryPlaceScrew())
         {
-            // Another screw hole accepted it → this hole stays Empty
-            Debug.Log($"[ScrewController] {name}: pending screw moved to another hole");
+            // Moved to another hole → this stays Empty
+            CleanupDrag();
             SetState(ScrewState.Empty);
             return;
         }
@@ -213,14 +210,33 @@ public class ScrewController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
             RectTransformUtility.RectangleContainsScreenPoint(
                 _hardwareArea, eventData.position, eventData.pressEventCamera))
         {
-            Debug.Log($"[ScrewController] {name}: pending screw returned to hardware area");
+            CleanupDrag();
             SetState(ScrewState.Empty);
             return;
         }
 
         // Invalid drop → put screw back to Pending
-        Debug.Log($"[ScrewController] {name}: drag cancelled, screw back to pending");
+        CleanupDrag();
         SetState(ScrewState.Pending);
+    }
+
+    /// <summary>
+    /// Raycast to find a ScrewController at the drop position.
+    /// </summary>
+    private ScrewController FindScrewAtPosition(Vector2 screenPos)
+    {
+        Ray ray = Camera.main.ScreenPointToRay(screenPos);
+        RaycastHit2D[] hits = Physics2D.RaycastAll(ray.origin, ray.direction);
+
+        foreach (RaycastHit2D hit in hits)
+        {
+            if (hit.collider == null) continue;
+            ScrewController screw = hit.collider.GetComponent<ScrewController>();
+            if (screw != null && screw != this && screw.GetState() == ScrewState.Empty)
+                return screw;
+        }
+
+        return null;
     }
 
     private void CleanupDrag()
@@ -240,15 +256,9 @@ public class ScrewController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         _state = newState;
         _currentProgress = 0f;
         UpdateSprite();
-
-        Debug.Log($"[ScrewController] {name} → {_state}");
         OnStateChanged?.Invoke(this);
     }
 
-    /// <summary>
-    /// Changes only the visual sprite without changing the actual state.
-    /// Used during drag start to show empty hole while state is still Pending.
-    /// </summary>
     private void SetStateVisualOnly(ScrewState visualState)
     {
         if (_spriteRenderer == null) return;

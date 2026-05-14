@@ -28,12 +28,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 227276680434924919}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.493, y: 0.718, z: 0}
-  m_LocalScale: {x: 0.3, y: 0.3, z: 0.3}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.61625, y: 0.8974999, z: 0}
+  m_LocalScale: {x: 0.375, y: 0.375, z: 0.375}
   m_ConstrainProportionsScale: 1
   m_Children: []
-  m_Father: {fileID: 4147673106250778730}
+  m_Father: {fileID: 2762922163884089807}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &8401932841073071238
 SpriteRenderer:
@@ -169,11 +169,46 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ff4cc55817bd7ca4ca02e8166bd72359, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ScrewController
-  screwedSprite: {fileID: 2946290848948124243, guid: 65302be2e818aa84faf7feb6e3ce3c18, type: 3}
-  pendingSprite: {fileID: 8227254658316489142, guid: adfea4553fc64f341a95d6fb5be0b3b7, type: 3}
-  emptySprite: {fileID: 7368833634316579776, guid: bfe439adba61c234a82ab5110f06c7b3, type: 3}
+  screwedSprite: {fileID: 1429817519544748392, guid: 231c58966141e0344baf7f5236de7930, type: 3}
+  pendingSprite: {fileID: -5779301034346100903, guid: 095283e917aea7a48bd78c4abd1a313c, type: 3}
+  emptySprite: {fileID: 1429817519544748392, guid: 231c58966141e0344baf7f5236de7930, type: 3}
   screwdriverDuration: 1
   coverController: {fileID: 9081154834298143754}
+--- !u!1 &878471698826414080
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2762922163884089807}
+  m_Layer: 12
+  m_Name: SystemUnitCoverScrew
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2762922163884089807
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 878471698826414080}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1.3333334, y: 1.3333334, z: 1.3333334}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 747107795036342784}
+  - {fileID: 6925240337316150021}
+  - {fileID: 3544850945555143481}
+  - {fileID: 713298157067868979}
+  m_Father: {fileID: 4147673106250778730}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &937456850590635898
 GameObject:
   m_ObjectHideFlags: 0
@@ -200,8 +235,8 @@ Transform:
   m_GameObject: {fileID: 937456850590635898}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.20784998, y: 0.1154, z: 0}
-  m_LocalScale: {x: 3, y: 3, z: 3}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1.5, y: 1.5, z: 1.5}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 4147673106250778730}
@@ -257,8 +292,8 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 1
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 1025503837781984806, guid: d52addd3d2615a846913f2ac6562a467, type: 3}
-  m_Color: {r: 0.051150203, g: 1, b: 0, a: 1}
+  m_Sprite: {fileID: 3631343710477853248, guid: b376cb16435721940b21938e0c04a209, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -292,8 +327,8 @@ Transform:
   m_GameObject: {fileID: 1060398562398413382}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.06928333, y: -0.03846667, z: 0}
-  m_LocalScale: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 0.6666667, y: 0.6666667, z: 0.6666667}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 9210005538243695543}
@@ -330,14 +365,11 @@ Transform:
   m_GameObject: {fileID: 1087269168915327669}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.014050007, y: -0.03846667, z: 0}
-  m_LocalScale: {x: 0.8333334, y: 0.8333334, z: 0.8333334}
+  m_LocalPosition: {x: -0.13333337, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children:
-  - {fileID: 747107795036342784}
-  - {fileID: 6925240337316150021}
-  - {fileID: 3544850945555143481}
-  - {fileID: 713298157067868979}
+  - {fileID: 2762922163884089807}
   m_Father: {fileID: 5703201339709561871}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &7207262118544270737
@@ -389,8 +421,8 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 3
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 1025503837781984806, guid: d52addd3d2615a846913f2ac6562a467, type: 3}
-  m_Color: {r: 0.5566037, g: 1, b: 0.9916799, a: 1}
+  m_Sprite: {fileID: -3566355272404385565, guid: 65c3401bf0d6d0746b548b9ac9863bda, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -433,17 +465,17 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
+  m_Offset: {x: 0.019593596, y: 0.01959315}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 1.3857143, y: 1.8285714}
+    oldSize: {x: 3.85, y: 2.97}
     newSize: {x: 1.3857143, y: 1.8285714}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 1.3857143, y: 1.8285714}
+  m_Size: {x: 3.8021982, y: 1.7893851}
   m_EdgeRadius: 0
 --- !u!50 &2916495316424581220
 Rigidbody2D:
@@ -489,7 +521,7 @@ MonoBehaviour:
   screw2: {fileID: 5647892806824230929}
   screw3: {fileID: 4510992254209033801}
   screw4: {fileID: 6073756353321823529}
-  slideDistance: 1
+  slideDistance: 4
   slideSpeed: 5
 --- !u!1 &1820356063017265982
 GameObject:
@@ -850,12 +882,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4311656313799818773}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.474, y: -0.709, z: 0}
-  m_LocalScale: {x: 0.3, y: 0.3, z: 0.3}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.5925001, y: -0.88625, z: 0}
+  m_LocalScale: {x: 0.375, y: 0.375, z: 0.375}
   m_ConstrainProportionsScale: 1
   m_Children: []
-  m_Father: {fileID: 4147673106250778730}
+  m_Father: {fileID: 2762922163884089807}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &973179915299328329
 SpriteRenderer:
@@ -991,9 +1023,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ff4cc55817bd7ca4ca02e8166bd72359, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ScrewController
-  screwedSprite: {fileID: 2946290848948124243, guid: 65302be2e818aa84faf7feb6e3ce3c18, type: 3}
-  pendingSprite: {fileID: 8227254658316489142, guid: adfea4553fc64f341a95d6fb5be0b3b7, type: 3}
-  emptySprite: {fileID: 7368833634316579776, guid: bfe439adba61c234a82ab5110f06c7b3, type: 3}
+  screwedSprite: {fileID: 1429817519544748392, guid: 231c58966141e0344baf7f5236de7930, type: 3}
+  pendingSprite: {fileID: -5779301034346100903, guid: 095283e917aea7a48bd78c4abd1a313c, type: 3}
+  emptySprite: {fileID: 1429817519544748392, guid: 231c58966141e0344baf7f5236de7930, type: 3}
   screwdriverDuration: 1
   coverController: {fileID: 9081154834298143754}
 --- !u!1 &5168367792473903378
@@ -1024,12 +1056,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5168367792473903378}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.469, y: 0.709, z: 0}
-  m_LocalScale: {x: 0.3, y: 0.3, z: 0.3}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.58624995, y: 0.88625, z: 0}
+  m_LocalScale: {x: 0.375, y: 0.375, z: 0.375}
   m_ConstrainProportionsScale: 1
   m_Children: []
-  m_Father: {fileID: 4147673106250778730}
+  m_Father: {fileID: 2762922163884089807}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &4288657628967775111
 SpriteRenderer:
@@ -1165,9 +1197,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ff4cc55817bd7ca4ca02e8166bd72359, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ScrewController
-  screwedSprite: {fileID: 2946290848948124243, guid: 65302be2e818aa84faf7feb6e3ce3c18, type: 3}
-  pendingSprite: {fileID: 8227254658316489142, guid: adfea4553fc64f341a95d6fb5be0b3b7, type: 3}
-  emptySprite: {fileID: 7368833634316579776, guid: bfe439adba61c234a82ab5110f06c7b3, type: 3}
+  screwedSprite: {fileID: 1429817519544748392, guid: 231c58966141e0344baf7f5236de7930, type: 3}
+  pendingSprite: {fileID: -5779301034346100903, guid: 095283e917aea7a48bd78c4abd1a313c, type: 3}
+  emptySprite: {fileID: 1429817519544748392, guid: 231c58966141e0344baf7f5236de7930, type: 3}
   screwdriverDuration: 1
   coverController: {fileID: 9081154834298143754}
 --- !u!1 &6557963363061177325
@@ -1198,12 +1230,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6557963363061177325}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.479, y: -0.695, z: 0}
-  m_LocalScale: {x: 0.3, y: 0.3, z: 0.3}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.59875, y: -0.86875, z: 0}
+  m_LocalScale: {x: 0.375, y: 0.375, z: 0.375}
   m_ConstrainProportionsScale: 1
   m_Children: []
-  m_Father: {fileID: 4147673106250778730}
+  m_Father: {fileID: 2762922163884089807}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &22508960140792528
 SpriteRenderer:
@@ -1339,9 +1371,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ff4cc55817bd7ca4ca02e8166bd72359, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ScrewController
-  screwedSprite: {fileID: 2946290848948124243, guid: 65302be2e818aa84faf7feb6e3ce3c18, type: 3}
-  pendingSprite: {fileID: 8227254658316489142, guid: adfea4553fc64f341a95d6fb5be0b3b7, type: 3}
-  emptySprite: {fileID: 7368833634316579776, guid: bfe439adba61c234a82ab5110f06c7b3, type: 3}
+  screwedSprite: {fileID: 1429817519544748392, guid: 231c58966141e0344baf7f5236de7930, type: 3}
+  pendingSprite: {fileID: -5779301034346100903, guid: 095283e917aea7a48bd78c4abd1a313c, type: 3}
+  emptySprite: {fileID: 1429817519544748392, guid: 231c58966141e0344baf7f5236de7930, type: 3}
   screwdriverDuration: 1
   coverController: {fileID: 9081154834298143754}
 --- !u!1 &7372706424193945778
@@ -1412,11 +1444,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6311013580841412812, guid: 6967d178116867d41ade41057d2dad51, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 1.4800003
+      value: 2.27
       objectReference: {fileID: 0}
     - target: {fileID: 6311013580841412812, guid: 6967d178116867d41ade41057d2dad51, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -2.47
+      value: -1.85
       objectReference: {fileID: 0}
     - target: {fileID: 6311013580841412812, guid: 6967d178116867d41ade41057d2dad51, type: 3}
       propertyPath: m_LocalPosition.z
@@ -1470,11 +1502,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 168160560977165521, guid: 76e8fcee477b76840b228edce3bf7004, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -1.0772026
+      value: -2.84
       objectReference: {fileID: 0}
     - target: {fileID: 168160560977165521, guid: 76e8fcee477b76840b228edce3bf7004, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.311
+      value: -1.91
       objectReference: {fileID: 0}
     - target: {fileID: 168160560977165521, guid: 76e8fcee477b76840b228edce3bf7004, type: 3}
       propertyPath: m_LocalPosition.z
@@ -1520,6 +1552,22 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2348670716774135780, guid: 76e8fcee477b76840b228edce3bf7004, type: 3}
+      propertyPath: m_Size.x
+      value: 2.2772717
+      objectReference: {fileID: 0}
+    - target: {fileID: 2348670716774135780, guid: 76e8fcee477b76840b228edce3bf7004, type: 3}
+      propertyPath: m_Size.y
+      value: 1.5580316
+      objectReference: {fileID: 0}
+    - target: {fileID: 2348670716774135780, guid: 76e8fcee477b76840b228edce3bf7004, type: 3}
+      propertyPath: m_Offset.x
+      value: -0.031002283
+      objectReference: {fileID: 0}
+    - target: {fileID: 2348670716774135780, guid: 76e8fcee477b76840b228edce3bf7004, type: 3}
+      propertyPath: m_Offset.y
+      value: -0.068204135
+      objectReference: {fileID: 0}
     - target: {fileID: 2748452050790346741, guid: 76e8fcee477b76840b228edce3bf7004, type: 3}
       propertyPath: m_SortingOrder
       value: 2
@@ -1557,11 +1605,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1121219151948019855, guid: 50ba32af9fdf1544e9d7a46649d4994d, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.97999996
+      value: 0.76
       objectReference: {fileID: 0}
     - target: {fileID: 1121219151948019855, guid: 50ba32af9fdf1544e9d7a46649d4994d, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 1.9400002
+      value: 1.96
       objectReference: {fileID: 0}
     - target: {fileID: 1121219151948019855, guid: 50ba32af9fdf1544e9d7a46649d4994d, type: 3}
       propertyPath: m_LocalPosition.z

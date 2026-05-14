@@ -4,11 +4,9 @@ using UnityEngine.InputSystem;
 
 /// <summary>
 /// A draggable cable object.
-/// Spawned when user detaches a cable from CableSlot, or dragged from hardware area.
-/// Can be dropped on a matching CableSlot to install, or on hardware area to destroy.
-///
-/// This is the CABLE OBJECT, not the slot. It has no installed/uninstalled state —
-/// it simply exists as a draggable thing. The CableSlot holds the visual state.
+/// Spawned when user detaches a cable from CableSlot.
+/// Can be dropped on matching CableSlot (install), hardware area (destroy),
+/// or anywhere else (snap back and reinstall to original slot).
 /// </summary>
 public class CableController : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
@@ -20,6 +18,9 @@ public class CableController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
     private bool _startedFromDetach = false;
     private RectTransform _hardwareArea;
 
+    // Track the slot this cable was detached from so we can snap back
+    private CableSlot _originSlot;
+
     private void Start()
     {
         if (GameManager.Instance != null)
@@ -30,10 +31,11 @@ public class CableController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
     /// Called by CableSlot immediately after spawning this cable from a detach.
     /// Starts following the mouse right away without needing a new drag gesture.
     /// </summary>
-    public void StartDragImmediately()
+    public void StartDragImmediately(CableSlot originSlot)
     {
         _startedFromDetach = true;
         _isDragging = true;
+        _originSlot = originSlot;
 
         if (GameManager.Instance != null)
             _hardwareArea = GameManager.Instance.hardwareArea;
@@ -41,7 +43,6 @@ public class CableController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
 
     private void Update()
     {
-        // If started from detach, follow mouse until user releases
         if (!_startedFromDetach) return;
 
         Vector3 worldPos = Camera.main.ScreenToWorldPoint(
@@ -51,7 +52,6 @@ public class CableController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         worldPos.z = 0f;
         transform.position = worldPos;
 
-        // When user releases mouse, handle the drop
         if (Mouse.current.leftButton.wasReleasedThisFrame)
         {
             _startedFromDetach = false;
@@ -60,12 +60,9 @@ public class CableController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         }
     }
 
-    // ── Drag Handlers (for normal drag from hardware area via CableDrag) ──
-
     public void OnBeginDrag(PointerEventData eventData)
     {
-        if (_startedFromDetach) return; // Already being handled by Update
-
+        if (_startedFromDetach) return;
         _isDragging = true;
     }
 
@@ -84,11 +81,8 @@ public class CableController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
     {
         if (!_isDragging || _startedFromDetach) return;
         _isDragging = false;
-
         HandleDrop(eventData.position);
     }
-
-    // ── Drop Handling ─────────────────────────────────────────────────────
 
     private void HandleDrop(Vector2 screenPos)
     {
@@ -111,14 +105,16 @@ public class CableController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
             return;
         }
 
-        // Invalid drop → destroy (cable disappears)
-        Debug.Log($"[CableController] {cableType} dropped in invalid area, destroyed");
+        // Invalid drop → snap back and reinstall to original slot
+        if (_originSlot != null)
+        {
+            _originSlot.InstallCable();
+            Debug.Log($"[CableController] {cableType} snapped back to original slot");
+        }
+
         Destroy(gameObject);
     }
 
-    /// <summary>
-    /// Raycast to find a CableSlot that matches this cable type.
-    /// </summary>
     private CableSlot FindMatchingSlotAtPosition(Vector2 screenPos)
     {
         Ray ray = Camera.main.ScreenPointToRay(screenPos);
@@ -137,8 +133,6 @@ public class CableController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
 
         return null;
     }
-
-    // ── Getters ───────────────────────────────────────────────────────────
 
     public string GetCableType() => cableType;
 }

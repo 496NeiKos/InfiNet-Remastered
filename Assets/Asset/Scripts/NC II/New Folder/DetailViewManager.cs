@@ -32,6 +32,9 @@ public class DetailViewManager : MonoBehaviour
             if (_isInnerPanelOpen)
                 return;
 
+            if (coverController != null && coverController.IsSliding)
+                return;
+
             if (coverController != null && coverController.IsOpen())
             {
                 CheckChildRightClick();
@@ -112,8 +115,6 @@ public class DetailViewManager : MonoBehaviour
         _childOriginalParent = childPrefab.transform.parent;
         _childOriginalLocalPos = childPrefab.transform.localPosition;
 
-        // ✅ Disable this prefab (SystemUnit) so it doesn't block the inner panel
-        // The child will be reparented to InnerEditingPanel so it stays visible
         gameObject.SetActive(false);
 
         panel.SetActive(true);
@@ -131,8 +132,6 @@ public class DetailViewManager : MonoBehaviour
         }
 
         ActivateChildDetailedView(childPrefab, true);
-
-        Debug.Log($"[DetailViewManager] Opened inner panel for '{childPrefab.name}'");
     }
 
     public void CloseInnerPanel()
@@ -141,19 +140,36 @@ public class DetailViewManager : MonoBehaviour
 
         ActivateChildDetailedView(_activeChildPrefab, false);
 
-        // ✅ Re-enable this prefab (SystemUnit) before reparenting child back
+        // Re-enable this prefab (SystemUnit)
         gameObject.SetActive(true);
 
+        // Return child to its original parent and position
         _activeChildPrefab.transform.SetParent(_childOriginalParent, true);
         _activeChildPrefab.transform.localPosition = _childOriginalLocalPos;
+
+        // ✅ Restore hardware visibility based on cover state
+        // When SystemUnit was disabled, child active states were preserved,
+        // but we need to make sure hardware components match the cover state
+        SystemUnitController controller = GetComponent<SystemUnitController>();
+        if (controller != null)
+        {
+            if (coverController != null && coverController.IsOpen())
+            {
+                // Cover was open → hardware should be visible
+                controller.RemoveCover();
+            }
+            else
+            {
+                // Cover was closed → hardware should be hidden
+                controller.AttachCover();
+            }
+        }
 
         if (innerEditingPanel != null)
             innerEditingPanel.SetActive(false);
 
         _activeChildPrefab = null;
         _isInnerPanelOpen = false;
-
-        Debug.Log("[DetailViewManager] Closed inner panel, returned to parent view");
     }
 
     private void ActivateChildDetailedView(GameObject childPrefab, bool active)
