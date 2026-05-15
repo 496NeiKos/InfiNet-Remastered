@@ -3,12 +3,15 @@ using UnityEngine;
 public class MotherboardController : MonoBehaviour
 {
     public bool IsUninstalledFromSystemUnit { get; private set; } = false;
+    private bool _wasEverInSystemUnit = false;
 
+    public void MarkInstalledInSystemUnit() => _wasEverInSystemUnit = true;
     public void MarkUninstalled() => IsUninstalledFromSystemUnit = true;
     public void MarkInstalled() => IsUninstalledFromSystemUnit = false;
 
     public bool IsPhase1Complete()
     {
+        if (!_wasEverInSystemUnit) return true;
         if (!IsUninstalledFromSystemUnit) return false;
 
         foreach (var s in GetComponentsInChildren<ScrewController>(true))

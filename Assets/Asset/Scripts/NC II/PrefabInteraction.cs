@@ -5,6 +5,7 @@ public class PrefabInteraction : MonoBehaviour
 {
     private SystemUnitController _controller;
     private MotherboardController _mbController;
+    private MotherboardPhaseManager _phaseManager;
 
     [SerializeField] private GameObject editingPanel;
 
@@ -12,6 +13,7 @@ public class PrefabInteraction : MonoBehaviour
     {
         _controller = GetComponent<SystemUnitController>();
         _mbController = GetComponent<MotherboardController>();
+        _phaseManager = GetComponent<MotherboardPhaseManager>();
     }
 
     void Update()
@@ -24,10 +26,14 @@ public class PrefabInteraction : MonoBehaviour
 
         if (!IsMouseOver()) return;
 
-        if (_mbController != null && !_mbController.IsPhase1Complete())
+        if (_mbController != null)
         {
-            Debug.Log($"{name} -> Phase 1 incomplete: unscrew, detach cables, and drag motherboard out first.");
-            return;
+            if (!_mbController.IsPhase1Complete())
+            {
+                Debug.Log($"{name} -> Phase 1 incomplete: unscrew, detach cables, and drag motherboard out first.");
+                return;
+            }
+            if (_phaseManager != null) _phaseManager.SetPhase2Interactive();
         }
 
         if (GameManager.Instance != null)

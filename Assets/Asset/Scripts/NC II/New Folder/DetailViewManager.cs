@@ -132,6 +132,12 @@ public class DetailViewManager : MonoBehaviour
         }
 
         ActivateChildDetailedView(childPrefab, true);
+
+        var mb = childPrefab.GetComponent<MotherboardController>();
+        if (mb != null) mb.MarkInstalledInSystemUnit();
+
+        var phase = childPrefab.GetComponent<MotherboardPhaseManager>();
+        if (phase != null) phase.SetPhase1Interactive();
     }
 
     public void CloseInnerPanel()
