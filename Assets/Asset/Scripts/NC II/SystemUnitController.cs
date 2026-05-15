@@ -9,6 +9,9 @@ public class SystemUnitController : MonoBehaviour
     public GameObject systemUnitCover;
     public GameObject systemUnitHardwareComponents;
 
+    [Header("References")]
+    [SerializeField] private CoverController coverController;
+
     private Vector3 _sideOriginalLocalPos;
     private Quaternion _sideOriginalLocalRot;
 
@@ -40,11 +43,24 @@ public class SystemUnitController : MonoBehaviour
             }
         }
 
+        // Cover is always active (visible)
         if (systemUnitCover != null)
             systemUnitCover.SetActive(true);
 
+        // ✅ Check cover state to decide hardware visibility
         if (systemUnitHardwareComponents != null)
-            systemUnitHardwareComponents.SetActive(false);
+        {
+            if (coverController != null && coverController.IsOpen())
+            {
+                // Cover is open → hardware should be visible
+                systemUnitHardwareComponents.SetActive(true);
+            }
+            else
+            {
+                // Cover is closed → hardware should be hidden
+                systemUnitHardwareComponents.SetActive(false);
+            }
+        }
 
         systemUnitSide.SetActive(true);
     }
@@ -59,12 +75,20 @@ public class SystemUnitController : MonoBehaviour
         systemUnitSide.transform.localRotation = _sideOriginalLocalRot;
     }
 
+    /// <summary>
+    /// Called when cover slides open.
+    /// Cover stays active. Only reveals hardware components.
+    /// </summary>
     public void RemoveCover()
     {
         if (systemUnitHardwareComponents != null)
             systemUnitHardwareComponents.SetActive(true);
     }
 
+    /// <summary>
+    /// Called when cover slides back to closed position.
+    /// Hides hardware components.
+    /// </summary>
     public void AttachCover()
     {
         if (systemUnitHardwareComponents != null)

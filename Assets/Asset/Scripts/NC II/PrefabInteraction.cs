@@ -3,63 +3,45 @@ using UnityEngine.InputSystem;
 
 public class PrefabInteraction : MonoBehaviour
 {
-    private SystemUnitController controller;
+    private SystemUnitController _controller;
+    private MotherboardController _mbController;
 
     [SerializeField] private GameObject editingPanel;
 
     void Start()
     {
-        controller = GetComponent<SystemUnitController>();
+        _controller = GetComponent<SystemUnitController>();
+        _mbController = GetComponent<MotherboardController>();
     }
 
     void Update()
     {
-        if (Mouse.current.rightButton.wasPressedThisFrame)
+        if (!Mouse.current.rightButton.wasPressedThisFrame) return;
+
+        if (IsInstalledInSlot()) return;
+
+        if (GameManager.Instance != null && GameManager.Instance.IsEditorOpen) return;
+
+        if (!IsMouseOver()) return;
+
+        if (_mbController != null && !_mbController.IsPhase1Complete())
         {
-            // If this prefab is installed in a slot (child of a parent in editing panel),
-            // let the parent's DetailViewManager handle the right-click instead
-            if (IsInstalledInSlot())
-                return;
+            Debug.Log($"{name} -> Phase 1 incomplete: unscrew, detach cables, and drag motherboard out first.");
+            return;
+        }
 
-            // Check edit lock
-            HardwareEditLock editLock = GetComponent<HardwareEditLock>();
-            if (editLock != null && editLock.IsAnyLocked())
-            {
-                Debug.LogWarning($"{name} → Cannot edit: This hardware is installed in a parent. Uninstall first.");
-                return;
-            }
-
-            // Block right-click while the editing panel is open
-            if (GameManager.Instance != null && GameManager.Instance.IsEditorOpen)
-            {
-                Debug.Log($"{name} → Right-click blocked: editor is open");
-                return;
-            }
-
-            if (IsMouseOver())
-            {
-                Debug.Log($"{name} → Right-click detected, opening editor panel");
-
-                if (GameManager.Instance != null)
-                    GameManager.Instance.OpenEditor(this);
-                else
-                {
-                    ShowDetailCentered();
-                    if (editingPanel != null)
-                        editingPanel.SetActive(true);
-                }
-            }
+        if (GameManager.Instance != null)
+            GameManager.Instance.OpenEditor(this);
+        else
+        {
+            ShowDetailCentered();
+            if (editingPanel != null) editingPanel.SetActive(true);
         }
     }
 
-    /// <summary>
-    /// Check if this prefab is currently inside a SlotContainer.
-    /// If yes, DetailViewManager handles right-click, not PrefabInteraction.
-    /// </summary>
     private bool IsInstalledInSlot()
     {
-        SlotContainer slot = GetComponentInParent<SlotContainer>();
-        return slot != null;
+        return GetComponentInParent<SlotContainer>() != null;
     }
 
     private bool IsMouseOver()
@@ -71,14 +53,14 @@ public class PrefabInteraction : MonoBehaviour
 
     public void ShowDetailCentered()
     {
-        if (controller != null)
-            controller.ShowDetailAtCenter();
+        if (_controller != null)
+            _controller.ShowDetailAtCenter();
     }
 
     public void OnEditorClosed()
     {
-        if (controller != null)
-            controller.HideDetail();
+        if (_controller != null)
+            _controller.HideDetail();
 
         if (editingPanel != null)
             editingPanel.SetActive(false);

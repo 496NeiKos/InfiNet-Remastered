@@ -1,78 +1,71 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.EventSystems;
 
 public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     private RectTransform workspaceArea;
     private RectTransform hardwareArea;
-    private Vector3 originalPos;
+    private Vector3 _originalPos;
+    private Transform _originalParent;
     private bool _isDragging = false;
+    private bool _wasInSlot = false;
 
     private void Start()
     {
         workspaceArea = GameManager.Instance.workspaceArea;
         hardwareArea = GameManager.Instance.hardwareArea;
-
-        if (HardwareStateManager.Instance != null)
-        {
-            IHardwareState hardwareState = GetComponent<IHardwareState>();
-            if (hardwareState != null)
-                HardwareStateManager.Instance.LoadHardwareState(hardwareState);
-        }
     }
 
     public void OnBeginDrag(PointerEventData eventData)
     {
-        if (GameManager.Instance != null && GameManager.Instance.IsEditorOpen)
+        bool isInSlot = GetComponentInParent<SlotContainer>() != null;
+
+        if (GameManager.Instance != null && GameManager.Instance.IsEditorOpen && !isInSlot)
         {
-            DetailViewManager dvm = GetComponentInParent<DetailViewManager>();
-            if (dvm != null && dvm.IsInnerPanelOpen)
-            {
-                _isDragging = false;
-                return;
-            }
+            _isDragging = false;
+            return;
+        }
 
-            // ✅ Block drag while cover is sliding
-            CoverController cover = GetComponentInParent<CoverController>();
-            if (cover != null && cover.IsSliding)
-            {
-                _isDragging = false;
-                return;
-            }
+        var dvm = FindObjectOfType<DetailViewManager>();
+        if (dvm != null && dvm.IsInnerPanelOpen)
+        {
+            _isDragging = false;
+            return;
+        }
 
-            if (!IsInstalledHardwareChild())
-            {
-                _isDragging = false;
-                return;
-            }
+        var cover = GetComponentInParent<CoverController>();
+        if (cover != null && cover.IsSliding)
+        {
+            _isDragging = false;
+            return;
+        }
 
-            if (!AreAllScrewsEmpty())
-            {
-                Debug.Log($"{name} → Cannot uninstall: screws are still attached.");
-                _isDragging = false;
-                return;
-            }
+        if (!AreAllScrewsEmpty())
+        {
+            _isDragging = false;
+            return;
+        }
 
-            if (!AreAllCablesDetached())
-            {
-                Debug.Log($"{name} → Cannot uninstall: cables are still connected.");
-                _isDragging = false;
-                return;
-            }
+        if (!AreAllCablesDetached())
+        {
+            _isDragging = false;
+            return;
         }
 
         _isDragging = true;
-        originalPos = transform.position;
+        _originalPos = transform.position;
+        _originalParent = transform.parent;
+        _wasInSlot = isInSlot;
+
+        if (_wasInSlot)
+            transform.SetParent(GameManager.Instance.workspaceArea, true);
     }
 
     public void OnDrag(PointerEventData eventData)
     {
         if (!_isDragging) return;
-
         Vector3 worldPos = Camera.main.ScreenToWorldPoint(
-            new Vector3(eventData.position.x, eventData.position.y, 10f)
-        );
+            new Vector3(eventData.position.x, eventData.position.y, 10f));
         transform.position = worldPos;
     }
 
@@ -81,100 +74,49 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
         if (!_isDragging) return;
         _isDragging = false;
 
-        bool isChild = IsInEditingPanel();
+        bool onHardwareArea = RectTransformUtility.RectangleContainsScreenPoint(
+            hardwareArea, eventData.position, eventData.pressEventCamera);
+        bool onWorkspace = RectTransformUtility.RectangleContainsScreenPoint(
+            workspaceArea, eventData.position, eventData.pressEventCamera);
 
-        if (isChild)
+        if (_wasInSlot)
         {
-            if (RectTransformUtility.RectangleContainsScreenPoint(
-                hardwareArea, eventData.position, eventData.pressEventCamera))
+            if (onHardwareArea)
             {
-                HardwareSlotManager parentSlotManager = GetComponentInParent<HardwareSlotManager>();
+                var slot = _originalParent.GetComponent<SlotContainer>();
+                if (slot != null) slot.RemoveChild();
 
-                if (parentSlotManager != null)
-                {
-                    Dictionary<string, string> slotStates = parentSlotManager.GetAllSlotStates();
-                    foreach (string slotType in slotStates.Keys)
-                    {
-                        SlotContainer slot = parentSlotManager.GetSlotByType(slotType);
-                        if (slot != null && slot.GetInstalledChild() == gameObject)
-                        {
-                            parentSlotManager.RemovePrefabFromSlot(slotType);
-                            return;
-                        }
-                    }
-                }
+                transform.SetParent(GameManager.Instance.workspaceArea, true);
 
-                Destroy(gameObject);
+                var mb = GetComponent<MotherboardController>();
+                if (mb != null) mb.MarkUninstalled();
             }
             else
             {
-                transform.position = originalPos;
+                transform.SetParent(_originalParent, true);
+                transform.position = _originalPos;
             }
-            return;
         }
-
-        if (RectTransformUtility.RectangleContainsScreenPoint(
-            hardwareArea, eventData.position, eventData.pressEventCamera))
+        else
         {
-            IHardwareState hardwareState = GetComponent<IHardwareState>();
-            if (hardwareState != null && HardwareStateManager.Instance != null)
-                HardwareStateManager.Instance.SaveHardwareState(hardwareState);
-
-            Destroy(gameObject);
-        }
-        else if (!RectTransformUtility.RectangleContainsScreenPoint(
-            workspaceArea, eventData.position, eventData.pressEventCamera))
-        {
-            transform.position = originalPos;
+            if (onHardwareArea)
+                Destroy(gameObject);
+            else if (!onWorkspace)
+                transform.position = _originalPos;
         }
     }
 
     private bool AreAllScrewsEmpty()
     {
-        ScrewController[] screws = GetComponentsInChildren<ScrewController>(true);
-        if (screws.Length == 0) return true;
-
-        foreach (ScrewController screw in screws)
-        {
-            if (!screw.IsEmpty())
-                return false;
-        }
+        foreach (var s in GetComponentsInChildren<ScrewController>(true))
+            if (!s.IsUnscrewed()) return false;
         return true;
     }
 
     private bool AreAllCablesDetached()
     {
-        CableSlot[] slots = GetComponentsInChildren<CableSlot>(true);
-        if (slots.Length == 0) return true;
-
-        foreach (CableSlot slot in slots)
-        {
-            if (slot.IsInstalled())
-                return false;
-        }
+        foreach (var c in GetComponentsInChildren<CableSlot>(true))
+            if (c.IsInstalled()) return false;
         return true;
-    }
-
-    private bool IsInstalledHardwareChild()
-    {
-        SlotContainer parentSlot = GetComponentInParent<SlotContainer>();
-        return parentSlot != null;
-    }
-
-    private bool IsInEditingPanel()
-    {
-        if (GameManager.Instance == null || GameManager.Instance.editingPanel == null)
-            return false;
-
-        Transform editingPanelTransform = GameManager.Instance.editingPanel.transform;
-        Transform current = transform.parent;
-
-        while (current != null)
-        {
-            if (current == editingPanelTransform)
-                return true;
-            current = current.parent;
-        }
-        return false;
     }
 }
