@@ -2,9 +2,13 @@
 
 public class GameManager : MonoBehaviour
 {
-    [Header("Drop Zones")]
+    [Header("Drop Zones (UI rect checks only)")]
     public RectTransform workspaceArea;
     public RectTransform hardwareArea;
+
+    [Header("World Parents (actual transform parents for world-space objects)")]
+    public Transform worldRoot;
+    public Transform hardwareStorage;
 
     [Header("UI Panels")]
     public GameObject editingPanel;
@@ -14,7 +18,6 @@ public class GameManager : MonoBehaviour
     public bool IsEditorOpen { get; private set; } = false;
 
     private PrefabInteraction _activeInteraction;
-
     private Transform _prefabOriginalParent;
     private Vector3 _prefabOriginalWorldPos;
 
@@ -49,25 +52,18 @@ public class GameManager : MonoBehaviour
             Debug.LogError("GameManager: editingPanel is not assigned in the Inspector!");
     }
 
-    /// <summary>
-    /// Called by the Close button.
-    /// If inner panel is open, close inner panel first.
-    /// If inner panel is closed, close the main editing panel.
-    /// </summary>
     public void CloseEditor()
     {
-        // Check if there's an inner panel open — close that first
         if (_activeInteraction != null)
         {
             DetailViewManager dvm = _activeInteraction.GetComponent<DetailViewManager>();
             if (dvm != null && dvm.IsInnerPanelOpen)
             {
                 dvm.CloseInnerPanel();
-                return; // Don't close main panel yet
+                return;
             }
         }
 
-        // Close the main editing panel
         IsEditorOpen = false;
 
         if (_activeInteraction != null)

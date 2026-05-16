@@ -7,7 +7,11 @@ public class MotherboardController : MonoBehaviour
 
     public void MarkInstalledInSystemUnit() => _wasEverInSystemUnit = true;
     public void MarkUninstalled() => IsUninstalledFromSystemUnit = true;
-    public void MarkInstalled() => IsUninstalledFromSystemUnit = false;
+    public void MarkInstalled()
+    {
+        IsUninstalledFromSystemUnit = false;
+        _wasEverInSystemUnit = false;
+    }
 
     public bool IsPhase1Complete()
     {

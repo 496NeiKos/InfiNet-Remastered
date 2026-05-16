@@ -6,6 +6,7 @@ public class PrefabInteraction : MonoBehaviour
     private SystemUnitController _controller;
     private MotherboardController _mbController;
     private MotherboardPhaseManager _phaseManager;
+    private GameObject _detailedView;
 
     [SerializeField] private GameObject editingPanel;
 
@@ -14,6 +15,15 @@ public class PrefabInteraction : MonoBehaviour
         _controller = GetComponent<SystemUnitController>();
         _mbController = GetComponent<MotherboardController>();
         _phaseManager = GetComponent<MotherboardPhaseManager>();
+
+        foreach (Transform child in transform)
+        {
+            if (child.name.Contains("Detailed"))
+            {
+                _detailedView = child.gameObject;
+                break;
+            }
+        }
     }
 
     void Update()
@@ -60,13 +70,34 @@ public class PrefabInteraction : MonoBehaviour
     public void ShowDetailCentered()
     {
         if (_controller != null)
+        {
             _controller.ShowDetailAtCenter();
+            return;
+        }
+
+        if (_detailedView == null) return;
+
+        if (GameManager.Instance != null && GameManager.Instance.editingPanel != null)
+        {
+            RectTransform rect = GameManager.Instance.editingPanel.GetComponent<RectTransform>();
+            if (rect != null)
+            {
+                Vector3 panelCenter = rect.TransformPoint(
+                    new Vector3(rect.rect.center.x, rect.rect.center.y, 0f));
+                panelCenter.z = 0f;
+                transform.position = panelCenter;
+            }
+        }
+
+        _detailedView.SetActive(true);
     }
 
     public void OnEditorClosed()
     {
         if (_controller != null)
             _controller.HideDetail();
+        else if (_detailedView != null)
+            _detailedView.SetActive(false);
 
         if (editingPanel != null)
             editingPanel.SetActive(false);

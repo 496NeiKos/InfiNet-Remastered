@@ -585,9 +585,9 @@ Transform:
   m_GameObject: {fileID: 1820356063017265982}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 2.47, y: 0.46, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 2154219661705685678}
   m_Father: {fileID: 0}
@@ -639,7 +639,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 2
   m_MaskInteraction: 0
   m_Sprite: {fileID: 6086007470371126333, guid: 52f372ee21e45694784f0e4cdb208b34, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -722,6 +722,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5a21ef8c32910ef4cb1c2160aa25145e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DragPrefab
+  hardwareHolder: {fileID: 0}
 --- !u!114 &5083438734142553130
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -958,9 +959,9 @@ Transform:
   m_GameObject: {fileID: 2245074796273777282}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.33424997, y: 0.08379999, z: 0}
-  m_LocalScale: {x: 2.638702, y: 2.6454723, z: 0.79}
-  m_ConstrainProportionsScale: 0
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 3, y: 3.0076973, z: 0.898169}
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 8791289445770751014}
   - {fileID: 8617450205332536107}
@@ -1071,6 +1072,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SlotContainer
   slotType: CMOS
+  installLocalPosition: {x: 0, y: 0, z: 0}
+  installLocalScale: {x: 1, y: 1, z: 1}
 --- !u!1 &3035606414201872416
 GameObject:
   m_ObjectHideFlags: 0
@@ -1117,6 +1120,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SlotContainer
   slotType: GPU
+  installLocalPosition: {x: 0, y: 0, z: 0}
+  installLocalScale: {x: 1, y: 1, z: 1}
 --- !u!1 &3318271809359178435
 GameObject:
   m_ObjectHideFlags: 0
@@ -1163,6 +1168,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SlotContainer
   slotType: RAM
+  installLocalPosition: {x: 0, y: 0, z: 0}
+  installLocalScale: {x: 1, y: 1, z: 1}
 --- !u!1 &3478037294238583287
 GameObject:
   m_ObjectHideFlags: 0
@@ -1829,6 +1836,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SlotContainer
   slotType: CPU
+  installLocalPosition: {x: 0, y: 0, z: 0}
+  installLocalScale: {x: 1, y: 1, z: 1}
 --- !u!1 &8266632725982231172
 GameObject:
   m_ObjectHideFlags: 0
@@ -2125,6 +2134,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7667484453010293703, guid: dfacceb815a0cdb4faf0351bc052ad5d, type: 3}
+      propertyPath: m_SpriteTilingProperty.oldSize.x
+      value: 1.9
+      objectReference: {fileID: 0}
+    - target: {fileID: 7667484453010293703, guid: dfacceb815a0cdb4faf0351bc052ad5d, type: 3}
+      propertyPath: m_SpriteTilingProperty.oldSize.y
+      value: 0.83
+      objectReference: {fileID: 0}
     - target: {fileID: 8102162558901674479, guid: dfacceb815a0cdb4faf0351bc052ad5d, type: 3}
       propertyPath: m_Sprite
       value: 
@@ -2138,66 +2155,14 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 245961653464500242, guid: dfacceb815a0cdb4faf0351bc052ad5d, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 5069005826566096040}
-    - targetCorrespondingSourceObject: {fileID: 245961653464500242, guid: dfacceb815a0cdb4faf0351bc052ad5d, type: 3}
-      insertIndex: -1
+      insertIndex: 3
       addedObject: {fileID: 687516776502779514}
-    - targetCorrespondingSourceObject: {fileID: 245961653464500242, guid: dfacceb815a0cdb4faf0351bc052ad5d, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 9152291062287614819}
   m_SourcePrefab: {fileID: 100100000, guid: dfacceb815a0cdb4faf0351bc052ad5d, type: 3}
 --- !u!1 &736716525891804938 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 245961653464500242, guid: dfacceb815a0cdb4faf0351bc052ad5d, type: 3}
   m_PrefabInstance: {fileID: 671180470677821208}
   m_PrefabAsset: {fileID: 0}
---- !u!61 &5069005826566096040
-BoxCollider2D:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 736716525891804938}
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Density: 1
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_ForceSendLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ForceReceiveLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ContactCaptureLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_CallbackLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_IsTrigger: 0
-  m_UsedByEffector: 0
-  m_CompositeOperation: 0
-  m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
-  m_SpriteTilingProperty:
-    border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 1.9, y: 0.83}
-    newSize: {x: 0.61, y: 0.6}
-    adaptiveTilingThreshold: 0.5
-    drawMode: 0
-    adaptiveTiling: 0
-  m_AutoTiling: 0
-  m_Size: {x: 1.9, y: 0.83}
-  m_EdgeRadius: 0
 --- !u!50 &687516776502779514
 Rigidbody2D:
   serializedVersion: 5
@@ -2225,18 +2190,6 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 0
---- !u!114 &9152291062287614819
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 736716525891804938}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5a21ef8c32910ef4cb1c2160aa25145e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DragPrefab
 --- !u!4 &1024488108690535131 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 533453995972371907, guid: dfacceb815a0cdb4faf0351bc052ad5d, type: 3}
@@ -2250,6 +2203,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 5675605121253242182}
     m_Modifications:
+    - target: {fileID: -3875423268109478891, guid: 5c1bfe4627a5c7a4dbe7f2f6985ed4a2, type: 3}
+      propertyPath: m_SpriteTilingProperty.oldSize.x
+      value: 0.3857143
+      objectReference: {fileID: 0}
+    - target: {fileID: -3875423268109478891, guid: 5c1bfe4627a5c7a4dbe7f2f6985ed4a2, type: 3}
+      propertyPath: m_SpriteTilingProperty.oldSize.y
+      value: 0.4
+      objectReference: {fileID: 0}
     - target: {fileID: 245961653464500242, guid: 5c1bfe4627a5c7a4dbe7f2f6985ed4a2, type: 3}
       propertyPath: m_Name
       value: CMOS
@@ -2307,14 +2268,8 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 245961653464500242, guid: 5c1bfe4627a5c7a4dbe7f2f6985ed4a2, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1858473602746868594}
-    - targetCorrespondingSourceObject: {fileID: 245961653464500242, guid: 5c1bfe4627a5c7a4dbe7f2f6985ed4a2, type: 3}
-      insertIndex: -1
+      insertIndex: 3
       addedObject: {fileID: 121863051318373059}
-    - targetCorrespondingSourceObject: {fileID: 245961653464500242, guid: 5c1bfe4627a5c7a4dbe7f2f6985ed4a2, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 4945183645683439569}
   m_SourcePrefab: {fileID: 100100000, guid: 5c1bfe4627a5c7a4dbe7f2f6985ed4a2, type: 3}
 --- !u!4 &1202711297714985074 stripped
 Transform:
@@ -2326,52 +2281,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 245961653464500242, guid: 5c1bfe4627a5c7a4dbe7f2f6985ed4a2, type: 3}
   m_PrefabInstance: {fileID: 1718077184357481905}
   m_PrefabAsset: {fileID: 0}
---- !u!61 &1858473602746868594
-BoxCollider2D:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1494635196048881059}
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Density: 1
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_ForceSendLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ForceReceiveLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ContactCaptureLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_CallbackLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_IsTrigger: 0
-  m_UsedByEffector: 0
-  m_CompositeOperation: 0
-  m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
-  m_SpriteTilingProperty:
-    border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 0.3857143, y: 0.4}
-    newSize: {x: 0.61, y: 0.6}
-    adaptiveTilingThreshold: 0.5
-    drawMode: 0
-    adaptiveTiling: 0
-  m_AutoTiling: 0
-  m_Size: {x: 0.3857143, y: 0.4}
-  m_EdgeRadius: 0
 --- !u!50 &121863051318373059
 Rigidbody2D:
   serializedVersion: 5
@@ -2399,18 +2308,6 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 0
---- !u!114 &4945183645683439569
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1494635196048881059}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5a21ef8c32910ef4cb1c2160aa25145e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DragPrefab
 --- !u!1001 &2527015597918328481
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2463,6 +2360,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1958760898577539119, guid: 8826d4f8b25975d47a7ab0eccef1ccf8, type: 3}
+      propertyPath: m_SpriteTilingProperty.oldSize.x
+      value: 0.95
+      objectReference: {fileID: 0}
+    - target: {fileID: 1958760898577539119, guid: 8826d4f8b25975d47a7ab0eccef1ccf8, type: 3}
+      propertyPath: m_SpriteTilingProperty.oldSize.y
+      value: 0.16
+      objectReference: {fileID: 0}
     - target: {fileID: 8102162558901674479, guid: 8826d4f8b25975d47a7ab0eccef1ccf8, type: 3}
       propertyPath: m_Sprite
       value: 
@@ -2476,66 +2381,14 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 245961653464500242, guid: 8826d4f8b25975d47a7ab0eccef1ccf8, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 2827769321375428540}
-    - targetCorrespondingSourceObject: {fileID: 245961653464500242, guid: 8826d4f8b25975d47a7ab0eccef1ccf8, type: 3}
-      insertIndex: -1
+      insertIndex: 3
       addedObject: {fileID: 8080082084025488808}
-    - targetCorrespondingSourceObject: {fileID: 245961653464500242, guid: 8826d4f8b25975d47a7ab0eccef1ccf8, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 5921735990450406271}
   m_SourcePrefab: {fileID: 100100000, guid: 8826d4f8b25975d47a7ab0eccef1ccf8, type: 3}
 --- !u!1 &2339645974744768179 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 245961653464500242, guid: 8826d4f8b25975d47a7ab0eccef1ccf8, type: 3}
   m_PrefabInstance: {fileID: 2527015597918328481}
   m_PrefabAsset: {fileID: 0}
---- !u!61 &2827769321375428540
-BoxCollider2D:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2339645974744768179}
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Density: 1
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_ForceSendLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ForceReceiveLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ContactCaptureLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_CallbackLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_IsTrigger: 0
-  m_UsedByEffector: 0
-  m_CompositeOperation: 0
-  m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
-  m_SpriteTilingProperty:
-    border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 0.95, y: 0.16}
-    newSize: {x: 0.61, y: 0.6}
-    adaptiveTilingThreshold: 0.5
-    drawMode: 0
-    adaptiveTiling: 0
-  m_AutoTiling: 0
-  m_Size: {x: 0.95, y: 0.16}
-  m_EdgeRadius: 0
 --- !u!50 &8080082084025488808
 Rigidbody2D:
   serializedVersion: 5
@@ -2563,18 +2416,6 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 0
---- !u!114 &5921735990450406271
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2339645974744768179}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5a21ef8c32910ef4cb1c2160aa25145e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DragPrefab
 --- !u!4 &2627558844791337826 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 533453995972371907, guid: 8826d4f8b25975d47a7ab0eccef1ccf8, type: 3}
@@ -2632,6 +2473,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 533453995972371907, guid: bea6c62400869d34bbb28935d49907bd, type: 3}
+      propertyPath: m_ConstrainProportionsScale
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8102162558901674479, guid: bea6c62400869d34bbb28935d49907bd, type: 3}
       propertyPath: m_SortingOrder
       value: 4
@@ -2641,14 +2486,8 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 245961653464500242, guid: bea6c62400869d34bbb28935d49907bd, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 5967394869177336332}
-    - targetCorrespondingSourceObject: {fileID: 245961653464500242, guid: bea6c62400869d34bbb28935d49907bd, type: 3}
-      insertIndex: -1
+      insertIndex: 3
       addedObject: {fileID: 6168106441089236077}
-    - targetCorrespondingSourceObject: {fileID: 245961653464500242, guid: bea6c62400869d34bbb28935d49907bd, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 4809511378054565841}
   m_SourcePrefab: {fileID: 100100000, guid: bea6c62400869d34bbb28935d49907bd, type: 3}
 --- !u!4 &3053317450318377988 stripped
 Transform:
@@ -2660,52 +2499,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 245961653464500242, guid: bea6c62400869d34bbb28935d49907bd, type: 3}
   m_PrefabInstance: {fileID: 3258536428447486407}
   m_PrefabAsset: {fileID: 0}
---- !u!61 &5967394869177336332
-BoxCollider2D:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3337573370464491989}
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Density: 1
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_ForceSendLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ForceReceiveLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ContactCaptureLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_CallbackLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_IsTrigger: 0
-  m_UsedByEffector: 0
-  m_CompositeOperation: 0
-  m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
-  m_SpriteTilingProperty:
-    border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 0.61, y: 0.6}
-    newSize: {x: 0.61, y: 0.6}
-    adaptiveTilingThreshold: 0.5
-    drawMode: 0
-    adaptiveTiling: 0
-  m_AutoTiling: 0
-  m_Size: {x: 0.61, y: 0.6}
-  m_EdgeRadius: 0
 --- !u!50 &6168106441089236077
 Rigidbody2D:
   serializedVersion: 5
@@ -2733,15 +2526,3 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 0
---- !u!114 &4809511378054565841
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3337573370464491989}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5a21ef8c32910ef4cb1c2160aa25145e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DragPrefab
