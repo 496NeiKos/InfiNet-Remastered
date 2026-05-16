@@ -3,8 +3,8 @@ using UnityEngine;
 public class SystemUnitConditionChecker : MonoBehaviour
 {
     [SerializeField] private PowerButton powerButton;
-    [SerializeField] private SlotContainer vgaPort;
-    [SerializeField] private SlotContainer psuBackPort;
+    [SerializeField] private BackPortSlot vgaPort;
+    [SerializeField] private BackPortSlot psuBackPort;
 
     public bool IsHardwareInteractable()
     {
@@ -15,7 +15,7 @@ public class SystemUnitConditionChecker : MonoBehaviour
         }
 
         return !powerButton.IsPoweredOn
-            && vgaPort.IsSlotEmpty()
-            && psuBackPort.IsSlotEmpty();
+            && vgaPort.IsUninstalled
+            && psuBackPort.IsUninstalled;
     }
 }

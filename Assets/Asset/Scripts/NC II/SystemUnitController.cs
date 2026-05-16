@@ -17,6 +17,13 @@ public class SystemUnitController : MonoBehaviour
 
     void Start()
     {
+        // Auto-find if not wired in inspector
+        if (coverController == null)
+            coverController = GetComponentInChildren<CoverController>(true);
+
+        if (viewController == null)
+            viewController = GetComponent<SystemUnitViewController>();
+
         systemUnitFront?.SetActive(false);
         systemUnitSide?.SetActive(false);
         systemUnitBack?.SetActive(false);
@@ -24,10 +31,15 @@ public class SystemUnitController : MonoBehaviour
 
     public void ShowDetailAtCenter()
     {
+        // Auto-find in case Start() hasn't run yet or references were cleared
+        if (coverController == null)
+            coverController = GetComponentInChildren<CoverController>(true);
+
+        if (viewController == null)
+            viewController = GetComponent<SystemUnitViewController>();
+
         viewController?.WireButtons();
         viewController?.ShowLastActive();
-
-        CenterActiveView();
 
         if (systemUnitCover != null)
             systemUnitCover.SetActive(true);
@@ -36,22 +48,10 @@ public class SystemUnitController : MonoBehaviour
             systemUnitHardwareComponents.SetActive(coverController != null && coverController.IsOpen());
     }
 
-    private void CenterActiveView()
-    {
-        GameObject active = GetActiveView();
-        if (active == null || GameManager.Instance?.editingPanel == null) return;
-
-        RectTransform rect = GameManager.Instance.editingPanel.GetComponent<RectTransform>();
-        if (rect != null)
-        {
-            Vector3 center = rect.TransformPoint(new Vector3(rect.rect.center.x, rect.rect.center.y, 0f));
-            center.z = 0f;
-            active.transform.position = center;
-        }
-    }
-
     public void HideDetail()
     {
+        viewController?.HideButtons();
+
         systemUnitFront?.SetActive(false);
         systemUnitSide?.SetActive(false);
         systemUnitBack?.SetActive(false);
@@ -69,7 +69,8 @@ public class SystemUnitController : MonoBehaviour
             systemUnitHardwareComponents.SetActive(false);
     }
 
-    private GameObject GetActiveView()
+    // Used by SystemUnitViewController to center the active view
+    public GameObject GetActiveView()
     {
         if (systemUnitFront != null && systemUnitFront.activeSelf) return systemUnitFront;
         if (systemUnitSide != null && systemUnitSide.activeSelf) return systemUnitSide;

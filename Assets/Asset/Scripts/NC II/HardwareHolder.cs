@@ -19,10 +19,17 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         if (hardwarePrefab != null)
         {
             _worldScale = hardwarePrefab.transform.lossyScale;
-            hardwarePrefab.SetActive(false);
+
+            // BackCable starts active (installed in port) — do not deactivate it here.
+            // All other hardware starts inactive (stored) until dragged to workspace.
+            bool isBackCable = hardwarePrefab.GetComponent<BackCable>() != null;
+            if (!isBackCable)
+                hardwarePrefab.SetActive(false);
         }
 
-        gameObject.SetActive(hardwarePrefab == null || !hardwarePrefab.activeSelf);
+        // Icon shows only when prefab is inactive (stored)
+        bool prefabInactive = hardwarePrefab == null || !hardwarePrefab.activeSelf;
+        gameObject.SetActive(prefabInactive);
     }
 
     public bool IsAvailable() => hardwarePrefab != null && !hardwarePrefab.activeSelf;
@@ -108,9 +115,45 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
             new Vector3(eventData.position.x, eventData.position.y, 10f));
         dropWorldPos.z = 0f;
 
+        // BackCable path — install to BackPortSlot
+        BackCable backCable = hardwarePrefab.GetComponent<BackCable>();
+        if (backCable != null)
+        {
+            BackPortSlot[] allPorts = FindObjectsOfType<BackPortSlot>(true);
+            BackPortSlot bestPort = null;
+            float bestDist = float.MaxValue;
+
+            foreach (BackPortSlot port in allPorts)
+            {
+                if (!port.IsUninstalled) continue;
+                if (port.gameObject.name != backCable.GetCableType() &&
+                    !port.gameObject.name.Contains(backCable.GetCableType())) continue;
+
+                float dist = Vector3.Distance(port.transform.position, dropWorldPos);
+                if (dist < slotInstallRadius && dist < bestDist)
+                {
+                    bestDist = dist;
+                    bestPort = port;
+                }
+            }
+
+            if (bestPort != null)
+            {
+                hardwarePrefab.SetActive(true);
+                backCable.InstallToPort(bestPort);
+                gameObject.SetActive(false);
+            }
+            else
+            {
+                Debug.Log($"[HardwareHolder] {prefabName} dropped on wrong/no port — returning to hardware area.");
+            }
+            return;
+        }
+
+        // Standard SlotContainer path
         SlotContainer[] allSlots = FindObjectsOfType<SlotContainer>();
         SlotContainer bestSlot = null;
-        float bestDist = float.MaxValue;
+        float bestSlotDist = float.MaxValue;
 
         foreach (SlotContainer slot in allSlots)
         {
@@ -118,9 +161,9 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
             if (!slot.CanAcceptPrefab(prefabName)) continue;
 
             float dist = Vector3.Distance(slot.transform.position, dropWorldPos);
-            if (dist < slotInstallRadius && dist < bestDist)
+            if (dist < slotInstallRadius && dist < bestSlotDist)
             {
-                bestDist = dist;
+                bestSlotDist = dist;
                 bestSlot = slot;
             }
         }

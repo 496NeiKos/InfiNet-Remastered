@@ -1,50 +1,105 @@
-using UnityEngine;
+﻿using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class PowerButton : MonoBehaviour
 {
-    private bool _isPoweredOn = true;
-    private float _holdTimer = 0f;
-    private bool _isHolding = false;
+    public enum PowerState { On, Off, Restarting }
 
-    public bool IsPoweredOn => _isPoweredOn;
+    [Header("Sprites")]
+    [SerializeField] private Sprite spriteOn;
+    [SerializeField] private Sprite spriteOff;
+
+    private SpriteRenderer _sr;
+    private PowerState _state = PowerState.On;
+
+    private float _rightHoldTimer = 0f;
+    private bool _isRightHolding = false;
+    private const float RestartHoldDuration = 3f;
+
+    public PowerState State => _state;
+    public bool IsPoweredOn => _state == PowerState.On || _state == PowerState.Restarting;
+
+    private void Awake()
+    {
+        _sr = GetComponent<SpriteRenderer>();
+        ApplySprite();
+    }
 
     private void Update()
     {
-        if (Input.GetMouseButtonDown(0) && IsMouseOver())
+        Mouse mouse = Mouse.current;
+        if (mouse == null) return;
+
+        // Left click — toggle on/off only
+        if (mouse.leftButton.wasPressedThisFrame && IsMouseOver())
         {
-            _isHolding = true;
-            _holdTimer = 0f;
+            if (_state == PowerState.On)
+                SetState(PowerState.Off);
+            else if (_state == PowerState.Off)
+                SetState(PowerState.On);
         }
 
-        if (_isHolding && Input.GetMouseButton(0))
+        // Right click hold — restart (only when On)
+        if (_state == PowerState.On)
         {
-            _holdTimer += Time.deltaTime;
-            if (_isPoweredOn && _holdTimer >= 3f)
+            if (mouse.rightButton.wasPressedThisFrame && IsMouseOver())
             {
-                _isHolding = false;
-                _holdTimer = 0f;
-                Debug.Log("[PowerButton] Restart triggered � no logic yet.");
+                _isRightHolding = true;
+                _rightHoldTimer = 0f;
+            }
+
+            if (_isRightHolding)
+            {
+                if (mouse.rightButton.isPressed)
+                {
+                    _rightHoldTimer += Time.deltaTime;
+                    if (_rightHoldTimer >= RestartHoldDuration)
+                    {
+                        _isRightHolding = false;
+                        _rightHoldTimer = 0f;
+                        TriggerRestart();
+                    }
+                }
+                else
+                {
+                    // Released before 3s — reset timer
+                    _isRightHolding = false;
+                    _rightHoldTimer = 0f;
+                    Debug.Log("[PowerButton] Right-click released early, restart cancelled.");
+                }
             }
         }
-
-        if (_isHolding && Input.GetMouseButtonUp(0))
+        else
         {
-            if (_holdTimer < 3f)
-                Toggle();
-            _isHolding = false;
-            _holdTimer = 0f;
+            // Not On — cancel any pending restart
+            _isRightHolding = false;
+            _rightHoldTimer = 0f;
         }
     }
 
-    private void Toggle()
+    private void TriggerRestart()
     {
-        _isPoweredOn = !_isPoweredOn;
-        Debug.Log($"[PowerButton] Power is now {(_isPoweredOn ? "ON" : "OFF")}");
+        SetState(PowerState.Restarting);
+        Debug.Log("[PowerButton] Restarting — no logic yet.");
+        SetState(PowerState.On);
+    }
+
+    private void SetState(PowerState newState)
+    {
+        _state = newState;
+        ApplySprite();
+        Debug.Log($"[PowerButton] State → {_state}");
+    }
+
+    private void ApplySprite()
+    {
+        if (_sr == null) return;
+        _sr.sprite = (_state == PowerState.Off) ? spriteOff : spriteOn;
     }
 
     private bool IsMouseOver()
     {
-        Vector2 mouseWorld = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        Vector2 mouseWorld = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
         Collider2D col = GetComponent<Collider2D>();
         return col != null && col.OverlapPoint(mouseWorld);
     }

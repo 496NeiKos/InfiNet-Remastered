@@ -14,7 +14,6 @@ public class SystemUnitViewController : MonoBehaviour
         frontView?.SetActive(false);
         backView?.SetActive(false);
         _activeView = sideView;
-        // sideView activation is handled by SystemUnitController.ShowDetailAtCenter
     }
 
     public void ShowLastActive()
@@ -33,6 +32,20 @@ public class SystemUnitViewController : MonoBehaviour
             view.SetActive(true);
             _activeView = view;
         }
+
+        CenterView(view);
+    }
+
+    private void CenterView(GameObject view)
+    {
+        if (view == null || GameManager.Instance?.editingPanel == null) return;
+
+        RectTransform rect = GameManager.Instance.editingPanel.GetComponent<RectTransform>();
+        if (rect == null) return;
+
+        Vector3 center = rect.TransformPoint(new Vector3(rect.rect.center.x, rect.rect.center.y, 0f));
+        center.z = 0f;
+        view.transform.position = center;
     }
 
     public void WireButtons()
@@ -40,23 +53,52 @@ public class SystemUnitViewController : MonoBehaviour
         GameObject panel = GameManager.Instance?.editingPanel;
         if (panel == null) return;
 
-        Button frontBtn = FindButtonByName(panel, "FrontButton");
-        Button sideBtn = FindButtonByName(panel, "SideButton");
-        Button backBtn = FindButtonByName(panel, "BackButton");
+        Button frontBtn = FindButtonInPanel(panel, "FrontButton");
+        Button sideBtn = FindButtonInPanel(panel, "SideButton");
+        Button backBtn = FindButtonInPanel(panel, "BackButton");
 
-        if (frontBtn != null) { frontBtn.onClick.RemoveAllListeners(); frontBtn.onClick.AddListener(() => ShowView(frontView)); }
-        if (sideBtn != null) { sideBtn.onClick.RemoveAllListeners(); sideBtn.onClick.AddListener(() => ShowView(sideView)); }
-        if (backBtn != null) { backBtn.onClick.RemoveAllListeners(); backBtn.onClick.AddListener(() => ShowView(backView)); }
+        if (frontBtn != null)
+        {
+            frontBtn.onClick.RemoveAllListeners();
+            frontBtn.onClick.AddListener(() => ShowView(frontView));
+            frontBtn.gameObject.SetActive(true);
+        }
+
+        if (sideBtn != null)
+        {
+            sideBtn.onClick.RemoveAllListeners();
+            sideBtn.onClick.AddListener(() => ShowView(sideView));
+            sideBtn.gameObject.SetActive(true);
+        }
+
+        if (backBtn != null)
+        {
+            backBtn.onClick.RemoveAllListeners();
+            backBtn.onClick.AddListener(() => ShowView(backView));
+            backBtn.gameObject.SetActive(true);
+        }
     }
 
-    private Button FindButtonByName(GameObject root, string buttonName)
+    public void HideButtons()
     {
-        Transform t = root.transform.Find(buttonName);
-        if (t == null)
+        GameObject panel = GameManager.Instance?.editingPanel;
+        if (panel == null) return;
+
+        FindButtonInPanel(panel, "FrontButton")?.gameObject.SetActive(false);
+        FindButtonInPanel(panel, "SideButton")?.gameObject.SetActive(false);
+        FindButtonInPanel(panel, "BackButton")?.gameObject.SetActive(false);
+    }
+
+    // GetComponentsInChildren finds buttons at any nesting depth, including inactive
+    private Button FindButtonInPanel(GameObject panel, string buttonName)
+    {
+        Button[] allButtons = panel.GetComponentsInChildren<Button>(true);
+        foreach (Button btn in allButtons)
         {
-            Debug.LogWarning($"[SystemUnitViewController] Button '{buttonName}' not found in EditingPanel.");
-            return null;
+            if (btn.gameObject.name == buttonName)
+                return btn;
         }
-        return t.GetComponent<Button>();
+        Debug.LogWarning($"[SystemUnitViewController] Button '{buttonName}' not found in EditingPanel.");
+        return null;
     }
 }
