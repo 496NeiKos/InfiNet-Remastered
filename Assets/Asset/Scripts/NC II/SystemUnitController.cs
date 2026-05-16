@@ -2,8 +2,10 @@
 
 public class SystemUnitController : MonoBehaviour
 {
-    [Header("Editing Panel View")]
+    [Header("Editing Panel Views")]
+    public GameObject systemUnitFront;
     public GameObject systemUnitSide;
+    public GameObject systemUnitBack;
 
     [Header("Cover & Hardware")]
     public GameObject systemUnitCover;
@@ -11,87 +13,67 @@ public class SystemUnitController : MonoBehaviour
 
     [Header("References")]
     [SerializeField] private CoverController coverController;
-
-    private Vector3 _sideOriginalLocalPos;
-    private Quaternion _sideOriginalLocalRot;
+    [SerializeField] private SystemUnitViewController viewController;
 
     void Start()
     {
-        if (systemUnitSide != null)
-            systemUnitSide.SetActive(false);
+        systemUnitFront?.SetActive(false);
+        systemUnitSide?.SetActive(false);
+        systemUnitBack?.SetActive(false);
     }
 
     public void ShowDetailAtCenter()
     {
-        if (systemUnitSide == null) return;
+        viewController?.WireButtons();
+        viewController?.ShowLastActive();
 
-        _sideOriginalLocalPos = systemUnitSide.transform.localPosition;
-        _sideOriginalLocalRot = systemUnitSide.transform.localRotation;
+        CenterActiveView();
 
-        if (GameManager.Instance != null && GameManager.Instance.editingPanel != null)
-        {
-            RectTransform rect = GameManager.Instance.editingPanel.GetComponent<RectTransform>();
-            if (rect != null)
-            {
-                Vector3 panelCenter = rect.TransformPoint(
-                    new Vector3(rect.rect.center.x, rect.rect.center.y, 0f)
-                );
-                panelCenter.z = 0f;
-
-                systemUnitSide.transform.position = panelCenter;
-                systemUnitSide.transform.rotation = Quaternion.identity;
-            }
-        }
-
-        // Cover is always active (visible)
         if (systemUnitCover != null)
             systemUnitCover.SetActive(true);
 
-        // ✅ Check cover state to decide hardware visibility
         if (systemUnitHardwareComponents != null)
-        {
-            if (coverController != null && coverController.IsOpen())
-            {
-                // Cover is open → hardware should be visible
-                systemUnitHardwareComponents.SetActive(true);
-            }
-            else
-            {
-                // Cover is closed → hardware should be hidden
-                systemUnitHardwareComponents.SetActive(false);
-            }
-        }
+            systemUnitHardwareComponents.SetActive(coverController != null && coverController.IsOpen());
+    }
 
-        systemUnitSide.SetActive(true);
+    private void CenterActiveView()
+    {
+        GameObject active = GetActiveView();
+        if (active == null || GameManager.Instance?.editingPanel == null) return;
+
+        RectTransform rect = GameManager.Instance.editingPanel.GetComponent<RectTransform>();
+        if (rect != null)
+        {
+            Vector3 center = rect.TransformPoint(new Vector3(rect.rect.center.x, rect.rect.center.y, 0f));
+            center.z = 0f;
+            active.transform.position = center;
+        }
     }
 
     public void HideDetail()
     {
-        if (systemUnitSide == null) return;
-
-        systemUnitSide.SetActive(false);
-
-        systemUnitSide.transform.localPosition = _sideOriginalLocalPos;
-        systemUnitSide.transform.localRotation = _sideOriginalLocalRot;
+        systemUnitFront?.SetActive(false);
+        systemUnitSide?.SetActive(false);
+        systemUnitBack?.SetActive(false);
     }
 
-    /// <summary>
-    /// Called when cover slides open.
-    /// Cover stays active. Only reveals hardware components.
-    /// </summary>
     public void RemoveCover()
     {
         if (systemUnitHardwareComponents != null)
             systemUnitHardwareComponents.SetActive(true);
     }
 
-    /// <summary>
-    /// Called when cover slides back to closed position.
-    /// Hides hardware components.
-    /// </summary>
     public void AttachCover()
     {
         if (systemUnitHardwareComponents != null)
             systemUnitHardwareComponents.SetActive(false);
+    }
+
+    private GameObject GetActiveView()
+    {
+        if (systemUnitFront != null && systemUnitFront.activeSelf) return systemUnitFront;
+        if (systemUnitSide != null && systemUnitSide.activeSelf) return systemUnitSide;
+        if (systemUnitBack != null && systemUnitBack.activeSelf) return systemUnitBack;
+        return systemUnitSide;
     }
 }

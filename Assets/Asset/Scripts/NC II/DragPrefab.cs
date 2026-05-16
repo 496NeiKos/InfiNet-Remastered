@@ -62,6 +62,18 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
             return;
         }
 
+        // Gate: Motherboard/HDD/PSU inside SystemUnit require power off + back cables unplugged
+        if (isInSlot && GetComponentInParent<SystemUnitController>() != null)
+        {
+            SystemUnitConditionChecker checker = GetComponentInParent<SystemUnitConditionChecker>();
+            if (checker != null && !checker.IsHardwareInteractable())
+            {
+                Debug.Log("[DragPrefab] Hardware locked — power still on or back cables still connected.");
+                _isDragging = false;
+                return;
+            }
+        }
+
         _isDragging = true;
         _originalPos = transform.position;
         _originalParent = transform.parent;
@@ -77,7 +89,6 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
             ApplyWorldScale(worldScale);
         }
 
-        // Drag indicator
         GameObject indicatorGO = new GameObject("DragIndicator");
         _dragIndicator = indicatorGO.AddComponent<SpriteRenderer>();
         _dragIndicator.sprite = GetComponent<SpriteRenderer>()?.sprite;
@@ -138,20 +149,18 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
 
     private void SendToHolder()
     {
-        // Try serialized reference first
         if (hardwareHolder != null)
         {
             hardwareHolder.StoreHardware();
             return;
         }
 
-        // Fallback: find by name match — handles prefab-asset components (CPU, GPU, RAM, CMOS)
         HardwareHolder[] allHolders = FindObjectsOfType<HardwareHolder>(true);
         foreach (HardwareHolder h in allHolders)
         {
             if (h.hardwarePrefab != null && h.hardwarePrefab.name == gameObject.name)
             {
-                hardwareHolder = h; // cache it for next time
+                hardwareHolder = h;
                 h.StoreHardware();
                 return;
             }

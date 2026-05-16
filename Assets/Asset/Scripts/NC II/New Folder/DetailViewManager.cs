@@ -37,6 +37,14 @@ public class DetailViewManager : MonoBehaviour
 
             if (coverController != null && coverController.IsOpen())
             {
+                // Gate: check condition before allowing inner panel open
+                SystemUnitConditionChecker checker = GetComponent<SystemUnitConditionChecker>();
+                if (checker != null && !checker.IsHardwareInteractable())
+                {
+                    Debug.Log("[DetailViewManager] Hardware locked — conditions not met.");
+                    return;
+                }
+
                 CheckChildRightClick();
             }
         }
@@ -146,29 +154,18 @@ public class DetailViewManager : MonoBehaviour
 
         ActivateChildDetailedView(_activeChildPrefab, false);
 
-        // Re-enable this prefab (SystemUnit)
         gameObject.SetActive(true);
 
-        // Return child to its original parent and position
         _activeChildPrefab.transform.SetParent(_childOriginalParent, true);
         _activeChildPrefab.transform.localPosition = _childOriginalLocalPos;
 
-        // ✅ Restore hardware visibility based on cover state
-        // When SystemUnit was disabled, child active states were preserved,
-        // but we need to make sure hardware components match the cover state
         SystemUnitController controller = GetComponent<SystemUnitController>();
         if (controller != null)
         {
             if (coverController != null && coverController.IsOpen())
-            {
-                // Cover was open → hardware should be visible
                 controller.RemoveCover();
-            }
             else
-            {
-                // Cover was closed → hardware should be hidden
                 controller.AttachCover();
-            }
         }
 
         if (innerEditingPanel != null)
