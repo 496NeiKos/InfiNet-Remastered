@@ -9,8 +9,11 @@ public class PowerButton : MonoBehaviour
     [SerializeField] private Sprite spriteOn;
     [SerializeField] private Sprite spriteOff;
 
+    [Header("References")]
+    [SerializeField] private PowerOnConditionChecker conditionChecker;
+
     private SpriteRenderer _sr;
-    private PowerState _state = PowerState.On;
+    private PowerState _state = PowerState.Off;
 
     private float _rightHoldTimer = 0f;
     private bool _isRightHolding = false;
@@ -22,6 +25,11 @@ public class PowerButton : MonoBehaviour
     private void Awake()
     {
         _sr = GetComponent<SpriteRenderer>();
+
+        // Auto-find checker on parent root if not wired
+        if (conditionChecker == null)
+            conditionChecker = GetComponentInParent<PowerOnConditionChecker>();
+
         ApplySprite();
     }
 
@@ -30,13 +38,17 @@ public class PowerButton : MonoBehaviour
         Mouse mouse = Mouse.current;
         if (mouse == null) return;
 
-        // Left click — toggle on/off only
+        // Left click — toggle on/off
         if (mouse.leftButton.wasPressedThisFrame && IsMouseOver())
         {
             if (_state == PowerState.On)
+            {
                 SetState(PowerState.Off);
+            }
             else if (_state == PowerState.Off)
-                SetState(PowerState.On);
+            {
+                TryTurnOn();
+            }
         }
 
         // Right click hold — restart (only when On)
@@ -62,19 +74,28 @@ public class PowerButton : MonoBehaviour
                 }
                 else
                 {
-                    // Released before 3s — reset timer
                     _isRightHolding = false;
                     _rightHoldTimer = 0f;
-                    Debug.Log("[PowerButton] Right-click released early, restart cancelled.");
+                    Debug.Log("[PowerButton] Right-click released early — restart cancelled.");
                 }
             }
         }
         else
         {
-            // Not On — cancel any pending restart
             _isRightHolding = false;
             _rightHoldTimer = 0f;
         }
+    }
+
+    private void TryTurnOn()
+    {
+        if (conditionChecker != null && !conditionChecker.CanTurnOn())
+        {
+            Debug.Log("[PowerButton] Cannot turn on — conditions not met. Check logs above.");
+            return;
+        }
+
+        SetState(PowerState.On);
     }
 
     private void TriggerRestart()

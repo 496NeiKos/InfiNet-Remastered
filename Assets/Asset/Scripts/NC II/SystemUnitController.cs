@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public class SystemUnitController : MonoBehaviour
+public class SystemUnitController : MonoBehaviour, IHardwareController
 {
     [Header("Editing Panel Views")]
     public GameObject systemUnitFront;
@@ -13,16 +13,15 @@ public class SystemUnitController : MonoBehaviour
 
     [Header("References")]
     [SerializeField] private CoverController coverController;
-    [SerializeField] private SystemUnitViewController viewController;
+    [SerializeField] private HardwareViewController viewController;
 
     void Start()
     {
-        // Auto-find if not wired in inspector
         if (coverController == null)
             coverController = GetComponentInChildren<CoverController>(true);
 
         if (viewController == null)
-            viewController = GetComponent<SystemUnitViewController>();
+            viewController = GetComponent<HardwareViewController>();
 
         systemUnitFront?.SetActive(false);
         systemUnitSide?.SetActive(false);
@@ -31,12 +30,11 @@ public class SystemUnitController : MonoBehaviour
 
     public void ShowDetailAtCenter()
     {
-        // Auto-find in case Start() hasn't run yet or references were cleared
         if (coverController == null)
             coverController = GetComponentInChildren<CoverController>(true);
 
         if (viewController == null)
-            viewController = GetComponent<SystemUnitViewController>();
+            viewController = GetComponent<HardwareViewController>();
 
         viewController?.WireButtons();
         viewController?.ShowLastActive();
@@ -67,14 +65,5 @@ public class SystemUnitController : MonoBehaviour
     {
         if (systemUnitHardwareComponents != null)
             systemUnitHardwareComponents.SetActive(false);
-    }
-
-    // Used by SystemUnitViewController to center the active view
-    public GameObject GetActiveView()
-    {
-        if (systemUnitFront != null && systemUnitFront.activeSelf) return systemUnitFront;
-        if (systemUnitSide != null && systemUnitSide.activeSelf) return systemUnitSide;
-        if (systemUnitBack != null && systemUnitBack.activeSelf) return systemUnitBack;
-        return systemUnitSide;
     }
 }

@@ -3,7 +3,8 @@ using UnityEngine.InputSystem;
 
 public class PrefabInteraction : MonoBehaviour
 {
-    private SystemUnitController _controller;
+    // Resolved to SystemUnitController, MonitorController, AVRController, etc.
+    private IHardwareController _controller;
     private MotherboardController _mbController;
     private MotherboardPhaseManager _phaseManager;
     private GameObject _detailedView;
@@ -12,7 +13,8 @@ public class PrefabInteraction : MonoBehaviour
 
     void Start()
     {
-        _controller = GetComponent<SystemUnitController>();
+        // GetComponent checks all IHardwareController implementors on this root
+        _controller = GetComponent<IHardwareController>();
         _mbController = GetComponent<MotherboardController>();
         _phaseManager = GetComponent<MotherboardPhaseManager>();
 
@@ -75,6 +77,7 @@ public class PrefabInteraction : MonoBehaviour
             return;
         }
 
+        // Fallback: Motherboard / plain hardware with a Detailed child
         if (_detailedView == null) return;
 
         if (GameManager.Instance != null && GameManager.Instance.editingPanel != null)
