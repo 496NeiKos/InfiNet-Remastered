@@ -1,19 +1,23 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.InputSystem;
 
 /// <summary>
-/// On the cable child object inside a back port (e.g. PSUPortCable, VGAPortCable).
-/// Handles drag-out from port, snap-back on invalid drop, store to hardware area on valid drop.
+/// On cable child objects inside back ports (PSUPortCable, VGAPortCable, etc.).
+/// Handles drag-out, snap-back, and store to hardware area.
+/// Optionally gated by a power button — cable cannot be removed while power is on.
 /// </summary>
 public class BackCable : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     [Header("Identity")]
-    [Tooltip("Must match the cableType on the matching BackPortSlot and the hardware area icon")]
+    [Tooltip("Must match the GameObject name of the matching BackPortSlot")]
     [SerializeField] private string cableType;
 
     [Header("Hardware Area Icon")]
     [SerializeField] private HardwareHolder hardwareHolder;
+
+    [Header("Power Gate (assign the power button that must be OFF before unplugging)")]
+    [SerializeField] private MonoBehaviour powerButtonSource;
+    private IPowerButton _powerButton;
 
     private BackPortSlot _parentPort;
     private Transform _originalParent;
@@ -26,24 +30,31 @@ public class BackCable : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
     private void Start()
     {
         _parentPort = GetComponentInParent<BackPortSlot>();
+
+        if (powerButtonSource != null)
+            _powerButton = powerButtonSource as IPowerButton;
     }
 
     public void OnBeginDrag(PointerEventData eventData)
     {
         if (eventData.button != PointerEventData.InputButton.Left) return;
 
-        _isDragging = true;
+        // Gate: power must be off before unplugging
+        if (_powerButton != null && _powerButton.IsPoweredOn)
+        {
+            Debug.Log($"[BackCable] Cannot unplug '{cableType}' — turn off the power button first.");
+            return;
+        }
 
+        _isDragging = true;
         _originalParent = transform.parent;
         _originalLocalPos = transform.localPosition;
         _originalLocalScale = transform.localScale;
 
-        // Detach visually so it can move freely
         Vector3 worldScale = transform.lossyScale;
         transform.SetParent(GameManager.Instance.worldRoot, true);
         ApplyWorldScale(worldScale);
 
-        // Drag indicator
         GameObject go = new GameObject("BackCableDrag");
         _dragIndicator = go.AddComponent<SpriteRenderer>();
         _dragIndicator.sprite = GetComponent<SpriteRenderer>()?.sprite;
@@ -80,20 +91,17 @@ public class BackCable : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
 
         if (onHardwareArea)
         {
-            // Store cable — port becomes uninstalled
             _parentPort?.SetUninstalled();
             SendToHolder();
-            Debug.Log($"[BackCable] {cableType} stored to hardware area.");
+            Debug.Log($"[BackCable] '{cableType}' stored to hardware area.");
         }
         else
         {
-            // Snap back to port
             SnapBack();
-            Debug.Log($"[BackCable] {cableType} snapped back to port.");
+            Debug.Log($"[BackCable] '{cableType}' snapped back to port.");
         }
     }
 
-    // Called by BackPortSlot's HardwareHolder when dragged from hardware area back to port
     public void InstallToPort(BackPortSlot port)
     {
         _parentPort = port;
@@ -102,7 +110,7 @@ public class BackCable : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
         transform.localScale = _originalLocalScale;
         gameObject.SetActive(true);
         port.SetInstalled();
-        Debug.Log($"[BackCable] {cableType} installed to port.");
+        Debug.Log($"[BackCable] '{cableType}' installed to port.");
     }
 
     private void SnapBack()
@@ -121,7 +129,6 @@ public class BackCable : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
             return;
         }
 
-        // Fallback: find by name match
         HardwareHolder[] all = FindObjectsOfType<HardwareHolder>(true);
         foreach (HardwareHolder h in all)
         {

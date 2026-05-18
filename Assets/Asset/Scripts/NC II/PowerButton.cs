@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class PowerButton : MonoBehaviour
+public class PowerButton : MonoBehaviour, IPowerButton
 {
     public enum PowerState { On, Off, Restarting }
 

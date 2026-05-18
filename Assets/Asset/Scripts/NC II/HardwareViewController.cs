@@ -3,8 +3,7 @@ using UnityEngine.UI;
 
 /// <summary>
 /// Generic view controller for any hardware with multiple angles (Front, Side, Back).
-/// Replaces SystemUnitViewController. Attach to hardware root.
-/// Assign only the views that exist — null views are skipped.
+/// Attach to hardware root. Assign only the views that exist — null views are skipped.
 /// </summary>
 public class HardwareViewController : MonoBehaviour
 {
@@ -22,9 +21,9 @@ public class HardwareViewController : MonoBehaviour
 
     private void Start()
     {
-        frontView?.SetActive(false);
-        sideView?.SetActive(false);
-        backView?.SetActive(false);
+        if (frontView != null) frontView.SetActive(false);
+        if (sideView != null) sideView.SetActive(false);
+        if (backView != null) backView.SetActive(false);
 
         _activeView = GetViewObject(defaultView) ?? frontView ?? sideView ?? backView;
     }
@@ -36,9 +35,9 @@ public class HardwareViewController : MonoBehaviour
 
     public void ShowView(GameObject view)
     {
-        frontView?.SetActive(false);
-        sideView?.SetActive(false);
-        backView?.SetActive(false);
+        if (frontView != null) frontView.SetActive(false);
+        if (sideView != null) sideView.SetActive(false);
+        if (backView != null) backView.SetActive(false);
 
         if (view != null)
         {
@@ -70,7 +69,7 @@ public class HardwareViewController : MonoBehaviour
 
     private void WireButton(GameObject panel, string buttonName, GameObject targetView)
     {
-        if (targetView == null) return; // skip buttons for views that don't exist
+        if (targetView == null) return; // no view assigned — skip this button entirely
 
         Button btn = FindButton(panel, buttonName);
         if (btn == null) return;

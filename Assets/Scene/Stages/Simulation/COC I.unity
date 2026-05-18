@@ -415,7 +415,7 @@ Transform:
   m_GameObject: {fileID: 80567646}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -7.62, y: 0.43, z: 0}
+  m_LocalPosition: {x: -4.22, y: -3.31, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -611,7 +611,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 3
+  m_SortingOrder: 2
   m_MaskInteraction: 0
   m_Sprite: {fileID: 4413966926691061823, guid: 6169c4ab113236c49860e1c8bbcfe863, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -1335,7 +1335,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -6110733534912979044, guid: 2fcdd7795ee01254c978f28bbbf5baf6, type: 3}
+  m_Sprite: {fileID: 8378771674652852805, guid: 9b845d9cf30189f4aa9f21505374fe16, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -1513,7 +1513,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 2
+  m_SortingOrder: 1
   m_MaskInteraction: 0
   m_Sprite: {fileID: -3566355272404385565, guid: 65c3401bf0d6d0746b548b9ac9863bda, type: 3}
   m_Color: {r: 1, g: 0.9053277, b: 0, a: 1}
@@ -2280,7 +2280,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -6110733534912979044, guid: 2fcdd7795ee01254c978f28bbbf5baf6, type: 3}
+  m_Sprite: {fileID: 3541215779132970264, guid: 425cb59b3c6861e4fb768971a3bb941d, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -2430,7 +2430,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -6110733534912979044, guid: 2fcdd7795ee01254c978f28bbbf5baf6, type: 3}
+  m_Sprite: {fileID: -2959178932220512929, guid: 308e1adff1614934aa3b65f9941967f3, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -2529,7 +2529,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 1
+  m_SortingOrder: 2
   m_MaskInteraction: 0
   m_Sprite: {fileID: 6580451491421541301, guid: 2a5c80e9508c58a40be5c76071253c0f, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -2601,6 +2601,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AVRPowerButton
   spriteOn: {fileID: 4413966926691061823, guid: 6169c4ab113236c49860e1c8bbcfe863, type: 3}
   spriteOff: {fileID: 6580451491421541301, guid: 2a5c80e9508c58a40be5c76071253c0f, type: 3}
+  avrRootSprite: {fileID: 80567653}
+  avrSpriteOn: {fileID: 4413966926691061823, guid: 6169c4ab113236c49860e1c8bbcfe863, type: 3}
+  avrSpriteOff: {fileID: 6580451491421541301, guid: 2a5c80e9508c58a40be5c76071253c0f, type: 3}
   avrPsuPort: {fileID: 411423494}
   systemUnitPsuPort: {fileID: 1133075496}
 --- !u!1 &411423492
@@ -2806,6 +2809,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BackCable
   cableType: MVGAPort
   hardwareHolder: {fileID: 686178430}
+  powerButtonSource: {fileID: 0}
 --- !u!212 &437242115
 SpriteRenderer:
   serializedVersion: 2
@@ -2853,7 +2857,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 2
   m_MaskInteraction: 0
   m_Sprite: {fileID: -527664293115241574, guid: 8712f5bc2ae8adc45b3616680bf18986, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -3416,7 +3420,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -6110733534912979044, guid: 2fcdd7795ee01254c978f28bbbf5baf6, type: 3}
+  m_Sprite: {fileID: 2946290848948124243, guid: 65302be2e818aa84faf7feb6e3ce3c18, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -3530,7 +3534,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 3
+  m_SortingOrder: 2
   m_MaskInteraction: 0
   m_Sprite: {fileID: 4413966926691061823, guid: 6169c4ab113236c49860e1c8bbcfe863, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -3636,7 +3640,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8392384f42d727c4d8e7ef541a7501f2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SlotContainer
-  slotType: VGA
+  slotType: SUVGACable
   installLocalPosition: {x: 0, y: 0, z: 0}
   installLocalScale: {x: 1, y: 1, z: 1}
 --- !u!212 &514138394
@@ -3686,7 +3690,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 3
+  m_SortingOrder: 2
   m_MaskInteraction: 0
   m_Sprite: {fileID: 4413966926691061823, guid: 6169c4ab113236c49860e1c8bbcfe863, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -4977,7 +4981,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 3
+  m_SortingOrder: 2
   m_MaskInteraction: 0
   m_Sprite: {fileID: 4413966926691061823, guid: 6169c4ab113236c49860e1c8bbcfe863, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -5373,7 +5377,7 @@ Transform:
   m_GameObject: {fileID: 721360362}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -7.92, y: -6.9, z: 0}
+  m_LocalPosition: {x: -6.18, y: -3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -5765,7 +5769,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 1
   m_MaskInteraction: 0
   m_Sprite: {fileID: 6580451491421541301, guid: 2a5c80e9508c58a40be5c76071253c0f, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -7188,7 +7192,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 3
+  m_SortingOrder: 2
   m_MaskInteraction: 0
   m_Sprite: {fileID: 4413966926691061823, guid: 6169c4ab113236c49860e1c8bbcfe863, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -7330,7 +7334,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8392384f42d727c4d8e7ef541a7501f2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SlotContainer
-  slotType: PSUBack
+  slotType: SUPSUCable
   installLocalPosition: {x: 0, y: 0, z: 0}
   installLocalScale: {x: 1, y: 1, z: 1}
 --- !u!212 &1133075494
@@ -7380,7 +7384,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 3
+  m_SortingOrder: 2
   m_MaskInteraction: 0
   m_Sprite: {fileID: 4413966926691061823, guid: 6169c4ab113236c49860e1c8bbcfe863, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -7780,7 +7784,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1222887816
 Transform:
   m_ObjectHideFlags: 0
@@ -7844,7 +7848,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 1
   m_MaskInteraction: 0
   m_Sprite: {fileID: 6776817244962131427, guid: 1610b13bcad6e254eb7b05440986b219, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -8110,7 +8114,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 3
+  m_SortingOrder: 2
   m_MaskInteraction: 0
   m_Sprite: {fileID: 4413966926691061823, guid: 6169c4ab113236c49860e1c8bbcfe863, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -8264,7 +8268,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 3
+  m_SortingOrder: 2
   m_MaskInteraction: 0
   m_Sprite: {fileID: 4413966926691061823, guid: 6169c4ab113236c49860e1c8bbcfe863, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -8403,7 +8407,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 4
+  m_SortingOrder: 3
   m_MaskInteraction: 0
   m_Sprite: {fileID: -527664293115241574, guid: 8712f5bc2ae8adc45b3616680bf18986, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -8427,8 +8431,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d7f115ced300e594ab9109b27c809c2e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BackCable
-  cableType: VGAPort
+  cableType: SUVGAPort
   hardwareHolder: {fileID: 477266320}
+  powerButtonSource: {fileID: 1338173049}
 --- !u!61 &1281493951
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -8554,6 +8559,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BackCable
   cableType: APSUPort
   hardwareHolder: {fileID: 700654899}
+  powerButtonSource: {fileID: 409216139}
 --- !u!4 &1299142857
 Transform:
   m_ObjectHideFlags: 0
@@ -8616,7 +8622,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 2
   m_MaskInteraction: 0
   m_Sprite: {fileID: -527664293115241574, guid: 8712f5bc2ae8adc45b3616680bf18986, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -8770,7 +8776,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 3
+  m_SortingOrder: 2
   m_MaskInteraction: 0
   m_Sprite: {fileID: 4413966926691061823, guid: 6169c4ab113236c49860e1c8bbcfe863, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -9398,7 +9404,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 1
   m_MaskInteraction: 0
   m_Sprite: {fileID: 6580451491421541301, guid: 2a5c80e9508c58a40be5c76071253c0f, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -10577,7 +10583,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 4
+  m_SortingOrder: 3
   m_MaskInteraction: 0
   m_Sprite: {fileID: -527664293115241574, guid: 8712f5bc2ae8adc45b3616680bf18986, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -10601,8 +10607,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d7f115ced300e594ab9109b27c809c2e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BackCable
-  cableType: PSUBackPort
+  cableType: SUPSUPort
   hardwareHolder: {fileID: 1487959379}
+  powerButtonSource: {fileID: 1338173049}
 --- !u!61 &1598114960
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -12102,7 +12109,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 1
   m_MaskInteraction: 0
   m_Sprite: {fileID: 6776817244962131427, guid: 1610b13bcad6e254eb7b05440986b219, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -12246,7 +12253,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -6110733534912979044, guid: 2fcdd7795ee01254c978f28bbbf5baf6, type: 3}
+  m_Sprite: {fileID: 8378771674652852805, guid: 9b845d9cf30189f4aa9f21505374fe16, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -12370,7 +12377,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 4
+  m_SortingOrder: 5
   m_MaskInteraction: 0
   m_Sprite: {fileID: -2413806693520163455, guid: a86470a33a6bf42c4b3595704624658b, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -12496,7 +12503,7 @@ Transform:
   m_GameObject: {fileID: 1820356062324776105}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -3.02, y: -1.87, z: 0}
+  m_LocalPosition: {x: -8.37, y: -3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -12958,7 +12965,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 4
+  m_SortingOrder: 5
   m_MaskInteraction: 0
   m_Sprite: {fileID: -2413806693520163455, guid: a86470a33a6bf42c4b3595704624658b, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -14817,7 +14824,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 4
+  m_SortingOrder: 5
   m_MaskInteraction: 0
   m_Sprite: {fileID: -2413806693520163455, guid: a86470a33a6bf42c4b3595704624658b, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -15971,7 +15978,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 2
+  m_SortingOrder: 3
   m_MaskInteraction: 0
   m_Sprite: {fileID: -2857172601287934143, guid: e9288a17362f685449cbaaae12887aaa, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -16275,7 +16282,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 3
+  m_SortingOrder: 4
   m_MaskInteraction: 0
   m_Sprite: {fileID: -3566355272404385565, guid: 65c3401bf0d6d0746b548b9ac9863bda, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -16804,7 +16811,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 4
+  m_SortingOrder: 5
   m_MaskInteraction: 0
   m_Sprite: {fileID: -2413806693520163455, guid: a86470a33a6bf42c4b3595704624658b, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -16952,7 +16959,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 2
+  m_SortingOrder: 3
   m_MaskInteraction: 0
   m_Sprite: {fileID: -6110733534912979044, guid: 2fcdd7795ee01254c978f28bbbf5baf6, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -17039,7 +17046,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 2
+  m_SortingOrder: 3
   m_MaskInteraction: 0
   m_Sprite: {fileID: 6086007470371126333, guid: 52f372ee21e45694784f0e4cdb208b34, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -17099,7 +17106,7 @@ MonoBehaviour:
   systemUnitCover: {fileID: 1087269167417597218}
   systemUnitHardwareComponents: {fileID: 1060398561848464849}
   coverController: {fileID: 9081154834822738845}
-  viewController: {fileID: 0}
+  viewController: {fileID: 8987857211568027838}
 --- !u!114 &8987857211568027836
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -17145,7 +17152,9 @@ MonoBehaviour:
   cableSlot3: {fileID: 4325677823266943144}
   cableSlot4: {fileID: 1863340193676512682}
   psuBackPort: {fileID: 1133075496}
-  vgaPort: {fileID: 514138396}
+  vgaBackPort: {fileID: 514138396}
+  monitorVgaPort: {fileID: 524374831}
+  avrPsuPort: {fileID: 411423494}
 --- !u!114 &8987857211568027838
 MonoBehaviour:
   m_ObjectHideFlags: 0

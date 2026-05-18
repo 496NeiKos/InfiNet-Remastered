@@ -1,23 +1,21 @@
 ﻿using UnityEngine;
 using UnityEngine.InputSystem;
 
-/// <summary>
-/// On AVR front power button object.
-/// On/Off only — no restart, no hold.
-/// Can only turn ON if AVR back PSU port AND SystemUnit back PSU port are both installed.
-/// </summary>
-public class AVRPowerButton : MonoBehaviour
+public class AVRPowerButton : MonoBehaviour, IPowerButton
 {
     public enum PowerState { On, Off }
 
-    [Header("Sprites")]
+    [Header("Button Sprites")]
     [SerializeField] private Sprite spriteOn;
     [SerializeField] private Sprite spriteOff;
 
+    [Header("AVR Root Sprite (changes when powered on/off)")]
+    [SerializeField] private SpriteRenderer avrRootSprite;
+    [SerializeField] private Sprite avrSpriteOn;
+    [SerializeField] private Sprite avrSpriteOff;
+
     [Header("Condition References")]
-    [Tooltip("PSU port on AVR back view")]
     [SerializeField] private BackPortSlot avrPsuPort;
-    [Tooltip("PSU port on SystemUnit back view")]
     [SerializeField] private BackPortSlot systemUnitPsuPort;
 
     private SpriteRenderer _sr;
@@ -29,7 +27,7 @@ public class AVRPowerButton : MonoBehaviour
     private void Awake()
     {
         _sr = GetComponent<SpriteRenderer>();
-        ApplySprite();
+        ApplySprites();
     }
 
     private void Update()
@@ -74,14 +72,17 @@ public class AVRPowerButton : MonoBehaviour
     private void SetState(PowerState newState)
     {
         _state = newState;
-        ApplySprite();
+        ApplySprites();
         Debug.Log($"[AVRPowerButton] State → {_state}");
     }
 
-    private void ApplySprite()
+    private void ApplySprites()
     {
-        if (_sr == null) return;
-        _sr.sprite = (_state == PowerState.On) ? spriteOn : spriteOff;
+        if (_sr != null)
+            _sr.sprite = (_state == PowerState.On) ? spriteOn : spriteOff;
+
+        if (avrRootSprite != null)
+            avrRootSprite.sprite = (_state == PowerState.On) ? avrSpriteOn : avrSpriteOff;
     }
 
     private bool IsMouseOver()
