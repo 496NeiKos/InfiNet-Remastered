@@ -32,6 +32,7 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
 
         if (GameManager.Instance.IsEditorOpen && !isInSlot)
         {
+            Debug.Log($"[DragPrefab:{name}] BLOCKED — editor open but not in slot.");
             _isDragging = false;
             return;
         }
@@ -39,6 +40,15 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
         var dvm = FindObjectOfType<DetailViewManager>();
         if (dvm != null && dvm.IsInnerPanelOpen)
         {
+            Debug.Log($"[DragPrefab:{name}] BLOCKED — inner panel is open.");
+            _isDragging = false;
+            return;
+        }
+
+        var mbcdm = FindObjectOfType<MotherboardComponentDetailManager>();
+        if (mbcdm != null && mbcdm.IsDetailPanelOpen)
+        {
+            Debug.Log($"[DragPrefab:{name}] BLOCKED — component detail panel is open.");
             _isDragging = false;
             return;
         }
@@ -46,34 +56,48 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
         var cover = GetComponentInParent<CoverController>();
         if (cover != null && cover.IsSliding)
         {
+            Debug.Log($"[DragPrefab:{name}] BLOCKED — cover is sliding.");
             _isDragging = false;
             return;
         }
 
         if (isInSlot && !AreAllScrewsEmpty())
         {
+            Debug.Log($"[DragPrefab:{name}] BLOCKED — screws not empty.");
             _isDragging = false;
             return;
         }
 
         if (isInSlot && !AreAllCablesDetached())
         {
+            Debug.Log($"[DragPrefab:{name}] BLOCKED — cables not detached.");
             _isDragging = false;
             return;
         }
 
-        // Gate: Motherboard/HDD/PSU inside SystemUnit require power off + back cables unplugged
+        // Block CPU drag if heatsink is installed
+        CPUController cpu = GetComponent<CPUController>();
+        if (cpu != null && isInSlot && cpu.IsHeatsinkInstalled)
+        {
+            Debug.Log($"[DragPrefab:{name}] BLOCKED — heatsink is still installed.");
+            _isDragging = false;
+            return;
+        }
+
+        // Layer 1 gate — applies to ALL SystemUnit hardware (Motherboard, HDD, PSU).
+        // SU back VGA and PSU cables must both be unplugged before any hardware can be dragged.
         if (isInSlot && GetComponentInParent<SystemUnitController>() != null)
         {
             SystemUnitConditionChecker checker = GetComponentInParent<SystemUnitConditionChecker>();
             if (checker != null && !checker.IsHardwareInteractable())
             {
-                Debug.Log("[DragPrefab] Hardware locked — power still on or back cables still connected.");
+                Debug.Log($"[DragPrefab:{name}] BLOCKED — SU back cables still connected.");
                 _isDragging = false;
                 return;
             }
         }
 
+        Debug.Log($"[DragPrefab:{name}] Drag started. isInSlot={isInSlot}");
         _isDragging = true;
         _originalPos = transform.position;
         _originalParent = transform.parent;
@@ -124,6 +148,9 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
 
         if (_wasInSlot && onHardwareArea)
         {
+            HeatsinkController heatsink = GetComponent<HeatsinkController>();
+            heatsink?.OnRemovedFromCPU();
+
             _originalSlot?.RemoveChild();
             GetComponent<MotherboardController>()?.MarkUninstalled();
             SendToHolder();
@@ -136,6 +163,8 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
         }
         else if (onHardwareArea)
         {
+            HeatsinkController heatsink = GetComponent<HeatsinkController>();
+            heatsink?.OnRemovedFromCPU();
             SendToHolder();
         }
         else
@@ -181,15 +210,39 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
 
     private bool AreAllScrewsEmpty()
     {
-        foreach (var s in GetComponentsInChildren<ScrewController>(true))
-            if (!s.IsUnscrewed()) return false;
+        // If this is a Motherboard, only check Phase1 screws — not heatsink screws in Phase2
+        MotherboardPhaseManager phase = GetComponent<MotherboardPhaseManager>();
+        Transform screwRoot = (phase != null) ? phase.GetPhase1Root() : transform;
+
+        if (screwRoot == null) screwRoot = transform;
+
+        foreach (var s in screwRoot.GetComponentsInChildren<ScrewController>(true))
+        {
+            if (!s.IsUnscrewed())
+            {
+                Debug.Log($"[DragPrefab:{name}] Screw blocking: {s.gameObject.name} state={s.GetState()}");
+                return false;
+            }
+        }
         return true;
     }
 
     private bool AreAllCablesDetached()
     {
-        foreach (var c in GetComponentsInChildren<CableSlot>(true))
-            if (c.IsInstalled()) return false;
+        // If this is a Motherboard, only check Phase1 cables — not any cables in Phase2
+        MotherboardPhaseManager phase = GetComponent<MotherboardPhaseManager>();
+        Transform cableRoot = (phase != null) ? phase.GetPhase1Root() : transform;
+
+        if (cableRoot == null) cableRoot = transform;
+
+        foreach (var c in cableRoot.GetComponentsInChildren<CableSlot>(true))
+        {
+            if (c.IsInstalled())
+            {
+                Debug.Log($"[DragPrefab:{name}] Cable blocking: {c.gameObject.name}");
+                return false;
+            }
+        }
         return true;
     }
 }

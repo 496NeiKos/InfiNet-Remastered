@@ -18,10 +18,15 @@ public class MotherboardController : MonoBehaviour
         if (!_wasEverInSystemUnit) return true;
         if (!IsUninstalledFromSystemUnit) return false;
 
-        foreach (var s in GetComponentsInChildren<ScrewController>(true))
+        // Scope checks to Phase1 root only — avoids finding heatsink screws in Phase2
+        MotherboardPhaseManager phase = GetComponent<MotherboardPhaseManager>();
+        Transform phase1Root = phase != null ? phase.GetPhase1Root() : transform;
+        if (phase1Root == null) phase1Root = transform;
+
+        foreach (var s in phase1Root.GetComponentsInChildren<ScrewController>(true))
             if (!s.IsUnscrewed()) return false;
 
-        foreach (var c in GetComponentsInChildren<CableSlot>(true))
+        foreach (var c in phase1Root.GetComponentsInChildren<CableSlot>(true))
             if (c.IsInstalled()) return false;
 
         return true;

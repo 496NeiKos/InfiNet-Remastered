@@ -36,17 +36,7 @@ public class DetailViewManager : MonoBehaviour
                 return;
 
             if (coverController != null && coverController.IsOpen())
-            {
-                // Gate: check condition before allowing inner panel open
-                SystemUnitConditionChecker checker = GetComponent<SystemUnitConditionChecker>();
-                if (checker != null && !checker.IsHardwareInteractable())
-                {
-                    Debug.Log("[DetailViewManager] Hardware locked — conditions not met.");
-                    return;
-                }
-
                 CheckChildRightClick();
-            }
         }
     }
 
@@ -58,9 +48,8 @@ public class DetailViewManager : MonoBehaviour
         if (GameManager.Instance == null || GameManager.Instance.editingPanel == null)
             return null;
 
-        GameObject editingPanelObj = GameManager.Instance.editingPanel;
-        Transform[] allChildren = editingPanelObj.GetComponentsInChildren<Transform>(true);
-        foreach (Transform child in allChildren)
+        foreach (Transform child in GameManager.Instance.editingPanel
+            .GetComponentsInChildren<Transform>(true))
         {
             if (child.name == "InnerEditingPanel")
             {
@@ -68,7 +57,6 @@ public class DetailViewManager : MonoBehaviour
                 return innerEditingPanel;
             }
         }
-
         return null;
     }
 
@@ -76,20 +64,16 @@ public class DetailViewManager : MonoBehaviour
     {
         if (coverController == null) return;
 
-        Vector2 mousePos = Mouse.current.position.ReadValue();
-        Ray ray = Camera.main.ScreenPointToRay(mousePos);
+        Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
         RaycastHit2D hit = Physics2D.Raycast(ray.origin, ray.direction);
 
         if (hit.collider != null && hit.collider.gameObject == coverController.gameObject)
-        {
             coverController.OnCoverClicked();
-        }
     }
 
     private void CheckChildRightClick()
     {
-        Vector2 mousePos = Mouse.current.position.ReadValue();
-        Ray ray = Camera.main.ScreenPointToRay(mousePos);
+        Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
         RaycastHit2D hit = Physics2D.Raycast(ray.origin, ray.direction);
 
         if (hit.collider == null) return;
@@ -104,6 +88,14 @@ public class DetailViewManager : MonoBehaviour
 
         SlotContainer matchedSlot = slotManager.GetSlotByType(parentSlot.GetSlotType());
         if (matchedSlot == null || matchedSlot != parentSlot) return;
+
+        // Layer 1 gate — SU back cables must be unplugged for ALL hardware (MB, HDD, PSU)
+        SystemUnitConditionChecker checker = GetComponent<SystemUnitConditionChecker>();
+        if (checker != null && !checker.IsHardwareInteractable())
+        {
+            Debug.Log($"[DetailViewManager] BLOCKED — SU back cables still connected. Unplug VGA and PSU cables first.");
+            return;
+        }
 
         OpenInnerPanel(clicked);
     }
@@ -124,7 +116,6 @@ public class DetailViewManager : MonoBehaviour
         _childOriginalLocalPos = childPrefab.transform.localPosition;
 
         gameObject.SetActive(false);
-
         panel.SetActive(true);
 
         childPrefab.transform.SetParent(panel.transform, true);
@@ -133,8 +124,7 @@ public class DetailViewManager : MonoBehaviour
         if (rect != null)
         {
             Vector3 panelCenter = rect.TransformPoint(
-                new Vector3(rect.rect.center.x, rect.rect.center.y, 0f)
-            );
+                new Vector3(rect.rect.center.x, rect.rect.center.y, 0f));
             panelCenter.z = 0f;
             childPrefab.transform.position = panelCenter;
         }

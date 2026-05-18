@@ -20,14 +20,12 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         {
             _worldScale = hardwarePrefab.transform.lossyScale;
 
-            // BackCable starts active (installed in port) — do not deactivate it here.
-            // All other hardware starts inactive (stored) until dragged to workspace.
+            // BackCable starts active (installed in port) — do not deactivate
             bool isBackCable = hardwarePrefab.GetComponent<BackCable>() != null;
             if (!isBackCable)
                 hardwarePrefab.SetActive(false);
         }
 
-        // Icon shows only when prefab is inactive (stored)
         bool prefabInactive = hardwarePrefab == null || !hardwarePrefab.activeSelf;
         gameObject.SetActive(prefabInactive);
     }
@@ -50,9 +48,8 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         _isDragging = true;
 
         _dragIndicator = new GameObject("DragIndicator");
-
         SpriteRenderer sr = _dragIndicator.AddComponent<SpriteRenderer>();
-        sr.sprite = GetComponent<Image>().sprite;
+        sr.sprite = GetComponent<Image>()?.sprite;
         sr.sortingOrder = 999;
 
         Vector3 worldPos = Camera.main.ScreenToWorldPoint(
@@ -115,7 +112,7 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
             new Vector3(eventData.position.x, eventData.position.y, 10f));
         dropWorldPos.z = 0f;
 
-        // BackCable path — install to BackPortSlot
+        // BackCable path
         BackCable backCable = hardwarePrefab.GetComponent<BackCable>();
         if (backCable != null)
         {
@@ -150,9 +147,52 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
             return;
         }
 
+        // Heatsink path — installs onto CPU's HeatsinkSlot Transform
+        HeatsinkController heatsink = hardwarePrefab.GetComponent<HeatsinkController>();
+        if (heatsink != null)
+        {
+            // Find all HeatsinkSlot transforms in the scene
+            // HeatsinkSlot is identified by name
+            GameObject[] allObjects = FindObjectsOfType<GameObject>();
+            Transform bestSlot = null;
+            float bestDist = float.MaxValue;
+
+            foreach (GameObject go in allObjects)
+            {
+                if (go.name != "HeatsinkSlot") continue;
+
+                // CPU must be installed (HeatsinkSlot's parent is CPU, which must be in CPUSlot)
+                CPUController cpu = go.GetComponentInParent<CPUController>();
+                if (cpu == null) continue;
+                if (cpu.IsHeatsinkInstalled) continue; // already has heatsink
+
+                float dist = Vector3.Distance(go.transform.position, dropWorldPos);
+                if (dist < slotInstallRadius && dist < bestDist)
+                {
+                    bestDist = dist;
+                    bestSlot = go.transform;
+                }
+            }
+
+            if (bestSlot != null)
+            {
+                hardwarePrefab.SetActive(true);
+                hardwarePrefab.transform.SetParent(bestSlot, false);
+                hardwarePrefab.transform.localPosition = Vector3.zero;
+                heatsink.OnInstalledToCPU(bestSlot);
+                gameObject.SetActive(false);
+                Debug.Log($"[HardwareHolder] Heatsink installed to CPU.");
+            }
+            else
+            {
+                Debug.Log($"[HardwareHolder] No valid HeatsinkSlot found near drop position.");
+            }
+            return;
+        }
+
         // Standard SlotContainer path
         SlotContainer[] allSlots = FindObjectsOfType<SlotContainer>();
-        SlotContainer bestSlot = null;
+        SlotContainer bestSlotContainer = null;
         float bestSlotDist = float.MaxValue;
 
         foreach (SlotContainer slot in allSlots)
@@ -164,14 +204,14 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
             if (dist < slotInstallRadius && dist < bestSlotDist)
             {
                 bestSlotDist = dist;
-                bestSlot = slot;
+                bestSlotContainer = slot;
             }
         }
 
-        if (bestSlot == null) return;
+        if (bestSlotContainer == null) return;
 
         hardwarePrefab.SetActive(true);
-        bestSlot.InstallChild(hardwarePrefab, prefabName);
+        bestSlotContainer.InstallChild(hardwarePrefab, prefabName);
 
         var mb = hardwarePrefab.GetComponent<MotherboardController>();
         if (mb != null) mb.MarkInstalled();

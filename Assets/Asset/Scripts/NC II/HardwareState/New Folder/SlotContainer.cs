@@ -24,7 +24,14 @@ public class SlotContainer : MonoBehaviour
     public string GetInstalledPrefabName() => installedPrefabName;
     public bool HasInstalledChild() => !IsSlotEmpty();
 
-    public bool CanAcceptPrefab(string prefabName) => slotType == prefabName;
+    public bool CanAcceptPrefab(string prefabName)
+    {
+        // RAM slots accept any RAM stick (any name starting with "RAM")
+        if (slotType == "RAM")
+            return prefabName.StartsWith("RAM");
+
+        return slotType == prefabName;
+    }
 
     public void InstallChild(GameObject childInstance, string prefabName)
     {

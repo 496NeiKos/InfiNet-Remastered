@@ -21,6 +21,8 @@ public class PowerOnConditionChecker : MonoBehaviour
     [SerializeField] private Transform gpuSlot;
     [SerializeField] private Transform ramSlot1;
     [SerializeField] private Transform ramSlot2;
+    [SerializeField] private Transform ramSlot3;
+    [SerializeField] private Transform ramSlot4;
     [SerializeField] private Transform cmosSlot;
 
     [Header("Motherboard Cables")]
@@ -33,10 +35,8 @@ public class PowerOnConditionChecker : MonoBehaviour
     [SerializeField] private BackPortSlot psuBackPort;
     [SerializeField] private BackPortSlot vgaBackPort;
 
-    [Header("External Port Cables (Monitor + AVR)")]
-    [Tooltip("Monitor back VGA port")]
+    [Header("External Port Cables")]
     [SerializeField] private BackPortSlot monitorVgaPort;
-    [Tooltip("AVR back PSU port")]
     [SerializeField] private BackPortSlot avrPsuPort;
 
     public bool CanTurnOn()
@@ -59,8 +59,9 @@ public class PowerOnConditionChecker : MonoBehaviour
         if (!HasChild(gpuSlot)) { Debug.Log("[PowerOn] FAIL — GPU not installed."); pass = false; }
         if (!HasChild(cmosSlot)) { Debug.Log("[PowerOn] FAIL — CMOS not installed."); pass = false; }
 
-        if (!HasChild(ramSlot1) && !HasChild(ramSlot2))
-        { Debug.Log("[PowerOn] FAIL — No RAM installed (at least 1 required)."); pass = false; }
+        // At least 1 RAM slot must be occupied
+        bool hasRam = HasChild(ramSlot1) || HasChild(ramSlot2) || HasChild(ramSlot3) || HasChild(ramSlot4);
+        if (!hasRam) { Debug.Log("[PowerOn] FAIL — No RAM installed (at least 1 required)."); pass = false; }
 
         if (!IsCableInstalled(cableSlot1)) { Debug.Log("[PowerOn] FAIL — MB Cable 1 not attached."); pass = false; }
         if (!IsCableInstalled(cableSlot2)) { Debug.Log("[PowerOn] FAIL — MB Cable 2 not attached."); pass = false; }
@@ -79,9 +80,7 @@ public class PowerOnConditionChecker : MonoBehaviour
         if (avrPsuPort == null || avrPsuPort.IsUninstalled)
         { Debug.Log("[PowerOn] FAIL — AVR PSU port cable not plugged in."); pass = false; }
 
-        if (pass)
-            Debug.Log("[PowerOn] All conditions met — power on allowed.");
-
+        if (pass) Debug.Log("[PowerOn] All conditions met — power on allowed.");
         return pass;
     }
 
