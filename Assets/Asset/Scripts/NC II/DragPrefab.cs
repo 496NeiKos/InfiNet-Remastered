@@ -45,8 +45,8 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
             return;
         }
 
-        var mbcdm = FindObjectOfType<MotherboardComponentDetailManager>();
-        if (mbcdm != null && mbcdm.IsDetailPanelOpen)
+        var mbdvm = FindObjectOfType<MotherboardDetailViewManager>();
+        if (mbdvm != null && mbdvm.IsInnerPanelOpen)
         {
             Debug.Log($"[DragPrefab:{name}] BLOCKED — component detail panel is open.");
             _isDragging = false;
