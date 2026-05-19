@@ -83,38 +83,35 @@ public class CPUSlotController : MonoBehaviour
     {
         if (cpu == null || heatsink == null) return;
 
-        CPUController cpuCtrl = cpu.GetComponent<CPUController>();
         Collider2D cpuCol = cpu.GetComponent<Collider2D>();
 
         switch (_state)
         {
             case SlotState.BothInstalled:
-                // Heatsink on top — CPU collider disabled, not interactable
-                heatsink.SetActive(true);
-                cpu.SetActive(true);
+                // Heatsink on top — disable CPU collider and interaction
                 if (cpuCol != null) cpuCol.enabled = false;
                 SetInteractable(cpu, false);
                 SetInteractable(heatsink, true);
                 break;
 
             case SlotState.HeatsinkUninstalled:
-                // Heatsink removed — CPU exposed and interactable
-                heatsink.SetActive(false);
-                cpu.SetActive(true);
+                // Heatsink removed — enable CPU collider and interaction
                 if (cpuCol != null) cpuCol.enabled = true;
                 SetInteractable(cpu, true);
+                // Do NOT call heatsink.SetActive(false) — HardwareHolder handles visibility
                 break;
 
             case SlotState.CPUUninstalled:
-                // CPU removed, heatsink may or may not be present
-                heatsink.SetActive(true);
-                cpu.SetActive(false);
+                // CPU removed — heatsink still interactable if present
+                if (cpuCol != null) cpuCol.enabled = false;
+                SetInteractable(cpu, false);
                 SetInteractable(heatsink, true);
                 break;
 
             case SlotState.BothUninstalled:
-                heatsink.SetActive(false);
-                cpu.SetActive(false);
+                if (cpuCol != null) cpuCol.enabled = false;
+                SetInteractable(cpu, false);
+                SetInteractable(heatsink, false);
                 break;
         }
     }

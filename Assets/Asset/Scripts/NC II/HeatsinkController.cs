@@ -6,26 +6,26 @@ public class HeatsinkController : MonoBehaviour
 
     private void Start()
     {
-        // Cache on start while still parented to CPUSlot
         _cpuSlot = GetComponentInParent<CPUSlotController>();
     }
 
-    // Called by DragPrefab.OnEndDrag when heatsink is dragged to hardware area
-    public void OnRemovedFromSlot()
+    // Called by DragPrefab.OnEndDrag — slot ref passed directly since Heatsink
+    // may have already moved away from CPUSlot hierarchy by this point
+    public void OnRemovedFromSlot(CPUSlotController slot)
     {
-        // Use cached ref — by this point Heatsink may already be reparented away from CPUSlot
-        if (_cpuSlot != null)
+        CPUSlotController target = slot != null ? slot : _cpuSlot;
+        if (target != null)
         {
-            _cpuSlot.OnHeatsinkUninstalled();
+            target.OnHeatsinkUninstalled();
             Debug.Log("[HeatsinkController] Notified CPUSlotController: heatsink uninstalled.");
         }
         else
         {
-            Debug.LogWarning("[HeatsinkController] _cpuSlot is null — CPUSlotController not notified.");
+            Debug.LogWarning("[HeatsinkController] No CPUSlotController found — state not updated.");
         }
     }
 
-    // Called by HardwareHolder.TryInstallInSlot when reinstalled
+    // Called by HardwareHolder.TryInstallInSlot when reinstalled from hardware area
     public void OnInstalledToSlot(CPUSlotController slot)
     {
         _cpuSlot = slot;

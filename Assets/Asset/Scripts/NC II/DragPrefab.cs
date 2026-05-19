@@ -108,9 +108,6 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
 
         if (_wasInSlot)
         {
-            // Notify HeatsinkController BEFORE reparenting — CPUSlot must still be parent for cached ref to match
-            GetComponent<HeatsinkController>()?.OnRemovedFromSlot();
-
             Vector3 worldScale = transform.lossyScale;
             transform.SetParent(GameManager.Instance.worldRoot, true);
             ApplyWorldScale(worldScale);
@@ -151,15 +148,28 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
 
         if (_wasInSlot && onHardwareArea)
         {
+            // Cache slot ref before reparenting removes it from the hierarchy
+            CPUSlotController cpuSlot = _originalParent?.GetComponent<CPUSlotController>();
+
             _originalSlot?.RemoveChild();
             GetComponent<MotherboardController>()?.MarkUninstalled();
+
+            // Notify AFTER caching ref, BEFORE SendToHolder (which reparents to storage)
+            if (GetComponent<HeatsinkController>() != null)
+                GetComponent<HeatsinkController>().OnRemovedFromSlot(cpuSlot);
+            else if (GetComponent<CPUController>() != null)
+                cpuSlot?.OnCPUUninstalled();
+
             SendToHolder();
         }
         else if (_wasInSlot)
         {
-            // Snap back — notify slot that heatsink is reinstalled
-            GetComponent<HeatsinkController>()?.OnInstalledToSlot(
-                _originalParent.GetComponent<CPUSlotController>());
+            // Snap back — notify slot that component is reinstalled
+            CPUSlotController cpuSlot = _originalParent?.GetComponent<CPUSlotController>();
+            if (GetComponent<HeatsinkController>() != null)
+                GetComponent<HeatsinkController>().OnInstalledToSlot(cpuSlot);
+            else if (GetComponent<CPUController>() != null)
+                cpuSlot?.OnCPUInstalled();
 
             transform.SetParent(_originalParent, false);
             transform.localPosition = _originalLocalPos;
