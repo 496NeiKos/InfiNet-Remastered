@@ -20,9 +20,12 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         {
             _worldScale = hardwarePrefab.transform.lossyScale;
 
-            // BackCable starts active (installed in port) — do not deactivate
             bool isBackCable = hardwarePrefab.GetComponent<BackCable>() != null;
-            if (!isBackCable)
+            bool isSlotSibling = hardwarePrefab.GetComponent<HeatsinkController>() != null
+                              || hardwarePrefab.GetComponent<CPUController>() != null;
+
+            // BackCable and CPUSlot siblings start active — do not deactivate
+            if (!isBackCable && !isSlotSibling)
                 hardwarePrefab.SetActive(false);
         }
 
@@ -35,7 +38,6 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
     public void StoreHardware()
     {
         if (hardwarePrefab == null) return;
-
         hardwarePrefab.transform.SetParent(GameManager.Instance.hardwareStorage, true);
         hardwarePrefab.SetActive(false);
         gameObject.SetActive(true);
@@ -71,12 +73,7 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
 
     public void OnEndDrag(PointerEventData eventData)
     {
-        if (_dragIndicator != null)
-        {
-            Destroy(_dragIndicator);
-            _dragIndicator = null;
-        }
-
+        if (_dragIndicator != null) { Destroy(_dragIndicator); _dragIndicator = null; }
         if (!_isDragging) return;
         _isDragging = false;
 
@@ -88,7 +85,6 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
 
         bool onWorkspace = RectTransformUtility.RectangleContainsScreenPoint(
             GameManager.Instance.workspaceArea, eventData.position, eventData.pressEventCamera);
-
         if (!onWorkspace) return;
 
         Vector3 worldPos = Camera.main.ScreenToWorldPoint(
@@ -142,60 +138,91 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
             }
             else
             {
-                Debug.Log($"[HardwareHolder] {prefabName} dropped on wrong/no port — returning to hardware area.");
+                Debug.Log($"[HardwareHolder] {prefabName} dropped on wrong/no port.");
             }
             return;
         }
 
-        // Heatsink path — installs onto CPU's HeatsinkSlot Transform
+        // Heatsink path — installs back to CPUSlot (finds CPUSlotController by proximity)
         HeatsinkController heatsink = hardwarePrefab.GetComponent<HeatsinkController>();
         if (heatsink != null)
         {
-            // Find all HeatsinkSlot transforms in the scene
-            // HeatsinkSlot is identified by name
-            GameObject[] allObjects = FindObjectsOfType<GameObject>();
-            Transform bestSlot = null;
+            CPUSlotController[] allSlots = FindObjectsOfType<CPUSlotController>(true);
+            CPUSlotController bestSlot = null;
             float bestDist = float.MaxValue;
 
-            foreach (GameObject go in allObjects)
+            foreach (CPUSlotController slot in allSlots)
             {
-                if (go.name != "HeatsinkSlot") continue;
+                // Can only install heatsink if CPU is installed and heatsink is not
+                if (slot.IsHeatsinkInstalled) continue;
+                if (!slot.IsCPUInstalled) continue;
 
-                // CPU must be installed (HeatsinkSlot's parent is CPU, which must be in CPUSlot)
-                CPUController cpu = go.GetComponentInParent<CPUController>();
-                if (cpu == null) continue;
-                if (cpu.IsHeatsinkInstalled) continue; // already has heatsink
-
-                float dist = Vector3.Distance(go.transform.position, dropWorldPos);
+                float dist = Vector3.Distance(slot.transform.position, dropWorldPos);
                 if (dist < slotInstallRadius && dist < bestDist)
                 {
                     bestDist = dist;
-                    bestSlot = go.transform;
+                    bestSlot = slot;
                 }
             }
 
             if (bestSlot != null)
             {
-                hardwarePrefab.SetActive(true);
-                hardwarePrefab.transform.SetParent(bestSlot, false);
+                hardwarePrefab.transform.SetParent(bestSlot.transform, false);
                 hardwarePrefab.transform.localPosition = Vector3.zero;
-                heatsink.OnInstalledToCPU(bestSlot);
+                hardwarePrefab.SetActive(true);
+                heatsink.OnInstalledToSlot(bestSlot);
                 gameObject.SetActive(false);
-                Debug.Log($"[HardwareHolder] Heatsink installed to CPU.");
+                Debug.Log($"[HardwareHolder] Heatsink installed to CPUSlot.");
             }
             else
             {
-                Debug.Log($"[HardwareHolder] No valid HeatsinkSlot found near drop position.");
+                Debug.Log($"[HardwareHolder] No valid CPUSlot found for Heatsink.");
             }
             return;
         }
 
-        // Standard SlotContainer path
-        SlotContainer[] allSlots = FindObjectsOfType<SlotContainer>();
+        // CPU path — installs back to CPUSlot
+        CPUController cpuCtrl = hardwarePrefab.GetComponent<CPUController>();
+        if (cpuCtrl != null)
+        {
+            CPUSlotController[] allSlots = FindObjectsOfType<CPUSlotController>(true);
+            CPUSlotController bestSlot = null;
+            float bestDist = float.MaxValue;
+
+            foreach (CPUSlotController slot in allSlots)
+            {
+                if (slot.IsCPUInstalled) continue; // already has CPU
+
+                float dist = Vector3.Distance(slot.transform.position, dropWorldPos);
+                if (dist < slotInstallRadius && dist < bestDist)
+                {
+                    bestDist = dist;
+                    bestSlot = slot;
+                }
+            }
+
+            if (bestSlot != null)
+            {
+                hardwarePrefab.transform.SetParent(bestSlot.transform, false);
+                hardwarePrefab.transform.localPosition = Vector3.zero;
+                hardwarePrefab.SetActive(true);
+                bestSlot.OnCPUInstalled();
+                gameObject.SetActive(false);
+                Debug.Log($"[HardwareHolder] CPU installed to CPUSlot.");
+            }
+            else
+            {
+                Debug.Log($"[HardwareHolder] No valid CPUSlot found for CPU.");
+            }
+            return;
+        }
+
+        // Standard SlotContainer path (GPU, RAM, CMOS, Motherboard, HDD, PSU)
+        SlotContainer[] allSlotContainers = FindObjectsOfType<SlotContainer>();
         SlotContainer bestSlotContainer = null;
         float bestSlotDist = float.MaxValue;
 
-        foreach (SlotContainer slot in allSlots)
+        foreach (SlotContainer slot in allSlotContainers)
         {
             if (!slot.IsSlotEmpty()) continue;
             if (!slot.CanAcceptPrefab(prefabName)) continue;
@@ -222,11 +249,10 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
     private void ApplyWorldScale(Transform t, Vector3 targetWorldScale)
     {
         t.localScale = Vector3.one;
-        Vector3 currentLossy = t.lossyScale;
+        Vector3 ls = t.lossyScale;
         t.localScale = new Vector3(
-            targetWorldScale.x / currentLossy.x,
-            targetWorldScale.y / currentLossy.y,
-            targetWorldScale.z / currentLossy.z
-        );
+            targetWorldScale.x / ls.x,
+            targetWorldScale.y / ls.y,
+            targetWorldScale.z / ls.z);
     }
 }

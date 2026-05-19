@@ -17,7 +17,7 @@ public class PowerOnConditionChecker : MonoBehaviour
     [SerializeField] private Transform psuSlot;
 
     [Header("Motherboard Component Slots")]
-    [SerializeField] private Transform cpuSlot;
+    [SerializeField] private CPUSlotController cpuSlotController;
     [SerializeField] private Transform gpuSlot;
     [SerializeField] private Transform ramSlot1;
     [SerializeField] private Transform ramSlot2;
@@ -55,7 +55,7 @@ public class PowerOnConditionChecker : MonoBehaviour
         if (!HasChild(hddSlot)) { Debug.Log("[PowerOn] FAIL — HDD not installed."); pass = false; }
         if (!HasChild(psuSlot)) { Debug.Log("[PowerOn] FAIL — PSU not installed."); pass = false; }
 
-        if (!HasChild(cpuSlot)) { Debug.Log("[PowerOn] FAIL — CPU not installed."); pass = false; }
+        if (cpuSlotController == null || !cpuSlotController.HasCPU()) { Debug.Log("[PowerOn] FAIL — CPU not installed."); pass = false; }
         if (!HasChild(gpuSlot)) { Debug.Log("[PowerOn] FAIL — GPU not installed."); pass = false; }
         if (!HasChild(cmosSlot)) { Debug.Log("[PowerOn] FAIL — CMOS not installed."); pass = false; }
 

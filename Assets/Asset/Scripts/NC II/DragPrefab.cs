@@ -28,7 +28,7 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
         if (eventData.button != PointerEventData.InputButton.Left) return;
 
         SlotContainer slot = GetComponentInParent<SlotContainer>();
-        bool isInSlot = slot != null;
+        bool isInSlot = slot != null || GetComponentInParent<CPUSlotController>() != null;
 
         if (GameManager.Instance.IsEditorOpen && !isInSlot)
         {
@@ -76,8 +76,8 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
         }
 
         // Block CPU drag if heatsink is installed
-        CPUController cpu = GetComponent<CPUController>();
-        if (cpu != null && isInSlot && cpu.IsHeatsinkInstalled)
+        CPUSlotController cpuSlot = GetComponentInParent<CPUSlotController>();
+        if (cpuSlot != null && isInSlot && cpuSlot.IsHeatsinkInstalled && GetComponent<CPUController>() != null)
         {
             Debug.Log($"[DragPrefab:{name}] BLOCKED — heatsink is still installed.");
             _isDragging = false;
@@ -108,6 +108,9 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
 
         if (_wasInSlot)
         {
+            // Notify HeatsinkController BEFORE reparenting — CPUSlot must still be parent for cached ref to match
+            GetComponent<HeatsinkController>()?.OnRemovedFromSlot();
+
             Vector3 worldScale = transform.lossyScale;
             transform.SetParent(GameManager.Instance.worldRoot, true);
             ApplyWorldScale(worldScale);
@@ -148,23 +151,22 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
 
         if (_wasInSlot && onHardwareArea)
         {
-            HeatsinkController heatsink = GetComponent<HeatsinkController>();
-            heatsink?.OnRemovedFromCPU();
-
             _originalSlot?.RemoveChild();
             GetComponent<MotherboardController>()?.MarkUninstalled();
             SendToHolder();
         }
         else if (_wasInSlot)
         {
+            // Snap back — notify slot that heatsink is reinstalled
+            GetComponent<HeatsinkController>()?.OnInstalledToSlot(
+                _originalParent.GetComponent<CPUSlotController>());
+
             transform.SetParent(_originalParent, false);
             transform.localPosition = _originalLocalPos;
             transform.localScale = _originalLocalScale;
         }
         else if (onHardwareArea)
         {
-            HeatsinkController heatsink = GetComponent<HeatsinkController>();
-            heatsink?.OnRemovedFromCPU();
             SendToHolder();
         }
         else

@@ -1,9 +1,9 @@
 using UnityEngine;
 
 /// <summary>
-/// On CPU root object inside CPUSlot.
-/// Tracks thermal paste state and heatsink installation.
-/// Controls CPU root sprite and CPUDetailed sprite changes.
+/// On CPU object (child of CPUSlot, sibling of Heatsink).
+/// Tracks thermal paste state and controls CPU sprites.
+/// Heatsink/CPU interaction state is managed by CPUSlotController.
 /// </summary>
 public class CPUController : MonoBehaviour
 {
@@ -19,24 +19,15 @@ public class CPUController : MonoBehaviour
     [SerializeField] private Sprite cpuDetailedNoPasteSprite;
     [SerializeField] private Sprite cpuDetailedPasteAppliedSprite;
 
-    private PasteState _pasteState = PasteState.PasteApplied; // default: paste already on
-    private bool _isHeatsinkInstalled = false;
+    private PasteState _pasteState = PasteState.PasteApplied;
 
     public PasteState CurrentPasteState => _pasteState;
-    public bool IsHeatsinkInstalled => _isHeatsinkInstalled;
 
     private void Awake()
     {
         if (cpuRootSprite == null)
             cpuRootSprite = GetComponent<SpriteRenderer>();
-
         ApplySprites();
-    }
-
-    public void SetHeatsinkInstalled(bool installed)
-    {
-        _isHeatsinkInstalled = installed;
-        Debug.Log($"[CPUController] Heatsink installed: {installed}");
     }
 
     public void ApplyThermalPaste()
@@ -46,7 +37,6 @@ public class CPUController : MonoBehaviour
             Debug.Log("[CPUController] Thermal paste already applied.");
             return;
         }
-
         _pasteState = PasteState.PasteApplied;
         ApplySprites();
         Debug.Log("[CPUController] Thermal paste applied.");
@@ -59,7 +49,6 @@ public class CPUController : MonoBehaviour
             Debug.Log("[CPUController] No thermal paste to remove.");
             return;
         }
-
         _pasteState = PasteState.NoPaste;
         ApplySprites();
         Debug.Log("[CPUController] Thermal paste removed.");
@@ -73,6 +62,8 @@ public class CPUController : MonoBehaviour
             cpuRootSprite.sprite = hasPaste ? cpuPasteAppliedSprite : cpuNoPasteSprite;
 
         if (cpuDetailedSprite != null)
-            cpuDetailedSprite.sprite = hasPaste ? cpuDetailedPasteAppliedSprite : cpuDetailedNoPasteSprite;
+            cpuDetailedSprite.sprite = hasPaste
+                ? cpuDetailedPasteAppliedSprite
+                : cpuDetailedNoPasteSprite;
     }
 }

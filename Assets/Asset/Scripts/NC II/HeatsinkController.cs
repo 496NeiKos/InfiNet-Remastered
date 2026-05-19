@@ -1,40 +1,34 @@
 using UnityEngine;
 
-/// <summary>
-/// On Heatsink object (child of HeatsinkSlot, which is child of CPU).
-/// Manages install/uninstall to/from CPU's HeatsinkSlot.
-/// Notifies CPUController of heatsink state.
-/// </summary>
 public class HeatsinkController : MonoBehaviour
 {
-    // HeatsinkSlot is the parent Transform on the CPU that the heatsink snaps to.
-    // Tracked so we can snap back on invalid drops.
-    private Transform _heatsinkSlot;
-    private CPUController _cpuController;
+    private CPUSlotController _cpuSlot;
 
     private void Start()
     {
-        // Parent is HeatsinkSlot, grandparent is CPU
-        _heatsinkSlot = transform.parent;
-
-        if (_heatsinkSlot != null)
-            _cpuController = _heatsinkSlot.GetComponentInParent<CPUController>();
-
-        if (_cpuController != null)
-            _cpuController.SetHeatsinkInstalled(true);
+        // Cache on start while still parented to CPUSlot
+        _cpuSlot = GetComponentInParent<CPUSlotController>();
     }
 
-    public void OnInstalledToCPU(Transform heatsinkSlot)
+    // Called by DragPrefab.OnEndDrag when heatsink is dragged to hardware area
+    public void OnRemovedFromSlot()
     {
-        _heatsinkSlot = heatsinkSlot;
-        _cpuController = heatsinkSlot.GetComponentInParent<CPUController>();
-        _cpuController?.SetHeatsinkInstalled(true);
+        // Use cached ref — by this point Heatsink may already be reparented away from CPUSlot
+        if (_cpuSlot != null)
+        {
+            _cpuSlot.OnHeatsinkUninstalled();
+            Debug.Log("[HeatsinkController] Notified CPUSlotController: heatsink uninstalled.");
+        }
+        else
+        {
+            Debug.LogWarning("[HeatsinkController] _cpuSlot is null — CPUSlotController not notified.");
+        }
     }
 
-    public void OnRemovedFromCPU()
+    // Called by HardwareHolder.TryInstallInSlot when reinstalled
+    public void OnInstalledToSlot(CPUSlotController slot)
     {
-        _cpuController?.SetHeatsinkInstalled(false);
+        _cpuSlot = slot;
+        _cpuSlot?.OnHeatsinkInstalled();
     }
-
-    public Transform GetHeatsinkSlot() => _heatsinkSlot;
 }
