@@ -21,15 +21,12 @@ public class PowerOnConditionChecker : MonoBehaviour
     [SerializeField] private Transform gpuSlot;
     [SerializeField] private Transform ramSlot1;
     [SerializeField] private Transform ramSlot2;
-    [SerializeField] private Transform ramSlot3;
-    [SerializeField] private Transform ramSlot4;
     [SerializeField] private Transform cmosSlot;
 
     [Header("Motherboard Cables")]
     [SerializeField] private CableSlot cableSlot1;
     [SerializeField] private CableSlot cableSlot2;
     [SerializeField] private CableSlot cableSlot3;
-    [SerializeField] private CableSlot cableSlot4;
 
     [Header("SystemUnit Back Port Cables")]
     [SerializeField] private BackPortSlot psuBackPort;
@@ -60,13 +57,12 @@ public class PowerOnConditionChecker : MonoBehaviour
         if (!HasChild(cmosSlot)) { Debug.Log("[PowerOn] FAIL — CMOS not installed."); pass = false; }
 
         // At least 1 RAM slot must be occupied
-        bool hasRam = HasChild(ramSlot1) || HasChild(ramSlot2) || HasChild(ramSlot3) || HasChild(ramSlot4);
+        bool hasRam = HasChild(ramSlot1) || HasChild(ramSlot2);
         if (!hasRam) { Debug.Log("[PowerOn] FAIL — No RAM installed (at least 1 required)."); pass = false; }
 
         if (!IsCableInstalled(cableSlot1)) { Debug.Log("[PowerOn] FAIL — MB Cable 1 not attached."); pass = false; }
         if (!IsCableInstalled(cableSlot2)) { Debug.Log("[PowerOn] FAIL — MB Cable 2 not attached."); pass = false; }
         if (!IsCableInstalled(cableSlot3)) { Debug.Log("[PowerOn] FAIL — MB Cable 3 not attached."); pass = false; }
-        if (!IsCableInstalled(cableSlot4)) { Debug.Log("[PowerOn] FAIL — MB Cable 4 not attached."); pass = false; }
 
         if (psuBackPort == null || psuBackPort.IsUninstalled)
         { Debug.Log("[PowerOn] FAIL — SystemUnit PSU back cable not plugged in."); pass = false; }

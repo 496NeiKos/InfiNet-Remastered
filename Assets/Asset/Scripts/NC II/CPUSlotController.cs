@@ -18,6 +18,7 @@ public class CPUSlotController : MonoBehaviour
     [Header("References")]
     [SerializeField] private GameObject cpu;
     [SerializeField] private GameObject heatsink;
+    [SerializeField] private CPULockController cpuLock;
 
     private SlotState _state = SlotState.BothInstalled;
     public SlotState State => _state;
@@ -25,6 +26,7 @@ public class CPUSlotController : MonoBehaviour
     // Convenience checks used by DragPrefab and MotherboardDetailViewManager
     public bool IsCPUInstalled => _state == SlotState.BothInstalled || _state == SlotState.HeatsinkUninstalled;
     public bool IsHeatsinkInstalled => _state == SlotState.BothInstalled || _state == SlotState.CPUUninstalled;
+    public bool IsLockClosed => cpuLock != null && cpuLock.IsLocked;
 
     private void Awake()
     {

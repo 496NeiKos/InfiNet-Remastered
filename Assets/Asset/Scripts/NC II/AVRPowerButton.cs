@@ -14,6 +14,11 @@ public class AVRPowerButton : MonoBehaviour, IPowerButton
     [SerializeField] private Sprite avrSpriteOn;
     [SerializeField] private Sprite avrSpriteOff;
 
+    [Header("AVR Detailed Sprite (front view — changes with power state)")]
+    [SerializeField] private SpriteRenderer avrDetailedSprite;
+    [SerializeField] private Sprite avrDetailedSpriteOn;
+    [SerializeField] private Sprite avrDetailedSpriteOff;
+
     [Header("Condition References")]
     [SerializeField] private BackPortSlot avrPsuPort;
     [SerializeField] private BackPortSlot systemUnitPsuPort;
@@ -83,6 +88,9 @@ public class AVRPowerButton : MonoBehaviour, IPowerButton
 
         if (avrRootSprite != null)
             avrRootSprite.sprite = (_state == PowerState.On) ? avrSpriteOn : avrSpriteOff;
+
+        if (avrDetailedSprite != null)
+            avrDetailedSprite.sprite = (_state == PowerState.On) ? avrDetailedSpriteOn : avrDetailedSpriteOff;
     }
 
     private bool IsMouseOver()

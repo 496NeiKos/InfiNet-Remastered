@@ -75,8 +75,16 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
             return;
         }
 
-        // Block CPU drag if heatsink is installed
+        // Block CPU drag if lock is closed
         CPUSlotController cpuSlot = GetComponentInParent<CPUSlotController>();
+        if (cpuSlot != null && isInSlot && GetComponent<CPUController>() != null && cpuSlot.IsLockClosed)
+        {
+            Debug.Log($"[DragPrefab:{name}] BLOCKED — CPU lock is closed.");
+            _isDragging = false;
+            return;
+        }
+
+        // Block CPU drag if heatsink is installed
         if (cpuSlot != null && isInSlot && cpuSlot.IsHeatsinkInstalled && GetComponent<CPUController>() != null)
         {
             Debug.Log($"[DragPrefab:{name}] BLOCKED — heatsink is still installed.");

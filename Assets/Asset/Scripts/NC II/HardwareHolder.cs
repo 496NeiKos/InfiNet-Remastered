@@ -13,12 +13,14 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
     private GameObject _dragIndicator;
     private bool _isDragging = false;
     private Vector3 _worldScale;
+    private Vector3 _originalLocalScale;
 
     private void Start()
     {
         if (hardwarePrefab != null)
         {
             _worldScale = hardwarePrefab.transform.lossyScale;
+            _originalLocalScale = hardwarePrefab.transform.localScale;
 
             bool isBackCable = hardwarePrefab.GetComponent<BackCable>() != null;
             bool isSlotSibling = hardwarePrefab.GetComponent<HeatsinkController>() != null
@@ -155,7 +157,6 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
             {
                 // Can only install heatsink if CPU is installed and heatsink is not
                 if (slot.IsHeatsinkInstalled) continue;
-                if (!slot.IsCPUInstalled) continue;
 
                 float dist = Vector3.Distance(slot.transform.position, dropWorldPos);
                 if (dist < slotInstallRadius && dist < bestDist)
@@ -169,6 +170,11 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
             {
                 hardwarePrefab.transform.SetParent(bestSlot.transform, false);
                 hardwarePrefab.transform.localPosition = Vector3.zero;
+                // Use scale captured by HeatsinkController while under CPUSlot — most reliable
+                Vector3 reinstallScale = heatsink.InstalledLocalScale;
+                hardwarePrefab.transform.localScale = reinstallScale != Vector3.zero
+                    ? reinstallScale
+                    : _originalLocalScale;
                 hardwarePrefab.SetActive(true);
                 heatsink.OnInstalledToSlot(bestSlot);
                 gameObject.SetActive(false);
@@ -192,6 +198,8 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
             foreach (CPUSlotController slot in allSlots)
             {
                 if (slot.IsCPUInstalled) continue; // already has CPU
+                if (slot.IsLockClosed) { Debug.Log("[HardwareHolder] CPU install blocked — CPU lock is closed."); continue; }
+                if (slot.IsHeatsinkInstalled) { Debug.Log("[HardwareHolder] CPU install blocked — heatsink is installed."); continue; }
 
                 float dist = Vector3.Distance(slot.transform.position, dropWorldPos);
                 if (dist < slotInstallRadius && dist < bestDist)
@@ -205,6 +213,7 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
             {
                 hardwarePrefab.transform.SetParent(bestSlot.transform, false);
                 hardwarePrefab.transform.localPosition = Vector3.zero;
+                hardwarePrefab.transform.localScale = _originalLocalScale;
                 hardwarePrefab.SetActive(true);
                 bestSlot.OnCPUInstalled();
                 gameObject.SetActive(false);

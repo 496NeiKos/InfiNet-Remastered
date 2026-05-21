@@ -10,27 +10,52 @@ public class MotherboardPhaseManager : MonoBehaviour
 
     public void SetPhase1Interactive()
     {
-        SetInteractable(phase1Root, true);
-        SetInteractable(phase2Root, false);
+        SetPhase1Enabled(true);
+        SetPhase2Enabled(false);
     }
 
     public void SetPhase2Interactive()
     {
-        SetInteractable(phase1Root, false);
-        SetInteractable(phase2Root, true);
+        SetPhase1Enabled(false);
+        SetPhase2Enabled(true);
     }
 
-    private void SetInteractable(GameObject root, bool interactable)
+    private void SetPhase1Enabled(bool enabled)
     {
-        if (root == null) return;
+        if (phase1Root == null) return;
 
-        foreach (var sc in root.GetComponentsInChildren<ScrewController>(true))
-            sc.enabled = interactable;
+        // Toggle screws and cables — both script and collider
+        foreach (var sc in phase1Root.GetComponentsInChildren<ScrewController>(true))
+        {
+            sc.enabled = enabled;
+            Collider2D col = sc.GetComponent<Collider2D>();
+            if (col != null) col.enabled = enabled;
+        }
 
-        foreach (var cs in root.GetComponentsInChildren<CableSlot>(true))
-            cs.enabled = interactable;
+        foreach (var cs in phase1Root.GetComponentsInChildren<CableSlot>(true))
+        {
+            cs.enabled = enabled;
+            Collider2D col = cs.GetComponent<Collider2D>();
+            if (col != null) col.enabled = enabled;
+        }
+    }
 
-        foreach (var dp in root.GetComponentsInChildren<DragPrefab>(true))
-            dp.enabled = interactable;
+    private void SetPhase2Enabled(bool enabled)
+    {
+        if (phase2Root == null) return;
+
+        // Toggle drag and right-click interaction on all Phase 2 components
+        foreach (var dp in phase2Root.GetComponentsInChildren<DragPrefab>(true))
+            dp.enabled = enabled;
+
+        foreach (var pi in phase2Root.GetComponentsInChildren<PrefabInteraction>(true))
+            pi.enabled = enabled;
+
+        foreach (var lk in phase2Root.GetComponentsInChildren<CPULockController>(true))
+            lk.enabled = enabled;
+
+        // Toggle colliders so components cannot be raycasted when phase is inactive
+        foreach (var col in phase2Root.GetComponentsInChildren<Collider2D>(true))
+            col.enabled = enabled;
     }
 }

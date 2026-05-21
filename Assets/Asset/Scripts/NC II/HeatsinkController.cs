@@ -3,11 +3,16 @@ using UnityEngine;
 public class HeatsinkController : MonoBehaviour
 {
     private CPUSlotController _cpuSlot;
+    private Vector3 _installedLocalScale;
 
     private void Start()
     {
         _cpuSlot = GetComponentInParent<CPUSlotController>();
+        // Capture scale now while correctly parented under CPUSlot
+        _installedLocalScale = transform.localScale;
     }
+
+    public Vector3 InstalledLocalScale => _installedLocalScale;
 
     // Called by DragPrefab.OnEndDrag — slot ref passed directly since Heatsink
     // may have already moved away from CPUSlot hierarchy by this point
