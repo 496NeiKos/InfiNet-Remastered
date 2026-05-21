@@ -155,6 +155,7 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
 
             foreach (CableSlot slot in allSlots)
             {
+                if (!slot.enabled) continue;          // Phase 1 inactive — slot is disabled
                 if (slot.IsInstalled()) continue;
                 if (!slot.CanAcceptCable(mbCable.GetCableType())) continue;
 

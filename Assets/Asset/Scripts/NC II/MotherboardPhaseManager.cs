@@ -38,6 +38,14 @@ public class MotherboardPhaseManager : MonoBehaviour
             Collider2D col = cs.GetComponent<Collider2D>();
             if (col != null) col.enabled = enabled;
         }
+
+        // Toggle MBCable — blocks hold-to-detach and drag when Phase 2 is active
+        foreach (var mc in phase1Root.GetComponentsInChildren<MBCable>(true))
+        {
+            mc.enabled = enabled;
+            Collider2D col = mc.GetComponent<Collider2D>();
+            if (col != null) col.enabled = enabled;
+        }
     }
 
     private void SetPhase2Enabled(bool enabled)

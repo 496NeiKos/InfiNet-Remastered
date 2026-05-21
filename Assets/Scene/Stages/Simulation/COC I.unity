@@ -201,7 +201,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 20
   m_MaskInteraction: 0
   m_Sprite: {fileID: 8724761358744914343, guid: 993556737efca3e4ead554078378c3cc, type: 3}
   m_Color: {r: 0.4490565, g: 0.4490565, b: 0.4490565, a: 0.47058824}
@@ -429,7 +429,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 20
   m_MaskInteraction: 0
   m_Sprite: {fileID: -7328141288582359700, guid: 56ab36eb16ea27247b72b9e2d9adc3f6, type: 3}
   m_Color: {r: 0.4490565, g: 0.4490565, b: 0.4490565, a: 0.47058824}
@@ -1655,7 +1655,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 20
   m_MaskInteraction: 0
   m_Sprite: {fileID: -380107874108939751, guid: 07a3d8af4d97a174fb5972ecfe604b0f, type: 3}
   m_Color: {r: 0.4490565, g: 0.4490565, b: 0.4490565, a: 0.47058824}
@@ -2319,7 +2319,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bf17dafdb00f41549b6e7de207f29387, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
-  hardwarePrefab: {fileID: 904372419361912784}
+  hardwarePrefab: {fileID: 4699670503633810579}
   slotInstallRadius: 1.5
 --- !u!1 &320783193
 GameObject:
@@ -2611,7 +2611,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bf17dafdb00f41549b6e7de207f29387, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
-  hardwarePrefab: {fileID: 904372419361912784}
+  hardwarePrefab: {fileID: 7816693105033411294}
   slotInstallRadius: 1.5
 --- !u!1 &343451547
 GameObject:
@@ -4254,11 +4254,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 971d2a53ea50eab449bf2856dfc4408c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CableDrag
-  cableDragSprite: {fileID: -527664293115241574, guid: 8712f5bc2ae8adc45b3616680bf18986, type: 3}
-  cableType: SUVGACableIcon
-  canvas: {fileID: 1417247270}
-  _dragVisual: {fileID: 0}
-  _isDragging: 0
 --- !u!114 &477266322
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5998,7 +5993,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 13
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -6192479539130286104, guid: b57e08cb1432392459f8352731b09b0d, type: 3}
+  m_Sprite: {fileID: 3696289872988920862, guid: 98828a5b12e2bc64ca919e15d20cc552, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -6017,8 +6012,8 @@ Transform:
   m_GameObject: {fileID: 679522239}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 2.5, y: 2.5, z: 2.4999995}
+  m_LocalPosition: {x: -0.108, y: 0.054, z: 0}
+  m_LocalScale: {x: 2.1, y: 2.1, z: 2.1}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 1227617956}
@@ -6062,7 +6057,7 @@ BoxCollider2D:
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 0.66, y: 0.68}
+    oldSize: {x: 1.4, y: 1.19}
     newSize: {x: 0.56, y: 0.57}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
@@ -6117,11 +6112,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 971d2a53ea50eab449bf2856dfc4408c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CableDrag
-  cableDragSprite: {fileID: -527664293115241574, guid: 8712f5bc2ae8adc45b3616680bf18986, type: 3}
-  cableType: MVGACableIcon
-  canvas: {fileID: 1417247270}
-  _dragVisual: {fileID: 0}
-  _isDragging: 0
 --- !u!114 &686178432
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6240,7 +6230,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &692340050
 Transform:
   m_ObjectHideFlags: 0
@@ -6756,11 +6746,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 971d2a53ea50eab449bf2856dfc4408c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CableDrag
-  cableDragSprite: {fileID: -527664293115241574, guid: 8712f5bc2ae8adc45b3616680bf18986, type: 3}
-  cableType: APSUCableIcon
-  canvas: {fileID: 1417247270}
-  _dragVisual: {fileID: 0}
-  _isDragging: 0
 --- !u!114 &700654901
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10105,7 +10090,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 2.4000003, y: 2.4, z: 2.3999999}
+  m_LocalScale: {x: 2, y: 2, z: 2}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 320783194}
@@ -12025,11 +12010,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 971d2a53ea50eab449bf2856dfc4408c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CableDrag
-  cableDragSprite: {fileID: -527664293115241574, guid: 8712f5bc2ae8adc45b3616680bf18986, type: 3}
-  cableType: SUPSUCableIcon
-  canvas: {fileID: 1417247270}
-  _dragVisual: {fileID: 0}
-  _isDragging: 0
 --- !u!114 &1487959381
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13316,7 +13296,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 6, y: 6, z: 6}
+  m_LocalScale: {x: 2, y: 2, z: 2}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 8592210239883464346}
@@ -15821,7 +15801,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!61 &961192306988971016
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -20066,9 +20046,9 @@ MonoBehaviour:
   ramSlot1: {fileID: 8448558833111799720}
   ramSlot2: {fileID: 117802753}
   cmosSlot: {fileID: 1414681628796506072}
-  cableSlot1: {fileID: 0}
-  cableSlot2: {fileID: 0}
-  cableSlot3: {fileID: 0}
+  cableSlot1: {fileID: 249089024}
+  cableSlot2: {fileID: 10203394}
+  cableSlot3: {fileID: 37371701}
   psuBackPort: {fileID: 1133075496}
   vgaBackPort: {fileID: 514138396}
   monitorVgaPort: {fileID: 524374831}
