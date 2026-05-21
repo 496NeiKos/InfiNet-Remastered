@@ -23,11 +23,11 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
             _originalLocalScale = hardwarePrefab.transform.localScale;
 
             bool isBackCable = hardwarePrefab.GetComponent<BackCable>() != null;
+            bool isMBCable = hardwarePrefab.GetComponent<MBCable>() != null;
             bool isSlotSibling = hardwarePrefab.GetComponent<HeatsinkController>() != null
                               || hardwarePrefab.GetComponent<CPUController>() != null;
 
-            // BackCable and CPUSlot siblings start active — do not deactivate
-            if (!isBackCable && !isSlotSibling)
+            if (!isBackCable && !isMBCable && !isSlotSibling)
                 hardwarePrefab.SetActive(false);
         }
 
@@ -141,6 +141,41 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
             else
             {
                 Debug.Log($"[HardwareHolder] {prefabName} dropped on wrong/no port.");
+            }
+            return;
+        }
+
+        // MBCable path — reinstalls to matching CableSlot by cableType
+        MBCable mbCable = hardwarePrefab.GetComponent<MBCable>();
+        if (mbCable != null)
+        {
+            CableSlot[] allSlots = FindObjectsOfType<CableSlot>(true);
+            CableSlot bestSlot = null;
+            float bestDist = float.MaxValue;
+
+            foreach (CableSlot slot in allSlots)
+            {
+                if (slot.IsInstalled()) continue;
+                if (!slot.CanAcceptCable(mbCable.GetCableType())) continue;
+
+                float dist = Vector3.Distance(slot.transform.position, dropWorldPos);
+                if (dist < slotInstallRadius && dist < bestDist)
+                {
+                    bestDist = dist;
+                    bestSlot = slot;
+                }
+            }
+
+            if (bestSlot != null)
+            {
+                hardwarePrefab.SetActive(true);
+                mbCable.InstallToSlot(bestSlot);
+                gameObject.SetActive(false);
+                Debug.Log($"[HardwareHolder] {prefabName} installed to CableSlot.");
+            }
+            else
+            {
+                Debug.Log($"[HardwareHolder] {prefabName} dropped on wrong/no slot — stays in hardware area.");
             }
             return;
         }
