@@ -21,6 +21,13 @@ public class DetailViewManager : MonoBehaviour
         if (GameManager.Instance == null || !GameManager.Instance.IsEditorOpen)
             return;
 
+        // Only handle input while this object is actually inside the editing panel.
+        // Prevents responding to clicks meant for another object (e.g. Motherboard) that
+        // is currently being edited instead.
+        if (GameManager.Instance.editingPanel == null ||
+            !transform.IsChildOf(GameManager.Instance.editingPanel.transform))
+            return;
+
         if (Mouse.current.leftButton.wasPressedThisFrame)
         {
             if (!_isInnerPanelOpen)

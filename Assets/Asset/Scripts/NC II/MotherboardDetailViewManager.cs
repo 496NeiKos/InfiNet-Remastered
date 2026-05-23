@@ -27,6 +27,13 @@ public class MotherboardDetailViewManager : MonoBehaviour
         if (GameManager.Instance == null || !GameManager.Instance.IsEditorOpen) return;
         if (_isInnerPanelOpen) return;
 
+        // Only handle input while this Motherboard is actually inside the editing panel.
+        // Prevents responding to clicks meant for another object (e.g. SystemUnit) that
+        // is currently being edited instead.
+        if (GameManager.Instance.editingPanel == null ||
+            !transform.IsChildOf(GameManager.Instance.editingPanel.transform))
+            return;
+
         if (Mouse.current.rightButton.wasPressedThisFrame)
             CheckComponentRightClick();
     }
