@@ -38,6 +38,7 @@ public class GPUDetailedView : MonoBehaviour
         _clickCount = 0;
         _clickTimer = 0f;
         ApplySprite();
+        ApplyHardwareInteractable();
     }
 
     private void Update()
@@ -99,6 +100,7 @@ public class GPUDetailedView : MonoBehaviour
         }
 
         ApplySprite();
+        ApplyHardwareInteractable();
         Debug.Log($"[GPUDetailedView] Latch → {(_gpuController.IsLatched ? "On" : "Out")}");
     }
 
@@ -114,6 +116,33 @@ public class GPUDetailedView : MonoBehaviour
         foreach (var cs in _gpuController.GetComponentsInChildren<CableSlot>(true))
             if (cs.IsInstalled()) return false;
         return true;
+    }
+
+    private void ApplyHardwareInteractable()
+    {
+        if (_gpuController == null) return;
+        bool interactable = _gpuController.IsLatched;
+
+        foreach (var sc in _gpuController.GetComponentsInChildren<ScrewController>(true))
+        {
+            sc.enabled = interactable;
+            Collider2D col = sc.GetComponent<Collider2D>();
+            if (col != null) col.enabled = interactable;
+        }
+
+        foreach (var cs in _gpuController.GetComponentsInChildren<CableSlot>(true))
+        {
+            cs.enabled = interactable;
+            Collider2D col = cs.GetComponent<Collider2D>();
+            if (col != null) col.enabled = interactable;
+        }
+
+        foreach (var mc in _gpuController.GetComponentsInChildren<MBCable>(true))
+        {
+            mc.enabled = interactable;
+            Collider2D col = mc.GetComponent<Collider2D>();
+            if (col != null) col.enabled = interactable;
+        }
     }
 
     private void ApplySprite()
