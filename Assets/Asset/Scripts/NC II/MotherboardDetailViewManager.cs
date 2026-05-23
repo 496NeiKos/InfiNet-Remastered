@@ -56,7 +56,7 @@ public class MotherboardDetailViewManager : MonoBehaviour
             if (cpu != null) { OpenInnerPanel(cpu.gameObject); return; }
 
             RAMController ram = hit.collider.GetComponent<RAMController>();
-            if (ram != null) { OpenInnerPanel(ram.gameObject); return; }
+            if (ram != null) { OpenInnerPanelForRAMDetailed(ram); return; }
         }
     }
 
@@ -96,12 +96,61 @@ public class MotherboardDetailViewManager : MonoBehaviour
         Debug.Log($"[MotherboardDetailViewManager] Opened inner panel for {childPrefab.name}");
     }
 
+    // RAM variant: only the RAMDetailedView child moves to the inner panel; the RAM root stays in its slot.
+    private void OpenInnerPanelForRAMDetailed(RAMController ram)
+    {
+        GameObject panel = GetInnerEditingPanel();
+        if (panel == null)
+        {
+            Debug.LogError("[MotherboardDetailViewManager] InnerEditingPanel not found.");
+            return;
+        }
+
+        Transform detailedChild = null;
+        foreach (Transform child in ram.transform)
+        {
+            if (child.name.Contains("Detailed")) { detailedChild = child; break; }
+        }
+
+        if (detailedChild == null)
+        {
+            Debug.LogError($"[MotherboardDetailViewManager] No 'Detailed' child found on {ram.name}");
+            return;
+        }
+
+        _activeChildPrefab = detailedChild.gameObject;
+        _isInnerPanelOpen = true;
+        _childOriginalParent = detailedChild.parent;        // RAM root
+        _childOriginalLocalPos = detailedChild.localPosition;
+        _childOriginalLocalScale = detailedChild.localScale;
+
+        gameObject.SetActive(false);
+
+        detailedChild.SetParent(panel.transform, true);
+        RectTransform rect = panel.GetComponent<RectTransform>();
+        if (rect != null)
+        {
+            Vector3 center = rect.TransformPoint(
+                new Vector3(rect.rect.center.x, rect.rect.center.y, 0f));
+            center.z = 0f;
+            detailedChild.position = center;
+        }
+
+        detailedChild.gameObject.SetActive(true);
+        panel.SetActive(true);
+        Debug.Log($"[MotherboardDetailViewManager] Opened inner panel for {ram.name} (RAMDetailedView only)");
+    }
+
     public void CloseInnerPanel()
     {
         if (!_isInnerPanelOpen || _activeChildPrefab == null) return;
 
-        // Deactivate detailed view first
-        SetDetailedView(_activeChildPrefab, false);
+        // RAM flow: _activeChildPrefab IS the detailed child — deactivate it directly.
+        // CPU / Heatsink flow: _activeChildPrefab is the component root — find and hide its detailed child.
+        if (_activeChildPrefab.GetComponent<RAMDetailedView>() != null)
+            _activeChildPrefab.SetActive(false);
+        else
+            SetDetailedView(_activeChildPrefab, false);
 
         // Re-enable Motherboard FIRST � makes CPUSlot hierarchy active again
         gameObject.SetActive(true);
