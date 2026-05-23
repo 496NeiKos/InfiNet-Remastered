@@ -63,6 +63,9 @@ public class MotherboardDetailViewManager : MonoBehaviour
 
             RAMController ram = hit.collider.GetComponent<RAMController>();
             if (ram != null) { OpenInnerPanel(ram.gameObject); return; }
+
+            GPUController gpu = hit.collider.GetComponent<GPUController>();
+            if (gpu != null) { OpenInnerPanel(gpu.gameObject); return; }
         }
     }
 

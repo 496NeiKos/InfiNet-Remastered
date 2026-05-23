@@ -101,6 +101,15 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
             return;
         }
 
+        // Block GPU drag until latched out AND all screws empty AND cable detached
+        GPUController gpu = GetComponent<GPUController>();
+        if (gpu != null && isInSlot && gpu.IsLatched)
+        {
+            Debug.Log($"[DragPrefab:{name}] BLOCKED — GPU is still latched.");
+            _isDragging = false;
+            return;
+        }
+
         // Layer 1 gate — applies to ALL SystemUnit hardware (Motherboard, HDD, PSU).
         // SU back VGA and PSU cables must both be unplugged before any hardware can be dragged.
         if (isInSlot && GetComponentInParent<SystemUnitController>() != null)
