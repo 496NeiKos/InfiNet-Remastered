@@ -145,7 +145,7 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
             return;
         }
 
-        // MBCable path — reinstalls to matching CableSlot by cableType
+        // MBCable path ï¿½ reinstalls to matching CableSlot by cableType
         MBCable mbCable = hardwarePrefab.GetComponent<MBCable>();
         if (mbCable != null)
         {
@@ -155,7 +155,7 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
 
             foreach (CableSlot slot in allSlots)
             {
-                if (!slot.enabled) continue;          // Phase 1 inactive — slot is disabled
+                if (!slot.enabled) continue;          // Phase 1 inactive ï¿½ slot is disabled
                 if (slot.IsInstalled()) continue;
                 if (!slot.CanAcceptCable(mbCable.GetCableType())) continue;
 
@@ -176,12 +176,12 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
             }
             else
             {
-                Debug.Log($"[HardwareHolder] {prefabName} dropped on wrong/no slot — stays in hardware area.");
+                Debug.Log($"[HardwareHolder] {prefabName} dropped on wrong/no slot ï¿½ stays in hardware area.");
             }
             return;
         }
 
-        // Heatsink path — installs back to CPUSlot (finds CPUSlotController by proximity)
+        // Heatsink path ï¿½ installs back to CPUSlot (finds CPUSlotController by proximity)
         HeatsinkController heatsink = hardwarePrefab.GetComponent<HeatsinkController>();
         if (heatsink != null)
         {
@@ -208,21 +208,21 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
             return;
         }
 
-        // CPU path — installs back to CPUSlot
+        // CPU path ï¿½ installs back to CPUSlot
         CPUController cpuCtrl = hardwarePrefab.GetComponent<CPUController>();
         if (cpuCtrl != null)
         {
             CPUSlotController[] allSlots = FindObjectsOfType<CPUSlotController>(true);
 
-            Debug.Log($"[HardwareHolder] CPU install — found {allSlots.Length} CPUSlotController(s)");
+            Debug.Log($"[HardwareHolder] CPU install ï¿½ found {allSlots.Length} CPUSlotController(s)");
 
             foreach (CPUSlotController slot in allSlots)
             {
                 Debug.Log($"[HardwareHolder] Checking slot '{slot.gameObject.name}': state={slot.State} IsCPUInstalled={slot.IsCPUInstalled} IsHeatsinkInstalled={slot.IsHeatsinkInstalled} IsLockClosed={slot.IsLockClosed}");
 
                 if (slot.IsCPUInstalled) continue;
-                if (slot.IsLockClosed) { Debug.Log("[HardwareHolder] CPU install blocked — CPU lock is closed."); continue; }
-                if (slot.IsHeatsinkInstalled) { Debug.Log("[HardwareHolder] CPU install blocked — heatsink is installed."); continue; }
+                if (slot.IsLockClosed) { Debug.Log("[HardwareHolder] CPU install blocked ï¿½ CPU lock is closed."); continue; }
+                if (slot.IsHeatsinkInstalled) { Debug.Log("[HardwareHolder] CPU install blocked ï¿½ heatsink is installed."); continue; }
 
                 hardwarePrefab.transform.SetParent(slot.transform, false);
                 hardwarePrefab.transform.localPosition = Vector3.zero;
@@ -264,6 +264,9 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
 
         var mb = hardwarePrefab.GetComponent<MotherboardController>();
         if (mb != null) mb.MarkInstalled();
+
+        var ram = hardwarePrefab.GetComponent<RAMController>();
+        if (ram != null) ram.SetInstalled();
 
         gameObject.SetActive(false);
     }

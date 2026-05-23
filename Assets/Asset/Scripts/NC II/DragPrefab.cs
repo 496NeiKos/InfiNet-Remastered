@@ -92,6 +92,15 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
             return;
         }
 
+        // Block RAM drag while latch is engaged (must Slide-Up in detail view first)
+        RAMController ram = GetComponent<RAMController>();
+        if (ram != null && isInSlot && ram.IsInstalled)
+        {
+            Debug.Log($"[DragPrefab:{name}] BLOCKED — RAM latch is still engaged.");
+            _isDragging = false;
+            return;
+        }
+
         // Layer 1 gate — applies to ALL SystemUnit hardware (Motherboard, HDD, PSU).
         // SU back VGA and PSU cables must both be unplugged before any hardware can be dragged.
         if (isInSlot && GetComponentInParent<SystemUnitController>() != null)

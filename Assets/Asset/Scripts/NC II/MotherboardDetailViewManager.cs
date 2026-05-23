@@ -46,7 +46,7 @@ public class MotherboardDetailViewManager : MonoBehaviour
             return orderB.CompareTo(orderA);
         });
 
-        // Heatsink collider is disabled when CPU is exposed — only one is hittable at a time
+        // Heatsink collider is disabled when CPU is exposed ï¿½ only one is hittable at a time
         foreach (RaycastHit2D hit in hits)
         {
             HeatsinkController heatsink = hit.collider.GetComponent<HeatsinkController>();
@@ -54,6 +54,9 @@ public class MotherboardDetailViewManager : MonoBehaviour
 
             CPUController cpu = hit.collider.GetComponent<CPUController>();
             if (cpu != null) { OpenInnerPanel(cpu.gameObject); return; }
+
+            RAMController ram = hit.collider.GetComponent<RAMController>();
+            if (ram != null) { OpenInnerPanel(ram.gameObject); return; }
         }
     }
 
@@ -72,7 +75,7 @@ public class MotherboardDetailViewManager : MonoBehaviour
         _childOriginalLocalPos = childPrefab.transform.localPosition;
         _childOriginalLocalScale = childPrefab.transform.localScale;
 
-        // Disable Motherboard root — same pattern as SystemUnit disabling for MB inner panel
+        // Disable Motherboard root ï¿½ same pattern as SystemUnit disabling for MB inner panel
         gameObject.SetActive(false);
 
         // Reparent to inner panel and center
@@ -100,7 +103,7 @@ public class MotherboardDetailViewManager : MonoBehaviour
         // Deactivate detailed view first
         SetDetailedView(_activeChildPrefab, false);
 
-        // Re-enable Motherboard FIRST — makes CPUSlot hierarchy active again
+        // Re-enable Motherboard FIRST ï¿½ makes CPUSlot hierarchy active again
         gameObject.SetActive(true);
 
         // Reparent back to CPUSlot with exact saved local transform
@@ -108,7 +111,7 @@ public class MotherboardDetailViewManager : MonoBehaviour
         _activeChildPrefab.transform.localPosition = _childOriginalLocalPos;
         _activeChildPrefab.transform.localScale = _childOriginalLocalScale;
 
-        // Hide inner panel — component is no longer its child
+        // Hide inner panel ï¿½ component is no longer its child
         if (innerEditingPanel != null)
             innerEditingPanel.SetActive(false);
 
@@ -121,7 +124,7 @@ public class MotherboardDetailViewManager : MonoBehaviour
     private void SetDetailedView(GameObject component, bool active)
     {
         if (component == null) return;
-        // Only direct children — prevents accidentally activating nested views
+        // Only direct children ï¿½ prevents accidentally activating nested views
         foreach (Transform child in component.transform)
         {
             if (child.name.Contains("Detailed"))
