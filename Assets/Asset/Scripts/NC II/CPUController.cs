@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 /// <summary>
 /// On CPU object (child of CPUSlot, sibling of Heatsink).
@@ -20,13 +20,16 @@ public class CPUController : MonoBehaviour
     [SerializeField] private Sprite cpuDetailedPasteAppliedSprite;
 
     private PasteState _pasteState = PasteState.PasteApplied;
+    private Vector3 _installedLocalScale;
 
     public PasteState CurrentPasteState => _pasteState;
+    public Vector3 InstalledLocalScale => _installedLocalScale;
 
     private void Awake()
     {
         if (cpuRootSprite == null)
             cpuRootSprite = GetComponent<SpriteRenderer>();
+        _installedLocalScale = transform.localScale;
         ApplySprites();
     }
 

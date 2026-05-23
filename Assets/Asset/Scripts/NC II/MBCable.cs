@@ -1,17 +1,17 @@
 ﻿using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
 /// <summary>
 /// On each cable child object inside a MB Phase 1 cable slot.
-/// Hold 2s to detach, then drag to hardware area or snap back.
-/// Same pattern as BackCable.
+/// Hold 2s to detach — fully Update()-based, bypasses EventSystem/DragPrefab gates.
+/// Once detached (_detached=true), drag continues even if this component is disabled
+/// by MotherboardPhaseManager, because OnDragUpdate is called from a separate path.
 /// </summary>
-public class MBCable : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
+[DefaultExecutionOrder(1)] // runs after MotherboardPhaseManager
+public class MBCable : MonoBehaviour
 {
     [Header("Identity")]
-    [Tooltip("Must match parent CableSlot's cableType")]
-    [SerializeField] private string cableType = "Cable1";
+    [SerializeField] private string cableType;
 
     [Header("Hardware Area Icon")]
     [SerializeField] private HardwareHolder hardwareHolder;
@@ -25,44 +25,52 @@ public class MBCable : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
     private Vector3 _originalLocalScale;
 
     private float _holdTimer = 0f;
-    private bool _isHolding = false;
     private bool _detached = false;
     private bool _isDragging = false;
+    private GameObject _dragIndicator;
 
-    private SpriteRenderer _dragIndicator;
+    public bool IsDetached => _detached;
+
+    // Registered with a manager so drag continues even when this component is disabled
+    private static MBCableDragManager _dragManager;
 
     private void Start()
     {
         _parentSlot = GetComponentInParent<CableSlot>();
+
+        // Ensure drag manager exists
+        if (_dragManager == null)
+        {
+            GameObject go = new GameObject("MBCableDragManager");
+            _dragManager = go.AddComponent<MBCableDragManager>();
+            DontDestroyOnLoad(go);
+        }
     }
 
     private void Update()
     {
-        if (_detached) return;
+        if (_detached) return; // drag handled by MBCableDragManager once detached
 
         Mouse mouse = Mouse.current;
         if (mouse == null) return;
 
         if (mouse.leftButton.isPressed && IsMouseOver())
         {
-            _isHolding = true;
             _holdTimer += Time.deltaTime;
-
             if (_holdTimer >= holdDuration)
                 Detach();
         }
         else
         {
-            _isHolding = false;
             _holdTimer = 0f;
         }
     }
 
     private void Detach()
     {
-        _isHolding = false;
         _holdTimer = 0f;
         _detached = true;
+        _isDragging = false;
 
         _originalParent = transform.parent;
         _originalLocalPos = transform.localPosition;
@@ -70,58 +78,62 @@ public class MBCable : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
 
         _parentSlot?.SetUninstalled();
 
-        // Capture world scale before reparenting — siblings are unaffected
         Vector3 worldLossy = transform.lossyScale;
-
-        // worldPositionStays=true preserves world position
         transform.SetParent(GameManager.Instance.worldRoot, true);
-
-        // WorldRoot scale is (1,1,1) so localScale == world scale
         transform.localScale = worldLossy;
 
-        Debug.Log($"[MBCable] {cableType} detached — now draggable.");
+        _dragIndicator = new GameObject("MBCableDragIndicator");
+        SpriteRenderer sr = _dragIndicator.AddComponent<SpriteRenderer>();
+        sr.sprite = GetComponent<SpriteRenderer>()?.sprite;
+        sr.sortingOrder = 999;
+        _dragIndicator.transform.position = transform.position;
+        _dragIndicator.transform.localScale = transform.lossyScale;
+
+        // Register with drag manager so drag continues regardless of enabled state
+        _dragManager?.Register(this);
+
+        Debug.Log($"[MBCable] {cableType} detached.");
     }
 
-    public void OnBeginDrag(PointerEventData eventData)
+    // Called by MBCableDragManager every frame while detached
+    public void DragUpdate()
     {
-        if (!_detached) return;
-        if (eventData.button != PointerEventData.InputButton.Left) return;
+        Mouse mouse = Mouse.current;
+        if (mouse == null) return;
 
-        _isDragging = true;
-
-        GameObject go = new GameObject("MBCableDrag");
-        _dragIndicator = go.AddComponent<SpriteRenderer>();
-        _dragIndicator.sprite = GetComponent<SpriteRenderer>()?.sprite;
-        _dragIndicator.sortingOrder = 999;
-        go.transform.localScale = transform.lossyScale;
-    }
-
-    public void OnDrag(PointerEventData eventData)
-    {
-        if (!_isDragging) return;
-
-        Vector3 worldPos = Camera.main.ScreenToWorldPoint(
-            new Vector3(eventData.position.x, eventData.position.y, 10f));
-        worldPos.z = 0f;
-        transform.position = worldPos;
-
-        if (_dragIndicator != null)
-            _dragIndicator.transform.position = worldPos;
-    }
-
-    public void OnEndDrag(PointerEventData eventData)
-    {
-        if (_dragIndicator != null)
+        if (!_isDragging)
         {
-            Destroy(_dragIndicator.gameObject);
-            _dragIndicator = null;
+            if (mouse.leftButton.isPressed)
+                _isDragging = true;
+            return;
         }
 
-        if (!_isDragging) return;
-        _isDragging = false;
+        if (mouse.leftButton.isPressed)
+        {
+            Vector3 worldPos = Camera.main.ScreenToWorldPoint(
+                new Vector3(mouse.position.ReadValue().x, mouse.position.ReadValue().y, 10f));
+            worldPos.z = 0f;
+            transform.position = worldPos;
+            if (_dragIndicator != null)
+                _dragIndicator.transform.position = worldPos;
+        }
+        else
+        {
+            // Released
+            OnDragReleased();
+        }
+    }
 
+    private void OnDragReleased()
+    {
+        if (_dragIndicator != null) { Destroy(_dragIndicator); _dragIndicator = null; }
+
+        _isDragging = false;
+        _dragManager?.Unregister(this);
+
+        Vector2 screenPos = Mouse.current.position.ReadValue();
         bool onHardwareArea = RectTransformUtility.RectangleContainsScreenPoint(
-            GameManager.Instance.hardwareArea, eventData.position, eventData.pressEventCamera);
+            GameManager.Instance.hardwareArea, screenPos, Camera.main);
 
         if (onHardwareArea)
         {
@@ -139,6 +151,7 @@ public class MBCable : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
     {
         _parentSlot = slot;
         _detached = false;
+        _isDragging = false;
 
         transform.SetParent(slot.transform, false);
         transform.localPosition = _originalLocalPos;
@@ -160,14 +173,9 @@ public class MBCable : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
 
     private void SendToHolder()
     {
-        if (hardwareHolder != null)
-        {
-            hardwareHolder.StoreHardware();
-            return;
-        }
+        if (hardwareHolder != null) { hardwareHolder.StoreHardware(); return; }
 
-        HardwareHolder[] all = FindObjectsOfType<HardwareHolder>(true);
-        foreach (HardwareHolder h in all)
+        foreach (HardwareHolder h in FindObjectsOfType<HardwareHolder>(true))
         {
             if (h.hardwarePrefab != null && h.hardwarePrefab.name == gameObject.name)
             {

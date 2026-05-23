@@ -40,8 +40,10 @@ public class MotherboardPhaseManager : MonoBehaviour
         }
 
         // Toggle MBCable — blocks hold-to-detach and drag when Phase 2 is active
+        // Skip cables that are already detached — disabling them mid-flight breaks drag
         foreach (var mc in phase1Root.GetComponentsInChildren<MBCable>(true))
         {
+            if (!enabled && mc.IsDetached) continue; // don't disable a cable being dragged
             mc.enabled = enabled;
             Collider2D col = mc.GetComponent<Collider2D>();
             if (col != null) col.enabled = enabled;

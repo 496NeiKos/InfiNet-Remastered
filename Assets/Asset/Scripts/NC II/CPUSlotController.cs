@@ -1,18 +1,13 @@
 ﻿using UnityEngine;
 
-/// <summary>
-/// Dedicated slot controller for CPUSlot.
-/// Manages both CPU and Heatsink as siblings under the same slot.
-/// Replaces SlotContainer on CPUSlot.
-/// </summary>
 public class CPUSlotController : MonoBehaviour
 {
     public enum SlotState
     {
-        BothInstalled,      // Default: CPU + Heatsink both present
-        HeatsinkUninstalled, // Heatsink removed, CPU exposed and interactable
-        CPUUninstalled,      // CPU removed (heatsink must already be uninstalled)
-        BothUninstalled      // Both removed
+        BothInstalled,
+        HeatsinkUninstalled,
+        CPUUninstalled,
+        BothUninstalled
     }
 
     [Header("References")]
@@ -23,56 +18,64 @@ public class CPUSlotController : MonoBehaviour
     private SlotState _state = SlotState.BothInstalled;
     public SlotState State => _state;
 
-    // Convenience checks used by DragPrefab and MotherboardDetailViewManager
     public bool IsCPUInstalled => _state == SlotState.BothInstalled || _state == SlotState.HeatsinkUninstalled;
     public bool IsHeatsinkInstalled => _state == SlotState.BothInstalled || _state == SlotState.CPUUninstalled;
     public bool IsLockClosed => cpuLock != null && cpuLock.IsLocked;
 
     private void Awake()
     {
-        // Both are children of this slot at start by default
         ApplyState();
     }
 
-    // Called by DragPrefab.OnEndDrag when Heatsink is sent to hardware area
+    // Called when Heatsink is removed — derives new state from current
     public void OnHeatsinkUninstalled()
     {
-        if (_state == SlotState.BothInstalled)
-            SetState(SlotState.HeatsinkUninstalled);
-        else if (_state == SlotState.CPUUninstalled)
-            SetState(SlotState.BothUninstalled);
-    }
-
-    // Called by DragPrefab.OnEndDrag when CPU is sent to hardware area
-    public void OnCPUUninstalled()
-    {
-        if (_state == SlotState.HeatsinkUninstalled)
-            SetState(SlotState.CPUUninstalled);
-        else if (_state == SlotState.BothInstalled)
+        switch (_state)
         {
-            // Should not happen — CPU is blocked while heatsink installed
-            Debug.LogWarning("[CPUSlotController] CPU uninstalled while heatsink still installed — state mismatch.");
-            SetState(SlotState.CPUUninstalled);
+            case SlotState.BothInstalled: SetState(SlotState.HeatsinkUninstalled); break;
+            case SlotState.CPUUninstalled: SetState(SlotState.BothUninstalled); break;
+            default: Debug.LogWarning($"[CPUSlotController] OnHeatsinkUninstalled from unexpected state: {_state}"); break;
         }
     }
 
-    // Called by HardwareHolder when Heatsink is dropped back onto CPUSlot
-    public void OnHeatsinkInstalled()
+    // Called when CPU is removed — derives new state from current
+    public void OnCPUUninstalled()
     {
-        if (_state == SlotState.HeatsinkUninstalled)
-            SetState(SlotState.BothInstalled);
-        else if (_state == SlotState.BothUninstalled)
-            SetState(SlotState.CPUUninstalled);
+        switch (_state)
+        {
+            case SlotState.HeatsinkUninstalled: SetState(SlotState.BothUninstalled); break;
+            case SlotState.BothInstalled:
+                Debug.LogWarning("[CPUSlotController] CPU removed while heatsink installed — forcing CPUUninstalled.");
+                SetState(SlotState.CPUUninstalled);
+                break;
+            default: Debug.LogWarning($"[CPUSlotController] OnCPUUninstalled from unexpected state: {_state}"); break;
+        }
     }
 
-    // Called by HardwareHolder when CPU is dropped back onto CPUSlot
+    // Called when Heatsink is installed back
+    public void OnHeatsinkInstalled()
+    {
+        switch (_state)
+        {
+            case SlotState.HeatsinkUninstalled: SetState(SlotState.BothInstalled); break;
+            case SlotState.BothUninstalled: SetState(SlotState.CPUUninstalled); break;
+            default: Debug.LogWarning($"[CPUSlotController] OnHeatsinkInstalled from unexpected state: {_state}"); break;
+        }
+    }
+
+    // Called when CPU is installed back
     public void OnCPUInstalled()
     {
-        if (_state == SlotState.CPUUninstalled)
-            SetState(SlotState.HeatsinkUninstalled);
-        else if (_state == SlotState.BothUninstalled)
-            SetState(SlotState.CPUUninstalled);
+        switch (_state)
+        {
+            case SlotState.CPUUninstalled: SetState(SlotState.BothInstalled); break;
+            case SlotState.BothUninstalled: SetState(SlotState.HeatsinkUninstalled); break;
+            default: Debug.LogWarning($"[CPUSlotController] OnCPUInstalled from unexpected state: {_state}"); break;
+        }
     }
+
+    // Force-reset state — call this if state gets out of sync
+    public void ForceState(SlotState state) => SetState(state);
 
     private void SetState(SlotState newState)
     {
@@ -90,21 +93,17 @@ public class CPUSlotController : MonoBehaviour
         switch (_state)
         {
             case SlotState.BothInstalled:
-                // Heatsink on top — disable CPU collider and interaction
                 if (cpuCol != null) cpuCol.enabled = false;
                 SetInteractable(cpu, false);
                 SetInteractable(heatsink, true);
                 break;
 
             case SlotState.HeatsinkUninstalled:
-                // Heatsink removed — enable CPU collider and interaction
                 if (cpuCol != null) cpuCol.enabled = true;
                 SetInteractable(cpu, true);
-                // Do NOT call heatsink.SetActive(false) — HardwareHolder handles visibility
                 break;
 
             case SlotState.CPUUninstalled:
-                // CPU removed — heatsink still interactable if present
                 if (cpuCol != null) cpuCol.enabled = false;
                 SetInteractable(cpu, false);
                 SetInteractable(heatsink, true);
@@ -125,8 +124,6 @@ public class CPUSlotController : MonoBehaviour
         if (dp != null) dp.enabled = interactable;
     }
 
-    // Used by PowerOnConditionChecker via Transform.childCount check —
-    // return whether CPU slot has CPU installed for the power-on condition
     public bool HasCPU() => IsCPUInstalled;
     public bool HasHeatsink() => IsHeatsinkInstalled;
 }

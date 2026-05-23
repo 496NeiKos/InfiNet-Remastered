@@ -4219,7 +4219,6 @@ GameObject:
   - component: {fileID: 477266324}
   - component: {fileID: 477266323}
   - component: {fileID: 477266322}
-  - component: {fileID: 477266321}
   - component: {fileID: 477266320}
   m_Layer: 11
   m_Name: SUVGACableIcon
@@ -4227,7 +4226,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &477266320
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4242,18 +4241,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 1281493947}
   slotInstallRadius: 1.5
---- !u!114 &477266321
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 477266319}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 971d2a53ea50eab449bf2856dfc4408c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CableDrag
 --- !u!114 &477266322
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4351,10 +4338,10 @@ RectTransform:
   - {fileID: 1422510408}
   m_Father: {fileID: 2077927671}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 240, y: -50}
+  m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &491776495
 GameObject:
@@ -5881,9 +5868,10 @@ GameObject:
   m_Component:
   - component: {fileID: 679522245}
   - component: {fileID: 679522244}
-  - component: {fileID: 679522242}
   - component: {fileID: 679522246}
+  - component: {fileID: 679522242}
   - component: {fileID: 679522241}
+  - component: {fileID: 679522247}
   - component: {fileID: 679522240}
   m_Layer: 0
   m_Name: Heatsink
@@ -6063,8 +6051,21 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 0.56, y: 0.57}
+  m_Size: {x: 1.4, y: 1.19}
   m_EdgeRadius: 0
+--- !u!114 &679522247
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 679522239}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fa1aa9c3dff636b4a96cd407c467e7de, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PrefabInteraction
+  editingPanel: {fileID: 0}
 --- !u!1 &686178429
 GameObject:
   m_ObjectHideFlags: 0
@@ -6077,7 +6078,6 @@ GameObject:
   - component: {fileID: 686178434}
   - component: {fileID: 686178433}
   - component: {fileID: 686178432}
-  - component: {fileID: 686178431}
   - component: {fileID: 686178430}
   m_Layer: 11
   m_Name: MVGACableIcon
@@ -6085,7 +6085,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &686178430
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6100,18 +6100,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 437242111}
   slotInstallRadius: 1.5
---- !u!114 &686178431
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 686178429}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 971d2a53ea50eab449bf2856dfc4408c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CableDrag
 --- !u!114 &686178432
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6209,10 +6197,10 @@ RectTransform:
   - {fileID: 677353353}
   m_Father: {fileID: 2077927671}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 50, y: -250}
+  m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &692340049
 GameObject:
@@ -6230,7 +6218,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &692340050
 Transform:
   m_ObjectHideFlags: 0
@@ -6691,7 +6679,6 @@ GameObject:
   - component: {fileID: 700654903}
   - component: {fileID: 700654902}
   - component: {fileID: 700654901}
-  - component: {fileID: 700654900}
   - component: {fileID: 700654899}
   m_Layer: 11
   m_Name: APSUCableIcon
@@ -6699,7 +6686,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &700654898
 RectTransform:
   m_ObjectHideFlags: 0
@@ -6715,10 +6702,10 @@ RectTransform:
   - {fileID: 1247852376}
   m_Father: {fileID: 2077927671}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 430, y: -50}
+  m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &700654899
 MonoBehaviour:
@@ -6734,18 +6721,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 1299142854}
   slotInstallRadius: 1.5
---- !u!114 &700654900
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 700654897}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 971d2a53ea50eab449bf2856dfc4408c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CableDrag
 --- !u!114 &700654901
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11955,7 +11930,6 @@ GameObject:
   - component: {fileID: 1487959383}
   - component: {fileID: 1487959382}
   - component: {fileID: 1487959381}
-  - component: {fileID: 1487959380}
   - component: {fileID: 1487959379}
   m_Layer: 11
   m_Name: SUPSUCableIcon
@@ -11963,7 +11937,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1487959378
 RectTransform:
   m_ObjectHideFlags: 0
@@ -11979,10 +11953,10 @@ RectTransform:
   - {fileID: 749328750}
   m_Father: {fileID: 2077927671}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 50, y: -50}
+  m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1487959379
 MonoBehaviour:
@@ -11998,18 +11972,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 1598114956}
   slotInstallRadius: 1.5
---- !u!114 &1487959380
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1487959377}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 971d2a53ea50eab449bf2856dfc4408c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CableDrag
 --- !u!114 &1487959381
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13314,7 +13276,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CPUDetailInteraction
   cpuController: {fileID: 8592210239883464347}
-  holdDuration: 1
+  holdDuration: 0.1
 --- !u!61 &1678787508
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -16102,7 +16064,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1148141474356184324
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -16164,7 +16126,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 0.61, y: 0.6}
+  m_Size: {x: 0.52, y: 0.51}
   m_EdgeRadius: 0
 --- !u!61 &1317447837779088567
 BoxCollider2D:
@@ -18673,7 +18635,7 @@ Transform:
   m_GameObject: {fileID: 3035606413777950647}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.73, y: 0.12, z: 0}
+  m_LocalPosition: {x: 1.98, y: -1.15, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children:
