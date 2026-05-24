@@ -139,6 +139,7 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
             ApplyWorldScale(worldScale);
             GetComponent<RAMController>()?.OnRemovedFromSlot();
             GetComponent<GPUController>()?.OnRemovedFromSlot();
+            GetComponent<HDDController>()?.OnRemovedFromSlot();
         }
 
         GameObject indicatorGO = new GameObject("DragIndicator");
@@ -201,6 +202,7 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
 
             GetComponent<RAMController>()?.OnSnappedToSlot();
             GetComponent<GPUController>()?.OnSnappedToSlot();
+            GetComponent<HDDController>()?.OnSnappedToSlot();
 
             transform.SetParent(_originalParent, false);
             transform.localPosition = _originalLocalPos;
