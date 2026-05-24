@@ -192,7 +192,7 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
                 if (slot.IsHeatsinkInstalled) continue;
 
                 hardwarePrefab.transform.SetParent(slot.transform, false);
-                hardwarePrefab.transform.localPosition = Vector3.zero;
+                hardwarePrefab.transform.localPosition = heatsink.InstalledLocalPosition;
                 Vector3 reinstallScale = heatsink.InstalledLocalScale;
                 hardwarePrefab.transform.localScale = reinstallScale != Vector3.zero
                     ? reinstallScale
@@ -225,7 +225,7 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
                 if (slot.IsHeatsinkInstalled) { Debug.Log("[HardwareHolder] CPU install blocked � heatsink is installed."); continue; }
 
                 hardwarePrefab.transform.SetParent(slot.transform, false);
-                hardwarePrefab.transform.localPosition = Vector3.zero;
+                hardwarePrefab.transform.localPosition = cpuCtrl.InstalledLocalPosition;
                 Vector3 cpuScale = cpuCtrl.InstalledLocalScale;
                 hardwarePrefab.transform.localScale = cpuScale != Vector3.zero ? cpuScale : _originalLocalScale;
                 hardwarePrefab.SetActive(true);

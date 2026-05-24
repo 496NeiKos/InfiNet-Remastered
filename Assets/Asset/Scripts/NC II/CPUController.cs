@@ -21,15 +21,18 @@ public class CPUController : MonoBehaviour
 
     private PasteState _pasteState = PasteState.PasteApplied;
     private Vector3 _installedLocalScale;
+    private Vector3 _installedLocalPosition;
 
     public PasteState CurrentPasteState => _pasteState;
     public Vector3 InstalledLocalScale => _installedLocalScale;
+    public Vector3 InstalledLocalPosition => _installedLocalPosition;
 
     private void Awake()
     {
         if (cpuRootSprite == null)
             cpuRootSprite = GetComponent<SpriteRenderer>();
         _installedLocalScale = transform.localScale;
+        _installedLocalPosition = transform.localPosition;
         ApplySprites();
     }
 

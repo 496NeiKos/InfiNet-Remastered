@@ -4,17 +4,20 @@ public class HeatsinkController : MonoBehaviour
 {
     private CPUSlotController _cpuSlot;
     private Vector3 _installedLocalScale;
+    private Vector3 _installedLocalPosition;
 
     private void Start()
     {
         _cpuSlot = GetComponentInParent<CPUSlotController>();
-        // Capture scale now while correctly parented under CPUSlot
+        // Capture transform while correctly parented under CPUSlot
         _installedLocalScale = transform.localScale;
+        _installedLocalPosition = transform.localPosition;
     }
 
     public Vector3 InstalledLocalScale => _installedLocalScale;
+    public Vector3 InstalledLocalPosition => _installedLocalPosition;
 
-    // Called by DragPrefab.OnEndDrag — slot ref passed directly since Heatsink
+    // Called by DragPrefab.OnEndDrag ï¿½ slot ref passed directly since Heatsink
     // may have already moved away from CPUSlot hierarchy by this point
     public void OnRemovedFromSlot(CPUSlotController slot)
     {
@@ -26,7 +29,7 @@ public class HeatsinkController : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("[HeatsinkController] No CPUSlotController found — state not updated.");
+            Debug.LogWarning("[HeatsinkController] No CPUSlotController found ï¿½ state not updated.");
         }
     }
 
