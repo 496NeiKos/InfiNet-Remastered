@@ -265,6 +265,9 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         var mb = hardwarePrefab.GetComponent<MotherboardController>();
         if (mb != null) mb.MarkInstalled();
 
+        hardwarePrefab.GetComponent<RAMController>()?.OnSnappedToSlot();
+        hardwarePrefab.GetComponent<GPUController>()?.OnSnappedToSlot();
+
         gameObject.SetActive(false);
     }
 

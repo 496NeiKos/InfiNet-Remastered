@@ -8,7 +8,12 @@ using UnityEngine;
 /// </summary>
 public class GPUController : MonoBehaviour
 {
+    [Header("Slot Sprites")]
+    [SerializeField] private Sprite defaultSprite;
+    [SerializeField] private Sprite snappedSprite;
+
     private bool _isLatched = true;
+    private SpriteRenderer _sr;
 
     public bool IsLatched => _isLatched;
 
@@ -29,6 +34,17 @@ public class GPUController : MonoBehaviour
         }
     }
 
+    private void Awake()
+    {
+        _sr = GetComponent<SpriteRenderer>();
+    }
+
+    private void Start()
+    {
+        // Restore correct sprite when scene loads with GPU already in a slot
+        ApplySlotSprite(GetComponentInParent<SlotContainer>() != null);
+    }
+
     public void SetLatched()
     {
         if (_isLatched) return;
@@ -41,5 +57,15 @@ public class GPUController : MonoBehaviour
         if (!_isLatched) return;
         _isLatched = false;
         Debug.Log($"[GPUController:{name}] Unlatched");
+    }
+
+    public void OnSnappedToSlot() => ApplySlotSprite(true);
+    public void OnRemovedFromSlot() => ApplySlotSprite(false);
+
+    private void ApplySlotSprite(bool inSlot)
+    {
+        if (_sr == null) return;
+        Sprite s = inSlot ? snappedSprite : defaultSprite;
+        if (s != null) _sr.sprite = s;
     }
 }

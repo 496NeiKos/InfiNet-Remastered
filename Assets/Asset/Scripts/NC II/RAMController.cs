@@ -10,9 +10,25 @@ public class RAMController : MonoBehaviour
 {
     public enum RAMState { Installed, Uninstalled }
 
+    [Header("Slot Sprites")]
+    [SerializeField] private Sprite defaultSprite;
+    [SerializeField] private Sprite snappedSprite;
+
     private RAMState _state = RAMState.Installed;
+    private SpriteRenderer _sr;
 
     public bool IsInstalled => _state == RAMState.Installed;
+
+    private void Awake()
+    {
+        _sr = GetComponent<SpriteRenderer>();
+    }
+
+    private void Start()
+    {
+        // Restore correct sprite when scene loads with RAM already in a slot
+        ApplySlotSprite(GetComponentInParent<SlotContainer>() != null);
+    }
 
     public void SetInstalled()
     {
@@ -26,5 +42,15 @@ public class RAMController : MonoBehaviour
         if (_state == RAMState.Uninstalled) return;
         _state = RAMState.Uninstalled;
         Debug.Log($"[RAMController:{name}] State → Uninstalled");
+    }
+
+    public void OnSnappedToSlot() => ApplySlotSprite(true);
+    public void OnRemovedFromSlot() => ApplySlotSprite(false);
+
+    private void ApplySlotSprite(bool inSlot)
+    {
+        if (_sr == null) return;
+        Sprite s = inSlot ? snappedSprite : defaultSprite;
+        if (s != null) _sr.sprite = s;
     }
 }
