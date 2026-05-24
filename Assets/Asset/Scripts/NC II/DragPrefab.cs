@@ -110,6 +110,15 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
             return;
         }
 
+        // Block PSU drag until back port cable and mobo ATX cable are both disconnected
+        PSUController psu = GetComponent<PSUController>();
+        if (psu != null && isInSlot && !psu.CanBeRemoved)
+        {
+            Debug.Log($"[DragPrefab:{name}] BLOCKED — PSU cables still connected.");
+            _isDragging = false;
+            return;
+        }
+
         // Layer 1 gate — applies to ALL SystemUnit hardware (Motherboard, HDD, PSU).
         // SU back VGA and PSU cables must both be unplugged before any hardware can be dragged.
         if (isInSlot && GetComponentInParent<SystemUnitController>() != null)
