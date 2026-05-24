@@ -96,6 +96,9 @@ public class DetailViewManager : MonoBehaviour
         SlotContainer matchedSlot = slotManager.GetSlotByType(parentSlot.GetSlotType());
         if (matchedSlot == null || matchedSlot != parentSlot) return;
 
+        // PSU has no detail view — right-click does nothing
+        if (clicked.GetComponentInParent<PSUController>() != null) return;
+
         // Layer 1 gate — SU back cables must be unplugged for ALL hardware (MB, HDD, PSU)
         SystemUnitConditionChecker checker = GetComponent<SystemUnitConditionChecker>();
         if (checker != null && !checker.IsHardwareInteractable())
