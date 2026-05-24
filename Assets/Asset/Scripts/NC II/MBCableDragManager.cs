@@ -4,11 +4,13 @@ using UnityEngine;
 /// <summary>
 /// Persistent manager that drives MBCable drag even when the cable component
 /// gets disabled by MotherboardPhaseManager during phase switching.
-/// Created automatically by MBCable.Start() — one instance per session.
+/// Created automatically by MBCable.Start() ï¿½ one instance per session.
 /// </summary>
 public class MBCableDragManager : MonoBehaviour
 {
     private List<MBCable> _activeCables = new List<MBCable>();
+
+    public bool HasActiveDrag => _activeCables.Count > 0;
 
     public void Register(MBCable cable)
     {

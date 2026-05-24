@@ -33,6 +33,8 @@ public class MBCable : MonoBehaviour
 
     // Registered with a manager so drag continues even when this component is disabled
     private static MBCableDragManager _dragManager;
+    // Only one cable may accumulate hold time at a time; set on the frame the press starts
+    private static MBCable _holdTarget;
 
     private void Start()
     {
@@ -54,11 +56,34 @@ public class MBCable : MonoBehaviour
         Mouse mouse = Mouse.current;
         if (mouse == null) return;
 
-        if (mouse.leftButton.isPressed && IsMouseOver())
+        // Block new holds while any cable is already being dragged
+        if (_dragManager != null && _dragManager.HasActiveDrag)
         {
-            _holdTimer += Time.deltaTime;
-            if (_holdTimer >= holdDuration)
-                Detach();
+            _holdTimer = 0f;
+            if (_holdTarget == this) _holdTarget = null;
+            return;
+        }
+
+        // Claim the hold target only on the exact frame the press begins over this cable
+        if (mouse.leftButton.wasPressedThisFrame && IsMouseOver())
+            _holdTarget = this;
+
+        if (_holdTarget == this)
+        {
+            if (mouse.leftButton.isPressed)
+            {
+                _holdTimer += Time.deltaTime;
+                if (_holdTimer >= holdDuration)
+                {
+                    _holdTarget = null;
+                    Detach();
+                }
+            }
+            else
+            {
+                _holdTarget = null;
+                _holdTimer = 0f;
+            }
         }
         else
         {
