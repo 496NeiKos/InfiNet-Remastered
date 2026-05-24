@@ -4,18 +4,36 @@ public class MotherboardPhaseManager : MonoBehaviour
 {
     [SerializeField] private GameObject phase1Root;
     [SerializeField] private GameObject phase2Root;
+    [SerializeField] private GPUPhase1CableInteraction gpuPhase1CableInteraction;
 
     public Transform GetPhase1Root() => phase1Root != null ? phase1Root.transform : null;
     public Transform GetPhase2Root() => phase2Root != null ? phase2Root.transform : null;
+    public GPUPhase1CableInteraction GetGPUPhase1CableInteraction() => gpuPhase1CableInteraction;
 
     public void SetPhase1Interactive()
     {
         SetPhase1Enabled(true);
         SetPhase2Enabled(false);
+
+        // Re-enable GPU Phase 1 AFTER SetPhase2Enabled, which sweeps and disables
+        // all phase2Root Collider2Ds (including the GPU root collider).
+        if (gpuPhase1CableInteraction != null)
+        {
+            gpuPhase1CableInteraction.enabled = true;
+            Collider2D gpuCol = gpuPhase1CableInteraction.GetComponent<Collider2D>();
+            if (gpuCol != null) gpuCol.enabled = true;
+        }
     }
 
     public void SetPhase2Interactive()
     {
+        // Close and disable GPU Phase 1 before Phase 2 activates
+        if (gpuPhase1CableInteraction != null)
+        {
+            gpuPhase1CableInteraction.ClosePanel();
+            gpuPhase1CableInteraction.enabled = false;
+        }
+
         SetPhase1Enabled(false);
         SetPhase2Enabled(true);
     }
@@ -24,7 +42,7 @@ public class MotherboardPhaseManager : MonoBehaviour
     {
         if (phase1Root == null) return;
 
-        // Toggle screws and cables — both script and collider
+        // Toggle screws and cables ï¿½ both script and collider
         foreach (var sc in phase1Root.GetComponentsInChildren<ScrewController>(true))
         {
             sc.enabled = enabled;
@@ -39,8 +57,8 @@ public class MotherboardPhaseManager : MonoBehaviour
             if (col != null) col.enabled = enabled;
         }
 
-        // Toggle MBCable — blocks hold-to-detach and drag when Phase 2 is active
-        // Skip cables that are already detached — disabling them mid-flight breaks drag
+        // Toggle MBCable ï¿½ blocks hold-to-detach and drag when Phase 2 is active
+        // Skip cables that are already detached ï¿½ disabling them mid-flight breaks drag
         foreach (var mc in phase1Root.GetComponentsInChildren<MBCable>(true))
         {
             if (!enabled && mc.IsDetached) continue; // don't disable a cable being dragged

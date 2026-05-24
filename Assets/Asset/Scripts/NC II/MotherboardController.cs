@@ -18,7 +18,7 @@ public class MotherboardController : MonoBehaviour
         if (!_wasEverInSystemUnit) return true;
         if (!IsUninstalledFromSystemUnit) return false;
 
-        // Scope checks to Phase1 root only — avoids finding heatsink screws in Phase2
+        // Scope checks to Phase1 root only ï¿½ avoids finding heatsink screws in Phase2
         MotherboardPhaseManager phase = GetComponent<MotherboardPhaseManager>();
         Transform phase1Root = phase != null ? phase.GetPhase1Root() : transform;
         if (phase1Root == null) phase1Root = transform;
@@ -28,6 +28,14 @@ public class MotherboardController : MonoBehaviour
 
         foreach (var c in phase1Root.GetComponentsInChildren<CableSlot>(true))
             if (c.IsInstalled()) return false;
+
+        // GPU cable must also be disconnected before the motherboard can be removed
+        GPUPhase1CableInteraction gpuPhase1 = phase?.GetGPUPhase1CableInteraction();
+        if (gpuPhase1 != null)
+        {
+            foreach (var cs in gpuPhase1.GetComponentsInChildren<CableSlot>(true))
+                if (cs.IsInstalled()) return false;
+        }
 
         return true;
     }

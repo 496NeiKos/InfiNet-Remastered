@@ -12,8 +12,6 @@ using UnityEngine;
 /// </summary>
 public class HardwareSlotManager : MonoBehaviour
 {
-    [SerializeField] private HardwarePrefabRegistry prefabRegistry;
-
     [Tooltip("The container that holds all slot containers (e.g., SystemUnitHardwareComponents)")]
     [SerializeField] private GameObject hardwareComponents;
 
@@ -78,7 +76,6 @@ public class HardwareSlotManager : MonoBehaviour
         if (slot == null) return false;
         if (!slot.CanAcceptPrefab(prefabName)) return false;
         if (!slot.IsSlotEmpty()) return false;
-        if (prefabRegistry == null) return false;
 
         GameObject child = PrefabInstaller.InstantiatePrefabByName(prefabName, slot.transform);
         if (child == null) return false;

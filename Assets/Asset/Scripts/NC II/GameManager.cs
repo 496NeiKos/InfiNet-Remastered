@@ -24,6 +24,10 @@ public class GameManager : MonoBehaviour
     // Cached separately — Motherboard disables itself when MB inner panel opens,
     // making GetComponent unreliable at that point
     private MotherboardDetailViewManager _activeMbdvm;
+    private GPUPhase1CableInteraction _activeGpuPhase1Panel;
+
+    public void RegisterGPUPhase1Panel(GPUPhase1CableInteraction panel) =>
+        _activeGpuPhase1Panel = panel;
 
     private void Awake()
     {
@@ -56,6 +60,13 @@ public class GameManager : MonoBehaviour
 
     public void CloseEditor()
     {
+        // Check GPU Phase 1 cable panel (third layer) — close it first before anything else
+        if (_activeGpuPhase1Panel != null && _activeGpuPhase1Panel.IsPanelOpen)
+        {
+            _activeGpuPhase1Panel.ClosePanel();
+            return;
+        }
+
         // Check SystemUnit inner panel (DetailViewManager on SystemUnit root)
         if (_activeInteraction != null)
         {
@@ -87,6 +98,7 @@ public class GameManager : MonoBehaviour
         }
 
         _activeMbdvm = null;
+        _activeGpuPhase1Panel = null;
 
         if (editingPanel != null)
             editingPanel.SetActive(false);

@@ -42,7 +42,7 @@ public class LessonOverviewManager : MonoBehaviour
         ShowOverview(lesson1Sprite,
             "Hardware",
             "This module focuses on hands-on tasks such as assembling and disassembling computer components. It helps students understand the proper handling, identification, and installation of hardware parts in a safe virtual environment.\r\n",
-            "Hardware"); // replace with your actual scene name
+            "COC I"); // replace with your actual scene name
     }
 
     public void ShowLesson2()

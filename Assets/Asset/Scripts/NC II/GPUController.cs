@@ -12,7 +12,12 @@ public class GPUController : MonoBehaviour
     [SerializeField] private Sprite defaultSprite;
     [SerializeField] private Sprite snappedSprite;
 
+    [Header("Cable State Sprites (in slot)")]
+    [SerializeField] private Sprite cableInstalledSprite;
+    [SerializeField] private Sprite cableRemovedSprite;
+
     private bool _isLatched = true;
+    private bool _inSlot = false;
     private SpriteRenderer _sr;
 
     public bool IsLatched => _isLatched;
@@ -41,8 +46,8 @@ public class GPUController : MonoBehaviour
 
     private void Start()
     {
-        // Restore correct sprite when scene loads with GPU already in a slot
-        ApplySlotSprite(GetComponentInParent<SlotContainer>() != null);
+        _inSlot = GetComponentInParent<SlotContainer>() != null;
+        RefreshSprite();
     }
 
     public void SetLatched()
@@ -59,13 +64,39 @@ public class GPUController : MonoBehaviour
         Debug.Log($"[GPUController:{name}] Unlatched");
     }
 
-    public void OnSnappedToSlot() => ApplySlotSprite(true);
-    public void OnRemovedFromSlot() => ApplySlotSprite(false);
+    public void OnSnappedToSlot()
+    {
+        _inSlot = true;
+        RefreshSprite();
+    }
 
-    private void ApplySlotSprite(bool inSlot)
+    public void OnRemovedFromSlot()
+    {
+        _inSlot = false;
+        RefreshSprite();
+    }
+
+    public void RefreshCableSprite() => RefreshSprite();
+
+    private void RefreshSprite()
     {
         if (_sr == null) return;
-        Sprite s = inSlot ? snappedSprite : defaultSprite;
-        if (s != null) _sr.sprite = s;
+
+        if (!_inSlot)
+        {
+            if (defaultSprite != null) _sr.sprite = defaultSprite;
+            return;
+        }
+
+        bool cableConnected = IsCableConnected();
+        Sprite cable = cableConnected ? cableInstalledSprite : cableRemovedSprite;
+        _sr.sprite = cable != null ? cable : snappedSprite;
+    }
+
+    private bool IsCableConnected()
+    {
+        foreach (var cs in GetComponentsInChildren<CableSlot>(true))
+            if (cs.IsInstalled()) return true;
+        return false;
     }
 }

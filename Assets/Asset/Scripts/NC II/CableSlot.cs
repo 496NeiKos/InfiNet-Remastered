@@ -22,12 +22,14 @@ public class CableSlot : MonoBehaviour
     public void SetInstalled()
     {
         _isInstalled = true;
+        GetComponentInParent<GPUController>()?.RefreshCableSprite();
         Debug.Log($"[CableSlot] {gameObject.name} → Installed");
     }
 
     public void SetUninstalled()
     {
         _isInstalled = false;
+        GetComponentInParent<GPUController>()?.RefreshCableSprite();
         Debug.Log($"[CableSlot] {gameObject.name} → Uninstalled");
     }
 }

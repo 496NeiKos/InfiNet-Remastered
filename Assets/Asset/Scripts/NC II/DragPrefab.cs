@@ -306,6 +306,24 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
                 return false;
             }
         }
+
+        // GPU cable must also be disconnected before the motherboard can be dragged out
+        if (phase != null)
+        {
+            GPUPhase1CableInteraction gpuPhase1 = phase.GetGPUPhase1CableInteraction();
+            if (gpuPhase1 != null)
+            {
+                foreach (var cs in gpuPhase1.GetComponentsInChildren<CableSlot>(true))
+                {
+                    if (cs.IsInstalled())
+                    {
+                        Debug.Log($"[DragPrefab:{name}] GPU cable blocking: {cs.gameObject.name}");
+                        return false;
+                    }
+                }
+            }
+        }
+
         return true;
     }
 }

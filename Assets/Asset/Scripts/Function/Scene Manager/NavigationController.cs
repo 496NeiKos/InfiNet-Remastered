@@ -19,16 +19,23 @@ public class NavigationController : MonoBehaviour
     }
     public void ReturnToLessonSelection()
     {
-        AudioClip sfx = SoundManager.instance.backSFX;
-        SoundManager.instance.PlaySFX(sfx);
-        StartCoroutine(WaitAndLoadScene("LessonSelection", sfx.length));
+        if (SoundManager.instance != null)
+        {
+            AudioClip sfx = SoundManager.instance.backSFX;
+            SoundManager.instance.PlaySFX(sfx);
+            StartCoroutine(WaitAndLoadScene("LessonSelection", sfx.length));
+        }
+        else
+        {
+            SceneManager.LoadScene("LessonSelection");
+        }
     }
 
     public void ReturnToHardware()
     {
         AudioClip sfx = SoundManager.instance.backSFX;
         SoundManager.instance.PlaySFX(sfx);
-        StartCoroutine(WaitAndLoadScene("Hardware", sfx.length));
+        StartCoroutine(WaitAndLoadScene("COC I", sfx.length));
     }
 
     //Module

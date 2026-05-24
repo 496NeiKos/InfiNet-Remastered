@@ -65,7 +65,14 @@ public class MotherboardDetailViewManager : MonoBehaviour
             if (ram != null) { OpenInnerPanel(ram.gameObject); return; }
 
             GPUController gpu = hit.collider.GetComponent<GPUController>();
-            if (gpu != null) { OpenInnerPanel(gpu.gameObject); return; }
+            if (gpu != null)
+            {
+                // During Phase 1, GPUPhase1CableInteraction owns right-click on the GPU
+                GPUPhase1CableInteraction phase1Cable = gpu.GetComponent<GPUPhase1CableInteraction>();
+                if (phase1Cable != null && phase1Cable.enabled) return;
+                OpenInnerPanel(gpu.gameObject);
+                return;
+            }
         }
     }
 

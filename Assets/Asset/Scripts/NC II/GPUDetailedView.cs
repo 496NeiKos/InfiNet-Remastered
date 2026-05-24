@@ -123,24 +123,11 @@ public class GPUDetailedView : MonoBehaviour
         if (_gpuController == null) return;
         bool interactable = _gpuController.IsLatched;
 
+        // Screws only — cables are Phase 1 and managed by GPUPhase1CableInteraction
         foreach (var sc in _gpuController.GetComponentsInChildren<ScrewController>(true))
         {
             sc.enabled = interactable;
             Collider2D col = sc.GetComponent<Collider2D>();
-            if (col != null) col.enabled = interactable;
-        }
-
-        foreach (var cs in _gpuController.GetComponentsInChildren<CableSlot>(true))
-        {
-            cs.enabled = interactable;
-            Collider2D col = cs.GetComponent<Collider2D>();
-            if (col != null) col.enabled = interactable;
-        }
-
-        foreach (var mc in _gpuController.GetComponentsInChildren<MBCable>(true))
-        {
-            mc.enabled = interactable;
-            Collider2D col = mc.GetComponent<Collider2D>();
             if (col != null) col.enabled = interactable;
         }
     }
