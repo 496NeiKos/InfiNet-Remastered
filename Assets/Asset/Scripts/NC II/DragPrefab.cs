@@ -119,6 +119,15 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
             return;
         }
 
+        // Block HDD drag until its own cable and mobo HDD cable are both disconnected
+        HDDController hdd = GetComponent<HDDController>();
+        if (hdd != null && isInSlot && !hdd.CanBeRemoved)
+        {
+            Debug.Log($"[DragPrefab:{name}] BLOCKED — HDD cables still connected.");
+            _isDragging = false;
+            return;
+        }
+
         // Layer 1 gate — applies to ALL SystemUnit hardware (Motherboard, HDD, PSU).
         // SU back VGA and PSU cables must both be unplugged before any hardware can be dragged.
         if (isInSlot && GetComponentInParent<SystemUnitController>() != null)
