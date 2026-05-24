@@ -4,7 +4,7 @@ using UnityEngine.EventSystems;
 /// <summary>
 /// On cable child objects inside back ports (PSUPortCable, VGAPortCable, etc.).
 /// Handles drag-out, snap-back, and store to hardware area.
-/// Optionally gated by a power button — cable cannot be removed while power is on.
+/// Optionally gated by a power button ï¿½ cable cannot be removed while power is on.
 /// </summary>
 public class BackCable : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
@@ -18,6 +18,9 @@ public class BackCable : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
     [Header("Power Gate (assign the power button that must be OFF before unplugging)")]
     [SerializeField] private MonoBehaviour powerButtonSource;
     private IPowerButton _powerButton;
+
+    [Header("PSU Switch Gate (assign PSUSwitchController â€” cable locked while switch is On)")]
+    [SerializeField] private PSUSwitchController psuSwitchGate;
 
     private BackPortSlot _parentPort;
     private Transform _originalParent;
@@ -42,7 +45,14 @@ public class BackCable : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
         // Gate: power must be off before unplugging
         if (_powerButton != null && _powerButton.IsPoweredOn)
         {
-            Debug.Log($"[BackCable] Cannot unplug '{cableType}' — turn off the power button first.");
+            Debug.Log($"[BackCable] Cannot unplug '{cableType}' ï¿½ turn off the power button first.");
+            return;
+        }
+
+        // Gate: PSU switch must be off before unplugging the PSU cable
+        if (psuSwitchGate != null && psuSwitchGate.IsOn)
+        {
+            Debug.Log($"[BackCable] Cannot unplug '{cableType}' â€” PSU switch is on.");
             return;
         }
 
