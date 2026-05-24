@@ -34,6 +34,11 @@ public class BackCable : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
     {
         _parentPort = GetComponentInParent<BackPortSlot>();
 
+        // Capture designed transform so InstallToPort and SnapBack always restore correctly
+        _originalParent = transform.parent;
+        _originalLocalPos = transform.localPosition;
+        _originalLocalScale = transform.localScale;
+
         if (powerButtonSource != null)
             _powerButton = powerButtonSource as IPowerButton;
     }
@@ -42,10 +47,16 @@ public class BackCable : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
     {
         if (eventData.button != PointerEventData.InputButton.Left) return;
 
+        // Always capture current transform so snap-back has valid values even on a blocked drag
+        _originalParent = transform.parent;
+        _originalLocalPos = transform.localPosition;
+        _originalLocalScale = transform.localScale;
+
         // Gate: power must be off before unplugging
         if (_powerButton != null && _powerButton.IsPoweredOn)
         {
             Debug.Log($"[BackCable] Cannot unplug '{cableType}' � turn off the power button first.");
+            _isDragging = false;
             return;
         }
 
@@ -53,13 +64,11 @@ public class BackCable : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
         if (psuSwitchGate != null && psuSwitchGate.IsOn)
         {
             Debug.Log($"[BackCable] Cannot unplug '{cableType}' — PSU switch is on.");
+            _isDragging = false;
             return;
         }
 
         _isDragging = true;
-        _originalParent = transform.parent;
-        _originalLocalPos = transform.localPosition;
-        _originalLocalScale = transform.localScale;
 
         Vector3 worldScale = transform.lossyScale;
         transform.SetParent(GameManager.Instance.worldRoot, true);
@@ -116,7 +125,7 @@ public class BackCable : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
     {
         _parentPort = port;
         transform.SetParent(port.transform, false);
-        transform.localPosition = Vector3.zero;
+        transform.localPosition = _originalLocalPos;
         transform.localScale = _originalLocalScale;
         gameObject.SetActive(true);
         port.SetInstalled();
