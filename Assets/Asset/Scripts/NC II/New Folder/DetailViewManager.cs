@@ -23,12 +23,6 @@ public class DetailViewManager : MonoBehaviour
             !transform.IsChildOf(GameManager.Instance.firstLayer.transform))
             return;
 
-        if (Mouse.current.leftButton.wasPressedThisFrame)
-        {
-            if (!_isInnerPanelOpen)
-                CheckCoverClick();
-        }
-
         if (Mouse.current.rightButton.wasPressedThisFrame)
         {
             if (_isInnerPanelOpen)
@@ -40,17 +34,6 @@ public class DetailViewManager : MonoBehaviour
             if (coverController != null && coverController.IsOpen())
                 CheckChildRightClick();
         }
-    }
-
-    private void CheckCoverClick()
-    {
-        if (coverController == null) return;
-
-        Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
-        RaycastHit2D hit = Physics2D.Raycast(ray.origin, ray.direction);
-
-        if (hit.collider != null && hit.collider.gameObject == coverController.gameObject)
-            coverController.OnCoverClicked();
     }
 
     private void CheckChildRightClick()
