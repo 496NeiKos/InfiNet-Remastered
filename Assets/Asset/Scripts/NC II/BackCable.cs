@@ -106,29 +106,26 @@ public class BackCable : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
         _isDragging = false;
 
         bool wasInPort = _originalParent?.GetComponent<BackPortSlot>() != null;
+        bool onHardwareArea = RectTransformUtility.RectangleContainsScreenPoint(
+            GameManager.Instance.hardwareArea, eventData.position, eventData.pressEventCamera);
 
-        if (wasInPort)
+        if (onHardwareArea)
         {
-            bool onHardwareArea = RectTransformUtility.RectangleContainsScreenPoint(
-                GameManager.Instance.hardwareArea, eventData.position, eventData.pressEventCamera);
-
-            if (onHardwareArea)
-            {
-                _parentPort?.SetUninstalled();
-                SendToHolder();
-                Debug.Log($"[BackCable] '{cableType}' stored to hardware area.");
-            }
-            else
-            {
-                SnapBack();
-                Debug.Log($"[BackCable] '{cableType}' snapped back to port.");
-            }
+            // Storage always allowed regardless of where drag started.
+            // Only mark port uninstalled if the drag actually came from a port.
+            if (wasInPort) _parentPort?.SetUninstalled();
+            SendToHolder();
+            Debug.Log($"[BackCable] '{cableType}' stored to hardware area.");
+        }
+        else if (wasInPort)
+        {
+            SnapBack();
+            Debug.Log($"[BackCable] '{cableType}' snapped back to port.");
         }
         else
         {
-            // Dragged from worldRoot (not from a port).
-            // Try to install to the nearest visible port; otherwise just snap back in place.
-            // Do NOT send to hardware area or touch any port state.
+            // Dragged from worldRoot — try to install to nearest visible port, else snap back.
+            // Do NOT touch port state on failure.
             BackPortSlot target = FindNearestPortInPanel(eventData);
             if (target != null)
             {

@@ -153,17 +153,26 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
             return;
         }
 
-        // MBCable path � reinstalls to matching CableSlot by cableType
+        // MBCable path — reinstalls to matching CableSlot by cableType
         MBCable mbCable = hardwarePrefab.GetComponent<MBCable>();
         if (mbCable != null)
         {
-            CableSlot[] allSlots = FindObjectsOfType<CableSlot>(true);
+            // Collect CableSlots only from active editing layers so slots in worldRoot
+            // (hardware not currently being edited) are never candidates.
+            var slotList = new System.Collections.Generic.List<CableSlot>();
+            if (GameManager.Instance?.firstLayer != null)
+                slotList.AddRange(GameManager.Instance.firstLayer.GetComponentsInChildren<CableSlot>());
+            if (GameManager.Instance?.secondLayer != null)
+                slotList.AddRange(GameManager.Instance.secondLayer.GetComponentsInChildren<CableSlot>());
+            if (GameManager.Instance?.thirdLayer != null)
+                slotList.AddRange(GameManager.Instance.thirdLayer.GetComponentsInChildren<CableSlot>());
+
             CableSlot bestSlot = null;
             float bestDist = float.MaxValue;
 
-            foreach (CableSlot slot in allSlots)
+            foreach (CableSlot slot in slotList)
             {
-                if (!slot.enabled) continue;          // Phase 1 inactive � slot is disabled
+                if (!slot.enabled) continue;          // Phase 1 inactive — slot is disabled
                 if (slot.IsInstalled()) continue;
                 if (!slot.CanAcceptCable(mbCable.GetCableType())) continue;
 
