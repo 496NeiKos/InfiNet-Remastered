@@ -31,6 +31,9 @@ public class ScrewController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
     [Header("References")]
     [SerializeField] private CoverController coverController;
 
+    // Only one screw may process a screwdriver at a time across all instances.
+    private static ScrewController _activeScrew = null;
+
     private SpriteRenderer _spriteRenderer;
     private ScrewState _state = ScrewState.Screwed;
     private float _currentProgress = 0f;
@@ -67,8 +70,7 @@ public class ScrewController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
             if (_currentProgress >= screwdriverDuration)
             {
                 SetState(ScrewState.Empty);
-                _currentProgress = 0f;
-                _isScrewdriverTouching = false;
+                ReleaseScrewdriverLock();
             }
         }
 
@@ -79,8 +81,7 @@ public class ScrewController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
             if (_currentProgress >= screwdriverDuration)
             {
                 SetState(ScrewState.Screwed);
-                _currentProgress = 0f;
-                _isScrewdriverTouching = false;
+                ReleaseScrewdriverLock();
             }
         }
     }
@@ -89,17 +90,19 @@ public class ScrewController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        // Screwdriver contact → start timer (works on Screwed and Pending)
         if (other.CompareTag("Screwdriver"))
-        {
-            if (_state == ScrewState.Screwed || _state == ScrewState.Pending)
-            {
-                _isScrewdriverTouching = true;
-            }
-        }
+            TryBeginScrewdriver();
 
         // NOTE: "Screw" tag contact NO LONGER installs instantly.
         // Installation only happens on DROP via ScrewDrag.OnEndDrag().
+    }
+
+    private void OnTriggerStay2D(Collider2D other)
+    {
+        // Re-attempt each frame so this screw can claim the lock the moment
+        // the previously active screw finishes and releases it.
+        if (other.CompareTag("Screwdriver") && !_isScrewdriverTouching)
+            TryBeginScrewdriver();
     }
 
     private void OnTriggerExit2D(Collider2D other)
@@ -107,7 +110,36 @@ public class ScrewController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         if (other.CompareTag("Screwdriver"))
         {
             _isScrewdriverTouching = false;
+            _currentProgress = 0f;
+            if (_activeScrew == this)
+                _activeScrew = null;
         }
+    }
+
+    private void OnDisable()
+    {
+        if (_activeScrew == this)
+        {
+            _activeScrew = null;
+            _isScrewdriverTouching = false;
+            _currentProgress = 0f;
+        }
+    }
+
+    private void TryBeginScrewdriver()
+    {
+        if (_state != ScrewState.Screwed && _state != ScrewState.Pending) return;
+        if (_activeScrew != null && _activeScrew != this) return;
+        _activeScrew = this;
+        _isScrewdriverTouching = true;
+    }
+
+    private void ReleaseScrewdriverLock()
+    {
+        _currentProgress = 0f;
+        _isScrewdriverTouching = false;
+        if (_activeScrew == this)
+            _activeScrew = null;
     }
 
     // ── Public: Called by ScrewDrag when screw is DROPPED on this hole ────
