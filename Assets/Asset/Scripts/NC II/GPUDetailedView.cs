@@ -3,8 +3,9 @@ using UnityEngine.UI;
 
 /// <summary>
 /// On GPUDetailed — manages switching between the top-view and side-view sub-panels.
-/// Wires FrontButton/SideButton in the InnerEditingPanel when active (same button names
-/// used by HardwareViewController in the main editing panel).
+/// Wires "TopViewButton" and "SideViewButton" in the InnerEditingPanel when active.
+/// These names are intentionally different from HardwareViewController's "FrontButton"/"SideButton"
+/// to avoid any conflict with the main editing panel's view buttons.
 /// ApplyHardwareInteractable() is public so GPULatchSideView can call it after latch changes.
 /// </summary>
 public class GPUDetailedView : MonoBehaviour
@@ -67,9 +68,8 @@ public class GPUDetailedView : MonoBehaviour
         GameObject panel = FindInnerEditingPanel();
         if (panel == null) return;
 
-        WireButton(panel, "FrontButton", topView);
-        WireButton(panel, "SideButton", sideView);
-        HideButton(panel, "BackButton");
+        WireButton(panel, "TopViewButton", topView);
+        WireButton(panel, "SideViewButton", sideView);
     }
 
     private void HideInnerPanelButtons()
@@ -79,9 +79,8 @@ public class GPUDetailedView : MonoBehaviour
         GameObject panel = FindInnerEditingPanel();
         if (panel == null) return;
 
-        HideButton(panel, "FrontButton");
-        HideButton(panel, "SideButton");
-        HideButton(panel, "BackButton");
+        HideButton(panel, "TopViewButton");
+        HideButton(panel, "SideViewButton");
     }
 
     private void WireButton(GameObject panel, string buttonName, GameObject targetView)
