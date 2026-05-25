@@ -15,6 +15,7 @@ public class GPUPhase1CableInteraction : MonoBehaviour
     private Vector3 _originalLocalPos;
     private Vector3 _originalLocalScale;
     private bool _isPanelOpen = false;
+    private GameObject _motherboard;
 
     public bool IsPanelOpen => _isPanelOpen;
 
@@ -39,6 +40,7 @@ public class GPUPhase1CableInteraction : MonoBehaviour
             SetCableOnlyInteraction(false);
             if (_detailedView != null) _detailedView.SetActive(false);
             RestoreGPUDetailedView();
+            RestoreMotherboard();
             _isPanelOpen = false;
         }
     }
@@ -65,6 +67,11 @@ public class GPUPhase1CableInteraction : MonoBehaviour
         _originalParent = transform.parent;
         _originalLocalPos = transform.localPosition;
         _originalLocalScale = transform.localScale;
+
+        // Find and disable the Motherboard before reparenting (GetComponentInParent won't work after).
+        MotherboardController mb = GetComponentInParent<MotherboardController>();
+        _motherboard = mb?.gameObject;
+        if (_motherboard != null) _motherboard.SetActive(false);
 
         transform.SetParent(thirdLayer.transform, true);
 
@@ -106,6 +113,8 @@ public class GPUPhase1CableInteraction : MonoBehaviour
         transform.localPosition = _originalLocalPos;
         transform.localScale = _originalLocalScale;
 
+        RestoreMotherboard();
+
         if (GameManager.Instance?.thirdLayer != null)
             GameManager.Instance.thirdLayer.SetActive(false);
 
@@ -146,6 +155,15 @@ public class GPUPhase1CableInteraction : MonoBehaviour
 
             foreach (var gdv in _gpuController.GetComponentsInChildren<GPUDetailedView>(true))
                 gdv.enabled = false;
+        }
+    }
+
+    private void RestoreMotherboard()
+    {
+        if (_motherboard != null)
+        {
+            _motherboard.SetActive(true);
+            _motherboard = null;
         }
     }
 
