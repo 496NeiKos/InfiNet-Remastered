@@ -120,6 +120,7 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
 
             foreach (BackPortSlot port in allPorts)
             {
+                if (!port.gameObject.activeInHierarchy) continue;
                 if (!port.IsUninstalled) continue;
                 if (port.gameObject.name != backCable.GetCableType() &&
                     !port.gameObject.name.Contains(backCable.GetCableType())) continue;
