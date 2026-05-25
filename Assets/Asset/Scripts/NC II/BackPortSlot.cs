@@ -12,6 +12,9 @@ public class BackPortSlot : MonoBehaviour
     [SerializeField] private Sprite installedSprite;
     [SerializeField] private Sprite uninstalledSprite;
 
+    [Header("Cross-device cable types this port also accepts")]
+    [SerializeField] private string[] additionalCableTypes;
+
     private SpriteRenderer _sr;
     private PortState _state = PortState.Installed;
 
@@ -36,6 +39,20 @@ public class BackPortSlot : MonoBehaviour
         _state = PortState.Uninstalled;
         ApplySprite();
         Debug.Log($"[BackPortSlot] {gameObject.name} → Uninstalled");
+    }
+
+    /// <summary>
+    /// Returns true if this port can accept a cable with the given cableType.
+    /// Matches when the port name equals/contains the type, or the type is in additionalCableTypes.
+    /// </summary>
+    public bool CanAcceptCable(string cableType)
+    {
+        if (string.IsNullOrEmpty(cableType)) return false;
+        if (gameObject.name == cableType || gameObject.name.Contains(cableType)) return true;
+        if (additionalCableTypes != null)
+            foreach (string t in additionalCableTypes)
+                if (!string.IsNullOrEmpty(t) && cableType == t) return true;
+        return false;
     }
 
     private void ApplySprite()

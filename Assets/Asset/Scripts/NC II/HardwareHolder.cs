@@ -136,8 +136,7 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
             foreach (BackPortSlot port in allPorts)
             {
                 if (!port.IsUninstalled) continue;
-                if (port.gameObject.name != backCable.GetCableType() &&
-                    !port.gameObject.name.Contains(backCable.GetCableType())) continue;
+                if (!port.CanAcceptCable(backCable.GetCableType())) continue;
 
                 float dist = Vector3.Distance(port.transform.position, dropWorldPos);
                 if (dist < slotInstallRadius && dist < bestDist)

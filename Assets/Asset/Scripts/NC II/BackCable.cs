@@ -158,7 +158,7 @@ public class BackCable : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
         foreach (BackPortSlot port in panel.GetComponentsInChildren<BackPortSlot>())
         {
             if (!port.IsUninstalled) continue;
-            if (port.gameObject.name != cableType && !port.gameObject.name.Contains(cableType)) continue;
+            if (!port.CanAcceptCable(cableType)) continue;
             float dist = Vector3.Distance(port.transform.position, dropPos);
             if (dist < radius && dist < bestDist) { bestDist = dist; best = port; }
         }
