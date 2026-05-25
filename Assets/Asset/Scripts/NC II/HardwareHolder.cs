@@ -85,6 +85,13 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
             return;
         }
 
+        // Cables must only install to a port via TryInstallInSlot (editor open).
+        // Never place them loose in worldRoot — snap back to hardware area instead.
+        bool isCable = hardwarePrefab != null &&
+            (hardwarePrefab.GetComponent<BackCable>() != null ||
+             hardwarePrefab.GetComponent<MBCable>() != null);
+        if (isCable) return;
+
         bool onWorkspace = RectTransformUtility.RectangleContainsScreenPoint(
             GameManager.Instance.workspaceArea, eventData.position, eventData.pressEventCamera);
         if (!onWorkspace) return;
