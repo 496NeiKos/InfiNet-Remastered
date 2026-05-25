@@ -105,20 +105,67 @@ public class BackCable : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
         if (!_isDragging) return;
         _isDragging = false;
 
-        bool onHardwareArea = RectTransformUtility.RectangleContainsScreenPoint(
-            GameManager.Instance.hardwareArea, eventData.position, eventData.pressEventCamera);
+        bool wasInPort = _originalParent?.GetComponent<BackPortSlot>() != null;
 
-        if (onHardwareArea)
+        if (wasInPort)
         {
-            _parentPort?.SetUninstalled();
-            SendToHolder();
-            Debug.Log($"[BackCable] '{cableType}' stored to hardware area.");
+            bool onHardwareArea = RectTransformUtility.RectangleContainsScreenPoint(
+                GameManager.Instance.hardwareArea, eventData.position, eventData.pressEventCamera);
+
+            if (onHardwareArea)
+            {
+                _parentPort?.SetUninstalled();
+                SendToHolder();
+                Debug.Log($"[BackCable] '{cableType}' stored to hardware area.");
+            }
+            else
+            {
+                SnapBack();
+                Debug.Log($"[BackCable] '{cableType}' snapped back to port.");
+            }
         }
         else
         {
-            SnapBack();
-            Debug.Log($"[BackCable] '{cableType}' snapped back to port.");
+            // Dragged from worldRoot (not from a port).
+            // Try to install to the nearest visible port; otherwise just snap back in place.
+            // Do NOT send to hardware area or touch any port state.
+            BackPortSlot target = FindNearestPortInPanel(eventData);
+            if (target != null)
+            {
+                InstallToPort(target);
+                Debug.Log($"[BackCable] '{cableType}' installed to port from workspace.");
+            }
+            else
+            {
+                transform.SetParent(_originalParent, false);
+                transform.localPosition = _originalLocalPos;
+                transform.localScale = _originalLocalScale;
+                Debug.Log($"[BackCable] '{cableType}' snapped back to workspace (no port in range).");
+            }
         }
+    }
+
+    private BackPortSlot FindNearestPortInPanel(PointerEventData eventData)
+    {
+        GameObject panel = GameManager.Instance?.firstLayer;
+        if (panel == null) return null;
+
+        Vector3 dropPos = Camera.main.ScreenToWorldPoint(
+            new Vector3(eventData.position.x, eventData.position.y, 10f));
+        dropPos.z = 0f;
+
+        const float radius = 1.5f;
+        BackPortSlot best = null;
+        float bestDist = float.MaxValue;
+
+        foreach (BackPortSlot port in panel.GetComponentsInChildren<BackPortSlot>())
+        {
+            if (!port.IsUninstalled) continue;
+            if (port.gameObject.name != cableType && !port.gameObject.name.Contains(cableType)) continue;
+            float dist = Vector3.Distance(port.transform.position, dropPos);
+            if (dist < radius && dist < bestDist) { bestDist = dist; best = port; }
+        }
+        return best;
     }
 
     public void InstallToPort(BackPortSlot port)
@@ -137,7 +184,9 @@ public class BackCable : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
         transform.SetParent(_originalParent, false);
         transform.localPosition = _originalLocalPos;
         transform.localScale = _originalLocalScale;
-        _parentPort?.SetInstalled();
+        // Only restore port state when actually snapping back into a BackPortSlot.
+        if (_originalParent?.GetComponent<BackPortSlot>() != null)
+            _parentPort?.SetInstalled();
     }
 
     private void SendToHolder()
