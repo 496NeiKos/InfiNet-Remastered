@@ -102,6 +102,9 @@ public class GPUPhase1CableInteraction : MonoBehaviour
     {
         if (!_isPanelOpen) return;
 
+        // Set false early so OnDisable (triggered by reparenting into inactive hierarchy) is a no-op.
+        _isPanelOpen = false;
+
         SetCableOnlyInteraction(false);
 
         if (_detailedView != null)
@@ -109,16 +112,17 @@ public class GPUPhase1CableInteraction : MonoBehaviour
 
         RestoreGPUDetailedView();
 
+        // Re-enable MB BEFORE reparenting: reparenting into an inactive parent triggers OnDisable,
+        // and calling SetActive inside that cascade throws "already being activated or deactivated".
+        RestoreMotherboard();
+
         transform.SetParent(_originalParent, false);
         transform.localPosition = _originalLocalPos;
         transform.localScale = _originalLocalScale;
 
-        RestoreMotherboard();
-
         if (GameManager.Instance?.thirdLayer != null)
             GameManager.Instance.thirdLayer.SetActive(false);
 
-        _isPanelOpen = false;
         GameManager.Instance?.RegisterGPUPhase1Panel(null);
 
         Debug.Log("[GPUPhase1CableInteraction] Phase 1 GPU cable panel closed.");
