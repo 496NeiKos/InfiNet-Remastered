@@ -36,6 +36,12 @@ public class GPUDetailedView : MonoBehaviour
         HideSecondLayerButtons();
     }
 
+    public void HideSubViews()
+    {
+        topView?.SetActive(false);
+        sideView?.SetActive(false);
+    }
+
     /// <summary>Gates screws based on latch state. Call after any latch state change.</summary>
     public void ApplyHardwareInteractable()
     {

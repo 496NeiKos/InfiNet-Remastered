@@ -158,7 +158,10 @@ public class GPUPhase1CableInteraction : MonoBehaviour
             }
 
             foreach (var gdv in _gpuController.GetComponentsInChildren<GPUDetailedView>(true))
+            {
+                gdv.HideSubViews();
                 gdv.enabled = false;
+            }
         }
     }
 
