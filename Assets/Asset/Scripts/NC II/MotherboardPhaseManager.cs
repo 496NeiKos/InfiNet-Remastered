@@ -2,9 +2,13 @@ using UnityEngine;
 
 public class MotherboardPhaseManager : MonoBehaviour
 {
+    public enum Phase { Phase1, Phase2 }
+
     [SerializeField] private GameObject phase1Root;
     [SerializeField] private GameObject phase2Root;
     [SerializeField] private GPUPhase1CableInteraction gpuPhase1CableInteraction;
+
+    public Phase CurrentPhase { get; private set; } = Phase.Phase1;
 
     public Transform GetPhase1Root() => phase1Root != null ? phase1Root.transform : null;
     public Transform GetPhase2Root() => phase2Root != null ? phase2Root.transform : null;
@@ -12,26 +16,34 @@ public class MotherboardPhaseManager : MonoBehaviour
 
     public void SetPhase1Interactive()
     {
+        CurrentPhase = Phase.Phase1;
         SetPhase1Enabled(true);
         SetPhase2Enabled(false);
 
-        // Re-enable GPU Phase 1 AFTER SetPhase2Enabled, which sweeps and disables
-        // all phase2Root Collider2Ds (including the GPU root collider).
+        // Re-enable full GPU interaction in Phase 1 AFTER SetPhase2Enabled, which sweeps
+        // and disables all phase2Root Collider2Ds (including the GPU root collider).
         if (gpuPhase1CableInteraction != null)
         {
             gpuPhase1CableInteraction.enabled = true;
-            Collider2D gpuCol = gpuPhase1CableInteraction.GetComponent<Collider2D>();
-            if (gpuCol != null) gpuCol.enabled = true;
+            foreach (DragPrefab dp in gpuPhase1CableInteraction.GetComponents<DragPrefab>())
+                dp.enabled = true;
+            foreach (Collider2D col in gpuPhase1CableInteraction.GetComponents<Collider2D>())
+                col.enabled = true;
         }
     }
 
     public void SetPhase2Interactive()
     {
-        // Close and disable GPU Phase 1 before Phase 2 activates
+        CurrentPhase = Phase.Phase2;
+        // Close and fully disable GPU — all GPU work is done in Phase 1.
         if (gpuPhase1CableInteraction != null)
         {
             gpuPhase1CableInteraction.ClosePanel();
             gpuPhase1CableInteraction.enabled = false;
+            foreach (DragPrefab dp in gpuPhase1CableInteraction.GetComponents<DragPrefab>())
+                dp.enabled = false;
+            foreach (Collider2D col in gpuPhase1CableInteraction.GetComponents<Collider2D>())
+                col.enabled = false;
         }
 
         SetPhase1Enabled(false);
@@ -72,18 +84,30 @@ public class MotherboardPhaseManager : MonoBehaviour
     {
         if (phase2Root == null) return;
 
-        // Toggle drag and right-click interaction on all Phase 2 components
+        // GPU is fully managed by Phase 1 — skip it entirely here.
+        GPUController gpuCtrl = gpuPhase1CableInteraction != null
+            ? gpuPhase1CableInteraction.GetComponent<GPUController>()
+            : null;
+
         foreach (var dp in phase2Root.GetComponentsInChildren<DragPrefab>(true))
+        {
+            if (gpuCtrl != null && dp.GetComponentInParent<GPUController>() == gpuCtrl) continue;
             dp.enabled = enabled;
+        }
 
         foreach (var pi in phase2Root.GetComponentsInChildren<PrefabInteraction>(true))
+        {
+            if (gpuCtrl != null && pi.GetComponentInParent<GPUController>() == gpuCtrl) continue;
             pi.enabled = enabled;
+        }
 
         foreach (var lk in phase2Root.GetComponentsInChildren<CPULockController>(true))
             lk.enabled = enabled;
 
-        // Toggle colliders so components cannot be raycasted when phase is inactive
         foreach (var col in phase2Root.GetComponentsInChildren<Collider2D>(true))
+        {
+            if (gpuCtrl != null && col.GetComponentInParent<GPUController>() == gpuCtrl) continue;
             col.enabled = enabled;
+        }
     }
 }

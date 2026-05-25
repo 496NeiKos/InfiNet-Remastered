@@ -23,6 +23,7 @@ public class NavigationController : MonoBehaviour
         {
             AudioClip sfx = SoundManager.instance.backSFX;
             SoundManager.instance.PlaySFX(sfx);
+
             StartCoroutine(WaitAndLoadScene("LessonSelection", sfx.length));
         }
         else

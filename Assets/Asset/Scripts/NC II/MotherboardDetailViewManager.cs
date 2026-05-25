@@ -70,6 +70,9 @@ public class MotherboardDetailViewManager : MonoBehaviour
                 OpenInnerPanel(gpu.gameObject);
                 return;
             }
+
+            SSDController ssd = hit.collider.GetComponent<SSDController>();
+            if (ssd != null) { OpenInnerPanel(ssd.gameObject); return; }
         }
     }
 

@@ -37,7 +37,7 @@ public class GPUPhase1CableInteraction : MonoBehaviour
     {
         if (_isPanelOpen)
         {
-            SetCableOnlyInteraction(false);
+            SetGPUInteraction(false);
             if (_detailedView != null) _detailedView.SetActive(false);
             RestoreMotherboard();
             _isPanelOpen = false;
@@ -83,14 +83,10 @@ public class GPUPhase1CableInteraction : MonoBehaviour
             transform.position = center;
         }
 
-        SetCableOnlyInteraction(true);
+        SetGPUInteraction(true);
 
         if (_detailedView != null)
             _detailedView.SetActive(true);
-
-        // GPUDetailedView.OnEnable may re-enable screws via ApplyHardwareInteractable.
-        // Force them off — screws are Phase 2 only.
-        DisableScrews();
 
         thirdLayer.SetActive(true);
         _isPanelOpen = true;
@@ -106,7 +102,7 @@ public class GPUPhase1CableInteraction : MonoBehaviour
         // Set false early so OnDisable (triggered by reparenting into inactive hierarchy) is a no-op.
         _isPanelOpen = false;
 
-        SetCableOnlyInteraction(false);
+        SetGPUInteraction(false);
 
         if (_detailedView != null)
             _detailedView.SetActive(false);
@@ -127,7 +123,7 @@ public class GPUPhase1CableInteraction : MonoBehaviour
         Debug.Log("[GPUPhase1CableInteraction] Phase 1 GPU cable panel closed.");
     }
 
-    private void SetCableOnlyInteraction(bool enable)
+    private void SetGPUInteraction(bool enable)
     {
         if (_gpuController == null) return;
 
@@ -146,16 +142,11 @@ public class GPUPhase1CableInteraction : MonoBehaviour
                 col.enabled = enable;
         }
 
-    }
-
-    private void DisableScrews()
-    {
-        if (_gpuController == null) return;
         foreach (var sc in _gpuController.GetComponentsInChildren<ScrewController>(true))
         {
-            sc.enabled = false;
+            sc.enabled = enable;
             foreach (Collider2D col in sc.GetComponents<Collider2D>())
-                col.enabled = false;
+                col.enabled = enable;
         }
     }
 

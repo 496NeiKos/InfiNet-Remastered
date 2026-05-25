@@ -19,9 +19,9 @@ public class AVRPowerButton : MonoBehaviour, IPowerButton
     [SerializeField] private Sprite avrDetailedSpriteOn;
     [SerializeField] private Sprite avrDetailedSpriteOff;
 
-    [Header("Condition References")]
-    [SerializeField] private BackPortSlot avrPsuPort;
-    [SerializeField] private BackPortSlot systemUnitPsuPort;
+    [Header("Condition References (AVR back ports only)")]
+    [SerializeField] private BackPortSlot aPSUPort;
+    [SerializeField] private BackPortSlot aMPort;
 
     [Header("Double-Click Window (seconds)")]
     [SerializeField] private float doubleClickWindow = 0.5f;
@@ -85,15 +85,15 @@ public class AVRPowerButton : MonoBehaviour, IPowerButton
     {
         bool pass = true;
 
-        if (avrPsuPort == null || avrPsuPort.IsUninstalled)
+        if (aPSUPort == null || aPSUPort.IsUninstalled)
         {
             Debug.Log("[AVRPowerButton] FAIL — AVR PSU port cable not connected.");
             pass = false;
         }
 
-        if (systemUnitPsuPort == null || systemUnitPsuPort.IsUninstalled)
+        if (aMPort == null || aMPort.IsUninstalled)
         {
-            Debug.Log("[AVRPowerButton] FAIL — SystemUnit PSU back port cable not connected.");
+            Debug.Log("[AVRPowerButton] FAIL — AVR monitor cable not connected.");
             pass = false;
         }
 

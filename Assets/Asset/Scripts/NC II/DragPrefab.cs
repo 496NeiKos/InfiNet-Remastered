@@ -92,6 +92,15 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
             return;
         }
 
+        // Block Heatsink drag until its cable is disconnected
+        HeatsinkController heatsink = GetComponent<HeatsinkController>();
+        if (heatsink != null && isInSlot && !heatsink.CanBeRemoved)
+        {
+            Debug.Log($"[DragPrefab:{name}] BLOCKED — heatsink cable still connected.");
+            _isDragging = false;
+            return;
+        }
+
         // Block RAM drag while latch is engaged (must Slide-Up in detail view first)
         RAMController ram = GetComponent<RAMController>();
         if (ram != null && isInSlot && ram.IsInstalled)
@@ -128,6 +137,20 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
             return;
         }
 
+        // Block Motherboard drag until the GPU has been fully removed from its slot
+        MotherboardController mb = GetComponent<MotherboardController>();
+        if (mb != null && isInSlot)
+        {
+            MotherboardPhaseManager phase = GetComponent<MotherboardPhaseManager>();
+            GPUPhase1CableInteraction gpuPhase1 = phase?.GetGPUPhase1CableInteraction();
+            if (gpuPhase1 != null && gpuPhase1.GetComponentInParent<SlotContainer>() != null)
+            {
+                Debug.Log($"[DragPrefab:{name}] BLOCKED — GPU must be removed before dragging the motherboard.");
+                _isDragging = false;
+                return;
+            }
+        }
+
         // Layer 1 gate — applies to ALL SystemUnit hardware (Motherboard, HDD, PSU).
         // SU back VGA and PSU cables must both be unplugged before any hardware can be dragged.
         if (isInSlot && GetComponentInParent<SystemUnitController>() != null)
@@ -158,6 +181,7 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
             GetComponent<RAMController>()?.OnRemovedFromSlot();
             GetComponent<GPUController>()?.OnRemovedFromSlot();
             GetComponent<HDDController>()?.OnRemovedFromSlot();
+            GetComponent<SSDController>()?.OnRemovedFromSlot();
         }
 
         GameObject indicatorGO = new GameObject("DragIndicator");
@@ -221,6 +245,7 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
             GetComponent<RAMController>()?.OnSnappedToSlot();
             GetComponent<GPUController>()?.OnSnappedToSlot();
             GetComponent<HDDController>()?.OnSnappedToSlot();
+            GetComponent<SSDController>()?.OnSnappedToSlot();
 
             transform.SetParent(_originalParent, false);
             transform.localPosition = _originalLocalPos;

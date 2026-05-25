@@ -11,7 +11,19 @@ public class PowerOnConditionChecker : MonoBehaviour
     [SerializeField] private ScrewController screw3;
     [SerializeField] private ScrewController screw4;
 
-    [Header("SystemUnit Hardware Slots")]
+    [Header("SystemUnit Back Ports")]
+    [SerializeField] private BackPortSlot sUVGAPort;
+    [SerializeField] private BackPortSlot sUPSUPort;
+
+    [Header("Monitor Back Ports")]
+    [SerializeField] private BackPortSlot mVGACableSlot;
+    [SerializeField] private BackPortSlot mPCableSlot;
+
+    [Header("AVR Back Ports")]
+    [SerializeField] private BackPortSlot aPSUSlot;
+    [SerializeField] private BackPortSlot aMCableSlot;
+
+    [Header("SystemUnit Side Hardware Slots")]
     [SerializeField] private Transform motherboardSlot;
     [SerializeField] private Transform hddSlot;
     [SerializeField] private Transform psuSlot;
@@ -19,68 +31,72 @@ public class PowerOnConditionChecker : MonoBehaviour
     [Header("Motherboard Component Slots")]
     [SerializeField] private CPUSlotController cpuSlotController;
     [SerializeField] private Transform gpuSlot;
+    [SerializeField] private Transform ssdSlot;
+    [SerializeField] private Transform cmosSlot;
     [SerializeField] private Transform ramSlot1;
     [SerializeField] private Transform ramSlot2;
-    [SerializeField] private Transform cmosSlot;
 
     [Header("Motherboard Cables")]
     [SerializeField] private CableSlot cableSlot1;
     [SerializeField] private CableSlot cableSlot2;
     [SerializeField] private CableSlot cableSlot3;
 
-    [Header("SystemUnit Back Port Cables")]
-    [SerializeField] private BackPortSlot psuBackPort;
-    [SerializeField] private BackPortSlot vgaBackPort;
-
-    [Header("External Port Cables")]
-    [SerializeField] private BackPortSlot monitorVgaPort;
-    [SerializeField] private BackPortSlot avrPsuPort;
-
     public bool CanTurnOn()
     {
         bool pass = true;
 
+        // Cover
         if (coverController == null || coverController.IsOpen())
-        { Debug.Log("[PowerOn] FAIL — Cover is open."); pass = false; }
+        { Debug.Log("[PowerOn] FAIL â€” Cover is open."); pass = false; }
 
-        if (!IsScrewed(screw1)) { Debug.Log("[PowerOn] FAIL — Screw 1 not tightened."); pass = false; }
-        if (!IsScrewed(screw2)) { Debug.Log("[PowerOn] FAIL — Screw 2 not tightened."); pass = false; }
-        if (!IsScrewed(screw3)) { Debug.Log("[PowerOn] FAIL — Screw 3 not tightened."); pass = false; }
-        if (!IsScrewed(screw4)) { Debug.Log("[PowerOn] FAIL — Screw 4 not tightened."); pass = false; }
+        // Cover screws
+        if (!IsScrewed(screw1)) { Debug.Log("[PowerOn] FAIL â€” Screw 1 not tightened."); pass = false; }
+        if (!IsScrewed(screw2)) { Debug.Log("[PowerOn] FAIL â€” Screw 2 not tightened."); pass = false; }
+        if (!IsScrewed(screw3)) { Debug.Log("[PowerOn] FAIL â€” Screw 3 not tightened."); pass = false; }
+        if (!IsScrewed(screw4)) { Debug.Log("[PowerOn] FAIL â€” Screw 4 not tightened."); pass = false; }
 
-        if (!HasChild(motherboardSlot)) { Debug.Log("[PowerOn] FAIL — Motherboard not installed."); pass = false; }
-        if (!HasChild(hddSlot)) { Debug.Log("[PowerOn] FAIL — HDD not installed."); pass = false; }
-        if (!HasChild(psuSlot)) { Debug.Log("[PowerOn] FAIL — PSU not installed."); pass = false; }
+        // SystemUnit back ports
+        if (!IsPortInstalled(sUVGAPort))  { Debug.Log("[PowerOn] FAIL â€” SU VGA back cable not plugged in."); pass = false; }
+        if (!IsPortInstalled(sUPSUPort))  { Debug.Log("[PowerOn] FAIL â€” SU PSU back cable not plugged in."); pass = false; }
 
-        if (cpuSlotController == null || !cpuSlotController.HasCPU()) { Debug.Log("[PowerOn] FAIL — CPU not installed."); pass = false; }
-        if (!HasChild(gpuSlot)) { Debug.Log("[PowerOn] FAIL — GPU not installed."); pass = false; }
-        if (!HasChild(cmosSlot)) { Debug.Log("[PowerOn] FAIL — CMOS not installed."); pass = false; }
+        // Monitor back ports
+        if (!IsPortInstalled(mVGACableSlot)) { Debug.Log("[PowerOn] FAIL â€” Monitor VGA cable not plugged in."); pass = false; }
+        if (!IsPortInstalled(mPCableSlot))   { Debug.Log("[PowerOn] FAIL â€” Monitor power cable not plugged in."); pass = false; }
 
-        // At least 1 RAM slot must be occupied
-        bool hasRam = HasChild(ramSlot1) || HasChild(ramSlot2);
-        if (!hasRam) { Debug.Log("[PowerOn] FAIL — No RAM installed (at least 1 required)."); pass = false; }
+        // AVR back ports
+        if (!IsPortInstalled(aPSUSlot))    { Debug.Log("[PowerOn] FAIL â€” AVR PSU cable not plugged in."); pass = false; }
+        if (!IsPortInstalled(aMCableSlot)) { Debug.Log("[PowerOn] FAIL â€” AVR monitor cable not plugged in."); pass = false; }
 
-        if (!IsCableInstalled(cableSlot1)) { Debug.Log("[PowerOn] FAIL — MB Cable 1 not attached."); pass = false; }
-        if (!IsCableInstalled(cableSlot2)) { Debug.Log("[PowerOn] FAIL — MB Cable 2 not attached."); pass = false; }
-        if (!IsCableInstalled(cableSlot3)) { Debug.Log("[PowerOn] FAIL — MB Cable 3 not attached."); pass = false; }
+        // SystemUnit side hardware
+        if (!HasChild(motherboardSlot)) { Debug.Log("[PowerOn] FAIL â€” Motherboard not installed."); pass = false; }
+        if (!HasChild(hddSlot))         { Debug.Log("[PowerOn] FAIL â€” HDD not installed."); pass = false; }
+        if (!HasChild(psuSlot))         { Debug.Log("[PowerOn] FAIL â€” PSU not installed."); pass = false; }
 
-        if (psuBackPort == null || psuBackPort.IsUninstalled)
-        { Debug.Log("[PowerOn] FAIL — SystemUnit PSU back cable not plugged in."); pass = false; }
+        // Motherboard components
+        if (cpuSlotController == null || !cpuSlotController.HasCPU())
+        { Debug.Log("[PowerOn] FAIL â€” CPU not installed."); pass = false; }
 
-        if (vgaBackPort == null || vgaBackPort.IsUninstalled)
-        { Debug.Log("[PowerOn] FAIL — SystemUnit VGA back cable not plugged in."); pass = false; }
+        if (cpuSlotController == null || !cpuSlotController.IsHeatsinkInstalled)
+        { Debug.Log("[PowerOn] FAIL â€” Heatsink not installed."); pass = false; }
 
-        if (monitorVgaPort == null || monitorVgaPort.IsUninstalled)
-        { Debug.Log("[PowerOn] FAIL — Monitor VGA port cable not plugged in."); pass = false; }
+        if (!HasChild(gpuSlot))  { Debug.Log("[PowerOn] FAIL â€” GPU not installed."); pass = false; }
+        if (!HasChild(ssdSlot))  { Debug.Log("[PowerOn] FAIL â€” SSD not installed."); pass = false; }
+        if (!HasChild(cmosSlot)) { Debug.Log("[PowerOn] FAIL â€” CMOS not installed."); pass = false; }
 
-        if (avrPsuPort == null || avrPsuPort.IsUninstalled)
-        { Debug.Log("[PowerOn] FAIL — AVR PSU port cable not plugged in."); pass = false; }
+        if (!HasChild(ramSlot1) && !HasChild(ramSlot2))
+        { Debug.Log("[PowerOn] FAIL â€” No RAM installed (at least 1 required)."); pass = false; }
 
-        if (pass) Debug.Log("[PowerOn] All conditions met — power on allowed.");
+        // Motherboard cables
+        if (!IsCableInstalled(cableSlot1)) { Debug.Log("[PowerOn] FAIL â€” MB Cable 1 not attached."); pass = false; }
+        if (!IsCableInstalled(cableSlot2)) { Debug.Log("[PowerOn] FAIL â€” MB Cable 2 not attached."); pass = false; }
+        if (!IsCableInstalled(cableSlot3)) { Debug.Log("[PowerOn] FAIL â€” MB Cable 3 not attached."); pass = false; }
+
+        if (pass) Debug.Log("[PowerOn] All conditions met â€” power on allowed.");
         return pass;
     }
 
-    private bool HasChild(Transform slot) => slot != null && slot.childCount > 0;
-    private bool IsScrewed(ScrewController s) => s != null && s.IsScrewed();
-    private bool IsCableInstalled(CableSlot c) => c != null && c.IsInstalled();
+    private bool HasChild(Transform slot)       => slot != null && slot.childCount > 0;
+    private bool IsScrewed(ScrewController s)   => s != null && s.IsScrewed();
+    private bool IsCableInstalled(CableSlot c)  => c != null && c.IsInstalled();
+    private bool IsPortInstalled(BackPortSlot p) => p != null && p.IsInstalled;
 }

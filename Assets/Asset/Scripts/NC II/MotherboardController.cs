@@ -29,13 +29,10 @@ public class MotherboardController : MonoBehaviour
         foreach (var c in phase1Root.GetComponentsInChildren<CableSlot>(true))
             if (c.IsInstalled()) return false;
 
-        // GPU cable must also be disconnected before the motherboard can be removed
+        // GPU must be fully removed from its slot before the motherboard can be removed
         GPUPhase1CableInteraction gpuPhase1 = phase?.GetGPUPhase1CableInteraction();
-        if (gpuPhase1 != null)
-        {
-            foreach (var cs in gpuPhase1.GetComponentsInChildren<CableSlot>(true))
-                if (cs.IsInstalled()) return false;
-        }
+        if (gpuPhase1 != null && gpuPhase1.GetComponentInParent<SlotContainer>() != null)
+            return false;
 
         return true;
     }

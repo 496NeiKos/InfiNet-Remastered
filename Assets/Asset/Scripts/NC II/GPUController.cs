@@ -12,13 +12,10 @@ public class GPUController : MonoBehaviour
     [SerializeField] private Sprite defaultSprite;
     [SerializeField] private Sprite snappedSprite;
 
-    [Header("Cable State Sprites (in slot)")]
-    [SerializeField] private Sprite cableInstalledSprite;
-    [SerializeField] private Sprite cableRemovedSprite;
-
     private bool _isLatched = true;
     private bool _inSlot = false;
     private SpriteRenderer _sr;
+    private GameObject _cableIndicator;
 
     public bool IsLatched => _isLatched;
 
@@ -42,6 +39,15 @@ public class GPUController : MonoBehaviour
     private void Awake()
     {
         _sr = GetComponent<SpriteRenderer>();
+
+        foreach (Transform child in transform)
+        {
+            if (child.name == "CableIndicator")
+            {
+                _cableIndicator = child.gameObject;
+                break;
+            }
+        }
     }
 
     private void Start()
@@ -80,17 +86,11 @@ public class GPUController : MonoBehaviour
 
     private void RefreshSprite()
     {
-        if (_sr == null) return;
+        if (_sr != null)
+            _sr.sprite = _inSlot ? snappedSprite : defaultSprite;
 
-        if (!_inSlot)
-        {
-            if (defaultSprite != null) _sr.sprite = defaultSprite;
-            return;
-        }
-
-        bool cableConnected = IsCableConnected();
-        Sprite cable = cableConnected ? cableInstalledSprite : cableRemovedSprite;
-        _sr.sprite = cable != null ? cable : snappedSprite;
+        if (_cableIndicator != null)
+            _cableIndicator.SetActive(_inSlot && IsCableConnected());
     }
 
     private bool IsCableConnected()

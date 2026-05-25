@@ -282,6 +282,17 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
 
         if (bestSlotContainer == null) return;
 
+        // Block GPU installation when the motherboard it belongs to is in Phase 2
+        if (hardwarePrefab.GetComponent<GPUController>() != null)
+        {
+            MotherboardPhaseManager phase = bestSlotContainer.GetComponentInParent<MotherboardPhaseManager>();
+            if (phase != null && phase.CurrentPhase == MotherboardPhaseManager.Phase.Phase2)
+            {
+                Debug.Log($"[HardwareHolder] {prefabName} install blocked — motherboard is in Phase 2.");
+                return;
+            }
+        }
+
         hardwarePrefab.SetActive(true);
         bestSlotContainer.InstallChild(hardwarePrefab, prefabName);
 
@@ -291,6 +302,7 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         hardwarePrefab.GetComponent<RAMController>()?.OnSnappedToSlot();
         hardwarePrefab.GetComponent<GPUController>()?.OnSnappedToSlot();
         hardwarePrefab.GetComponent<HDDController>()?.OnSnappedToSlot();
+        hardwarePrefab.GetComponent<SSDController>()?.OnSnappedToSlot();
 
         gameObject.SetActive(false);
     }
