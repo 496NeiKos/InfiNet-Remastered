@@ -23,8 +23,14 @@ public class AVRPowerButton : MonoBehaviour, IPowerButton
     [SerializeField] private BackPortSlot avrPsuPort;
     [SerializeField] private BackPortSlot systemUnitPsuPort;
 
+    [Header("Double-Click Window (seconds)")]
+    [SerializeField] private float doubleClickWindow = 0.5f;
+
     private SpriteRenderer _sr;
     private PowerState _state = PowerState.Off;
+
+    private int _clickCount;
+    private float _clickTimer;
 
     public PowerState State => _state;
     public bool IsPoweredOn => _state == PowerState.On;
@@ -35,17 +41,43 @@ public class AVRPowerButton : MonoBehaviour, IPowerButton
         ApplySprites();
     }
 
+    private void OnEnable()
+    {
+        _clickCount = 0;
+        _clickTimer = 0f;
+    }
+
     private void Update()
     {
         Mouse mouse = Mouse.current;
         if (mouse == null) return;
 
+        if (_clickCount > 0)
+        {
+            _clickTimer += Time.deltaTime;
+            if (_clickTimer >= doubleClickWindow)
+            {
+                _clickCount = 0;
+                _clickTimer = 0f;
+            }
+        }
+
         if (mouse.leftButton.wasPressedThisFrame && IsMouseOver())
         {
-            if (_state == PowerState.On)
-                SetState(PowerState.Off);
-            else
-                TryTurnOn();
+            _clickCount++;
+            if (_clickCount == 1)
+            {
+                _clickTimer = 0f;
+            }
+            else if (_clickCount >= 2)
+            {
+                _clickCount = 0;
+                _clickTimer = 0f;
+                if (_state == PowerState.On)
+                    SetState(PowerState.Off);
+                else
+                    TryTurnOn();
+            }
         }
     }
 
