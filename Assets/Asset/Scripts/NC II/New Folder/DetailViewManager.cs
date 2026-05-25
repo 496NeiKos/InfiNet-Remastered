@@ -1,13 +1,10 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class DetailViewManager : MonoBehaviour
 {
     [Header("Controllers")]
     [SerializeField] private CoverController coverController;
-
-    [Header("Inner Editing Panel (auto-found if empty)")]
-    [SerializeField] private GameObject innerEditingPanel;
 
     private GameObject _activeChildPrefab;
     private Transform _childOriginalParent;
@@ -21,11 +18,9 @@ public class DetailViewManager : MonoBehaviour
         if (GameManager.Instance == null || !GameManager.Instance.IsEditorOpen)
             return;
 
-        // Only handle input while this object is actually inside the editing panel.
-        // Prevents responding to clicks meant for another object (e.g. Motherboard) that
-        // is currently being edited instead.
-        if (GameManager.Instance.editingPanel == null ||
-            !transform.IsChildOf(GameManager.Instance.editingPanel.transform))
+        // Only handle input while this object is inside FirstLayer (the top-level editing panel).
+        if (GameManager.Instance.firstLayer == null ||
+            !transform.IsChildOf(GameManager.Instance.firstLayer.transform))
             return;
 
         if (Mouse.current.leftButton.wasPressedThisFrame)
@@ -45,26 +40,6 @@ public class DetailViewManager : MonoBehaviour
             if (coverController != null && coverController.IsOpen())
                 CheckChildRightClick();
         }
-    }
-
-    private GameObject GetInnerEditingPanel()
-    {
-        if (innerEditingPanel != null)
-            return innerEditingPanel;
-
-        if (GameManager.Instance == null || GameManager.Instance.editingPanel == null)
-            return null;
-
-        foreach (Transform child in GameManager.Instance.editingPanel
-            .GetComponentsInChildren<Transform>(true))
-        {
-            if (child.name == "InnerEditingPanel")
-            {
-                innerEditingPanel = child.gameObject;
-                return innerEditingPanel;
-            }
-        }
-        return null;
     }
 
     private void CheckCoverClick()
@@ -96,10 +71,8 @@ public class DetailViewManager : MonoBehaviour
         SlotContainer matchedSlot = slotManager.GetSlotByType(parentSlot.GetSlotType());
         if (matchedSlot == null || matchedSlot != parentSlot) return;
 
-        // PSU has no detail view — right-click does nothing
         if (clicked.GetComponentInParent<PSUController>() != null) return;
 
-        // Layer 1 gate — SU back cables must be unplugged for ALL hardware (MB, HDD, PSU)
         SystemUnitConditionChecker checker = GetComponent<SystemUnitConditionChecker>();
         if (checker != null && !checker.IsHardwareInteractable())
         {
@@ -112,10 +85,10 @@ public class DetailViewManager : MonoBehaviour
 
     private void OpenInnerPanel(GameObject childPrefab)
     {
-        GameObject panel = GetInnerEditingPanel();
+        GameObject panel = GameManager.Instance?.secondLayer;
         if (panel == null)
         {
-            Debug.LogError("[DetailViewManager] Cannot open inner panel: InnerEditingPanel not found!");
+            Debug.LogError("[DetailViewManager] Cannot open inner panel: secondLayer not assigned in GameManager.");
             return;
         }
 
@@ -168,8 +141,8 @@ public class DetailViewManager : MonoBehaviour
                 controller.AttachCover();
         }
 
-        if (innerEditingPanel != null)
-            innerEditingPanel.SetActive(false);
+        if (GameManager.Instance?.secondLayer != null)
+            GameManager.Instance.secondLayer.SetActive(false);
 
         _activeChildPrefab = null;
         _isInnerPanelOpen = false;

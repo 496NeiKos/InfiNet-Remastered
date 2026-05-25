@@ -3,17 +3,14 @@ using UnityEngine.InputSystem;
 
 /// <summary>
 /// On Motherboard root.
-/// Handles right-click on CPU, Heatsink, and RAM while Motherboard is in the editing panel.
+/// Handles right-click on CPU, Heatsink, RAM, and GPU while Motherboard is in SecondLayer.
 /// Same pattern as DetailViewManager on SystemUnit:
 ///   - Motherboard root (this) disables when inner panel opens
-///   - Component reparents to InnerEditingPanel and centers
+///   - Component reparents to SecondLayer and centers
 ///   - Close: Motherboard re-enables FIRST, then component reparents back to its slot
 /// </summary>
 public class MotherboardDetailViewManager : MonoBehaviour
 {
-    [Header("Inner Editing Panel (auto-found if empty)")]
-    [SerializeField] private GameObject innerEditingPanel;
-
     private GameObject _activeChildPrefab;
     private Transform _childOriginalParent;
     private Vector3 _childOriginalLocalPos;
@@ -27,11 +24,9 @@ public class MotherboardDetailViewManager : MonoBehaviour
         if (GameManager.Instance == null || !GameManager.Instance.IsEditorOpen) return;
         if (_isInnerPanelOpen) return;
 
-        // Only handle input while this Motherboard is actually inside the editing panel.
-        // Prevents responding to clicks meant for another object (e.g. SystemUnit) that
-        // is currently being edited instead.
-        if (GameManager.Instance.editingPanel == null ||
-            !transform.IsChildOf(GameManager.Instance.editingPanel.transform))
+        // Only handle input while this Motherboard is inside SecondLayer.
+        if (GameManager.Instance.secondLayer == null ||
+            !transform.IsChildOf(GameManager.Instance.secondLayer.transform))
             return;
 
         if (Mouse.current.rightButton.wasPressedThisFrame)
@@ -67,7 +62,6 @@ public class MotherboardDetailViewManager : MonoBehaviour
             GPUController gpu = hit.collider.GetComponent<GPUController>();
             if (gpu != null)
             {
-                // During Phase 1, GPUPhase1CableInteraction owns right-click on the GPU
                 GPUPhase1CableInteraction phase1Cable = gpu.GetComponent<GPUPhase1CableInteraction>();
                 if (phase1Cable != null && phase1Cable.enabled) return;
                 OpenInnerPanel(gpu.gameObject);
@@ -78,10 +72,10 @@ public class MotherboardDetailViewManager : MonoBehaviour
 
     private void OpenInnerPanel(GameObject childPrefab)
     {
-        GameObject panel = GetInnerEditingPanel();
+        GameObject panel = GameManager.Instance?.secondLayer;
         if (panel == null)
         {
-            Debug.LogError("[MotherboardDetailViewManager] InnerEditingPanel not found.");
+            Debug.LogError("[MotherboardDetailViewManager] secondLayer not assigned in GameManager.");
             return;
         }
 
@@ -91,10 +85,8 @@ public class MotherboardDetailViewManager : MonoBehaviour
         _childOriginalLocalPos = childPrefab.transform.localPosition;
         _childOriginalLocalScale = childPrefab.transform.localScale;
 
-        // Disable Motherboard root — same pattern as SystemUnit disabling for MB inner panel
         gameObject.SetActive(false);
 
-        // Reparent to inner panel and center
         childPrefab.transform.SetParent(panel.transform, true);
         RectTransform rect = panel.GetComponent<RectTransform>();
         if (rect != null)
@@ -105,7 +97,6 @@ public class MotherboardDetailViewManager : MonoBehaviour
             childPrefab.transform.position = center;
         }
 
-        // Activate the direct "Detailed" child of the component
         SetDetailedView(childPrefab, true);
 
         panel.SetActive(true);
@@ -118,15 +109,14 @@ public class MotherboardDetailViewManager : MonoBehaviour
 
         SetDetailedView(_activeChildPrefab, false);
 
-        // Re-enable Motherboard FIRST — makes slot hierarchy active again before reparenting
         gameObject.SetActive(true);
 
         _activeChildPrefab.transform.SetParent(_childOriginalParent, false);
         _activeChildPrefab.transform.localPosition = _childOriginalLocalPos;
         _activeChildPrefab.transform.localScale = _childOriginalLocalScale;
 
-        if (innerEditingPanel != null)
-            innerEditingPanel.SetActive(false);
+        if (GameManager.Instance?.secondLayer != null)
+            GameManager.Instance.secondLayer.SetActive(false);
 
         _activeChildPrefab = null;
         _isInnerPanelOpen = false;
@@ -137,7 +127,6 @@ public class MotherboardDetailViewManager : MonoBehaviour
     private void SetDetailedView(GameObject component, bool active)
     {
         if (component == null) return;
-        // Only direct children — prevents accidentally activating nested views
         foreach (Transform child in component.transform)
         {
             if (child.name.Contains("Detailed"))
@@ -146,23 +135,5 @@ public class MotherboardDetailViewManager : MonoBehaviour
                 return;
             }
         }
-    }
-
-    private GameObject GetInnerEditingPanel()
-    {
-        if (innerEditingPanel != null) return innerEditingPanel;
-
-        if (GameManager.Instance?.editingPanel == null) return null;
-
-        foreach (Transform t in GameManager.Instance.editingPanel
-            .GetComponentsInChildren<Transform>(true))
-        {
-            if (t.name == "InnerEditingPanel")
-            {
-                innerEditingPanel = t.gameObject;
-                return innerEditingPanel;
-            }
-        }
-        return null;
     }
 }

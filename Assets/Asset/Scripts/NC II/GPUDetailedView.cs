@@ -3,9 +3,9 @@ using UnityEngine.UI;
 
 /// <summary>
 /// On GPUDetailed — manages switching between the top-view and side-view sub-panels.
-/// Wires "TopViewButton" and "SideViewButton" in the InnerEditingPanel when active.
-/// These names are intentionally different from HardwareViewController's "FrontButton"/"SideButton"
-/// to avoid any conflict with the main editing panel's view buttons.
+/// Wires "SecondLayerTop" and "SecondLayerSide" buttons in SecondLayer when active.
+/// These names are unique to SecondLayer and never collide with FirstLayer buttons
+/// (FirstLayerTop/Front/Side/Back used by HardwareViewController).
 /// ApplyHardwareInteractable() is public so GPULatchSideView can call it after latch changes.
 /// </summary>
 public class GPUDetailedView : MonoBehaviour
@@ -24,7 +24,7 @@ public class GPUDetailedView : MonoBehaviour
 
     private void OnEnable()
     {
-        WireInnerPanelButtons();
+        WireSecondLayerButtons();
         ShowView(_activeView != null ? _activeView : topView);
         ApplyHardwareInteractable();
     }
@@ -33,7 +33,7 @@ public class GPUDetailedView : MonoBehaviour
     {
         topView?.SetActive(false);
         sideView?.SetActive(false);
-        HideInnerPanelButtons();
+        HideSecondLayerButtons();
     }
 
     /// <summary>Gates screws based on latch state. Call after any latch state change.</summary>
@@ -61,26 +61,26 @@ public class GPUDetailedView : MonoBehaviour
         }
     }
 
-    private void WireInnerPanelButtons()
+    private void WireSecondLayerButtons()
     {
         if (topView == null && sideView == null) return;
 
-        GameObject panel = FindInnerEditingPanel();
+        GameObject panel = GameManager.Instance?.secondLayer;
         if (panel == null) return;
 
-        WireButton(panel, "TopViewButton", topView);
-        WireButton(panel, "SideViewButton", sideView);
+        WireButton(panel, "SecondLayerTop", topView);
+        WireButton(panel, "SecondLayerSide", sideView);
     }
 
-    private void HideInnerPanelButtons()
+    private void HideSecondLayerButtons()
     {
         if (topView == null && sideView == null) return;
 
-        GameObject panel = FindInnerEditingPanel();
+        GameObject panel = GameManager.Instance?.secondLayer;
         if (panel == null) return;
 
-        HideButton(panel, "TopViewButton");
-        HideButton(panel, "SideViewButton");
+        HideButton(panel, "SecondLayerTop");
+        HideButton(panel, "SecondLayerSide");
     }
 
     private void WireButton(GameObject panel, string buttonName, GameObject targetView)
@@ -102,14 +102,6 @@ public class GPUDetailedView : MonoBehaviour
     {
         foreach (Button btn in panel.GetComponentsInChildren<Button>(true))
             if (btn.gameObject.name == buttonName) return btn;
-        return null;
-    }
-
-    private GameObject FindInnerEditingPanel()
-    {
-        if (GameManager.Instance?.editingPanel == null) return null;
-        foreach (Transform t in GameManager.Instance.editingPanel.GetComponentsInChildren<Transform>(true))
-            if (t.name == "InnerEditingPanel") return t.gameObject;
         return null;
     }
 }

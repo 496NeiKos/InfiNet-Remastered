@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
@@ -10,8 +10,10 @@ public class GameManager : MonoBehaviour
     public Transform worldRoot;
     public Transform hardwareStorage;
 
-    [Header("UI Panels")]
-    public GameObject editingPanel;
+    [Header("Detail Panel Layers")]
+    public GameObject firstLayer;   // top-level hardware editing (was EditingPanel)
+    public GameObject secondLayer;  // inner component editing (was InnerEditingPanel)
+    public GameObject thirdLayer;   // GPU Phase 1 cable panel (was ThirdLayerPanel)
 
     public static GameManager Instance { get; private set; }
 
@@ -21,8 +23,6 @@ public class GameManager : MonoBehaviour
     private Transform _prefabOriginalParent;
     private Vector3 _prefabOriginalWorldPos;
 
-    // Cached separately — Motherboard disables itself when MB inner panel opens,
-    // making GetComponent unreliable at that point
     private MotherboardDetailViewManager _activeMbdvm;
     private GPUPhase1CableInteraction _activeGpuPhase1Panel;
 
@@ -43,31 +43,28 @@ public class GameManager : MonoBehaviour
         _activeInteraction = interaction;
         IsEditorOpen = true;
 
-        // Cache MotherboardDetailViewManager before it potentially disables itself
         _activeMbdvm = interaction.GetComponent<MotherboardDetailViewManager>();
 
         _prefabOriginalParent = interaction.transform.parent;
         _prefabOriginalWorldPos = interaction.transform.position;
 
-        interaction.transform.SetParent(editingPanel.transform, true);
+        interaction.transform.SetParent(firstLayer.transform, true);
         _activeInteraction.ShowDetailCentered();
 
-        if (editingPanel != null)
-            editingPanel.SetActive(true);
+        if (firstLayer != null)
+            firstLayer.SetActive(true);
         else
-            Debug.LogError("GameManager: editingPanel is not assigned in the Inspector!");
+            Debug.LogError("GameManager: firstLayer is not assigned in the Inspector!");
     }
 
     public void CloseEditor()
     {
-        // Check GPU Phase 1 cable panel (third layer) — close it first before anything else
         if (_activeGpuPhase1Panel != null && _activeGpuPhase1Panel.IsPanelOpen)
         {
             _activeGpuPhase1Panel.ClosePanel();
             return;
         }
 
-        // Check SystemUnit inner panel (DetailViewManager on SystemUnit root)
         if (_activeInteraction != null)
         {
             DetailViewManager dvm = _activeInteraction.GetComponent<DetailViewManager>();
@@ -78,14 +75,12 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        // Check Motherboard inner panel — use cached ref since Motherboard may be inactive
         if (_activeMbdvm != null && _activeMbdvm.IsInnerPanelOpen)
         {
             _activeMbdvm.CloseInnerPanel();
             return;
         }
 
-        // No inner panels open — close full editing panel
         IsEditorOpen = false;
 
         if (_activeInteraction != null)
@@ -100,7 +95,9 @@ public class GameManager : MonoBehaviour
         _activeMbdvm = null;
         _activeGpuPhase1Panel = null;
 
-        if (editingPanel != null)
-            editingPanel.SetActive(false);
+        // Layers are now siblings — close all explicitly
+        if (firstLayer != null) firstLayer.SetActive(false);
+        if (secondLayer != null) secondLayer.SetActive(false);
+        if (thirdLayer != null) thirdLayer.SetActive(false);
     }
 }

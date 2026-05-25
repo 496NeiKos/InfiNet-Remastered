@@ -2,17 +2,13 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 /// <summary>
-/// On the GPU root. Provides cable-only interaction during Motherboard Phase 1
-/// (system unit is open in the editing panel, mobo not yet dragged out).
-/// Right-clicking the GPU opens a third-layer panel showing only the cable slot —
+/// On the GPU root. Provides cable-only interaction during Motherboard Phase 1.
+/// Right-clicking the GPU opens ThirdLayer showing only the cable slot —
 /// screws and latch remain inactive until Phase 2.
-/// Enabled/disabled by MotherboardPhaseManager. The GPU root Collider2D is also
-/// toggled by MotherboardPhaseManager so right-click is detectable during Phase 1.
+/// Enabled/disabled by MotherboardPhaseManager.
 /// </summary>
 public class GPUPhase1CableInteraction : MonoBehaviour
 {
-    [SerializeField] private GameObject thirdLayerPanel;
-
     private GPUController _gpuController;
     private GameObject _detailedView;
     private Transform _originalParent;
@@ -38,8 +34,6 @@ public class GPUPhase1CableInteraction : MonoBehaviour
 
     private void OnDisable()
     {
-        // Do NOT reparent here — Unity forbids SetParent while a parent is mid-deactivation.
-        // GameManager.CloseEditor() closes this panel explicitly before deactivating any panel.
         if (_isPanelOpen)
         {
             SetCableOnlyInteraction(false);
@@ -61,9 +55,10 @@ public class GPUPhase1CableInteraction : MonoBehaviour
 
     private void OpenPanel()
     {
-        if (thirdLayerPanel == null)
+        GameObject thirdLayer = GameManager.Instance?.thirdLayer;
+        if (thirdLayer == null)
         {
-            Debug.LogError("[GPUPhase1CableInteraction] ThirdLayerPanel not assigned.");
+            Debug.LogError("[GPUPhase1CableInteraction] thirdLayer not assigned in GameManager.");
             return;
         }
 
@@ -71,9 +66,9 @@ public class GPUPhase1CableInteraction : MonoBehaviour
         _originalLocalPos = transform.localPosition;
         _originalLocalScale = transform.localScale;
 
-        transform.SetParent(thirdLayerPanel.transform, true);
+        transform.SetParent(thirdLayer.transform, true);
 
-        RectTransform rect = thirdLayerPanel.GetComponent<RectTransform>();
+        RectTransform rect = thirdLayer.GetComponent<RectTransform>();
         if (rect != null)
         {
             Vector3 center = rect.TransformPoint(
@@ -89,7 +84,7 @@ public class GPUPhase1CableInteraction : MonoBehaviour
         if (_detailedView != null)
             _detailedView.SetActive(true);
 
-        thirdLayerPanel.SetActive(true);
+        thirdLayer.SetActive(true);
         _isPanelOpen = true;
         GameManager.Instance?.RegisterGPUPhase1Panel(this);
 
@@ -105,16 +100,14 @@ public class GPUPhase1CableInteraction : MonoBehaviour
         if (_detailedView != null)
             _detailedView.SetActive(false);
 
-        // Re-enable GPUDetailedView AFTER deactivating the Detailed child so OnEnable
-        // doesn't fire now. Phase 2 will trigger it fresh when it opens the GPU view.
         RestoreGPUDetailedView();
 
         transform.SetParent(_originalParent, false);
         transform.localPosition = _originalLocalPos;
         transform.localScale = _originalLocalScale;
 
-        if (thirdLayerPanel != null)
-            thirdLayerPanel.SetActive(false);
+        if (GameManager.Instance?.thirdLayer != null)
+            GameManager.Instance.thirdLayer.SetActive(false);
 
         _isPanelOpen = false;
         GameManager.Instance?.RegisterGPUPhase1Panel(null);

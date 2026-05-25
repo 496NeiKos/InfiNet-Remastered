@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class PrefabInteraction : MonoBehaviour
@@ -9,11 +9,8 @@ public class PrefabInteraction : MonoBehaviour
     private MotherboardPhaseManager _phaseManager;
     private GameObject _detailedView;
 
-    [SerializeField] private GameObject editingPanel;
-
     void Start()
     {
-        // GetComponent checks all IHardwareController implementors on this root
         _controller = GetComponent<IHardwareController>();
         _mbController = GetComponent<MotherboardController>();
         _phaseManager = GetComponent<MotherboardPhaseManager>();
@@ -51,10 +48,7 @@ public class PrefabInteraction : MonoBehaviour
         if (GameManager.Instance != null)
             GameManager.Instance.OpenEditor(this);
         else
-        {
             ShowDetailCentered();
-            if (editingPanel != null) editingPanel.SetActive(true);
-        }
     }
 
     private bool IsInstalledInSlot()
@@ -80,9 +74,10 @@ public class PrefabInteraction : MonoBehaviour
         // Fallback: Motherboard / plain hardware with a Detailed child
         if (_detailedView == null) return;
 
-        if (GameManager.Instance != null && GameManager.Instance.editingPanel != null)
+        GameObject layer = GameManager.Instance?.firstLayer;
+        if (layer != null)
         {
-            RectTransform rect = GameManager.Instance.editingPanel.GetComponent<RectTransform>();
+            RectTransform rect = layer.GetComponent<RectTransform>();
             if (rect != null)
             {
                 Vector3 panelCenter = rect.TransformPoint(
@@ -101,9 +96,6 @@ public class PrefabInteraction : MonoBehaviour
             _controller.HideDetail();
         else if (_detailedView != null)
             _detailedView.SetActive(false);
-
-        if (editingPanel != null)
-            editingPanel.SetActive(false);
     }
 
     public void CloseEditor()

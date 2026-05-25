@@ -2,12 +2,14 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// Generic view controller for any hardware with multiple angles (Front, Side, Back).
-/// Attach to hardware root. Assign only the views that exist — null views are skipped.
+/// Generic view controller for any hardware with multiple angles (Top, Front, Side, Back).
+/// Attach to hardware root. Assign only the views that exist â€” null views are skipped.
+/// Wires FirstLayer buttons: FirstLayerTop, FirstLayerFront, FirstLayerSide, FirstLayerBack.
 /// </summary>
 public class HardwareViewController : MonoBehaviour
 {
     [Header("Views (assign only those that exist)")]
+    [SerializeField] private GameObject topView;
     [SerializeField] private GameObject frontView;
     [SerializeField] private GameObject sideView;
     [SerializeField] private GameObject backView;
@@ -15,17 +17,18 @@ public class HardwareViewController : MonoBehaviour
     [Header("Default View")]
     [SerializeField] private ViewType defaultView = ViewType.Front;
 
-    public enum ViewType { Front, Side, Back }
+    public enum ViewType { Top, Front, Side, Back }
 
     private GameObject _activeView;
 
     private void Start()
     {
+        if (topView != null) topView.SetActive(false);
         if (frontView != null) frontView.SetActive(false);
         if (sideView != null) sideView.SetActive(false);
         if (backView != null) backView.SetActive(false);
 
-        _activeView = GetViewObject(defaultView) ?? frontView ?? sideView ?? backView;
+        _activeView = GetViewObject(defaultView) ?? topView ?? frontView ?? sideView ?? backView;
     }
 
     public void ShowLastActive()
@@ -35,6 +38,7 @@ public class HardwareViewController : MonoBehaviour
 
     public void ShowView(GameObject view)
     {
+        if (topView != null) topView.SetActive(false);
         if (frontView != null) frontView.SetActive(false);
         if (sideView != null) sideView.SetActive(false);
         if (backView != null) backView.SetActive(false);
@@ -49,27 +53,29 @@ public class HardwareViewController : MonoBehaviour
 
     public void WireButtons()
     {
-        GameObject panel = GameManager.Instance?.editingPanel;
+        GameObject panel = GameManager.Instance?.firstLayer;
         if (panel == null) return;
 
-        WireButton(panel, "FrontButton", frontView);
-        WireButton(panel, "SideButton", sideView);
-        WireButton(panel, "BackButton", backView);
+        WireButton(panel, "FirstLayerTop", topView);
+        WireButton(panel, "FirstLayerFront", frontView);
+        WireButton(panel, "FirstLayerSide", sideView);
+        WireButton(panel, "FirstLayerBack", backView);
     }
 
     public void HideButtons()
     {
-        GameObject panel = GameManager.Instance?.editingPanel;
+        GameObject panel = GameManager.Instance?.firstLayer;
         if (panel == null) return;
 
-        FindButton(panel, "FrontButton")?.gameObject.SetActive(false);
-        FindButton(panel, "SideButton")?.gameObject.SetActive(false);
-        FindButton(panel, "BackButton")?.gameObject.SetActive(false);
+        FindButton(panel, "FirstLayerTop")?.gameObject.SetActive(false);
+        FindButton(panel, "FirstLayerFront")?.gameObject.SetActive(false);
+        FindButton(panel, "FirstLayerSide")?.gameObject.SetActive(false);
+        FindButton(panel, "FirstLayerBack")?.gameObject.SetActive(false);
     }
 
     private void WireButton(GameObject panel, string buttonName, GameObject targetView)
     {
-        if (targetView == null) return; // no view assigned — skip this button entirely
+        if (targetView == null) return;
 
         Button btn = FindButton(panel, buttonName);
         if (btn == null) return;
@@ -81,9 +87,9 @@ public class HardwareViewController : MonoBehaviour
 
     private void CenterView(GameObject view)
     {
-        if (view == null || GameManager.Instance?.editingPanel == null) return;
+        if (view == null || GameManager.Instance?.firstLayer == null) return;
 
-        RectTransform rect = GameManager.Instance.editingPanel.GetComponent<RectTransform>();
+        RectTransform rect = GameManager.Instance.firstLayer.GetComponent<RectTransform>();
         if (rect == null) return;
 
         Vector3 center = rect.TransformPoint(new Vector3(rect.rect.center.x, rect.rect.center.y, 0f));
@@ -102,6 +108,7 @@ public class HardwareViewController : MonoBehaviour
     {
         return type switch
         {
+            ViewType.Top => topView,
             ViewType.Front => frontView,
             ViewType.Side => sideView,
             ViewType.Back => backView,
