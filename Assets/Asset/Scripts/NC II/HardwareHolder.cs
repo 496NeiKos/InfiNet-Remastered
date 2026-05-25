@@ -114,13 +114,20 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         BackCable backCable = hardwarePrefab.GetComponent<BackCable>();
         if (backCable != null)
         {
-            BackPortSlot[] allPorts = FindObjectsOfType<BackPortSlot>(true);
+            // Only search inside firstLayer — BackPortSlots are only reachable when the
+            // SystemUnit is actively open in the editing panel. Searching globally (even
+            // with activeInHierarchy) still finds ports whose world position lingers at
+            // the workspace location of the closed system unit.
+            GameObject editingPanel = GameManager.Instance?.firstLayer;
+            BackPortSlot[] allPorts = editingPanel != null
+                ? editingPanel.GetComponentsInChildren<BackPortSlot>()
+                : System.Array.Empty<BackPortSlot>();
+
             BackPortSlot bestPort = null;
             float bestDist = float.MaxValue;
 
             foreach (BackPortSlot port in allPorts)
             {
-                if (!port.gameObject.activeInHierarchy) continue;
                 if (!port.IsUninstalled) continue;
                 if (port.gameObject.name != backCable.GetCableType() &&
                     !port.gameObject.name.Contains(backCable.GetCableType())) continue;
