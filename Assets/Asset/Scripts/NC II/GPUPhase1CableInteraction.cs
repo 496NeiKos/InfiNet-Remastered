@@ -82,11 +82,12 @@ public class GPUPhase1CableInteraction : MonoBehaviour
             transform.position = center;
         }
 
+        // Disable GPUDetailedView BEFORE activating the detail view so its OnEnable
+        // does not show sub-views (TopView/SideView) during Phase 1.
+        SetCableOnlyInteraction(true);
+
         if (_detailedView != null)
             _detailedView.SetActive(true);
-
-        // Enable cables only — screws and latch stay Phase 2
-        SetCableOnlyInteraction(true);
 
         thirdLayerPanel.SetActive(true);
         _isPanelOpen = true;

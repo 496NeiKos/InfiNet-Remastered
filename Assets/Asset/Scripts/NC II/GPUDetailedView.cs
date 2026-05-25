@@ -1,129 +1,46 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 /// <summary>
-/// On the GPUDetailed child of the GPU root.
-///
-/// Double-click (two clicks within 0.5 s) on this object's own 2D collider toggles the PCIe latch.
-///
-/// Latch On  → Latch Out : BLOCKED unless all ScrewControllers are Empty AND all CableSlots are detached.
-/// Latch Out → Latch On  : Always allowed (no prerequisites).
-///
-/// Only active while the InnerEditingPanel is open (MotherboardDetailViewManager activates/
-/// deactivates this child via SetDetailedView), so no extra panel-open guard is needed.
+/// On GPUDetailed — manages switching between the top-view and side-view sub-panels.
+/// Wires FrontButton/SideButton in the InnerEditingPanel when active (same button names
+/// used by HardwareViewController in the main editing panel).
+/// ApplyHardwareInteractable() is public so GPULatchSideView can call it after latch changes.
 /// </summary>
 public class GPUDetailedView : MonoBehaviour
 {
-    [Header("Sprites")]
-    [SerializeField] private Sprite latchedSprite;
-    [SerializeField] private Sprite unlatchedSprite;
+    [Header("Sub-Views")]
+    [SerializeField] private GameObject topView;
+    [SerializeField] private GameObject sideView;
 
-    [Header("Double-Click Window (seconds)")]
-    [SerializeField] private float doubleClickWindow = 0.5f;
-
-    private SpriteRenderer _sr;
     private GPUController _gpuController;
-
-    private int _clickCount;
-    private float _clickTimer;
+    private GameObject _activeView;
 
     private void Awake()
     {
-        _sr = GetComponent<SpriteRenderer>();
         _gpuController = GetComponentInParent<GPUController>();
     }
 
     private void OnEnable()
     {
-        _clickCount = 0;
-        _clickTimer = 0f;
-        ApplySprite();
+        WireInnerPanelButtons();
+        ShowView(_activeView != null ? _activeView : topView);
         ApplyHardwareInteractable();
     }
 
-    private void Update()
+    private void OnDisable()
     {
-        if (GameManager.Instance == null || !GameManager.Instance.IsEditorOpen) return;
-
-        Mouse mouse = Mouse.current;
-        if (mouse == null) return;
-
-        // Tick the double-click window; reset if it expires
-        if (_clickCount > 0)
-        {
-            _clickTimer += Time.deltaTime;
-            if (_clickTimer >= doubleClickWindow)
-            {
-                _clickCount = 0;
-                _clickTimer = 0f;
-            }
-        }
-
-        if (!mouse.leftButton.wasPressedThisFrame || !IsMouseOver()) return;
-
-        _clickCount++;
-
-        if (_clickCount == 1)
-        {
-            _clickTimer = 0f; // start the window on first click
-        }
-        else if (_clickCount >= 2)
-        {
-            _clickCount = 0;
-            _clickTimer = 0f;
-            TryToggleLatch();
-        }
+        topView?.SetActive(false);
+        sideView?.SetActive(false);
+        HideInnerPanelButtons();
     }
 
-    private void TryToggleLatch()
-    {
-        if (_gpuController == null) return;
-
-        if (_gpuController.IsLatched)
-        {
-            // Unlatch requires all screws removed and cable detached first
-            if (!AllScrewsEmpty())
-            {
-                Debug.Log("[GPUDetailedView] Cannot unlatch — screws still installed.");
-                return;
-            }
-            if (!AllCablesDetached())
-            {
-                Debug.Log("[GPUDetailedView] Cannot unlatch — cable still connected.");
-                return;
-            }
-            _gpuController.SetUnlatched();
-        }
-        else
-        {
-            _gpuController.SetLatched();
-        }
-
-        ApplySprite();
-        ApplyHardwareInteractable();
-        Debug.Log($"[GPUDetailedView] Latch → {(_gpuController.IsLatched ? "On" : "Out")}");
-    }
-
-    private bool AllScrewsEmpty()
-    {
-        foreach (var sc in _gpuController.GetComponentsInChildren<ScrewController>(true))
-            if (!sc.IsUnscrewed()) return false;
-        return true;
-    }
-
-    private bool AllCablesDetached()
-    {
-        foreach (var cs in _gpuController.GetComponentsInChildren<CableSlot>(true))
-            if (cs.IsInstalled()) return false;
-        return true;
-    }
-
-    private void ApplyHardwareInteractable()
+    /// <summary>Gates screws based on latch state. Call after any latch state change.</summary>
+    public void ApplyHardwareInteractable()
     {
         if (_gpuController == null) return;
         bool interactable = _gpuController.IsLatched;
 
-        // Screws only — cables are Phase 1 and managed by GPUPhase1CableInteraction
         foreach (var sc in _gpuController.GetComponentsInChildren<ScrewController>(true))
         {
             sc.enabled = interactable;
@@ -132,18 +49,64 @@ public class GPUDetailedView : MonoBehaviour
         }
     }
 
-    private void ApplySprite()
+    private void ShowView(GameObject view)
     {
-        if (_sr == null) return;
-        bool latched = _gpuController != null && _gpuController.IsLatched;
-        _sr.sprite = latched ? latchedSprite : unlatchedSprite;
+        topView?.SetActive(false);
+        sideView?.SetActive(false);
+        if (view != null)
+        {
+            view.SetActive(true);
+            _activeView = view;
+        }
     }
 
-    private bool IsMouseOver()
+    private void WireInnerPanelButtons()
     {
-        Vector2 mouseWorld = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
-        foreach (Collider2D col in GetComponents<Collider2D>())
-            if (col.OverlapPoint(mouseWorld)) return true;
-        return false;
+        GameObject panel = FindInnerEditingPanel();
+        if (panel == null) return;
+
+        WireButton(panel, "FrontButton", topView);
+        WireButton(panel, "SideButton", sideView);
+        HideButton(panel, "BackButton");
+    }
+
+    private void HideInnerPanelButtons()
+    {
+        GameObject panel = FindInnerEditingPanel();
+        if (panel == null) return;
+
+        HideButton(panel, "FrontButton");
+        HideButton(panel, "SideButton");
+        HideButton(panel, "BackButton");
+    }
+
+    private void WireButton(GameObject panel, string buttonName, GameObject targetView)
+    {
+        if (targetView == null) return;
+        Button btn = FindButton(panel, buttonName);
+        if (btn == null) return;
+        btn.onClick.RemoveAllListeners();
+        btn.onClick.AddListener(() => ShowView(targetView));
+        btn.gameObject.SetActive(true);
+    }
+
+    private void HideButton(GameObject panel, string buttonName)
+    {
+        FindButton(panel, buttonName)?.gameObject.SetActive(false);
+    }
+
+    private Button FindButton(GameObject panel, string buttonName)
+    {
+        foreach (Button btn in panel.GetComponentsInChildren<Button>(true))
+            if (btn.gameObject.name == buttonName) return btn;
+        return null;
+    }
+
+    private GameObject FindInnerEditingPanel()
+    {
+        if (GameManager.Instance?.editingPanel == null) return null;
+        foreach (Transform t in GameManager.Instance.editingPanel.GetComponentsInChildren<Transform>(true))
+            if (t.name == "InnerEditingPanel") return t.gameObject;
+        return null;
     }
 }
