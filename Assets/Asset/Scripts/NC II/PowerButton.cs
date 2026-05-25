@@ -121,7 +121,8 @@ public class PowerButton : MonoBehaviour, IPowerButton
     private bool IsMouseOver()
     {
         Vector2 mouseWorld = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
-        Collider2D col = GetComponent<Collider2D>();
-        return col != null && col.OverlapPoint(mouseWorld);
+        foreach (Collider2D col in GetComponents<Collider2D>())
+            if (col.OverlapPoint(mouseWorld)) return true;
+        return false;
     }
 }

@@ -46,15 +46,15 @@ public class MotherboardPhaseManager : MonoBehaviour
         foreach (var sc in phase1Root.GetComponentsInChildren<ScrewController>(true))
         {
             sc.enabled = enabled;
-            Collider2D col = sc.GetComponent<Collider2D>();
-            if (col != null) col.enabled = enabled;
+            foreach (Collider2D col in sc.GetComponents<Collider2D>())
+                col.enabled = enabled;
         }
 
         foreach (var cs in phase1Root.GetComponentsInChildren<CableSlot>(true))
         {
             cs.enabled = enabled;
-            Collider2D col = cs.GetComponent<Collider2D>();
-            if (col != null) col.enabled = enabled;
+            foreach (Collider2D col in cs.GetComponents<Collider2D>())
+                col.enabled = enabled;
         }
 
         // Toggle MBCable � blocks hold-to-detach and drag when Phase 2 is active
@@ -63,8 +63,8 @@ public class MotherboardPhaseManager : MonoBehaviour
         {
             if (!enabled && mc.IsDetached) continue; // don't disable a cable being dragged
             mc.enabled = enabled;
-            Collider2D col = mc.GetComponent<Collider2D>();
-            if (col != null) col.enabled = enabled;
+            foreach (Collider2D col in mc.GetComponents<Collider2D>())
+                col.enabled = enabled;
         }
     }
 

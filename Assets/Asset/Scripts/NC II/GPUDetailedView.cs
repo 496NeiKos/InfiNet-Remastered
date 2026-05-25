@@ -127,8 +127,8 @@ public class GPUDetailedView : MonoBehaviour
         foreach (var sc in _gpuController.GetComponentsInChildren<ScrewController>(true))
         {
             sc.enabled = interactable;
-            Collider2D col = sc.GetComponent<Collider2D>();
-            if (col != null) col.enabled = interactable;
+            foreach (Collider2D col in sc.GetComponents<Collider2D>())
+                col.enabled = interactable;
         }
     }
 
@@ -142,7 +142,8 @@ public class GPUDetailedView : MonoBehaviour
     private bool IsMouseOver()
     {
         Vector2 mouseWorld = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
-        Collider2D col = GetComponent<Collider2D>();
-        return col != null && col.OverlapPoint(mouseWorld);
+        foreach (Collider2D col in GetComponents<Collider2D>())
+            if (col.OverlapPoint(mouseWorld)) return true;
+        return false;
     }
 }

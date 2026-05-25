@@ -128,16 +128,16 @@ public class GPUPhase1CableInteraction : MonoBehaviour
         foreach (var cs in _gpuController.GetComponentsInChildren<CableSlot>(true))
         {
             cs.enabled = enable;
-            Collider2D col = cs.GetComponent<Collider2D>();
-            if (col != null) col.enabled = enable;
+            foreach (Collider2D col in cs.GetComponents<Collider2D>())
+                col.enabled = enable;
         }
 
         foreach (var mc in _gpuController.GetComponentsInChildren<MBCable>(true))
         {
             if (!enable && mc.IsDetached) continue;
             mc.enabled = enable;
-            Collider2D col = mc.GetComponent<Collider2D>();
-            if (col != null) col.enabled = enable;
+            foreach (Collider2D col in mc.GetComponents<Collider2D>())
+                col.enabled = enable;
         }
 
         // When opening: explicitly disable screws and latch view (Phase 2 only)
@@ -146,8 +146,8 @@ public class GPUPhase1CableInteraction : MonoBehaviour
             foreach (var sc in _gpuController.GetComponentsInChildren<ScrewController>(true))
             {
                 sc.enabled = false;
-                Collider2D col = sc.GetComponent<Collider2D>();
-                if (col != null) col.enabled = false;
+                foreach (Collider2D col in sc.GetComponents<Collider2D>())
+                    col.enabled = false;
             }
 
             foreach (var gdv in _gpuController.GetComponentsInChildren<GPUDetailedView>(true))
@@ -165,7 +165,8 @@ public class GPUPhase1CableInteraction : MonoBehaviour
     private bool IsMouseOver()
     {
         Vector2 mouseWorld = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
-        Collider2D col = GetComponent<Collider2D>();
-        return col != null && col.OverlapPoint(mouseWorld);
+        foreach (Collider2D col in GetComponents<Collider2D>())
+            if (col.OverlapPoint(mouseWorld)) return true;
+        return false;
     }
 }

@@ -13,22 +13,22 @@ public class HDDDetailView : MonoBehaviour
         foreach (var sc in GetComponentsInChildren<ScrewController>(true))
         {
             sc.enabled = true;
-            Collider2D col = sc.GetComponent<Collider2D>();
-            if (col != null) col.enabled = true;
+            foreach (Collider2D col in sc.GetComponents<Collider2D>())
+                col.enabled = true;
         }
 
         foreach (var cs in GetComponentsInChildren<CableSlot>(true))
         {
             cs.enabled = true;
-            Collider2D col = cs.GetComponent<Collider2D>();
-            if (col != null) col.enabled = true;
+            foreach (Collider2D col in cs.GetComponents<Collider2D>())
+                col.enabled = true;
         }
 
         foreach (var mc in GetComponentsInChildren<MBCable>(true))
         {
             mc.enabled = true;
-            Collider2D col = mc.GetComponent<Collider2D>();
-            if (col != null) col.enabled = true;
+            foreach (Collider2D col in mc.GetComponents<Collider2D>())
+                col.enabled = true;
         }
     }
 }

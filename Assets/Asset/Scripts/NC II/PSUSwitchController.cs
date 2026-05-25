@@ -93,18 +93,22 @@ public class PSUSwitchController : MonoBehaviour
     private bool IsMouseOver()
     {
         Vector2 mouseWorld = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
-        Collider2D col = GetComponent<Collider2D>();
-        if (col == null || !col.OverlapPoint(mouseWorld)) return false;
+
+        var ownCols = GetComponents<Collider2D>();
+        bool ownHit = false;
+        foreach (Collider2D col in ownCols)
+            if (col.OverlapPoint(mouseWorld)) { ownHit = true; break; }
+        if (!ownHit) return false;
 
         // If a child object (cable, port) with a higher sorting order is on top,
         // let that object handle the click instead of the PSU switch.
         SpriteRenderer mySR = GetComponent<SpriteRenderer>();
         int myOrder = mySR != null ? mySR.sortingOrder : 0;
 
-        Collider2D[] hits = Physics2D.OverlapPointAll(mouseWorld);
-        foreach (Collider2D hit in hits)
+        var ownColSet = new System.Collections.Generic.HashSet<Collider2D>(ownCols);
+        foreach (Collider2D hit in Physics2D.OverlapPointAll(mouseWorld))
         {
-            if (hit == col) continue;
+            if (ownColSet.Contains(hit)) continue;
             SpriteRenderer sr = hit.GetComponent<SpriteRenderer>();
             if (sr != null && sr.sortingOrder > myOrder)
                 return false;
