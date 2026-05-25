@@ -39,7 +39,6 @@ public class GPUPhase1CableInteraction : MonoBehaviour
         {
             SetCableOnlyInteraction(false);
             if (_detailedView != null) _detailedView.SetActive(false);
-            RestoreGPUDetailedView();
             RestoreMotherboard();
             _isPanelOpen = false;
         }
@@ -84,12 +83,14 @@ public class GPUPhase1CableInteraction : MonoBehaviour
             transform.position = center;
         }
 
-        // Disable GPUDetailedView BEFORE activating the detail view so its OnEnable
-        // does not show sub-views (TopView/SideView) during Phase 1.
         SetCableOnlyInteraction(true);
 
         if (_detailedView != null)
             _detailedView.SetActive(true);
+
+        // GPUDetailedView.OnEnable may re-enable screws via ApplyHardwareInteractable.
+        // Force them off — screws are Phase 2 only.
+        DisableScrews();
 
         thirdLayer.SetActive(true);
         _isPanelOpen = true;
@@ -109,8 +110,6 @@ public class GPUPhase1CableInteraction : MonoBehaviour
 
         if (_detailedView != null)
             _detailedView.SetActive(false);
-
-        RestoreGPUDetailedView();
 
         // Re-enable MB BEFORE reparenting: reparenting into an inactive parent triggers OnDisable,
         // and calling SetActive inside that cascade throws "already being activated or deactivated".
@@ -147,21 +146,16 @@ public class GPUPhase1CableInteraction : MonoBehaviour
                 col.enabled = enable;
         }
 
-        // When opening: explicitly disable screws and latch view (Phase 2 only)
-        if (enable)
-        {
-            foreach (var sc in _gpuController.GetComponentsInChildren<ScrewController>(true))
-            {
-                sc.enabled = false;
-                foreach (Collider2D col in sc.GetComponents<Collider2D>())
-                    col.enabled = false;
-            }
+    }
 
-            foreach (var gdv in _gpuController.GetComponentsInChildren<GPUDetailedView>(true))
-            {
-                gdv.HideSubViews();
-                gdv.enabled = false;
-            }
+    private void DisableScrews()
+    {
+        if (_gpuController == null) return;
+        foreach (var sc in _gpuController.GetComponentsInChildren<ScrewController>(true))
+        {
+            sc.enabled = false;
+            foreach (Collider2D col in sc.GetComponents<Collider2D>())
+                col.enabled = false;
         }
     }
 
@@ -172,13 +166,6 @@ public class GPUPhase1CableInteraction : MonoBehaviour
             _motherboard.SetActive(true);
             _motherboard = null;
         }
-    }
-
-    private void RestoreGPUDetailedView()
-    {
-        if (_gpuController == null) return;
-        foreach (var gdv in _gpuController.GetComponentsInChildren<GPUDetailedView>(true))
-            gdv.enabled = true;
     }
 
     private bool IsMouseOver()

@@ -3,9 +3,9 @@ using UnityEngine.UI;
 
 /// <summary>
 /// On GPUDetailed — manages switching between the top-view and side-view sub-panels.
-/// Wires "SecondLayerTop" and "SecondLayerSide" buttons in SecondLayer when active.
-/// These names are unique to SecondLayer and never collide with FirstLayer buttons
-/// (FirstLayerTop/Front/Side/Back used by HardwareViewController).
+/// Wires Top/Side buttons in whichever layer the GPU currently lives in (SecondLayer in Phase 2,
+/// ThirdLayer in Phase 1). Button names follow the layer prefix convention: SecondLayerTop,
+/// ThirdLayerSide, etc.
 /// ApplyHardwareInteractable() is public so GPULatchSideView can call it after latch changes.
 /// </summary>
 public class GPUDetailedView : MonoBehaviour
@@ -24,7 +24,7 @@ public class GPUDetailedView : MonoBehaviour
 
     private void OnEnable()
     {
-        WireSecondLayerButtons();
+        WireButtons();
         ShowView(_activeView != null ? _activeView : topView);
         ApplyHardwareInteractable();
     }
@@ -33,16 +33,9 @@ public class GPUDetailedView : MonoBehaviour
     {
         topView?.SetActive(false);
         sideView?.SetActive(false);
-        HideSecondLayerButtons();
+        HideButtons();
     }
 
-    public void HideSubViews()
-    {
-        topView?.SetActive(false);
-        sideView?.SetActive(false);
-    }
-
-    /// <summary>Gates screws based on latch state. Call after any latch state change.</summary>
     public void ApplyHardwareInteractable()
     {
         if (_gpuController == null) return;
@@ -67,26 +60,46 @@ public class GPUDetailedView : MonoBehaviour
         }
     }
 
-    private void WireSecondLayerButtons()
+    private void WireButtons()
     {
         if (topView == null && sideView == null) return;
-
-        GameObject panel = GameManager.Instance?.secondLayer;
+        GameObject panel = FindCurrentPanel();
         if (panel == null) return;
-
-        WireButton(panel, "SecondLayerTop", topView);
-        WireButton(panel, "SecondLayerSide", sideView);
+        string prefix = GetPanelPrefix(panel);
+        WireButton(panel, prefix + "Top", topView);
+        WireButton(panel, prefix + "Side", sideView);
     }
 
-    private void HideSecondLayerButtons()
+    private void HideButtons()
     {
         if (topView == null && sideView == null) return;
+        // Hide in both possible panels since we may not know which was used.
+        HideButtonsInPanel(GameManager.Instance?.secondLayer, "SecondLayer");
+        HideButtonsInPanel(GameManager.Instance?.thirdLayer, "ThirdLayer");
+    }
 
-        GameObject panel = GameManager.Instance?.secondLayer;
+    private void HideButtonsInPanel(GameObject panel, string prefix)
+    {
         if (panel == null) return;
+        HideButton(panel, prefix + "Top");
+        HideButton(panel, prefix + "Side");
+    }
 
-        HideButton(panel, "SecondLayerTop");
-        HideButton(panel, "SecondLayerSide");
+    private GameObject FindCurrentPanel()
+    {
+        if (GameManager.Instance == null) return null;
+        GameObject sl = GameManager.Instance.secondLayer;
+        GameObject tl = GameManager.Instance.thirdLayer;
+        if (sl != null && transform.IsChildOf(sl.transform)) return sl;
+        if (tl != null && transform.IsChildOf(tl.transform)) return tl;
+        return null;
+    }
+
+    private string GetPanelPrefix(GameObject panel)
+    {
+        if (panel == GameManager.Instance?.secondLayer) return "SecondLayer";
+        if (panel == GameManager.Instance?.thirdLayer) return "ThirdLayer";
+        return "SecondLayer";
     }
 
     private void WireButton(GameObject panel, string buttonName, GameObject targetView)
