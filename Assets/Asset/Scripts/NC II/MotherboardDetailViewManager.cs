@@ -24,10 +24,13 @@ public class MotherboardDetailViewManager : MonoBehaviour
         if (GameManager.Instance == null || !GameManager.Instance.IsEditorOpen) return;
         if (_isInnerPanelOpen) return;
 
-        // Only handle input while this Motherboard is inside SecondLayer.
-        if (GameManager.Instance.secondLayer == null ||
-            !transform.IsChildOf(GameManager.Instance.secondLayer.transform))
-            return;
+        // Motherboard may be in FirstLayer (Phase 2 — edited directly) or
+        // SecondLayer (Phase 1 — nested inside the SystemUnit editing panel).
+        bool inFirstLayer = GameManager.Instance.firstLayer != null &&
+                            transform.IsChildOf(GameManager.Instance.firstLayer.transform);
+        bool inSecondLayer = GameManager.Instance.secondLayer != null &&
+                             transform.IsChildOf(GameManager.Instance.secondLayer.transform);
+        if (!inFirstLayer && !inSecondLayer) return;
 
         if (Mouse.current.rightButton.wasPressedThisFrame)
             CheckComponentRightClick();
