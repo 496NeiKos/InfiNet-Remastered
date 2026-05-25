@@ -62,6 +62,8 @@ public class GPUDetailedView : MonoBehaviour
 
     private void WireInnerPanelButtons()
     {
+        if (topView == null && sideView == null) return;
+
         GameObject panel = FindInnerEditingPanel();
         if (panel == null) return;
 
@@ -72,6 +74,8 @@ public class GPUDetailedView : MonoBehaviour
 
     private void HideInnerPanelButtons()
     {
+        if (topView == null && sideView == null) return;
+
         GameObject panel = FindInnerEditingPanel();
         if (panel == null) return;
 
