@@ -28,6 +28,7 @@ public class MonitorController : MonoBehaviour, IHardwareController
         if (viewController == null)
             viewController = GetComponent<HardwareViewController>();
 
+        viewController?.SetDefaultIfNone(monitorFront);
         viewController?.WireButtons();
         viewController?.ShowLastActive();
     }

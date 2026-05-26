@@ -9,11 +9,15 @@ public class PrefabInteraction : MonoBehaviour
     private MotherboardPhaseManager _phaseManager;
     private GameObject _detailedView;
 
+    private SpriteRenderer _rootSprite;
+    private int _savedSortingOrder;
+
     void Start()
     {
         _controller = GetComponent<IHardwareController>();
         _mbController = GetComponent<MotherboardController>();
         _phaseManager = GetComponent<MotherboardPhaseManager>();
+        _rootSprite = GetComponent<SpriteRenderer>();
 
         foreach (Transform child in transform)
         {
@@ -83,6 +87,8 @@ public class PrefabInteraction : MonoBehaviour
 
     public void ShowDetailCentered()
     {
+        HideRootSprite();
+
         if (_controller != null)
         {
             _controller.ShowDetailAtCenter();
@@ -110,10 +116,25 @@ public class PrefabInteraction : MonoBehaviour
 
     public void OnEditorClosed()
     {
+        RestoreRootSprite();
+
         if (_controller != null)
             _controller.HideDetail();
         else if (_detailedView != null)
             _detailedView.SetActive(false);
+    }
+
+    private void HideRootSprite()
+    {
+        if (_rootSprite == null) return;
+        _savedSortingOrder = _rootSprite.sortingOrder;
+        _rootSprite.sortingOrder = -1;
+    }
+
+    private void RestoreRootSprite()
+    {
+        if (_rootSprite == null) return;
+        _rootSprite.sortingOrder = _savedSortingOrder;
     }
 
     public void CloseEditor()

@@ -36,6 +36,7 @@ public class SystemUnitController : MonoBehaviour, IHardwareController
         if (viewController == null)
             viewController = GetComponent<HardwareViewController>();
 
+        viewController?.SetDefaultIfNone(systemUnitFront);
         viewController?.WireButtons();
         viewController?.ShowLastActive();
 

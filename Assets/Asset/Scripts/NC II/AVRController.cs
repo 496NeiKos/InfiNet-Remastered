@@ -28,6 +28,7 @@ public class AVRController : MonoBehaviour, IHardwareController
         if (viewController == null)
             viewController = GetComponent<HardwareViewController>();
 
+        viewController?.SetDefaultIfNone(avrFront);
         viewController?.WireButtons();
         viewController?.ShowLastActive();
     }

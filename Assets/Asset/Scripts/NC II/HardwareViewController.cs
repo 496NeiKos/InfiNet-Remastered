@@ -36,6 +36,14 @@ public class HardwareViewController : MonoBehaviour
         ShowView(_activeView ?? GetViewObject(defaultView));
     }
 
+    // Sets _activeView to the supplied view only when no view has been chosen yet
+    // (first open). Call this before ShowLastActive so there is always a default.
+    public void SetDefaultIfNone(GameObject defaultFirstView)
+    {
+        if (_activeView == null)
+            _activeView = defaultFirstView;
+    }
+
     public void ShowView(GameObject view)
     {
         if (topView != null) topView.SetActive(false);
