@@ -188,6 +188,7 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
                 if (!slot.enabled) continue;          // Phase 1 inactive — slot is disabled
                 if (slot.IsInstalled()) continue;
                 if (!slot.CanAcceptCable(mbCable.GetCableType())) continue;
+                if (!slot.IsPrerequisiteMet()) continue; // prerequisite slot (e.g. PSU) not installed
 
                 float dist = Vector3.Distance(slot.transform.position, dropWorldPos);
                 if (dist < slotInstallRadius && dist < bestDist)

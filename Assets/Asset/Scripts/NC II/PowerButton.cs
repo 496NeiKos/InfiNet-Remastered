@@ -5,9 +5,19 @@ public class PowerButton : MonoBehaviour, IPowerButton
 {
     public enum PowerState { On, Off, Restarting }
 
-    [Header("Sprites")]
+    [Header("Button Sprites")]
     [SerializeField] private Sprite spriteOn;
     [SerializeField] private Sprite spriteOff;
+
+    [Header("System Unit Front Sprites")]
+    [SerializeField] private SpriteRenderer systemUnitFrontSR;
+    [SerializeField] private Sprite systemUnitFrontOn;
+    [SerializeField] private Sprite systemUnitFrontOff;
+
+    [Header("System Unit Root Sprites")]
+    [SerializeField] private SpriteRenderer systemUnitRootSR;
+    [SerializeField] private Sprite systemUnitRootOn;
+    [SerializeField] private Sprite systemUnitRootOff;
 
     [Header("References")]
     [SerializeField] private PowerOnConditionChecker conditionChecker;
@@ -142,8 +152,16 @@ public class PowerButton : MonoBehaviour, IPowerButton
 
     private void ApplySprite()
     {
-        if (_sr == null) return;
-        _sr.sprite = (_state == PowerState.Off) ? spriteOff : spriteOn;
+        if (_sr != null)
+            _sr.sprite = (_state == PowerState.Off) ? spriteOff : spriteOn;
+
+        bool on = _state != PowerState.Off;
+
+        if (systemUnitFrontSR != null && systemUnitFrontOn != null && systemUnitFrontOff != null)
+            systemUnitFrontSR.sprite = on ? systemUnitFrontOn : systemUnitFrontOff;
+
+        if (systemUnitRootSR != null && systemUnitRootOn != null && systemUnitRootOff != null)
+            systemUnitRootSR.sprite = on ? systemUnitRootOn : systemUnitRootOff;
     }
 
     private bool IsMouseOver()

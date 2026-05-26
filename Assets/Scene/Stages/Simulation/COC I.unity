@@ -147,7 +147,7 @@ Transform:
   m_GameObject: {fileID: 10203390}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.7580003, y: -0.2875, z: 0}
+  m_LocalPosition: {x: -0.995, y: -0.282, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -208,7 +208,7 @@ SpriteRenderer:
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 0.36, y: 2.6}
+  m_Size: {x: 0.63, y: 2.58}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -251,13 +251,13 @@ BoxCollider2D:
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 0.36, y: 2.6}
-    newSize: {x: 0.36, y: 2.6}
+    oldSize: {x: 0.63, y: 2.58}
+    newSize: {x: 0.63, y: 2.58}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 0.36, y: 2.6}
+  m_Size: {x: 0.63, y: 2.58}
   m_EdgeRadius: 0
 --- !u!114 &10203394
 MonoBehaviour:
@@ -272,6 +272,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CableSlot
   cableType: CablePSU-CPU
+  installPrerequisiteSlot: {fileID: 0}
 --- !u!1 &10828611
 GameObject:
   m_ObjectHideFlags: 0
@@ -531,7 +532,7 @@ Transform:
   m_GameObject: {fileID: 37371697}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.5819999, y: -0.5919999, z: 0}
+  m_LocalPosition: {x: 1.315, y: -0.705, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -592,7 +593,7 @@ SpriteRenderer:
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 0.87, y: 2.06}
+  m_Size: {x: 0.86, y: 1.82}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -631,17 +632,17 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
+  m_Offset: {x: 0.010422558, y: 0.28349593}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 0.87, y: 2.06}
-    newSize: {x: 0.87, y: 2.06}
+    oldSize: {x: 0.86, y: 1.82}
+    newSize: {x: 0.86, y: 1.82}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 0.87, y: 2.06}
+  m_Size: {x: 0.8391549, y: 1.2530081}
   m_EdgeRadius: 0
 --- !u!114 &37371701
 MonoBehaviour:
@@ -656,6 +657,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CableSlot
   cableType: CablePSU-MOBO
+  installPrerequisiteSlot: {fileID: 5675605123354084049}
 --- !u!1 &64933560
 GameObject:
   m_ObjectHideFlags: 0
@@ -1752,7 +1754,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 12
+  m_SortingOrder: 13
   m_MaskInteraction: 0
   m_Sprite: {fileID: -1406600514268031611, guid: 140fe4b2d8ee08347beb45f892acc510, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -2478,6 +2480,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CableSlot
   cableType: CableHDD-PSU
+  installPrerequisiteSlot: {fileID: 0}
 --- !u!1 &200753543
 GameObject:
   m_ObjectHideFlags: 0
@@ -3094,6 +3097,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CableSlot
   cableType: CableMOBO-HDD
+  installPrerequisiteSlot: {fileID: 0}
 --- !u!212 &249089025
 SpriteRenderer:
   serializedVersion: 2
@@ -3789,7 +3793,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 12
+  m_SortingOrder: 13
   m_MaskInteraction: 0
   m_Sprite: {fileID: -4350512765818139347, guid: 2c27c93f7b4c0a94494de3daec09f325, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -9918,6 +9922,7 @@ GameObject:
   m_Component:
   - component: {fileID: 692340050}
   - component: {fileID: 692340051}
+  - component: {fileID: 692340052}
   m_Layer: 12
   m_Name: SystemUnitBack
   m_TagString: Untagged
@@ -10006,6 +10011,32 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!114 &692340052
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 692340049}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b2596d50c9ff8e49acd5401a46849a7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SystemUnitBackController
+  motherboardSlot: {fileID: 9210005540168721440}
+  psuSlot: {fileID: 5675605123354084049}
+  suPSUBackObject: {fileID: 289643106}
+  motherboardDependentPorts:
+  - {fileID: 1260481909}
+  - {fileID: 692968725}
+  - {fileID: 1119098470}
+  - {fileID: 1263876962}
+  - {fileID: 514138390}
+  backPanelSR: {fileID: 692340051}
+  spriteBothInstalled: {fileID: 4122175483293411631, guid: 342e39aee58c65c45abc8b9be20ced37, type: 3}
+  spriteMBOnlyInstalled: {fileID: -2999497131253031276, guid: 6edcef8c7cce8094ab66dad5627ba273, type: 3}
+  spritePSUOnlyInstalled: {fileID: 2945752055678105277, guid: 9d795fe934a86ab4dabb619b3c3f83bd, type: 3}
+  spriteNeitherInstalled: {fileID: -60776744424520295, guid: 482d7e90ec2e8d14c8191fcc62f6991c, type: 3}
 --- !u!1 &692968725
 GameObject:
   m_ObjectHideFlags: 0
@@ -11544,7 +11575,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 12
+  m_SortingOrder: 13
   m_MaskInteraction: 0
   m_Sprite: {fileID: -5740593123815313993, guid: cdc60becc6215474f8bf60d9770eeb6c, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -16792,6 +16823,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PowerButton
   spriteOn: {fileID: 4413966926691061823, guid: 6169c4ab113236c49860e1c8bbcfe863, type: 3}
   spriteOff: {fileID: 6580451491421541301, guid: 2a5c80e9508c58a40be5c76071253c0f, type: 3}
+  systemUnitFrontSR: {fileID: 264790081}
+  systemUnitFrontOn: {fileID: -4123530890058936308, guid: 7b202cbd8d404974f9158dccd5ff7d4a, type: 3}
+  systemUnitFrontOff: {fileID: 978501349817071120, guid: d5f5e5c7079f5cc40be1269930125b13, type: 3}
+  systemUnitRootSR: {fileID: 2748452052623087714}
+  systemUnitRootOn: {fileID: -4123530890058936308, guid: 7b202cbd8d404974f9158dccd5ff7d4a, type: 3}
+  systemUnitRootOff: {fileID: 978501349817071120, guid: d5f5e5c7079f5cc40be1269930125b13, type: 3}
   conditionChecker: {fileID: 8987857211568027837}
   doubleClickWindow: 0.5
 --- !u!61 &1338173050
@@ -16890,7 +16927,7 @@ SpriteRenderer:
   m_SortingOrder: 7
   m_MaskInteraction: 0
   m_Sprite: {fileID: 4413966926691061823, guid: 6169c4ab113236c49860e1c8bbcfe863, type: 3}
-  m_Color: {r: 0, g: 0, b: 0, a: 0.58431375}
+  m_Color: {r: 0, g: 0, b: 0, a: 0}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -21795,6 +21832,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CableSlot
   cableType: GPUCable
+  installPrerequisiteSlot: {fileID: 0}
 --- !u!61 &1854676237
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -22950,6 +22988,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CableSlot
   cableType: CableHDD-MOBO
+  installPrerequisiteSlot: {fileID: 0}
 --- !u!1 &2043043438
 GameObject:
   m_ObjectHideFlags: 0
@@ -24473,7 +24512,7 @@ Transform:
   m_GameObject: {fileID: 1820356062324776105}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -5.36, y: -5.65, z: 0}
+  m_LocalPosition: {x: -14.56, y: -7.75, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -24828,7 +24867,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!61 &961192306988971016
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -24863,17 +24902,17 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0.49021852}
+  m_Offset: {x: 0, y: 0.60695225}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 0.87, y: 2.06}
-    newSize: {x: 1.14, y: 1.8}
+    oldSize: {x: 0.86, y: 1.82}
+    newSize: {x: 0.86, y: 1.82}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 0.87, y: 0.63053274}
+  m_Size: {x: 0.87, y: 0.6221944}
   m_EdgeRadius: 0
 --- !u!212 &973179916855125726
 SpriteRenderer:
@@ -25792,7 +25831,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 11
+  m_SortingOrder: 12
   m_MaskInteraction: 0
   m_Sprite: {fileID: -4350512765818139347, guid: 2c27c93f7b4c0a94494de3daec09f325, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -26208,13 +26247,13 @@ BoxCollider2D:
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 0.36, y: 2.6}
-    newSize: {x: 1.14, y: 1.8}
+    oldSize: {x: 0.63, y: 2.58}
+    newSize: {x: 0.63, y: 2.58}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 0.36, y: 2.6}
+  m_Size: {x: 0.63, y: 2.58}
   m_EdgeRadius: 0
 --- !u!1 &3448282945772191770
 GameObject:
@@ -27419,7 +27458,7 @@ SpriteRenderer:
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 1.14, y: 1.8}
+  m_Size: {x: 0.63, y: 2.58}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -28672,7 +28711,7 @@ SpriteRenderer:
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 1.14, y: 1.8}
+  m_Size: {x: 0.86, y: 1.82}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -28726,17 +28765,17 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: -0.2824083, y: -0.41112489}
+  m_Offset: {x: 0.26790702, y: 0.009949982}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 0.87, y: 2.06}
-    newSize: {x: 1.14, y: 1.8}
+    oldSize: {x: 0.86, y: 1.82}
+    newSize: {x: 0.86, y: 1.82}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 0.3051834, y: 1.2377502}
+  m_Size: {x: 0.3135214, y: 1.854771}
   m_EdgeRadius: 0
 --- !u!114 &8188985129908973533
 MonoBehaviour:
