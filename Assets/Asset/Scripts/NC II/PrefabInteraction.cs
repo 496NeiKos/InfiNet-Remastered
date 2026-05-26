@@ -10,7 +10,6 @@ public class PrefabInteraction : MonoBehaviour
     private GameObject _detailedView;
 
     private SpriteRenderer _rootSprite;
-    private int _savedSortingOrder;
 
     void Start()
     {
@@ -59,6 +58,40 @@ public class PrefabInteraction : MonoBehaviour
             ShowDetailCentered();
     }
 
+    // Reactively set root alpha to 0 whenever this component is being shown in a
+    // detail view — either because it was reparented to an editing layer (top-level
+    // editor) or because its Detailed child is active (inner panel from within another
+    // editor). Alpha returns to 1 the moment neither condition holds.
+    void LateUpdate()
+    {
+        if (_rootSprite == null) return;
+
+        float target = ShouldHideRoot() ? 0f : 1f;
+
+        Color c = _rootSprite.color;
+        if (!Mathf.Approximately(c.a, target))
+        {
+            c.a = target;
+            _rootSprite.color = c;
+        }
+    }
+
+    private bool ShouldHideRoot()
+    {
+        if (GameManager.Instance == null) return false;
+
+        // Reparented to an editing layer → this is the active top-level editor
+        Transform p = transform.parent;
+        if (GameManager.Instance.firstLayer  != null && p == GameManager.Instance.firstLayer.transform)  return true;
+        if (GameManager.Instance.secondLayer != null && p == GameManager.Instance.secondLayer.transform) return true;
+        if (GameManager.Instance.thirdLayer  != null && p == GameManager.Instance.thirdLayer.transform)  return true;
+
+        // Detailed child is active → inner panel opened from within another editor
+        if (_detailedView != null && _detailedView.activeSelf) return true;
+
+        return false;
+    }
+
     private bool IsInstalledInSlot()
     {
         return GetComponentInParent<SlotContainer>() != null;
@@ -87,8 +120,6 @@ public class PrefabInteraction : MonoBehaviour
 
     public void ShowDetailCentered()
     {
-        HideRootSprite();
-
         if (_controller != null)
         {
             _controller.ShowDetailAtCenter();
@@ -116,25 +147,10 @@ public class PrefabInteraction : MonoBehaviour
 
     public void OnEditorClosed()
     {
-        RestoreRootSprite();
-
         if (_controller != null)
             _controller.HideDetail();
         else if (_detailedView != null)
             _detailedView.SetActive(false);
-    }
-
-    private void HideRootSprite()
-    {
-        if (_rootSprite == null) return;
-        _savedSortingOrder = _rootSprite.sortingOrder;
-        _rootSprite.sortingOrder = -1;
-    }
-
-    private void RestoreRootSprite()
-    {
-        if (_rootSprite == null) return;
-        _rootSprite.sortingOrder = _savedSortingOrder;
     }
 
     public void CloseEditor()

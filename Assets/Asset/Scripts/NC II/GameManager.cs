@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using UnityEngine;
 
 public class GameManager : MonoBehaviour
@@ -27,11 +26,6 @@ public class GameManager : MonoBehaviour
     private MotherboardDetailViewManager _activeMbdvm;
     private GPUPhase1CableInteraction _activeGpuPhase1Panel;
 
-    // Sorting-order snapshot for every SpriteRenderer in worldRoot taken when the
-    // editor opens. Restored when the editor fully closes.
-    private readonly Dictionary<SpriteRenderer, int> _worldRootSavedOrders
-        = new Dictionary<SpriteRenderer, int>();
-
     public void RegisterGPUPhase1Panel(GPUPhase1CableInteraction panel) =>
         _activeGpuPhase1Panel = panel;
 
@@ -54,11 +48,8 @@ public class GameManager : MonoBehaviour
         _prefabOriginalParent = interaction.transform.parent;
         _prefabOriginalWorldPos = interaction.transform.position;
 
-        // Move the component out of worldRoot first so it isn't caught by DimWorldRoot.
         interaction.transform.SetParent(firstLayer.transform, true);
         _activeInteraction.ShowDetailCentered();
-
-        DimWorldRoot();
 
         if (firstLayer != null)
             firstLayer.SetActive(true);
@@ -91,7 +82,6 @@ public class GameManager : MonoBehaviour
         }
 
         IsEditorOpen = false;
-        RestoreWorldRoot();
 
         if (_activeInteraction != null)
         {
@@ -109,30 +99,5 @@ public class GameManager : MonoBehaviour
         if (firstLayer != null) firstLayer.SetActive(false);
         if (secondLayer != null) secondLayer.SetActive(false);
         if (thirdLayer != null) thirdLayer.SetActive(false);
-    }
-
-    private void DimWorldRoot()
-    {
-        _worldRootSavedOrders.Clear();
-        if (worldRoot == null) return;
-
-        foreach (Transform child in worldRoot)
-        {
-            foreach (SpriteRenderer sr in child.GetComponentsInChildren<SpriteRenderer>(true))
-            {
-                _worldRootSavedOrders[sr] = sr.sortingOrder;
-                sr.sortingOrder = -1;
-            }
-        }
-    }
-
-    private void RestoreWorldRoot()
-    {
-        foreach (var kvp in _worldRootSavedOrders)
-        {
-            if (kvp.Key != null)
-                kvp.Key.sortingOrder = kvp.Value;
-        }
-        _worldRootSavedOrders.Clear();
     }
 }
