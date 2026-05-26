@@ -89,6 +89,9 @@ public class PrefabInteraction : MonoBehaviour
         // Detailed child is active → inner panel opened from within another editor
         if (_detailedView != null && _detailedView.activeSelf) return true;
 
+        // Bystander in worldRoot while another component's detail view is open
+        if (GameManager.Instance.IsEditorOpen && IsInWorldRoot()) return true;
+
         return false;
     }
 

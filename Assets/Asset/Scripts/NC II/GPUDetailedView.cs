@@ -34,6 +34,7 @@ public class GPUDetailedView : MonoBehaviour
         topView?.SetActive(false);
         sideView?.SetActive(false);
         HideButtons();
+        _gpuController?.RefreshCableSprite();
     }
 
     public void ApplyHardwareInteractable()
@@ -58,6 +59,7 @@ public class GPUDetailedView : MonoBehaviour
             view.SetActive(true);
             _activeView = view;
         }
+        _gpuController?.SetCableIndicatorForView(view == sideView);
     }
 
     private void WireButtons()

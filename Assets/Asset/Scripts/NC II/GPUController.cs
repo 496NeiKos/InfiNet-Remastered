@@ -84,6 +84,14 @@ public class GPUController : MonoBehaviour
 
     public void RefreshCableSprite() => RefreshSprite();
 
+    // Called by GPUDetailedView when switching sub-views.
+    // Side view hides the indicator; top view restores normal cable logic.
+    public void SetCableIndicatorForView(bool sideViewActive)
+    {
+        if (_cableIndicator == null) return;
+        _cableIndicator.SetActive(!sideViewActive && _inSlot && IsCableConnected());
+    }
+
     private void RefreshSprite()
     {
         if (_sr != null)
