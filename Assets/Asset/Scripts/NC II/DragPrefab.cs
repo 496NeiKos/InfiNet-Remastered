@@ -4,6 +4,7 @@ using UnityEngine.EventSystems;
 public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     [SerializeField] public HardwareHolder hardwareHolder;
+    [SerializeField] private GameObject workspaceProxy;
 
     private RectTransform workspaceArea;
     private RectTransform hardwareArea;
@@ -21,6 +22,29 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
     {
         workspaceArea = GameManager.Instance.workspaceArea;
         hardwareArea = GameManager.Instance.hardwareArea;
+    }
+
+    private void Update()
+    {
+        if (GameManager.Instance == null) return;
+
+        bool inWorldRoot = transform.parent == GameManager.Instance.worldRoot;
+
+        if (workspaceProxy != null)
+        {
+            if (workspaceProxy.activeSelf != inWorldRoot)
+                workspaceProxy.SetActive(inWorldRoot);
+
+            // Disable parent collider while proxy is active to avoid double-hits.
+            Collider2D col = GetComponent<Collider2D>();
+            if (col != null) col.enabled = !inWorldRoot;
+        }
+        else if (inWorldRoot)
+        {
+            // No proxy — re-enable own collider in case slot state management disabled it.
+            Collider2D col = GetComponent<Collider2D>();
+            if (col != null) col.enabled = true;
+        }
     }
 
     public void OnBeginDrag(PointerEventData eventData)

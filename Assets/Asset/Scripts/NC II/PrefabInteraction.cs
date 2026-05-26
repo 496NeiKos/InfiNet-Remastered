@@ -31,6 +31,10 @@ public class PrefabInteraction : MonoBehaviour
 
         if (IsInstalledInSlot()) return;
 
+        // Motherboard-level components (CPU, GPU, RAM, PSU, HDD, SSD, Heatsink) must
+        // not open a detail view when loose in the workspace — only in the editing panel.
+        if (IsMotherboardComponent() && IsInWorldRoot()) return;
+
         if (GameManager.Instance != null && GameManager.Instance.IsEditorOpen) return;
 
         if (!IsMouseOver()) return;
@@ -54,6 +58,20 @@ public class PrefabInteraction : MonoBehaviour
     private bool IsInstalledInSlot()
     {
         return GetComponentInParent<SlotContainer>() != null;
+    }
+
+    // True for components that live inside the motherboard (CPU, Heatsink, RAM, GPU,
+    // PSU, HDD, SSD) — i.e. everything that is NOT SystemUnit/Monitor/AVR/Motherboard.
+    // SystemUnit/Monitor/AVR implement IHardwareController; Motherboard has MotherboardController.
+    private bool IsMotherboardComponent()
+    {
+        return _controller == null && _mbController == null;
+    }
+
+    private bool IsInWorldRoot()
+    {
+        return GameManager.Instance != null
+            && transform.parent == GameManager.Instance.worldRoot;
     }
 
     private bool IsMouseOver()

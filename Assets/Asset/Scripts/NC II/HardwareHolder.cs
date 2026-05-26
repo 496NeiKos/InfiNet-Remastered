@@ -104,6 +104,13 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         hardwarePrefab.transform.position = worldPos;
         ApplyWorldScale(hardwarePrefab.transform, _worldScale);
         hardwarePrefab.SetActive(true);
+
+        // Re-enable DragPrefab — CPUSlotController may have disabled it while the
+        // component was seated in its slot (BothUninstalled state disables both).
+        // Collider state is managed by DragPrefab.Update() via the workspaceProxy.
+        DragPrefab dp = hardwarePrefab.GetComponent<DragPrefab>();
+        if (dp != null) dp.enabled = true;
+
         gameObject.SetActive(false);
     }
 
