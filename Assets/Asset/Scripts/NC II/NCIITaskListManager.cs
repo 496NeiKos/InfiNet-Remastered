@@ -24,7 +24,7 @@ public class NCIITaskListManager : MonoBehaviour
 
     [Header("Condition References")]
     [SerializeField] private CoverController coverController;
-    [SerializeField] private HardwareHolder motherboardHolder;
+    [SerializeField] private MotherboardController motherboardController;
     [SerializeField] private HardwareHolder psuHolder;
     [SerializeField] private HardwareHolder hddHolder;
     [SerializeField] private HardwareHolder cpuHolder;
@@ -85,7 +85,7 @@ public class NCIITaskListManager : MonoBehaviour
                 taskObject = disassemblyTaskObjects[2],
                 originalIndex = 2,
                 condition = () =>
-                    (motherboardHolder == null || motherboardHolder.IsAvailable()) &&
+                    (motherboardController == null || motherboardController.IsUninstalledFromSystemUnit) &&
                     (psuHolder == null || psuHolder.IsAvailable()) &&
                     (hddHolder == null || hddHolder.IsAvailable())
             },
