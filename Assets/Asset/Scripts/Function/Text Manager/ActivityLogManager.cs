@@ -1,8 +1,6 @@
-using System.Collections;
 using System.Text;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class ActivityLogManager : MonoBehaviour
 {
@@ -10,7 +8,6 @@ public class ActivityLogManager : MonoBehaviour
 
     public static ActivityLogManager Instance { get; private set; }
 
-    [SerializeField] private ScrollRect scrollRect;
     [SerializeField] private TextMeshProUGUI logText;
 
     private readonly StringBuilder _log = new StringBuilder();
@@ -39,20 +36,7 @@ public class ActivityLogManager : MonoBehaviour
 
         _log.AppendLine($"<color={color}>> {message}</color>");
 
-        if (logText == null || scrollRect == null) return;
-
-        logText.text = _log.ToString();
-
-        StopAllCoroutines();
-        StartCoroutine(ScrollToBottom());
-    }
-
-    private IEnumerator ScrollToBottom()
-    {
-        // Wait two frames: first for TMP to rebuild its mesh,
-        // second for ContentSizeFitter to resize the content rect.
-        yield return null;
-        yield return null;
-        scrollRect.verticalNormalizedPosition = 0f;
+        if (logText != null)
+            logText.text = _log.ToString();
     }
 }
