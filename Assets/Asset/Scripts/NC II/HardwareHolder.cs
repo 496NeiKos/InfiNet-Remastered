@@ -217,25 +217,37 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         if (heatsink != null)
         {
             CPUSlotController[] allSlots = FindObjectsOfType<CPUSlotController>(true);
+            CPUSlotController bestSlot = null;
+            float bestDist = float.MaxValue;
 
             foreach (CPUSlotController slot in allSlots)
             {
                 if (slot.IsHeatsinkInstalled) continue;
 
-                hardwarePrefab.transform.SetParent(slot.transform, false);
-                hardwarePrefab.transform.localPosition = heatsink.InstalledLocalPosition;
-                Vector3 reinstallScale = heatsink.InstalledLocalScale;
-                hardwarePrefab.transform.localScale = reinstallScale != Vector3.zero
-                    ? reinstallScale
-                    : _originalLocalScale;
-                hardwarePrefab.SetActive(true);
-                heatsink.OnInstalledToSlot(slot);
-                gameObject.SetActive(false);
-                Debug.Log($"[HardwareHolder] Heatsink installed to CPUSlot.");
+                float dist = Vector3.Distance(slot.transform.position, dropWorldPos);
+                if (dist < slotInstallRadius && dist < bestDist)
+                {
+                    bestDist = dist;
+                    bestSlot = slot;
+                }
+            }
+
+            if (bestSlot == null)
+            {
+                Debug.Log($"[HardwareHolder] No valid CPUSlot found for Heatsink.");
                 return;
             }
 
-            Debug.Log($"[HardwareHolder] No valid CPUSlot found for Heatsink.");
+            hardwarePrefab.transform.SetParent(bestSlot.transform, false);
+            hardwarePrefab.transform.localPosition = heatsink.InstalledLocalPosition;
+            Vector3 reinstallScale = heatsink.InstalledLocalScale;
+            hardwarePrefab.transform.localScale = reinstallScale != Vector3.zero
+                ? reinstallScale
+                : _originalLocalScale;
+            hardwarePrefab.SetActive(true);
+            heatsink.OnInstalledToSlot(bestSlot);
+            gameObject.SetActive(false);
+            Debug.Log($"[HardwareHolder] Heatsink installed to CPUSlot.");
             return;
         }
 
@@ -244,6 +256,8 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         if (cpuCtrl != null)
         {
             CPUSlotController[] allSlots = FindObjectsOfType<CPUSlotController>(true);
+            CPUSlotController bestSlot = null;
+            float bestDist = float.MaxValue;
 
             Debug.Log($"[HardwareHolder] CPU install � found {allSlots.Length} CPUSlotController(s)");
 
@@ -252,21 +266,31 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
                 Debug.Log($"[HardwareHolder] Checking slot '{slot.gameObject.name}': state={slot.State} IsCPUInstalled={slot.IsCPUInstalled} IsHeatsinkInstalled={slot.IsHeatsinkInstalled} IsLockClosed={slot.IsLockClosed}");
 
                 if (slot.IsCPUInstalled) continue;
-                if (slot.IsLockClosed) { Debug.Log("[HardwareHolder] CPU install blocked � CPU lock is closed."); continue; }
-                if (slot.IsHeatsinkInstalled) { Debug.Log("[HardwareHolder] CPU install blocked � heatsink is installed."); continue; }
+                if (slot.IsLockClosed) { Debug.Log("[HardwareHolder] CPU install blocked — CPU lock is closed."); continue; }
+                if (slot.IsHeatsinkInstalled) { Debug.Log("[HardwareHolder] CPU install blocked — heatsink is installed."); continue; }
 
-                hardwarePrefab.transform.SetParent(slot.transform, false);
-                hardwarePrefab.transform.localPosition = cpuCtrl.InstalledLocalPosition;
-                Vector3 cpuScale = cpuCtrl.InstalledLocalScale;
-                hardwarePrefab.transform.localScale = cpuScale != Vector3.zero ? cpuScale : _originalLocalScale;
-                hardwarePrefab.SetActive(true);
-                slot.OnCPUInstalled();
-                gameObject.SetActive(false);
-                Debug.Log($"[HardwareHolder] CPU installed to CPUSlot.");
+                float dist = Vector3.Distance(slot.transform.position, dropWorldPos);
+                if (dist < slotInstallRadius && dist < bestDist)
+                {
+                    bestDist = dist;
+                    bestSlot = slot;
+                }
+            }
+
+            if (bestSlot == null)
+            {
+                Debug.Log($"[HardwareHolder] No valid CPUSlot found for CPU.");
                 return;
             }
 
-            Debug.Log($"[HardwareHolder] No valid CPUSlot found for CPU.");
+            hardwarePrefab.transform.SetParent(bestSlot.transform, false);
+            hardwarePrefab.transform.localPosition = cpuCtrl.InstalledLocalPosition;
+            Vector3 cpuScale = cpuCtrl.InstalledLocalScale;
+            hardwarePrefab.transform.localScale = cpuScale != Vector3.zero ? cpuScale : _originalLocalScale;
+            hardwarePrefab.SetActive(true);
+            bestSlot.OnCPUInstalled();
+            gameObject.SetActive(false);
+            Debug.Log($"[HardwareHolder] CPU installed to CPUSlot.");
             return;
         }
 

@@ -11,6 +11,12 @@ public class PowerOnConditionChecker : MonoBehaviour
     [SerializeField] private ScrewController screw3;
     [SerializeField] private ScrewController screw4;
 
+    [Header("PSU Switch (System Unit Back)")]
+    [SerializeField] private PSUSwitchController psuSwitch;
+
+    [Header("AVR Power Button")]
+    [SerializeField] private AVRPowerButton avrPowerButton;
+
     [Header("SystemUnit Back Ports")]
     [SerializeField] private BackPortSlot sUVGAPort;
     [SerializeField] private BackPortSlot sUPSUPort;
@@ -54,6 +60,14 @@ public class PowerOnConditionChecker : MonoBehaviour
         if (!IsScrewed(screw2)) { Debug.Log("[PowerOn] FAIL — Screw 2 not tightened."); pass = false; }
         if (!IsScrewed(screw3)) { Debug.Log("[PowerOn] FAIL — Screw 3 not tightened."); pass = false; }
         if (!IsScrewed(screw4)) { Debug.Log("[PowerOn] FAIL — Screw 4 not tightened."); pass = false; }
+
+        // PSU switch (system unit back) must be on
+        if (psuSwitch == null || !psuSwitch.IsOn)
+        { Debug.Log("[PowerOn] FAIL — PSU switch is off."); pass = false; }
+
+        // AVR must be powered on
+        if (avrPowerButton == null || !avrPowerButton.IsPoweredOn)
+        { Debug.Log("[PowerOn] FAIL — AVR is not powered on."); pass = false; }
 
         // SystemUnit back ports
         if (!IsPortInstalled(sUVGAPort))  { Debug.Log("[PowerOn] FAIL — SU VGA back cable not plugged in."); pass = false; }
