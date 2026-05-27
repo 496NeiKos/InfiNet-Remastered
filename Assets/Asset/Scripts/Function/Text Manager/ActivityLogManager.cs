@@ -41,10 +41,6 @@ public class ActivityLogManager : MonoBehaviour
 
     private void Append(string message, EntryType type)
     {
-        // Capture scroll position BEFORE adding content — content height change
-        // would shift normalizedPosition even without user input.
-        bool wasAtBottom = IsAtBottom();
-
         string color = type switch
         {
             EntryType.Install => "#00E676",
@@ -58,18 +54,7 @@ public class ActivityLogManager : MonoBehaviour
         if (logText != null)
             logText.text = _log.ToString();
 
-        // Only follow the log when the user hasn't scrolled up to read history.
-        if (wasAtBottom)
-            StartCoroutine(ScrollToBottom());
-    }
-
-    // True when the user is at (or very near) the bottom, or when content hasn't
-    // overflowed the viewport yet.
-    private bool IsAtBottom()
-    {
-        if (scrollRect == null) return true;
-        if (scrollRect.content.rect.height <= scrollRect.viewport.rect.height) return true;
-        return scrollRect.verticalNormalizedPosition <= 0.05f;
+        StartCoroutine(ScrollToBottom());
     }
 
     private IEnumerator ScrollToBottom()
