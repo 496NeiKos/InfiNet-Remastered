@@ -59,10 +59,11 @@ public class ActivityLogManager : MonoBehaviour
 
     private IEnumerator ScrollToBottom()
     {
-        // Wait one frame so the layout system updates the content height first.
-        yield return null;
-        Canvas.ForceUpdateCanvases();
-        if (scrollRect != null)
-            scrollRect.verticalNormalizedPosition = 0f;
+        // WaitForEndOfFrame ensures Unity has finished its layout pass for this frame
+        // before we force a rebuild and set the scroll position.
+        yield return new WaitForEndOfFrame();
+        if (scrollRect == null) yield break;
+        LayoutRebuilder.ForceRebuildLayoutImmediate(scrollRect.content);
+        scrollRect.verticalNormalizedPosition = 0f;
     }
 }
