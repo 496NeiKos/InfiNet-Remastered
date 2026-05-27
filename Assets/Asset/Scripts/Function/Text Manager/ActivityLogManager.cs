@@ -1,4 +1,3 @@
-using System.Text;
 using TMPro;
 using UnityEngine;
 
@@ -10,7 +9,7 @@ public class ActivityLogManager : MonoBehaviour
 
     [SerializeField] private TextMeshProUGUI logText;
 
-    private readonly StringBuilder _log = new StringBuilder();
+    private string _log = "";
 
     private void Awake()
     {
@@ -34,9 +33,10 @@ public class ActivityLogManager : MonoBehaviour
             _                 => "#E0E0E0",
         };
 
-        _log.AppendLine($"<color={color}>> {message}</color>");
+        // Prepend so the newest entry is always at line 1.
+        _log = $"<color={color}>> {message}</color>\n" + _log;
 
         if (logText != null)
-            logText.text = _log.ToString();
+            logText.text = _log;
     }
 }
