@@ -60,6 +60,7 @@ public class GPUController : MonoBehaviour
     {
         if (_isLatched) return;
         _isLatched = true;
+        ActivityLogManager.Log("GPU latch engaged", ActivityLogManager.EntryType.Install);
         Debug.Log($"[GPUController:{name}] Latched");
     }
 
@@ -67,6 +68,7 @@ public class GPUController : MonoBehaviour
     {
         if (!_isLatched) return;
         _isLatched = false;
+        ActivityLogManager.Log("GPU latch released", ActivityLogManager.EntryType.Action);
         Debug.Log($"[GPUController:{name}] Unlatched");
     }
 

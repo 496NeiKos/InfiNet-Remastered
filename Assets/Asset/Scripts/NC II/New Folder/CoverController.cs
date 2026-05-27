@@ -59,12 +59,16 @@ public class CoverController : MonoBehaviour
                 _isSliding = false;
 
                 if (_isOpening)
+                {
                     Debug.Log("[CoverController] Cover fully open.");
+                    ActivityLogManager.Log("Side cover removed", ActivityLogManager.EntryType.Remove);
+                }
                 else
                 {
                     if (systemUnitController != null)
                         systemUnitController.AttachCover();
                     Debug.Log("[CoverController] Cover fully closed, hardware hidden.");
+                    ActivityLogManager.Log("Side cover attached", ActivityLogManager.EntryType.Install);
                 }
             }
         }

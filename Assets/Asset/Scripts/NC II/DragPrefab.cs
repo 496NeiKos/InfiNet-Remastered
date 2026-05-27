@@ -243,6 +243,8 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
 
         if (_wasInSlot && onHardwareArea)
         {
+            ActivityLogManager.Log($"{name} removed to storage", ActivityLogManager.EntryType.Remove);
+
             // Cache slot ref before reparenting removes it from the hierarchy
             CPUSlotController cpuSlot = _originalParent?.GetComponent<CPUSlotController>();
 

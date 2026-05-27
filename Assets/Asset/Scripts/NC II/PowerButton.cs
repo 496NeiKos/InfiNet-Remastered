@@ -147,6 +147,20 @@ public class PowerButton : MonoBehaviour, IPowerButton
     {
         _state = newState;
         ApplySprite();
+
+        switch (_state)
+        {
+            case PowerState.On:
+                ActivityLogManager.Log("System unit powered ON", ActivityLogManager.EntryType.Install);
+                break;
+            case PowerState.Off:
+                ActivityLogManager.Log("System unit powered OFF", ActivityLogManager.EntryType.Remove);
+                break;
+            case PowerState.Restarting:
+                ActivityLogManager.Log("System unit restarting...", ActivityLogManager.EntryType.Action);
+                break;
+        }
+
         Debug.Log($"[PowerButton] State → {_state}");
     }
 

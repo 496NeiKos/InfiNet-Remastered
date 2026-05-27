@@ -81,6 +81,11 @@ public class CPULockController : MonoBehaviour
         _state = newState;
         ApplyState();
         Debug.Log($"[CPULockController] State → {_state}");
+
+        if (newState == LockState.Open)
+            ActivityLogManager.Log("CPU lock lever opened", ActivityLogManager.EntryType.Action);
+        else
+            ActivityLogManager.Log("CPU lock lever closed", ActivityLogManager.EntryType.Install);
     }
 
     private void ApplyState()

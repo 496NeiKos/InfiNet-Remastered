@@ -113,7 +113,11 @@ public class BackCable : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
         {
             // Storage always allowed regardless of where drag started.
             // Only mark port uninstalled if the drag actually came from a port.
-            if (wasInPort) _parentPort?.SetUninstalled();
+            if (wasInPort)
+            {
+                _parentPort?.SetUninstalled();
+                ActivityLogManager.Log($"{cableType} cable unplugged", ActivityLogManager.EntryType.Remove);
+            }
             SendToHolder();
             Debug.Log($"[BackCable] '{cableType}' stored to hardware area.");
         }
@@ -173,6 +177,7 @@ public class BackCable : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
         transform.localScale = _originalLocalScale;
         gameObject.SetActive(true);
         port.SetInstalled();
+        ActivityLogManager.Log($"{cableType} cable plugged in", ActivityLogManager.EntryType.Install);
         Debug.Log($"[BackCable] '{cableType}' installed to port.");
     }
 

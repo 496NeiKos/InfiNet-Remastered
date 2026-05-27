@@ -30,6 +30,7 @@ public class CableSlot : MonoBehaviour
     {
         _isInstalled = true;
         GetComponentInParent<GPUController>()?.RefreshCableSprite();
+        ActivityLogManager.Log($"{cableType} cable connected", ActivityLogManager.EntryType.Install);
         Debug.Log($"[CableSlot] {gameObject.name} → Installed");
     }
 
@@ -37,6 +38,7 @@ public class CableSlot : MonoBehaviour
     {
         _isInstalled = false;
         GetComponentInParent<GPUController>()?.RefreshCableSprite();
+        ActivityLogManager.Log($"{cableType} cable disconnected", ActivityLogManager.EntryType.Remove);
         Debug.Log($"[CableSlot] {gameObject.name} → Uninstalled");
     }
 }

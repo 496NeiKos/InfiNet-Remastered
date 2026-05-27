@@ -247,6 +247,7 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
             hardwarePrefab.SetActive(true);
             heatsink.OnInstalledToSlot(bestSlot);
             gameObject.SetActive(false);
+            ActivityLogManager.Log("Heatsink installed", ActivityLogManager.EntryType.Install);
             Debug.Log($"[HardwareHolder] Heatsink installed to CPUSlot.");
             return;
         }
@@ -290,6 +291,7 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
             hardwarePrefab.SetActive(true);
             bestSlot.OnCPUInstalled();
             gameObject.SetActive(false);
+            ActivityLogManager.Log("CPU installed to slot", ActivityLogManager.EntryType.Install);
             Debug.Log($"[HardwareHolder] CPU installed to CPUSlot.");
             return;
         }
@@ -327,6 +329,7 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
 
         hardwarePrefab.SetActive(true);
         bestSlotContainer.InstallChild(hardwarePrefab, prefabName);
+        ActivityLogManager.Log($"{prefabName} installed", ActivityLogManager.EntryType.Install);
 
         var mb = hardwarePrefab.GetComponent<MotherboardController>();
         if (mb != null) mb.MarkInstalled();

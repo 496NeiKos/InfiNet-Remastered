@@ -45,6 +45,7 @@ public class CPUController : MonoBehaviour
         }
         _pasteState = PasteState.PasteApplied;
         ApplySprites();
+        ActivityLogManager.Log("Thermal paste applied to CPU", ActivityLogManager.EntryType.Install);
         Debug.Log("[CPUController] Thermal paste applied.");
     }
 
@@ -57,6 +58,7 @@ public class CPUController : MonoBehaviour
         }
         _pasteState = PasteState.NoPaste;
         ApplySprites();
+        ActivityLogManager.Log("Thermal paste removed from CPU", ActivityLogManager.EntryType.Remove);
         Debug.Log("[CPUController] Thermal paste removed.");
     }
 

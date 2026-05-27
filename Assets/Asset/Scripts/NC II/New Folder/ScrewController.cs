@@ -289,6 +289,19 @@ public class ScrewController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         _currentProgress = 0f;
         UpdateSprite();
         OnStateChanged?.Invoke(this);
+
+        switch (newState)
+        {
+            case ScrewState.Screwed:
+                ActivityLogManager.Log($"{name}: screw tightened", ActivityLogManager.EntryType.Install);
+                break;
+            case ScrewState.Pending:
+                ActivityLogManager.Log($"{name}: screw placed", ActivityLogManager.EntryType.Action);
+                break;
+            case ScrewState.Empty:
+                ActivityLogManager.Log($"{name}: screw removed", ActivityLogManager.EntryType.Remove);
+                break;
+        }
     }
 
     private void SetStateVisualOnly(ScrewState visualState)
