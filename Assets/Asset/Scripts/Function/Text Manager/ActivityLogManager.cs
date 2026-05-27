@@ -8,7 +8,6 @@ public class ActivityLogManager : MonoBehaviour
     public static ActivityLogManager Instance { get; private set; }
 
     [SerializeField] private TextMeshProUGUI logText;
-    [SerializeField] private RectTransform content;
 
     private string _log = "";
 
@@ -34,16 +33,10 @@ public class ActivityLogManager : MonoBehaviour
             _                 => "#E0E0E0",
         };
 
+        // Prepend so the newest entry is always at line 1.
         _log = $"<color={color}>> {message}</color>\n" + _log;
 
-        if (logText == null) return;
-
-        logText.text = _log;
-
-        // Force TMP to calculate the new height, then size the Content to match.
-        // This tells the ScrollRect the real scrollable area without relying on ContentSizeFitter.
-        logText.ForceMeshUpdate();
-        if (content != null)
-            content.sizeDelta = new Vector2(content.sizeDelta.x, logText.preferredHeight);
+        if (logText != null)
+            logText.text = _log;
     }
 }
