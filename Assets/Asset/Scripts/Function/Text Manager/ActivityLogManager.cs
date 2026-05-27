@@ -1,17 +1,15 @@
-using System.Collections;
 using System.Text;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// Singleton terminal log. Appends every user action as a colour-coded line and
-/// keeps the full history visible in a ScrollRect.
+/// Singleton terminal log. Appends every user action as a colour-coded line.
 ///
-/// UI setup required (all assigned in the Inspector):
-///   - ScrollRect   : the scroll view wrapping the log content
-///   - TextMeshProUGUI logText : inside the ScrollRect content, with ContentSizeFitter
-///     set to Preferred Size (Vertical) so the content grows as lines are added
+/// UI setup — no ContentSizeFitter needed on Content:
+///   - ScrollRect  : the Scroll View root
+///   - TextMeshProUGUI logText : inside ScrollRect → Viewport → Content
+///     Content RectTransform: anchor top-stretch, pivot (0.5, 1)
 /// </summary>
 public class ActivityLogManager : MonoBehaviour
 {
@@ -30,9 +28,6 @@ public class ActivityLogManager : MonoBehaviour
         Instance = this;
     }
 
-    /// <summary>
-    /// Append a log entry. Safe to call when Instance is null (e.g. in scenes without a terminal).
-    /// </summary>
     public static void Log(string message, EntryType type = EntryType.Action)
     {
         if (Instance == null) return;
@@ -51,19 +46,18 @@ public class ActivityLogManager : MonoBehaviour
 
         _log.AppendLine($"<color={color}>> {message}</color>");
 
-        if (logText != null)
-            logText.text = _log.ToString();
+        if (logText == null || scrollRect == null) return;
 
-        StartCoroutine(ScrollToBottom());
-    }
+        logText.text = _log.ToString();
 
-    private IEnumerator ScrollToBottom()
-    {
-        // WaitForEndOfFrame ensures Unity has finished its layout pass for this frame
-        // before we force a rebuild and set the scroll position.
-        yield return new WaitForEndOfFrame();
-        if (scrollRect == null) yield break;
-        LayoutRebuilder.ForceRebuildLayoutImmediate(scrollRect.content);
+        // Ask TMP to recalculate its mesh synchronously so preferredHeight is current.
+        logText.ForceMeshUpdate();
+
+        // Resize the content RectTransform to exactly fit the text — no ContentSizeFitter needed.
+        RectTransform content = scrollRect.content;
+        content.sizeDelta = new Vector2(content.sizeDelta.x, logText.preferredHeight);
+
+        // Scroll to bottom in the same frame — layout is already correct.
         scrollRect.verticalNormalizedPosition = 0f;
     }
 }
