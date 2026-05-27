@@ -50,14 +50,20 @@ public class ActivityLogManager : MonoBehaviour
 
         logText.text = _log.ToString();
 
-        // Ask TMP to recalculate its mesh synchronously so preferredHeight is current.
+        // Force TMP to compute the correct height for the new text immediately.
         logText.ForceMeshUpdate();
 
-        // Resize the content RectTransform to exactly fit the text — no ContentSizeFitter needed.
-        RectTransform content = scrollRect.content;
-        content.sizeDelta = new Vector2(content.sizeDelta.x, logText.preferredHeight);
+        float contentHeight  = logText.preferredHeight;
+        float viewportHeight = scrollRect.viewport.rect.height;
 
-        // Scroll to bottom in the same frame — layout is already correct.
-        scrollRect.verticalNormalizedPosition = 0f;
+        // Resize the content rect to fit all text.
+        RectTransform content = scrollRect.content;
+        content.sizeDelta = new Vector2(content.sizeDelta.x, contentHeight);
+
+        // Directly set the content's anchored position to show the bottom.
+        // For a top-anchored content (pivot.y = 1), moving it up by
+        // (contentHeight - viewportHeight) puts the last line in view.
+        float scrollY = Mathf.Max(0f, contentHeight - viewportHeight);
+        content.anchoredPosition = new Vector2(content.anchoredPosition.x, scrollY);
     }
 }
