@@ -258,6 +258,7 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
                 cpuSlot?.OnCPUUninstalled();
 
             SendToHolder();
+            NCIITaskListManager.CheckConditions();
         }
         else if (_wasInSlot)
         {

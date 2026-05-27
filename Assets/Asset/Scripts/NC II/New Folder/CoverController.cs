@@ -62,6 +62,7 @@ public class CoverController : MonoBehaviour
                 {
                     Debug.Log("[CoverController] Cover fully open.");
                     ActivityLogManager.Log("Side cover removed", ActivityLogManager.EntryType.Remove);
+                    NCIITaskListManager.CheckConditions();
                 }
                 else
                 {
@@ -69,6 +70,7 @@ public class CoverController : MonoBehaviour
                         systemUnitController.AttachCover();
                     Debug.Log("[CoverController] Cover fully closed, hardware hidden.");
                     ActivityLogManager.Log("Side cover attached", ActivityLogManager.EntryType.Install);
+                    NCIITaskListManager.CheckConditions();
                 }
             }
         }

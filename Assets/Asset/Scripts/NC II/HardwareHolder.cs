@@ -340,6 +340,7 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         hardwarePrefab.GetComponent<SSDController>()?.OnSnappedToSlot();
 
         gameObject.SetActive(false);
+        NCIITaskListManager.CheckConditions();
     }
 
     private void ApplyWorldScale(Transform t, Vector3 targetWorldScale)

@@ -119,6 +119,7 @@ public class BackCable : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
                 ActivityLogManager.Log($"{cableType} cable unplugged", ActivityLogManager.EntryType.Remove);
             }
             SendToHolder();
+            NCIITaskListManager.CheckConditions();
             Debug.Log($"[BackCable] '{cableType}' stored to hardware area.");
         }
         else if (wasInPort)
@@ -178,6 +179,7 @@ public class BackCable : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
         gameObject.SetActive(true);
         port.SetInstalled();
         ActivityLogManager.Log($"{cableType} cable plugged in", ActivityLogManager.EntryType.Install);
+        NCIITaskListManager.CheckConditions();
         Debug.Log($"[BackCable] '{cableType}' installed to port.");
     }
 
