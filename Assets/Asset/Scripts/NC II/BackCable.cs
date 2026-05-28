@@ -22,6 +22,9 @@ public class BackCable : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
     [Header("Secondary Power Gate (optional SU power button that must also be OFF)")]
     [SerializeField] private PowerButton secondaryPowerGate;
 
+    [Header("Monitor Power Gate (optional — cable locked while monitor is ON)")]
+    [SerializeField] private MonitorPowerButton monitorPowerGate;
+
     [Header("PSU Switch Gate (assign PSUSwitchController — cable locked while switch is On)")]
     [SerializeField] private PSUSwitchController psuSwitchGate;
 
@@ -70,6 +73,15 @@ public class BackCable : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
         {
             ActivityLogManager.Log($"Cannot unplug {cableType} cable — turn off the System Unit first.", ActivityLogManager.EntryType.Warning);
             Debug.Log($"[BackCable] Cannot unplug '{cableType}' — turn off the secondary power source first.");
+            _isDragging = false;
+            return;
+        }
+
+        // Gate: monitor power button must also be off
+        if (monitorPowerGate != null && monitorPowerGate.IsPoweredOn)
+        {
+            ActivityLogManager.Log($"Cannot unplug {cableType} cable — turn off the Monitor first.", ActivityLogManager.EntryType.Warning);
+            Debug.Log($"[BackCable] Cannot unplug '{cableType}' — monitor is still on.");
             _isDragging = false;
             return;
         }

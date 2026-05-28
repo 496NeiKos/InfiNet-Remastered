@@ -1487,7 +1487,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BackCable
   cableType: MPCablePort
   hardwareHolder: {fileID: 2043043440}
-  powerButtonSource: {fileID: 1338173049}
+  powerButtonSource: {fileID: 409216139}
   secondaryPowerGate: {fileID: 0}
   psuSwitchGate: {fileID: 0}
 --- !u!4 &108009069
@@ -3991,7 +3991,8 @@ MonoBehaviour:
   hardwareHolder: {fileID: 361067702}
   powerButtonSource: {fileID: 409216139}
   secondaryPowerGate: {fileID: 0}
-  psuSwitchGate: {fileID: 289643109}
+  monitorPowerGate: {fileID: 1299985818}
+  psuSwitchGate: {fileID: 0}
 --- !u!1 &260907803
 GameObject:
   m_ObjectHideFlags: 0
@@ -18269,8 +18270,9 @@ MonoBehaviour:
   cableType: APSUPort
   hardwareHolder: {fileID: 700654899}
   powerButtonSource: {fileID: 409216139}
-  secondaryPowerGate: {fileID: 0}
-  psuSwitchGate: {fileID: 289643109}
+  secondaryPowerGate: {fileID: 1338173049}
+  monitorPowerGate: {fileID: 0}
+  psuSwitchGate: {fileID: 0}
 --- !u!4 &1299142857
 Transform:
   m_ObjectHideFlags: 0

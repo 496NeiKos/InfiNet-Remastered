@@ -94,6 +94,13 @@ public class MonitorPowerButton : MonoBehaviour, IPowerButton
 
     private void TryTurnOn()
     {
+        if (suPowerButton != null && !suPowerButton.IsPoweredOn)
+        {
+            ActivityLogManager.Log("Cannot turn on monitor — turn on the System Unit first.", ActivityLogManager.EntryType.Warning);
+            Debug.Log("[MonitorPowerButton] FAIL — System Unit power button is off.");
+            return;
+        }
+
         if (monitorVGAPort == null || monitorVGAPort.IsUninstalled)
         {
             ActivityLogManager.Log("Cannot turn on monitor — connect the VGA cable first.", ActivityLogManager.EntryType.Warning);
