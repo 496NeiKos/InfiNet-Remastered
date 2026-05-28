@@ -98,21 +98,19 @@ public class AVRPowerButton : MonoBehaviour, IPowerButton
 
         if (aPSUPort == null || aPSUPort.IsUninstalled)
         {
+            ActivityLogManager.Log("Cannot turn on AVR — connect the AVR PSU cable first.", ActivityLogManager.EntryType.Warning);
             Debug.Log("[AVRPowerButton] FAIL — AVR PSU port cable not connected.");
             pass = false;
         }
 
         if (aMPort == null || aMPort.IsUninstalled)
         {
+            ActivityLogManager.Log("Cannot turn on AVR — connect the AVR monitor cable first.", ActivityLogManager.EntryType.Warning);
             Debug.Log("[AVRPowerButton] FAIL — AVR monitor cable not connected.");
             pass = false;
         }
 
-        if (!pass)
-        {
-            Debug.Log("[AVRPowerButton] Cannot turn on — conditions not met.");
-            return;
-        }
+        if (!pass) return;
 
         SetState(PowerState.On);
     }
@@ -121,6 +119,7 @@ public class AVRPowerButton : MonoBehaviour, IPowerButton
     {
         if (suPowerButton != null && suPowerButton.IsPoweredOn)
         {
+            ActivityLogManager.Log("Cannot turn off AVR — turn off the System Unit first.", ActivityLogManager.EntryType.Warning);
             Debug.Log("[AVRPowerButton] Cannot turn off — System Unit power button is still on.");
             return;
         }

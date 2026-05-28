@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class ActivityLogManager : MonoBehaviour
 {
-    public enum EntryType { Install, Remove, Action }
+    public enum EntryType { Install, Remove, Action, Warning }
 
     public static ActivityLogManager Instance { get; private set; }
 
@@ -27,10 +27,11 @@ public class ActivityLogManager : MonoBehaviour
     {
         string color = type switch
         {
-            EntryType.Install => "#00E676",
-            EntryType.Remove  => "#FFB300",
-            EntryType.Action  => "#E0E0E0",
-            _                 => "#E0E0E0",
+            EntryType.Install  => "#00E676",
+            EntryType.Remove   => "#FFB300",
+            EntryType.Action   => "#E0E0E0",
+            EntryType.Warning  => "#FF5252",
+            _                  => "#E0E0E0",
         };
 
         // Prepend so the newest entry is always at line 1.

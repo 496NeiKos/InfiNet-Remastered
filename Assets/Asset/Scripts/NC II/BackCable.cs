@@ -59,6 +59,7 @@ public class BackCable : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
         // Gate: power must be off before unplugging
         if (_powerButton != null && _powerButton.IsPoweredOn)
         {
+            ActivityLogManager.Log($"Cannot unplug {cableType} cable — turn off its power source first.", ActivityLogManager.EntryType.Warning);
             Debug.Log($"[BackCable] Cannot unplug '{cableType}' — turn off the power button first.");
             _isDragging = false;
             return;
@@ -67,6 +68,7 @@ public class BackCable : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
         // Gate: secondary power button (SU) must also be off
         if (secondaryPowerGate != null && secondaryPowerGate.IsPoweredOn)
         {
+            ActivityLogManager.Log($"Cannot unplug {cableType} cable — turn off the System Unit first.", ActivityLogManager.EntryType.Warning);
             Debug.Log($"[BackCable] Cannot unplug '{cableType}' — turn off the secondary power source first.");
             _isDragging = false;
             return;
@@ -75,6 +77,7 @@ public class BackCable : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
         // Gate: PSU switch must be off before unplugging the PSU cable
         if (psuSwitchGate != null && psuSwitchGate.IsOn)
         {
+            ActivityLogManager.Log($"Cannot unplug {cableType} cable — turn off the PSU switch first.", ActivityLogManager.EntryType.Warning);
             Debug.Log($"[BackCable] Cannot unplug '{cableType}' — PSU switch is on.");
             _isDragging = false;
             return;

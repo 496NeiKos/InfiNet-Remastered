@@ -53,60 +53,66 @@ public class PowerOnConditionChecker : MonoBehaviour
 
         // Cover
         if (coverController == null || coverController.IsOpen())
-        { Debug.Log("[PowerOn] FAIL — Cover is open."); pass = false; }
+        { Warn("Cannot power on — close the System Unit cover first."); pass = false; }
 
         // Cover screws
-        if (!IsScrewed(screw1)) { Debug.Log("[PowerOn] FAIL — Screw 1 not tightened."); pass = false; }
-        if (!IsScrewed(screw2)) { Debug.Log("[PowerOn] FAIL — Screw 2 not tightened."); pass = false; }
-        if (!IsScrewed(screw3)) { Debug.Log("[PowerOn] FAIL — Screw 3 not tightened."); pass = false; }
-        if (!IsScrewed(screw4)) { Debug.Log("[PowerOn] FAIL — Screw 4 not tightened."); pass = false; }
+        if (!IsScrewed(screw1)) { Warn("Cannot power on — tighten cover screw 1 first."); pass = false; }
+        if (!IsScrewed(screw2)) { Warn("Cannot power on — tighten cover screw 2 first."); pass = false; }
+        if (!IsScrewed(screw3)) { Warn("Cannot power on — tighten cover screw 3 first."); pass = false; }
+        if (!IsScrewed(screw4)) { Warn("Cannot power on — tighten cover screw 4 first."); pass = false; }
 
         // PSU switch (system unit back) must be on
         if (psuSwitch == null || !psuSwitch.IsOn)
-        { Debug.Log("[PowerOn] FAIL — PSU switch is off."); pass = false; }
+        { Warn("Cannot power on — turn on the PSU switch on the System Unit back first."); pass = false; }
 
         // AVR must be powered on
         if (avrPowerButton == null || !avrPowerButton.IsPoweredOn)
-        { Debug.Log("[PowerOn] FAIL — AVR is not powered on."); pass = false; }
+        { Warn("Cannot power on — turn on the AVR first."); pass = false; }
 
         // SystemUnit back ports
-        if (!IsPortInstalled(sUVGAPort))  { Debug.Log("[PowerOn] FAIL — SU VGA back cable not plugged in."); pass = false; }
-        if (!IsPortInstalled(sUPSUPort))  { Debug.Log("[PowerOn] FAIL — SU PSU back cable not plugged in."); pass = false; }
+        if (!IsPortInstalled(sUVGAPort))  { Warn("Cannot power on — plug in the VGA cable to the System Unit back."); pass = false; }
+        if (!IsPortInstalled(sUPSUPort))  { Warn("Cannot power on — plug in the PSU cable to the System Unit back."); pass = false; }
 
         // Monitor back ports
-        if (!IsPortInstalled(mVGACableSlot)) { Debug.Log("[PowerOn] FAIL — Monitor VGA cable not plugged in."); pass = false; }
-        if (!IsPortInstalled(mPCableSlot))   { Debug.Log("[PowerOn] FAIL — Monitor power cable not plugged in."); pass = false; }
+        if (!IsPortInstalled(mVGACableSlot)) { Warn("Cannot power on — plug in the VGA cable to the monitor."); pass = false; }
+        if (!IsPortInstalled(mPCableSlot))   { Warn("Cannot power on — plug in the power cable to the monitor."); pass = false; }
 
         // AVR back ports
-        if (!IsPortInstalled(aPSUSlot))    { Debug.Log("[PowerOn] FAIL — AVR PSU cable not plugged in."); pass = false; }
-        if (!IsPortInstalled(aMCableSlot)) { Debug.Log("[PowerOn] FAIL — AVR monitor cable not plugged in."); pass = false; }
+        if (!IsPortInstalled(aPSUSlot))    { Warn("Cannot power on — plug in the PSU cable to the AVR."); pass = false; }
+        if (!IsPortInstalled(aMCableSlot)) { Warn("Cannot power on — plug in the monitor cable to the AVR."); pass = false; }
 
         // SystemUnit side hardware
-        if (!HasChild(motherboardSlot)) { Debug.Log("[PowerOn] FAIL — Motherboard not installed."); pass = false; }
-        if (!HasChild(hddSlot))         { Debug.Log("[PowerOn] FAIL — HDD not installed."); pass = false; }
-        if (!HasChild(psuSlot))         { Debug.Log("[PowerOn] FAIL — PSU not installed."); pass = false; }
+        if (!HasChild(motherboardSlot)) { Warn("Cannot power on — install the motherboard first."); pass = false; }
+        if (!HasChild(hddSlot))         { Warn("Cannot power on — install the HDD first."); pass = false; }
+        if (!HasChild(psuSlot))         { Warn("Cannot power on — install the PSU first."); pass = false; }
 
         // Motherboard components
         if (cpuSlotController == null || !cpuSlotController.HasCPU())
-        { Debug.Log("[PowerOn] FAIL — CPU not installed."); pass = false; }
+        { Warn("Cannot power on — install the CPU first."); pass = false; }
 
         if (cpuSlotController == null || !cpuSlotController.IsHeatsinkInstalled)
-        { Debug.Log("[PowerOn] FAIL — Heatsink not installed."); pass = false; }
+        { Warn("Cannot power on — install the heatsink first."); pass = false; }
 
-        if (!HasChild(gpuSlot))  { Debug.Log("[PowerOn] FAIL — GPU not installed."); pass = false; }
-        if (!HasChild(ssdSlot))  { Debug.Log("[PowerOn] FAIL — SSD not installed."); pass = false; }
-        if (!HasChild(cmosSlot)) { Debug.Log("[PowerOn] FAIL — CMOS not installed."); pass = false; }
+        if (!HasChild(gpuSlot))  { Warn("Cannot power on — install the GPU first."); pass = false; }
+        if (!HasChild(ssdSlot))  { Warn("Cannot power on — install the SSD first."); pass = false; }
+        if (!HasChild(cmosSlot)) { Warn("Cannot power on — install the CMOS battery first."); pass = false; }
 
         if (!HasChild(ramSlot1) && !HasChild(ramSlot2))
-        { Debug.Log("[PowerOn] FAIL — No RAM installed (at least 1 required)."); pass = false; }
+        { Warn("Cannot power on — install at least one RAM stick first."); pass = false; }
 
         // Motherboard cables
-        if (!IsCableInstalled(cableSlot1)) { Debug.Log("[PowerOn] FAIL — MB Cable 1 not attached."); pass = false; }
-        if (!IsCableInstalled(cableSlot2)) { Debug.Log("[PowerOn] FAIL — MB Cable 2 not attached."); pass = false; }
-        if (!IsCableInstalled(cableSlot3)) { Debug.Log("[PowerOn] FAIL — MB Cable 3 not attached."); pass = false; }
+        if (!IsCableInstalled(cableSlot1)) { Warn("Cannot power on — connect motherboard cable 1 first."); pass = false; }
+        if (!IsCableInstalled(cableSlot2)) { Warn("Cannot power on — connect motherboard cable 2 first."); pass = false; }
+        if (!IsCableInstalled(cableSlot3)) { Warn("Cannot power on — connect motherboard cable 3 first."); pass = false; }
 
         if (pass) Debug.Log("[PowerOn] All conditions met — power on allowed.");
         return pass;
+    }
+
+    private void Warn(string message)
+    {
+        ActivityLogManager.Log(message, ActivityLogManager.EntryType.Warning);
+        Debug.Log($"[PowerOn] {message}");
     }
 
     private bool HasChild(Transform slot)       => slot != null && slot.childCount > 0;

@@ -86,12 +86,14 @@ public class PSUSwitchController : MonoBehaviour
     {
         if (psuPort != null && !psuPort.IsInstalled)
         {
+            ActivityLogManager.Log("Cannot toggle PSU switch — plug in the PSU cable first.", ActivityLogManager.EntryType.Warning);
             Debug.Log("[PSUSwitchController] Cannot toggle — PSU cable not installed.");
             return;
         }
 
         if (_isOn && avrPowerButton != null && avrPowerButton.IsPoweredOn)
         {
+            ActivityLogManager.Log("Cannot turn off PSU switch — turn off the AVR first.", ActivityLogManager.EntryType.Warning);
             Debug.Log("[PSUSwitchController] Cannot turn off — AVR power button is still on.");
             return;
         }

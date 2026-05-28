@@ -96,6 +96,7 @@ public class MonitorPowerButton : MonoBehaviour, IPowerButton
     {
         if (monitorVGAPort == null || monitorVGAPort.IsUninstalled)
         {
+            ActivityLogManager.Log("Cannot turn on monitor — connect the VGA cable first.", ActivityLogManager.EntryType.Warning);
             Debug.Log("[MonitorPowerButton] FAIL — monitor VGA port cable not connected.");
             return;
         }
@@ -107,6 +108,7 @@ public class MonitorPowerButton : MonoBehaviour, IPowerButton
     {
         if (suPowerButton != null && suPowerButton.IsPoweredOn)
         {
+            ActivityLogManager.Log("Cannot turn off monitor — turn off the System Unit first.", ActivityLogManager.EntryType.Warning);
             Debug.Log("[MonitorPowerButton] Cannot turn off — System Unit power button is still on.");
             return;
         }
