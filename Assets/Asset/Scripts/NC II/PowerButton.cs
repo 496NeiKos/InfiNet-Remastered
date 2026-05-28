@@ -30,6 +30,7 @@ public class PowerButton : MonoBehaviour, IPowerButton
 
     private SpriteRenderer _sr;
     private PowerState _state = PowerState.Off;
+    private bool _initialized = false;
 
     private int _clickCount;
     private float _clickTimer;
@@ -39,7 +40,10 @@ public class PowerButton : MonoBehaviour, IPowerButton
     private const float RestartHoldDuration = 3f;
 
     public PowerState State => _state;
-    public bool IsPoweredOn => _state == PowerState.On || _state == PowerState.Restarting;
+    // Falls back to startOn if Awake hasn't run yet (object was inactive at scene load).
+    public bool IsPoweredOn => _initialized
+        ? (_state == PowerState.On || _state == PowerState.Restarting)
+        : startOn;
 
     private void Awake()
     {
@@ -49,8 +53,8 @@ public class PowerButton : MonoBehaviour, IPowerButton
         if (conditionChecker == null)
             conditionChecker = GetComponentInParent<PowerOnConditionChecker>();
 
-        if (startOn)
-            _state = PowerState.On;
+        _state = startOn ? PowerState.On : PowerState.Off;
+        _initialized = true;
 
         ApplySprite();
     }

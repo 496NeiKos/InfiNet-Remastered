@@ -19,6 +19,9 @@ public class BackCable : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
     [SerializeField] private MonoBehaviour powerButtonSource;
     private IPowerButton _powerButton;
 
+    [Header("Secondary Power Gate (optional SU power button that must also be OFF)")]
+    [SerializeField] private PowerButton secondaryPowerGate;
+
     [Header("PSU Switch Gate (assign PSUSwitchController — cable locked while switch is On)")]
     [SerializeField] private PSUSwitchController psuSwitchGate;
 
@@ -41,6 +44,7 @@ public class BackCable : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
 
         if (powerButtonSource != null)
             _powerButton = powerButtonSource as IPowerButton;
+
     }
 
     public void OnBeginDrag(PointerEventData eventData)
@@ -55,7 +59,15 @@ public class BackCable : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
         // Gate: power must be off before unplugging
         if (_powerButton != null && _powerButton.IsPoweredOn)
         {
-            Debug.Log($"[BackCable] Cannot unplug '{cableType}' � turn off the power button first.");
+            Debug.Log($"[BackCable] Cannot unplug '{cableType}' — turn off the power button first.");
+            _isDragging = false;
+            return;
+        }
+
+        // Gate: secondary power button (SU) must also be off
+        if (secondaryPowerGate != null && secondaryPowerGate.IsPoweredOn)
+        {
+            Debug.Log($"[BackCable] Cannot unplug '{cableType}' — turn off the secondary power source first.");
             _isDragging = false;
             return;
         }
