@@ -249,6 +249,7 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
             gameObject.SetActive(false);
             ActivityLogManager.Log("Heatsink installed", ActivityLogManager.EntryType.Install);
             Debug.Log($"[HardwareHolder] Heatsink installed to CPUSlot.");
+            NCIITaskListManager.CheckConditions();
             return;
         }
 
@@ -293,6 +294,7 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
             gameObject.SetActive(false);
             ActivityLogManager.Log("CPU installed to slot", ActivityLogManager.EntryType.Install);
             Debug.Log($"[HardwareHolder] CPU installed to CPUSlot.");
+            NCIITaskListManager.CheckConditions();
             return;
         }
 
