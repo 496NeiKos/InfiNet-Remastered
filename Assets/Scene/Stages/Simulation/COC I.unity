@@ -691,6 +691,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 1844451779}
+  startInWorkspace: 0
   slotInstallRadius: 1.5
 --- !u!114 &64933562
 MonoBehaviour:
@@ -1102,7 +1103,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -4553049634920380254, guid: 6cb221e7404937349af1175d14a37bfb, type: 3}
+  m_Sprite: {fileID: 5223100989477494258, guid: f146fcc146812ba4b87805a8823ff38b, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -1121,7 +1122,7 @@ Transform:
   m_GameObject: {fileID: 80567646}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -10.88, y: -11.63, z: 0}
+  m_LocalPosition: {x: 14.62, y: -5.88, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1348,6 +1349,7 @@ MonoBehaviour:
   cableType: MPCablePort
   hardwareHolder: {fileID: 2043043440}
   powerButtonSource: {fileID: 1338173049}
+  secondaryPowerGate: {fileID: 0}
   psuSwitchGate: {fileID: 0}
 --- !u!4 &108009069
 Transform:
@@ -3473,6 +3475,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 624839213}
+  startInWorkspace: 0
   slotInstallRadius: 1.5
 --- !u!114 &253282985
 MonoBehaviour:
@@ -3848,6 +3851,7 @@ MonoBehaviour:
   cableType: AMPort
   hardwareHolder: {fileID: 361067702}
   powerButtonSource: {fileID: 409216139}
+  secondaryPowerGate: {fileID: 0}
   psuSwitchGate: {fileID: 289643109}
 --- !u!1 &260907803
 GameObject:
@@ -4588,6 +4592,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 2390677771505005363}
+  startInWorkspace: 0
   slotInstallRadius: 1.5
 --- !u!114 &285861483
 MonoBehaviour:
@@ -4779,6 +4784,8 @@ MonoBehaviour:
   offSprite: {fileID: 7321770163872473640, guid: 5c3e280771933474e9f4acce30d48aa0, type: 3}
   onSprite: {fileID: 4528021382585732146, guid: c2016d04cc3dc4b418e1a2bb9e7ac699, type: 3}
   psuPort: {fileID: 1133075496}
+  avrPowerButton: {fileID: 409216139}
+  startOn: 1
   doubleClickWindow: 0.5
 --- !u!212 &289643110
 SpriteRenderer:
@@ -5191,6 +5198,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 4699670503633810579}
+  startInWorkspace: 0
   slotInstallRadius: 1.5
 --- !u!1 &313552432
 GameObject:
@@ -5562,6 +5570,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 7816693105033411294}
+  startInWorkspace: 0
   slotInstallRadius: 1.5
 --- !u!1 &343451547
 GameObject:
@@ -6025,6 +6034,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 260820737}
+  startInWorkspace: 0
   slotInstallRadius: 1.5
 --- !u!1 &362088524
 GameObject:
@@ -6530,6 +6540,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 1820356062324776105}
+  startInWorkspace: 1
   slotInstallRadius: 1.5
 --- !u!1 &405871561
 GameObject:
@@ -6585,6 +6596,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 6294746388856104340}
+  startInWorkspace: 0
   slotInstallRadius: 1.5
 --- !u!114 &405871565
 MonoBehaviour:
@@ -6734,6 +6746,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 5322194216335052605}
+  startInWorkspace: 0
   slotInstallRadius: 1.5
 --- !u!114 &406604042
 MonoBehaviour:
@@ -6990,6 +7003,8 @@ MonoBehaviour:
   avrDetailedSpriteOff: {fileID: -4553049634920380254, guid: 6cb221e7404937349af1175d14a37bfb, type: 3}
   aPSUPort: {fileID: 411423494}
   aMPort: {fileID: 73471826}
+  suPowerButton: {fileID: 1338173049}
+  startOn: 1
   doubleClickWindow: 0.5
 --- !u!1 &409642195
 GameObject:
@@ -7566,7 +7581,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BackCable
   cableType: MVGAPort
   hardwareHolder: {fileID: 686178430}
-  powerButtonSource: {fileID: 1338173049}
+  powerButtonSource: {fileID: 1299985818}
+  secondaryPowerGate: {fileID: 1338173049}
   psuSwitchGate: {fileID: 0}
 --- !u!212 &437242115
 SpriteRenderer:
@@ -7918,6 +7934,7 @@ MonoBehaviour:
   cableType: MHDMICablePort
   hardwareHolder: {fileID: 1197448058}
   powerButtonSource: {fileID: 1338173049}
+  secondaryPowerGate: {fileID: 0}
   psuSwitchGate: {fileID: 0}
 --- !u!1 &472708842
 GameObject:
@@ -8312,6 +8329,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 1281493947}
+  startInWorkspace: 0
   slotInstallRadius: 1.5
 --- !u!114 &477266322
 MonoBehaviour:
@@ -8469,6 +8487,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 8301058766642013003}
+  startInWorkspace: 0
   slotInstallRadius: 1.5
 --- !u!114 &495981042
 MonoBehaviour:
@@ -10440,6 +10459,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 437242111}
+  startInWorkspace: 0
   slotInstallRadius: 1.5
 --- !u!114 &686178432
 MonoBehaviour:
@@ -11151,6 +11171,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 1299142854}
+  startInWorkspace: 0
   slotInstallRadius: 1.5
 --- !u!114 &700654901
 MonoBehaviour:
@@ -11380,7 +11401,7 @@ Transform:
   m_GameObject: {fileID: 721360362}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -5.3600006, y: -5.65, z: 0}
+  m_LocalPosition: {x: 11.45, y: -5.43, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -13364,6 +13385,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 679522239}
+  startInWorkspace: 0
   slotInstallRadius: 1.5
 --- !u!114 &924184857
 MonoBehaviour:
@@ -13742,6 +13764,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 265908535}
+  startInWorkspace: 0
   slotInstallRadius: 1.5
 --- !u!114 &947855579
 MonoBehaviour:
@@ -13891,6 +13914,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 6871304167088779069}
+  startInWorkspace: 0
   slotInstallRadius: 1.5
 --- !u!114 &948321811
 MonoBehaviour:
@@ -14434,6 +14458,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 793291698}
+  startInWorkspace: 0
   slotInstallRadius: 1.5
 --- !u!114 &1012018387
 MonoBehaviour:
@@ -15003,6 +15028,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 721360362}
+  startInWorkspace: 1
   slotInstallRadius: 1.5
 --- !u!114 &1068688293
 MonoBehaviour:
@@ -15945,6 +15971,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 465003130}
+  startInWorkspace: 0
   slotInstallRadius: 1.5
 --- !u!1 &1207145770
 GameObject:
@@ -17230,6 +17257,7 @@ MonoBehaviour:
   cableType: SUVGAPort
   hardwareHolder: {fileID: 477266320}
   powerButtonSource: {fileID: 1338173049}
+  secondaryPowerGate: {fileID: 0}
   psuSwitchGate: {fileID: 0}
 --- !u!61 &1281493951
 BoxCollider2D:
@@ -17310,6 +17338,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 695772721}
+  startInWorkspace: 0
   slotInstallRadius: 1.5
 --- !u!114 &1283400875
 MonoBehaviour:
@@ -17573,6 +17602,7 @@ MonoBehaviour:
   cableType: APSUPort
   hardwareHolder: {fileID: 700654899}
   powerButtonSource: {fileID: 409216139}
+  secondaryPowerGate: {fileID: 0}
   psuSwitchGate: {fileID: 289643109}
 --- !u!4 &1299142857
 Transform:
@@ -17694,6 +17724,169 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 0.13429493, y: 1.23}
   m_EdgeRadius: 0
+--- !u!1 &1299985816
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1299985817}
+  - component: {fileID: 1299985820}
+  - component: {fileID: 1299985819}
+  - component: {fileID: 1299985818}
+  m_Layer: 0
+  m_Name: MonitorPowerButton
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1299985817
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1299985816}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1.634, y: -0.249, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2127048301}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1299985818
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1299985816}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d04930852d858334c995304500b69cb1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MonitorPowerButton
+  spriteOn: {fileID: 1429817519544748392, guid: 231c58966141e0344baf7f5236de7930, type: 3}
+  spriteOff: {fileID: 1429817519544748392, guid: 231c58966141e0344baf7f5236de7930, type: 3}
+  monitorRootSprite: {fileID: 721360370}
+  monitorRootSpriteOn: {fileID: 7086264142023964043, guid: fa0175e6c5b3b754c99545e69d405b59, type: 3}
+  monitorRootSpriteOff: {fileID: 7086264142023964043, guid: fa0175e6c5b3b754c99545e69d405b59, type: 3}
+  monitorDetailedSprite: {fileID: 2127048302}
+  monitorDetailedSpriteOn: {fileID: 7086264142023964043, guid: fa0175e6c5b3b754c99545e69d405b59, type: 3}
+  monitorDetailedSpriteOff: {fileID: 7086264142023964043, guid: fa0175e6c5b3b754c99545e69d405b59, type: 3}
+  monitorVGAPort: {fileID: 524374831}
+  suPowerButton: {fileID: 1338173049}
+  startOn: 1
+  doubleClickWindow: 0.5
+--- !u!61 &1299985819
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1299985816}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0.5, y: 0.5}
+    oldSize: {x: 0.3, y: 0.3}
+    newSize: {x: 0.3, y: 0.3}
+    adaptiveTilingThreshold: 0.5
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  m_Size: {x: 0.3, y: 0.3}
+  m_EdgeRadius: 0
+--- !u!212 &1299985820
+SpriteRenderer:
+  serializedVersion: 2
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1299985816}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 0
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 7
+  m_MaskInteraction: 0
+  m_Sprite: {fileID: 1429817519544748392, guid: 231c58966141e0344baf7f5236de7930, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_FlipX: 0
+  m_FlipY: 0
+  m_DrawMode: 0
+  m_Size: {x: 0.3, y: 0.3}
+  m_AdaptiveModeThreshold: 0.5
+  m_SpriteTileMode: 0
+  m_WasSpriteAssigned: 1
+  m_SpriteSortPoint: 0
 --- !u!1 &1338173047
 GameObject:
   m_ObjectHideFlags: 0
@@ -17749,6 +17942,7 @@ MonoBehaviour:
   systemUnitRootOn: {fileID: -4123530890058936308, guid: 7b202cbd8d404974f9158dccd5ff7d4a, type: 3}
   systemUnitRootOff: {fileID: 978501349817071120, guid: d5f5e5c7079f5cc40be1269930125b13, type: 3}
   conditionChecker: {fileID: 8987857211568027837}
+  startOn: 1
   doubleClickWindow: 0.5
 --- !u!61 &1338173050
 BoxCollider2D:
@@ -18588,6 +18782,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 1392355154}
+  startInWorkspace: 0
   slotInstallRadius: 1.5
 --- !u!114 &1437814296
 MonoBehaviour:
@@ -18725,6 +18920,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 80567646}
+  startInWorkspace: 1
   slotInstallRadius: 1.5
 --- !u!114 &1456423467
 MonoBehaviour:
@@ -19266,6 +19462,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 4909219956909887904}
+  startInWorkspace: 0
   slotInstallRadius: 1.5
 --- !u!1 &1484567558
 GameObject:
@@ -19441,6 +19638,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 1598114956}
+  startInWorkspace: 0
   slotInstallRadius: 1.5
 --- !u!114 &1487959381
 MonoBehaviour:
@@ -20671,7 +20869,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BackCable
   cableType: SUPSUPort
   hardwareHolder: {fileID: 1487959379}
-  powerButtonSource: {fileID: 1338173049}
+  powerButtonSource: {fileID: 409216139}
+  secondaryPowerGate: {fileID: 0}
   psuSwitchGate: {fileID: 289643109}
 --- !u!61 &1598114960
 BoxCollider2D:
@@ -21565,6 +21764,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 904372419361912784}
+  startInWorkspace: 0
   slotInstallRadius: 1.5
 --- !u!1 &1702222622
 GameObject:
@@ -24041,6 +24241,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 108009065}
+  startInWorkspace: 0
   slotInstallRadius: 1.5
 --- !u!114 &2043043441
 MonoBehaviour:
@@ -24775,7 +24976,8 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1.5, y: 1.5, z: 1.5}
   m_ConstrainProportionsScale: 1
-  m_Children: []
+  m_Children:
+  - {fileID: 1299985817}
   m_Father: {fileID: 721360363}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &2127048302
@@ -24970,6 +25172,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 472708842}
+  startInWorkspace: 0
   slotInstallRadius: 1.5
 --- !u!114 &2136389003
 MonoBehaviour:
@@ -25122,6 +25325,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 9014568342930170925}
+  startInWorkspace: 0
   slotInstallRadius: 1.5
 --- !u!114 &2139111064
 MonoBehaviour:
@@ -25546,7 +25750,7 @@ Transform:
   m_GameObject: {fileID: 1820356062324776105}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -14.56, y: -7.75, z: 0}
+  m_LocalPosition: {x: 7.89, y: -5.06, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -26999,7 +27203,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -8021997829868995114, guid: 335ca76f60ed46d4c8136369d71256ca, type: 3}
+  m_Sprite: {fileID: -4123530890058936308, guid: 7b202cbd8d404974f9158dccd5ff7d4a, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
