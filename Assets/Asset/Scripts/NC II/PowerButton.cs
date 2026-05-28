@@ -22,6 +22,9 @@ public class PowerButton : MonoBehaviour, IPowerButton
     [Header("References")]
     [SerializeField] private PowerOnConditionChecker conditionChecker;
 
+    [Header("Initial State")]
+    [SerializeField] private bool startOn = false;
+
     [Header("Double-Click Window (seconds)")]
     [SerializeField] private float doubleClickWindow = 0.5f;
 
@@ -45,6 +48,9 @@ public class PowerButton : MonoBehaviour, IPowerButton
         // Auto-find checker on parent root if not wired
         if (conditionChecker == null)
             conditionChecker = GetComponentInParent<PowerOnConditionChecker>();
+
+        if (startOn)
+            _state = PowerState.On;
 
         ApplySprite();
     }

@@ -17,20 +17,31 @@ public class PSUSwitchController : MonoBehaviour
     [Tooltip("The BackPortSlot the PSU cable plugs into — cable must be installed to allow toggling.")]
     [SerializeField] private BackPortSlot psuPort;
 
+    [Header("Power Off Gate")]
+    [Tooltip("AVR power button must be off before the PSU switch can be turned off.")]
+    [SerializeField] private AVRPowerButton avrPowerButton;
+
+    [Header("Initial State")]
+    [SerializeField] private bool startOn = false;
+
     [Header("Double-Click Window (seconds)")]
     [SerializeField] private float doubleClickWindow = 0.5f;
 
     private SpriteRenderer _sr;
     private bool _isOn = false;
+    private bool _initialized = false;
 
     private int _clickCount;
     private float _clickTimer;
 
-    public bool IsOn => _isOn;
+    // Falls back to startOn if Awake hasn't run yet (object was inactive at scene load).
+    public bool IsOn => _initialized ? _isOn : startOn;
 
     private void Awake()
     {
         _sr = GetComponent<SpriteRenderer>();
+        _isOn = startOn;
+        _initialized = true;
     }
 
     private void OnEnable()
@@ -76,6 +87,12 @@ public class PSUSwitchController : MonoBehaviour
         if (psuPort != null && !psuPort.IsInstalled)
         {
             Debug.Log("[PSUSwitchController] Cannot toggle — PSU cable not installed.");
+            return;
+        }
+
+        if (_isOn && avrPowerButton != null && avrPowerButton.IsPoweredOn)
+        {
+            Debug.Log("[PSUSwitchController] Cannot turn off — AVR power button is still on.");
             return;
         }
 

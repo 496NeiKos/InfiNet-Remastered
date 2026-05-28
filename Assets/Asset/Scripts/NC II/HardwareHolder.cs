@@ -7,6 +7,10 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
     [Header("Hardware Reference")]
     public GameObject hardwarePrefab;
 
+    [Header("Spawn in Workspace")]
+    [Tooltip("When true the prefab starts active in the workspace and the holder stays hidden.")]
+    [SerializeField] private bool startInWorkspace = false;
+
     [Header("Slot Install Proximity (world units)")]
     public float slotInstallRadius = 1.5f;
 
@@ -22,13 +26,16 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
             _worldScale = hardwarePrefab.transform.lossyScale;
             _originalLocalScale = hardwarePrefab.transform.localScale;
 
-            bool isBackCable = hardwarePrefab.GetComponent<BackCable>() != null;
-            bool isMBCable = hardwarePrefab.GetComponent<MBCable>() != null;
-            bool isSlotSibling = hardwarePrefab.GetComponent<HeatsinkController>() != null
-                              || hardwarePrefab.GetComponent<CPUController>() != null;
+            if (!startInWorkspace)
+            {
+                bool isBackCable = hardwarePrefab.GetComponent<BackCable>() != null;
+                bool isMBCable = hardwarePrefab.GetComponent<MBCable>() != null;
+                bool isSlotSibling = hardwarePrefab.GetComponent<HeatsinkController>() != null
+                                  || hardwarePrefab.GetComponent<CPUController>() != null;
 
-            if (!isBackCable && !isMBCable && !isSlotSibling)
-                hardwarePrefab.SetActive(false);
+                if (!isBackCable && !isMBCable && !isSlotSibling)
+                    hardwarePrefab.SetActive(false);
+            }
         }
 
         bool prefabInactive = hardwarePrefab == null || !hardwarePrefab.activeSelf;

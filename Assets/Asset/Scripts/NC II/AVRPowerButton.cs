@@ -23,21 +23,32 @@ public class AVRPowerButton : MonoBehaviour, IPowerButton
     [SerializeField] private BackPortSlot aPSUPort;
     [SerializeField] private BackPortSlot aMPort;
 
+    [Header("Power Off Gate")]
+    [Tooltip("SU front power button must be off before AVR can be turned off.")]
+    [SerializeField] private PowerButton suPowerButton;
+
+    [Header("Initial State")]
+    [SerializeField] private bool startOn = false;
+
     [Header("Double-Click Window (seconds)")]
     [SerializeField] private float doubleClickWindow = 0.5f;
 
     private SpriteRenderer _sr;
     private PowerState _state = PowerState.Off;
+    private bool _initialized = false;
 
     private int _clickCount;
     private float _clickTimer;
 
     public PowerState State => _state;
-    public bool IsPoweredOn => _state == PowerState.On;
+    // Falls back to startOn if Awake hasn't run yet (object was inactive at scene load).
+    public bool IsPoweredOn => _initialized ? _state == PowerState.On : startOn;
 
     private void Awake()
     {
         _sr = GetComponent<SpriteRenderer>();
+        _state = startOn ? PowerState.On : PowerState.Off;
+        _initialized = true;
         ApplySprites();
     }
 
@@ -74,7 +85,7 @@ public class AVRPowerButton : MonoBehaviour, IPowerButton
                 _clickCount = 0;
                 _clickTimer = 0f;
                 if (_state == PowerState.On)
-                    SetState(PowerState.Off);
+                    TryTurnOff();
                 else
                     TryTurnOn();
             }
@@ -104,6 +115,17 @@ public class AVRPowerButton : MonoBehaviour, IPowerButton
         }
 
         SetState(PowerState.On);
+    }
+
+    private void TryTurnOff()
+    {
+        if (suPowerButton != null && suPowerButton.IsPoweredOn)
+        {
+            Debug.Log("[AVRPowerButton] Cannot turn off — System Unit power button is still on.");
+            return;
+        }
+
+        SetState(PowerState.Off);
     }
 
     private void SetState(PowerState newState)
