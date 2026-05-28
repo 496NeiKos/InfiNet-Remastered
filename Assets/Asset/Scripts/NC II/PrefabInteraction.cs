@@ -110,8 +110,10 @@ public class PrefabInteraction : MonoBehaviour
 
     private bool IsInWorldRoot()
     {
-        return GameManager.Instance != null
-            && transform.parent == GameManager.Instance.worldRoot;
+        if (GameManager.Instance == null) return false;
+        if (transform.parent == GameManager.Instance.worldRoot) return true;
+        Transform active = GameManager.Instance.ActiveWorldContainer;
+        return active != null && transform.parent == active;
     }
 
     private bool IsMouseOver()

@@ -28,7 +28,7 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
     {
         if (GameManager.Instance == null) return;
 
-        bool inWorldRoot = transform.parent == GameManager.Instance.worldRoot;
+        bool inWorldRoot = transform.parent == GameManager.Instance.ActiveWorldContainer;
 
         if (workspaceProxy != null)
         {
@@ -200,7 +200,7 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
         if (_wasInSlot)
         {
             Vector3 worldScale = transform.lossyScale;
-            transform.SetParent(GameManager.Instance.worldRoot, true);
+            transform.SetParent(GameManager.Instance.ActiveWorldContainer, true);
             ApplyWorldScale(worldScale);
             GetComponent<RAMController>()?.OnRemovedFromSlot();
             GetComponent<GPUController>()?.OnRemovedFromSlot();

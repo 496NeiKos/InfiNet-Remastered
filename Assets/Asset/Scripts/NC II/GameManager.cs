@@ -19,6 +19,16 @@ public class GameManager : MonoBehaviour
 
     public bool IsEditorOpen { get; private set; } = false;
 
+    public Transform ActiveWorldContainer =>
+        TopicManager.Instance != null
+            ? (TopicManager.Instance.GetActiveWorldContainer() ?? worldRoot)
+            : worldRoot;
+
+    public Transform ActiveHardwareStorageContainer =>
+        TopicManager.Instance != null
+            ? (TopicManager.Instance.GetActiveHardwareStorageContainer() ?? hardwareStorage)
+            : hardwareStorage;
+
     private PrefabInteraction _activeInteraction;
     private Transform _prefabOriginalParent;
     private Vector3 _prefabOriginalWorldPos;

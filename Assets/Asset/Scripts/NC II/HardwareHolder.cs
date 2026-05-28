@@ -47,7 +47,7 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
     public void StoreHardware()
     {
         if (hardwarePrefab == null) return;
-        hardwarePrefab.transform.SetParent(GameManager.Instance.hardwareStorage, true);
+        hardwarePrefab.transform.SetParent(GameManager.Instance.ActiveHardwareStorageContainer, true);
         hardwarePrefab.SetActive(false);
         gameObject.SetActive(true);
     }
@@ -107,7 +107,7 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
             new Vector3(eventData.position.x, eventData.position.y, 10f));
         worldPos.z = 0f;
 
-        hardwarePrefab.transform.SetParent(GameManager.Instance.worldRoot, false);
+        hardwarePrefab.transform.SetParent(GameManager.Instance.ActiveWorldContainer, false);
         hardwarePrefab.transform.position = worldPos;
         ApplyWorldScale(hardwarePrefab.transform, _worldScale);
         hardwarePrefab.SetActive(true);
