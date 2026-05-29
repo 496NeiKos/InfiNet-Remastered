@@ -32,6 +32,7 @@ public class HeatsinkController : MonoBehaviour
 
     public Vector3 InstalledLocalScale => _installedLocalScale;
     public Vector3 InstalledLocalPosition => _installedLocalPosition;
+    public bool IsInstalledInSlot => GetComponentInParent<CPUSlotController>()?.IsHeatsinkInstalled ?? false;
 
     // Cable must be disconnected (via HeatsinkCableConnector slide gesture) before drag-out is allowed.
     public bool CanBeRemoved

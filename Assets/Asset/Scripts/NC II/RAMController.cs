@@ -34,6 +34,7 @@ public class RAMController : MonoBehaviour
     {
         if (_state == RAMState.Installed) return;
         _state = RAMState.Installed;
+        GetComponentInParent<MotherboardController>()?.RefreshCableSprite();
         Debug.Log($"[RAMController:{name}] State → Installed");
     }
 
@@ -41,11 +42,21 @@ public class RAMController : MonoBehaviour
     {
         if (_state == RAMState.Uninstalled) return;
         _state = RAMState.Uninstalled;
+        GetComponentInParent<MotherboardController>()?.RefreshCableSprite();
         Debug.Log($"[RAMController:{name}] State → Uninstalled");
     }
 
-    public void OnSnappedToSlot() => ApplySlotSprite(true);
-    public void OnRemovedFromSlot() => ApplySlotSprite(false);
+    public void OnSnappedToSlot()
+    {
+        ApplySlotSprite(true);
+        GetComponentInParent<MotherboardController>()?.RefreshCableSprite();
+    }
+
+    public void OnRemovedFromSlot()
+    {
+        ApplySlotSprite(false);
+        GetComponentInParent<MotherboardController>()?.RefreshCableSprite();
+    }
 
     private void ApplySlotSprite(bool inSlot)
     {

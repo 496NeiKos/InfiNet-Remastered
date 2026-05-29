@@ -5,6 +5,102 @@ public class MotherboardController : MonoBehaviour
     public bool IsUninstalledFromSystemUnit { get; private set; } = false;
     private bool _wasEverInSystemUnit = false;
 
+    [Header("Cable & Component Indicators")]
+    [Tooltip("Drag the source GameObject — the script finds the correct controller automatically. Supports CableSlot, RAM, GPU, SSD, CPU, and Heatsink.")]
+    [SerializeField] private GameObject[] indicatorSources;
+    [SerializeField] private GameObject[] cableIndicators;
+
+    private bool _started;
+
+    private void Start()
+    {
+        _started = true;
+        SyncCollider();
+        RefreshIndicators();
+    }
+
+    private void SyncCollider()
+    {
+        SpriteRenderer sr = GetComponent<SpriteRenderer>();
+        if (sr == null || sr.sprite == null) return;
+
+        BoxCollider2D box = GetComponent<BoxCollider2D>();
+        if (box != null)
+        {
+            box.size   = sr.sprite.bounds.size;
+            box.offset = sr.sprite.bounds.center;
+            return;
+        }
+
+        PolygonCollider2D poly = GetComponent<PolygonCollider2D>();
+        if (poly != null)
+        {
+            int count = sr.sprite.GetPhysicsShapeCount();
+            poly.pathCount = count;
+            var path = new System.Collections.Generic.List<Vector2>();
+            for (int i = 0; i < count; i++)
+            {
+                path.Clear();
+                sr.sprite.GetPhysicsShape(i, path);
+                poly.SetPath(i, path);
+            }
+        }
+    }
+
+    private void OnEnable()
+    {
+        if (_started) RefreshIndicators();
+    }
+
+    public void RefreshCableSprite() => RefreshIndicators();
+
+    private void RefreshIndicators()
+    {
+        for (int i = 0; i < cableIndicators.Length && i < indicatorSources.Length; i++)
+        {
+            if (cableIndicators[i] != null && indicatorSources[i] != null)
+                cableIndicators[i].SetActive(CheckInstalled(indicatorSources[i]));
+        }
+    }
+
+    private static bool CheckInstalled(GameObject go)
+    {
+        // CableSlot: uses its own tracked state (never hierarchy-dependent)
+        CableSlot cs = go.GetComponent<CableSlot>();
+        if (cs != null) return cs.IsInstalled();
+
+        // RAM: uses its own latch state
+        RAMController ram = go.GetComponent<RAMController>();
+        if (ram != null) return ram.IsInstalled;
+
+        // GPU / SSD: in a slot when parented under a SlotContainer
+        if (go.GetComponent<GPUController>() != null)
+            return go.GetComponentInParent<SlotContainer>(true) != null;
+
+        if (go.GetComponent<SSDController>() != null)
+            return go.GetComponentInParent<SlotContainer>(true) != null;
+
+        // CPU / Heatsink: try CPUSlotController first, fall back to SlotContainer
+        if (go.GetComponent<CPUController>() != null)
+        {
+            CPUSlotController cpuSlot = go.GetComponentInParent<CPUSlotController>(true);
+            if (cpuSlot != null) return cpuSlot.IsCPUInstalled;
+            return go.GetComponentInParent<SlotContainer>(true) != null;
+        }
+
+        if (go.GetComponent<HeatsinkController>() != null)
+        {
+            CPUSlotController cpuSlot = go.GetComponentInParent<CPUSlotController>(true);
+            if (cpuSlot != null) return cpuSlot.IsHeatsinkInstalled;
+            return go.GetComponentInParent<SlotContainer>(true) != null;
+        }
+
+        // Fallback for components with no dedicated controller (e.g. CMOS):
+        // consider installed if parented inside any slot
+        return go.GetComponentInParent<SlotContainer>(true) != null
+            || go.GetComponentInParent<CPUSlotController>(true) != null;
+    }
+
     public void MarkInstalledInSystemUnit() => _wasEverInSystemUnit = true;
     public void MarkUninstalled() => IsUninstalledFromSystemUnit = true;
     public void MarkInstalled()

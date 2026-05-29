@@ -26,6 +26,7 @@ public class CPUController : MonoBehaviour
     public PasteState CurrentPasteState => _pasteState;
     public Vector3 InstalledLocalScale => _installedLocalScale;
     public Vector3 InstalledLocalPosition => _installedLocalPosition;
+    public bool IsInstalledInSlot => GetComponentInParent<CPUSlotController>()?.IsCPUInstalled ?? false;
 
     private void Awake()
     {

@@ -10,6 +10,7 @@ public class HDDDetailView : MonoBehaviour
 {
     private void OnEnable()
     {
+        GetComponentInParent<HDDController>()?.SetCableIndicatorForView(true);
         foreach (var sc in GetComponentsInChildren<ScrewController>(true))
         {
             sc.enabled = true;
@@ -30,5 +31,10 @@ public class HDDDetailView : MonoBehaviour
             foreach (Collider2D col in mc.GetComponents<Collider2D>())
                 col.enabled = true;
         }
+    }
+
+    private void OnDisable()
+    {
+        GetComponentInParent<HDDController>()?.SetCableIndicatorForView(false);
     }
 }

@@ -18,6 +18,7 @@ public class GPUController : MonoBehaviour
     private GameObject _cableIndicator;
 
     public bool IsLatched => _isLatched;
+    public bool IsInSlot => _inSlot;
 
     /// <summary>
     /// True when latched AND every CableSlot is installed AND every ScrewController is Screwed.
@@ -39,6 +40,7 @@ public class GPUController : MonoBehaviour
     private void Awake()
     {
         _sr = GetComponent<SpriteRenderer>();
+        _inSlot = GetComponentInParent<SlotContainer>() != null;
 
         foreach (Transform child in transform)
         {
@@ -52,7 +54,6 @@ public class GPUController : MonoBehaviour
 
     private void Start()
     {
-        _inSlot = GetComponentInParent<SlotContainer>() != null;
         RefreshSprite();
     }
 
@@ -76,12 +77,14 @@ public class GPUController : MonoBehaviour
     {
         _inSlot = true;
         RefreshSprite();
+        GetComponentInParent<MotherboardController>()?.RefreshCableSprite();
     }
 
     public void OnRemovedFromSlot()
     {
         _inSlot = false;
         RefreshSprite();
+        GetComponentInParent<MotherboardController>()?.RefreshCableSprite();
     }
 
     public void RefreshCableSprite() => RefreshSprite();

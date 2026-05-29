@@ -115,11 +115,11 @@ public class MotherboardDetailViewManager : MonoBehaviour
 
         SetDetailedView(_activeChildPrefab, false);
 
-        gameObject.SetActive(true);
-
         _activeChildPrefab.transform.SetParent(_childOriginalParent, false);
         _activeChildPrefab.transform.localPosition = _childOriginalLocalPos;
         _activeChildPrefab.transform.localScale = _childOriginalLocalScale;
+
+        gameObject.SetActive(true);
 
         if (GameManager.Instance?.secondLayer != null)
             GameManager.Instance.secondLayer.SetActive(false);

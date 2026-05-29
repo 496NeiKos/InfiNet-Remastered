@@ -39,31 +39,43 @@ public class DetailViewManager : MonoBehaviour
     private void CheckChildRightClick()
     {
         Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
-        RaycastHit2D hit = Physics2D.Raycast(ray.origin, ray.direction);
+        RaycastHit2D[] hits = Physics2D.RaycastAll(ray.origin, ray.direction);
+        if (hits.Length == 0) return;
 
-        if (hit.collider == null) return;
-
-        GameObject clicked = hit.collider.gameObject;
-        SlotContainer parentSlot = clicked.GetComponentInParent<SlotContainer>();
-
-        if (parentSlot == null) return;
+        System.Array.Sort(hits, (a, b) =>
+        {
+            SpriteRenderer srA = a.collider.GetComponent<SpriteRenderer>();
+            SpriteRenderer srB = b.collider.GetComponent<SpriteRenderer>();
+            int orderA = srA != null ? srA.sortingOrder : 0;
+            int orderB = srB != null ? srB.sortingOrder : 0;
+            return orderB.CompareTo(orderA);
+        });
 
         HardwareSlotManager slotManager = GetComponent<HardwareSlotManager>();
         if (slotManager == null) return;
 
-        SlotContainer matchedSlot = slotManager.GetSlotByType(parentSlot.GetSlotType());
-        if (matchedSlot == null || matchedSlot != parentSlot) return;
-
-        if (clicked.GetComponentInParent<PSUController>() != null) return;
-
         SystemUnitConditionChecker checker = GetComponent<SystemUnitConditionChecker>();
-        if (checker != null && !checker.IsHardwareInteractable())
+
+        foreach (RaycastHit2D hit in hits)
         {
-            Debug.Log($"[DetailViewManager] BLOCKED — SU back cables still connected. Unplug VGA and PSU cables first.");
+            GameObject clicked = hit.collider.gameObject;
+            SlotContainer parentSlot = clicked.GetComponentInParent<SlotContainer>();
+            if (parentSlot == null) continue;
+
+            SlotContainer matchedSlot = slotManager.GetSlotByType(parentSlot.GetSlotType());
+            if (matchedSlot == null || matchedSlot != parentSlot) continue;
+
+            if (clicked.GetComponentInParent<PSUController>() != null) return;
+
+            if (checker != null && !checker.IsHardwareInteractable())
+            {
+                Debug.Log("[DetailViewManager] BLOCKED — SU back cables still connected. Unplug VGA and PSU cables first.");
+                return;
+            }
+
+            OpenInnerPanel(clicked);
             return;
         }
-
-        OpenInnerPanel(clicked);
     }
 
     private void OpenInnerPanel(GameObject childPrefab)
