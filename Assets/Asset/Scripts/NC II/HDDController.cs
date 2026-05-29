@@ -14,20 +14,20 @@ public class HDDController : MonoBehaviour
 
     [Header("Removal Gates")]
     [Tooltip("Motherboard Phase 1 cable slot (CableMOBO-HDD) — must be uninstalled before drag-out.")]
-    [SerializeField] private CableSlot hddMoboCableSlot;
+    [SerializeField] private CablePort hddMoboCableSlot;
 
     public bool CanBeRemoved
     {
         get
         {
-            if (hddMoboCableSlot != null && hddMoboCableSlot.IsInstalled()) return false;
+            if (hddMoboCableSlot != null && hddMoboCableSlot.IsInstalled) return false;
             return true;
         }
     }
 
     [Header("Cable Indicators")]
     [Tooltip("Each slot paired by index with its indicator below.")]
-    [SerializeField] private CableSlot[] indicatorSlots;
+    [SerializeField] private CablePort[] indicatorSlots;
     [SerializeField] private GameObject[] cableIndicators;
 
     private SpriteRenderer _sr;
@@ -38,8 +38,8 @@ public class HDDController : MonoBehaviour
     {
         get
         {
-            foreach (var cs in GetComponentsInChildren<CableSlot>(true))
-                if (!cs.IsInstalled()) return false;
+            foreach (var cs in GetComponentsInChildren<CablePort>(true))
+                if (!cs.IsInstalled) return false;
             foreach (var sc in GetComponentsInChildren<ScrewController>(true))
                 if (!sc.IsScrewed()) return false;
             return true;
@@ -120,7 +120,7 @@ public class HDDController : MonoBehaviour
         for (int i = 0; i < cableIndicators.Length && i < indicatorSlots.Length; i++)
         {
             if (cableIndicators[i] != null && indicatorSlots[i] != null)
-                cableIndicators[i].SetActive(canShow && indicatorSlots[i].IsInstalled());
+                cableIndicators[i].SetActive(canShow && indicatorSlots[i].IsInstalled);
         }
     }
 }

@@ -95,8 +95,7 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         // Cables must only install to a port via TryInstallInSlot (editor open).
         // Never place them loose in worldRoot — snap back to hardware area instead.
         bool isCable = hardwarePrefab != null &&
-            (hardwarePrefab.GetComponent<BackCable>() != null ||
-             hardwarePrefab.GetComponent<MBCable>() != null);
+            hardwarePrefab.GetComponent<CableBehavior>() != null;
         if (isCable) return;
 
         bool onWorkspace = RectTransformUtility.RectangleContainsScreenPoint(
@@ -131,90 +130,44 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
             new Vector3(eventData.position.x, eventData.position.y, 10f));
         dropWorldPos.z = 0f;
 
-        // BackCable path
-        BackCable backCable = hardwarePrefab.GetComponent<BackCable>();
-        if (backCable != null)
+        // Unified cable path — works for all CableBehavior cables (formerly BackCable and MBCable)
+        CableBehavior cable = hardwarePrefab.GetComponent<CableBehavior>();
+        if (cable != null)
         {
-            // Only search inside firstLayer — BackPortSlots are only reachable when the
-            // SystemUnit is actively open in the editing panel. Searching globally (even
-            // with activeInHierarchy) still finds ports whose world position lingers at
-            // the workspace location of the closed system unit.
-            GameObject editingPanel = GameManager.Instance?.firstLayer;
-            BackPortSlot[] allPorts = editingPanel != null
-                ? editingPanel.GetComponentsInChildren<BackPortSlot>()
-                : System.Array.Empty<BackPortSlot>();
+            string cableType = cable.GetCableType();
+            CablePort[] allPorts = FindObjectsOfType<CablePort>(true);
 
-            BackPortSlot bestPort = null;
+            CablePort bestPort = null;
             float bestDist = float.MaxValue;
+            var rejectedActive = new System.Collections.Generic.List<string>();
+            var rejectedInstalled = new System.Collections.Generic.List<string>();
+            var rejectedType = new System.Collections.Generic.List<string>();
+            var rejectedDist = new System.Collections.Generic.List<string>();
 
-            foreach (BackPortSlot port in allPorts)
+            foreach (CablePort port in allPorts)
             {
-                if (!port.IsUninstalled) continue;
-                if (!port.CanAcceptCable(backCable.GetCableType())) continue;
-
+                if (!port.gameObject.activeInHierarchy) { rejectedActive.Add(port.name); continue; }
+                if (!port.IsUninstalled) { rejectedInstalled.Add(port.name); continue; }
+                if (!port.CanAcceptCable(cableType)) { rejectedType.Add(port.name); continue; }
                 float dist = Vector3.Distance(port.transform.position, dropWorldPos);
-                if (dist < slotInstallRadius && dist < bestDist)
-                {
-                    bestDist = dist;
-                    bestPort = port;
-                }
+                if (dist >= slotInstallRadius) { rejectedDist.Add($"{port.name}@{dist:F2}"); continue; }
+                if (dist < bestDist) { bestDist = dist; bestPort = port; }
             }
 
             if (bestPort != null)
             {
                 hardwarePrefab.SetActive(true);
-                backCable.InstallToPort(bestPort);
+                cable.InstallToPort(bestPort);
                 gameObject.SetActive(false);
+                Debug.Log($"[HardwareHolder] {prefabName} installed to {bestPort.name} (dist={bestDist:F2}).");
             }
             else
             {
-                Debug.Log($"[HardwareHolder] {prefabName} dropped on wrong/no port.");
-            }
-            return;
-        }
-
-        // MBCable path — reinstalls to matching CableSlot by cableType
-        MBCable mbCable = hardwarePrefab.GetComponent<MBCable>();
-        if (mbCable != null)
-        {
-            // Collect CableSlots only from active editing layers so slots in worldRoot
-            // (hardware not currently being edited) are never candidates.
-            var slotList = new System.Collections.Generic.List<CableSlot>();
-            if (GameManager.Instance?.firstLayer != null)
-                slotList.AddRange(GameManager.Instance.firstLayer.GetComponentsInChildren<CableSlot>());
-            if (GameManager.Instance?.secondLayer != null)
-                slotList.AddRange(GameManager.Instance.secondLayer.GetComponentsInChildren<CableSlot>());
-            if (GameManager.Instance?.thirdLayer != null)
-                slotList.AddRange(GameManager.Instance.thirdLayer.GetComponentsInChildren<CableSlot>());
-
-            CableSlot bestSlot = null;
-            float bestDist = float.MaxValue;
-
-            foreach (CableSlot slot in slotList)
-            {
-                if (!slot.enabled) continue;          // Phase 1 inactive — slot is disabled
-                if (slot.IsInstalled()) continue;
-                if (!slot.CanAcceptCable(mbCable.GetCableType())) continue;
-                if (!slot.IsPrerequisiteMet()) continue; // prerequisite slot (e.g. PSU) not installed
-
-                float dist = Vector3.Distance(slot.transform.position, dropWorldPos);
-                if (dist < slotInstallRadius && dist < bestDist)
-                {
-                    bestDist = dist;
-                    bestSlot = slot;
-                }
-            }
-
-            if (bestSlot != null)
-            {
-                hardwarePrefab.SetActive(true);
-                mbCable.InstallToSlot(bestSlot);
-                gameObject.SetActive(false);
-                Debug.Log($"[HardwareHolder] {prefabName} installed to CableSlot.");
-            }
-            else
-            {
-                Debug.Log($"[HardwareHolder] {prefabName} dropped on wrong/no slot � stays in hardware area.");
+                Debug.Log($"[HardwareHolder] {prefabName} (cableType='{cableType}') failed.\n" +
+                          $"  Inactive: [{string.Join(", ", rejectedActive)}]\n" +
+                          $"  Already installed: [{string.Join(", ", rejectedInstalled)}]\n" +
+                          $"  Wrong type: [{string.Join(", ", rejectedType)}]\n" +
+                          $"  Out of range: [{string.Join(", ", rejectedDist)}]");
             }
             return;
         }
@@ -347,6 +300,7 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         hardwarePrefab.GetComponent<GPUController>()?.OnSnappedToSlot();
         hardwarePrefab.GetComponent<HDDController>()?.OnSnappedToSlot();
         hardwarePrefab.GetComponent<SSDController>()?.OnSnappedToSlot();
+        hardwarePrefab.GetComponent<MotherboardController>()?.OnSnappedToSlot();
 
         gameObject.SetActive(false);
         NCIITaskListManager.CheckConditions();

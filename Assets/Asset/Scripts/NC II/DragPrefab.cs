@@ -206,6 +206,7 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
             GetComponent<GPUController>()?.OnRemovedFromSlot();
             GetComponent<HDDController>()?.OnRemovedFromSlot();
             GetComponent<SSDController>()?.OnRemovedFromSlot();
+            GetComponent<MotherboardController>()?.OnRemovedFromSlot();
         }
 
         GameObject indicatorGO = new GameObject("DragIndicator");
@@ -273,6 +274,7 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
             GetComponent<GPUController>()?.OnSnappedToSlot();
             GetComponent<HDDController>()?.OnSnappedToSlot();
             GetComponent<SSDController>()?.OnSnappedToSlot();
+            GetComponent<MotherboardController>()?.OnSnappedToSlot();
 
             transform.SetParent(_originalParent, false);
             transform.localPosition = _originalLocalPos;
@@ -350,9 +352,9 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
 
         if (cableRoot == null) cableRoot = transform;
 
-        foreach (var c in cableRoot.GetComponentsInChildren<CableSlot>(true))
+        foreach (var c in cableRoot.GetComponentsInChildren<CablePort>(true))
         {
-            if (c.IsInstalled())
+            if (c.IsInstalled)
             {
                 Debug.Log($"[DragPrefab:{name}] Cable blocking: {c.gameObject.name}");
                 return false;
@@ -365,9 +367,9 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
             GPUPhase1CableInteraction gpuPhase1 = phase.GetGPUPhase1CableInteraction();
             if (gpuPhase1 != null)
             {
-                foreach (var cs in gpuPhase1.GetComponentsInChildren<CableSlot>(true))
+                foreach (var cs in gpuPhase1.GetComponentsInChildren<CablePort>(true))
                 {
-                    if (cs.IsInstalled())
+                    if (cs.IsInstalled)
                     {
                         Debug.Log($"[DragPrefab:{name}] GPU cable blocking: {cs.gameObject.name}");
                         return false;

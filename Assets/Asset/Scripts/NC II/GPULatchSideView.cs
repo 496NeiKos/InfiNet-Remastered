@@ -109,8 +109,8 @@ public class GPULatchSideView : MonoBehaviour
     private bool AllCablesDetached()
     {
         if (_gpuController == null) return true;
-        foreach (var cs in _gpuController.GetComponentsInChildren<CableSlot>(true))
-            if (cs.IsInstalled()) return false;
+        foreach (var cs in _gpuController.GetComponentsInChildren<CablePort>(true))
+            if (cs.IsInstalled) return false;
         return true;
     }
 

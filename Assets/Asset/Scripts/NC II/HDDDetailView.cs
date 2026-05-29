@@ -18,17 +18,17 @@ public class HDDDetailView : MonoBehaviour
                 col.enabled = true;
         }
 
-        foreach (var cs in GetComponentsInChildren<CableSlot>(true))
+        foreach (var cp in GetComponentsInChildren<CablePort>(true))
         {
-            cs.enabled = true;
-            foreach (Collider2D col in cs.GetComponents<Collider2D>())
+            cp.enabled = true;
+            foreach (Collider2D col in cp.GetComponents<Collider2D>())
                 col.enabled = true;
         }
 
-        foreach (var mc in GetComponentsInChildren<MBCable>(true))
+        foreach (var cb in GetComponentsInChildren<CableBehavior>(true))
         {
-            mc.enabled = true;
-            foreach (Collider2D col in mc.GetComponents<Collider2D>())
+            cb.enabled = true;
+            foreach (Collider2D col in cb.GetComponents<Collider2D>())
                 col.enabled = true;
         }
     }

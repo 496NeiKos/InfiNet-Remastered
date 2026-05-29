@@ -127,18 +127,18 @@ public class GPUPhase1CableInteraction : MonoBehaviour
     {
         if (_gpuController == null) return;
 
-        foreach (var cs in _gpuController.GetComponentsInChildren<CableSlot>(true))
+        foreach (var cp in _gpuController.GetComponentsInChildren<CablePort>(true))
         {
-            cs.enabled = enable;
-            foreach (Collider2D col in cs.GetComponents<Collider2D>())
+            cp.enabled = enable;
+            foreach (Collider2D col in cp.GetComponents<Collider2D>())
                 col.enabled = enable;
         }
 
-        foreach (var mc in _gpuController.GetComponentsInChildren<MBCable>(true))
+        foreach (var cb in _gpuController.GetComponentsInChildren<CableBehavior>(true))
         {
-            if (!enable && mc.IsDetached) continue;
-            mc.enabled = enable;
-            foreach (Collider2D col in mc.GetComponents<Collider2D>())
+            if (!enable && cb.IsDetached) continue;
+            cb.enabled = enable;
+            foreach (Collider2D col in cb.GetComponents<Collider2D>())
                 col.enabled = enable;
         }
 

@@ -59,6 +59,7 @@ public class DetailViewManager : MonoBehaviour
         foreach (RaycastHit2D hit in hits)
         {
             GameObject clicked = hit.collider.gameObject;
+            if (clicked.GetComponent<CablePort>() != null) continue;
             SlotContainer parentSlot = clicked.GetComponentInParent<SlotContainer>();
             if (parentSlot == null) continue;
 

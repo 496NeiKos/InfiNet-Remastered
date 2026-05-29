@@ -29,8 +29,8 @@ public class GPUController : MonoBehaviour
         get
         {
             if (!_isLatched) return false;
-            foreach (var cs in GetComponentsInChildren<CableSlot>(true))
-                if (!cs.IsInstalled()) return false;
+            foreach (var cs in GetComponentsInChildren<CablePort>(true))
+                if (!cs.IsInstalled) return false;
             foreach (var sc in GetComponentsInChildren<ScrewController>(true))
                 if (!sc.IsScrewed()) return false;
             return true;
@@ -108,8 +108,8 @@ public class GPUController : MonoBehaviour
 
     private bool IsCableConnected()
     {
-        foreach (var cs in GetComponentsInChildren<CableSlot>(true))
-            if (cs.IsInstalled()) return true;
+        foreach (var cs in GetComponentsInChildren<CablePort>(true))
+            if (cs.IsInstalled) return true;
         return false;
     }
 }

@@ -11,11 +11,25 @@ public class MotherboardController : MonoBehaviour
     [SerializeField] private GameObject[] cableIndicators;
 
     private bool _started;
+    private bool _inSlot;
 
     private void Start()
     {
         _started = true;
+        _inSlot = GetComponentInParent<SlotContainer>(true) != null;
         SyncCollider();
+        RefreshIndicators();
+    }
+
+    public void OnSnappedToSlot()
+    {
+        _inSlot = true;
+        RefreshIndicators();
+    }
+
+    public void OnRemovedFromSlot()
+    {
+        _inSlot = false;
         RefreshIndicators();
     }
 
@@ -59,15 +73,15 @@ public class MotherboardController : MonoBehaviour
         for (int i = 0; i < cableIndicators.Length && i < indicatorSources.Length; i++)
         {
             if (cableIndicators[i] != null && indicatorSources[i] != null)
-                cableIndicators[i].SetActive(CheckInstalled(indicatorSources[i]));
+                cableIndicators[i].SetActive(_inSlot && CheckInstalled(indicatorSources[i]));
         }
     }
 
     private static bool CheckInstalled(GameObject go)
     {
-        // CableSlot: uses its own tracked state (never hierarchy-dependent)
-        CableSlot cs = go.GetComponent<CableSlot>();
-        if (cs != null) return cs.IsInstalled();
+        // CablePort: uses its own tracked state (never hierarchy-dependent)
+        CablePort cs = go.GetComponent<CablePort>();
+        if (cs != null) return cs.IsInstalled;
 
         // RAM: uses its own latch state
         RAMController ram = go.GetComponent<RAMController>();
@@ -122,8 +136,8 @@ public class MotherboardController : MonoBehaviour
         foreach (var s in phase1Root.GetComponentsInChildren<ScrewController>(true))
             if (!s.IsUnscrewed()) return false;
 
-        foreach (var c in phase1Root.GetComponentsInChildren<CableSlot>(true))
-            if (c.IsInstalled()) return false;
+        foreach (var c in phase1Root.GetComponentsInChildren<CablePort>(true))
+            if (c.IsInstalled) return false;
 
         // GPU must be fully removed from its slot before the motherboard can be removed
         GPUPhase1CableInteraction gpuPhase1 = phase?.GetGPUPhase1CableInteraction();

@@ -3,8 +3,8 @@ using UnityEngine;
 public class SystemUnitConditionChecker : MonoBehaviour
 {
     [SerializeField] private PowerButton powerButton;
-    [SerializeField] private BackPortSlot vgaPort;
-    [SerializeField] private BackPortSlot psuBackPort;
+    [SerializeField] private CablePort vgaPort;
+    [SerializeField] private CablePort psuBackPort;
 
     public bool IsHardwareInteractable()
     {
