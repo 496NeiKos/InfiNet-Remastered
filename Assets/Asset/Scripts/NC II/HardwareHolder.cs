@@ -160,6 +160,8 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
                 cable.InstallToPort(bestPort);
                 gameObject.SetActive(false);
                 Debug.Log($"[HardwareHolder] {prefabName} installed to {bestPort.name} (dist={bestDist:F2}).");
+                NCIITaskListManager.CheckConditions();
+                T2TaskListManager.CheckConditions();
             }
             else
             {

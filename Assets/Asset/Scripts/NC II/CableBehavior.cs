@@ -200,6 +200,7 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         {
             SendToHolder();
             NCIITaskListManager.CheckConditions();
+            T2TaskListManager.CheckConditions();
             Debug.Log($"[CableBehavior] {cableType} stored.");
             return;
         }
@@ -213,6 +214,7 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         {
             InstallToPort(target);
             NCIITaskListManager.CheckConditions();
+            T2TaskListManager.CheckConditions();
         }
         else
         {

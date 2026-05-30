@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class GameManager : MonoBehaviour
 {
@@ -35,9 +36,24 @@ public class GameManager : MonoBehaviour
 
     private MotherboardDetailViewManager _activeMbdvm;
     private GPUPhase1CableInteraction _activeGpuPhase1Panel;
+    private T2MonitorInteraction _activeInPlaceInteraction;
 
     public void RegisterGPUPhase1Panel(GPUPhase1CableInteraction panel) =>
         _activeGpuPhase1Panel = panel;
+
+    public void OpenEditorInPlace(T2MonitorInteraction interaction)
+    {
+        _activeInPlaceInteraction = interaction;
+        IsEditorOpen = true;
+        interaction.ShowDetail();
+        Debug.Log("[GameManager] In-place editor opened (T2Monitor).");
+    }
+
+    private void Update()
+    {
+        if (IsEditorOpen && Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
+            CloseEditor();
+    }
 
     private void Awake()
     {
@@ -69,6 +85,16 @@ public class GameManager : MonoBehaviour
 
     public void CloseEditor()
     {
+        // In-place editor (T2Monitor) — just hide the Canvas, no reparenting needed
+        if (_activeInPlaceInteraction != null)
+        {
+            _activeInPlaceInteraction.HideDetail();
+            _activeInPlaceInteraction = null;
+            IsEditorOpen = false;
+            Debug.Log("[GameManager] In-place editor closed (T2Monitor).");
+            return;
+        }
+
         if (_activeGpuPhase1Panel != null && _activeGpuPhase1Panel.IsPanelOpen)
         {
             _activeGpuPhase1Panel.ClosePanel();

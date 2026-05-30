@@ -227,6 +227,8 @@ public class NCIITaskListManager : MonoBehaviour
 
     private void EvaluateConditions()
     {
+        if (!gameObject.activeInHierarchy) return;
+
         // Only the visible tab is evaluated. The scene starts fully assembled, so the
         // assembly conditions are all true at startup — gating on the active tab keeps
         // them from auto-completing before the player has actually disassembled anything.
