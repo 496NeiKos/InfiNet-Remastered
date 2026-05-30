@@ -9,45 +9,60 @@
  *
  *    Detail root (Canvas content)
  *      Desktop          — index 0, shown first on open
- *        ├─ [Browser icon button   → calls GoTo(1)]
- *        ├─ [Rufus app button      → calls OpenRufus()  — starts greyed out]
- *        └─ Rufus Set Up           — DIRECT child of Desktop, starts INACTIVE
- *             └─ [Rufus UI, close button → calls CloseRufus()]
+ *        ├─ BrowserApp button   → GoTo(1)
+ *        ├─ RufusApp button     → OpenRufus()   (starts greyed out)
+ *        └─ Rufus Set Up        — DIRECT child of Desktop, starts INACTIVE
+ *             └─ close button   → CloseRufus()
  *      Browser          — index 1
- *        ├─ [Search bar  (InputField)]
- *        └─ [Search button → calls GoTo(2) to go to Rufus download page]
+ *        ├─ Search InputField (TMP)  → On Submit → SubmitSearch()
+ *        ├─ (optional) "No results" object → assign to searchNoResults
+ *        └─ Back button → GoTo(0)
  *      Rufus Download   — index 2
- *        ├─ [Rufus download button → calls DownloadRufus()]
- *        └─ [Back button → calls GoTo(0)]
+ *        ├─ Download link button → DownloadRufus()
+ *        └─ Back button → GoTo(0)
  *
  *    Only Desktop starts active. Deactivate Browser and Rufus Download.
  *    Rufus Set Up also starts inactive.
  *
+ *    NAMING TIP: the BrowserApp button on the Desktop and the Browser
+ *    panel are different objects — give them distinct names (e.g.
+ *    "BrowserIcon" vs "Browser") so wiring isn't mixed up.
+ *
  *    IMPORTANT:
  *      - Rufus Set Up is NOT in the panels array. It is toggled
  *        independently by OpenRufus() / CloseRufus().
- *      - The "Rufus App" button GameObject must be ACTIVE in the scene.
+ *      - The RufusApp button GameObject must be ACTIVE in the scene.
  *        The script greys it out (interactable=false) until Rufus is
  *        downloaded — do NOT leave the GameObject itself inactive, or
  *        it can never be clicked.
  *
  *  STEP 3 — Wire the inspector
  *    T2MonitorNavigator:
- *      panels[0]       → Desktop
- *      panels[1]       → Browser
- *      panels[2]       → Rufus Download
- *      browserPanel    → Browser            (same object as panels[1];
- *                                            used for the "open browser" task)
- *      rufusSetupPanel → Rufus Set Up       (direct child of Desktop)
- *      rufusAppButton  → the Rufus app Button on Desktop
+ *      panels[0]        → Desktop
+ *      panels[1]        → Browser
+ *      panels[2]        → Rufus Download
+ *      browserPanel     → Browser            (same object as panels[1])
+ *      searchField      → Search InputField (TMP) on the Browser panel
+ *      searchKeyword    → "rufus" (default; case-insensitive, trimmed)
+ *      downloadPanelIndex → 2
+ *      searchNoResults  → optional "no results" object (leave empty to skip)
+ *      rufusSetupPanel  → Rufus Set Up       (direct child of Desktop)
+ *      rufusAppButton   → the RufusApp Button on Desktop
  *
- *  STEP 4 — Wire buttons
- *    Browser icon on Desktop      → GoTo(1)
- *    Search button in Browser     → GoTo(2)
- *    Back button on Rufus Download → GoTo(0)
- *    Download button on Download  → DownloadRufus()
- *    Rufus app button on Desktop  → OpenRufus()
+ *  STEP 4 — Wire buttons / events
+ *    BrowserApp button on Desktop   → GoTo(1)
+ *    Search InputField (On Submit)  → SubmitSearch()   ← fires on Enter
+ *    Back button on Browser         → GoTo(0)
+ *    Download button on Download    → DownloadRufus()
+ *    Back button on Rufus Download  → GoTo(0)
+ *    RufusApp button on Desktop     → OpenRufus()
  *    Close/X button in Rufus Set Up → CloseRufus()
+ *
+ *    NOTE on the search: SubmitSearch() reads the InputField directly, so
+ *    it works wired to the InputField's "On Submit (String)" (Enter key)
+ *    OR to a search Button. If you use Enter, the separate search button
+ *    can be deleted. Prefer "On Submit" over "On End Edit" — On End Edit
+ *    also fires when the field loses focus.
  *
  *  STEP 5 — Mark Rufus complete (Task 4 — tentative)
  *    The final confirm/flash button inside Rufus Set Up:
@@ -63,6 +78,8 @@
  * ================================================================
  */
 
+using System;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -74,6 +91,16 @@ public class T2MonitorNavigator : MonoBehaviour
     [Header("Task Tracking")]
     [Tooltip("The Browser panel — opening it completes the 'open browser' task. Usually the same object as panels[1].")]
     [SerializeField] private GameObject browserPanel;
+
+    [Header("Browser Search")]
+    [Tooltip("The TMP InputField on the Browser panel.")]
+    [SerializeField] private TMP_InputField searchField;
+    [Tooltip("Query that must be typed to reach the download page (case-insensitive, trimmed).")]
+    [SerializeField] private string searchKeyword = "rufus";
+    [Tooltip("Index in 'panels' of the Rufus Download page.")]
+    [SerializeField] private int downloadPanelIndex = 2;
+    [Tooltip("Optional object shown when the search query does not match (e.g. a 'No results' label). Leave empty to skip.")]
+    [SerializeField] private GameObject searchNoResults;
 
     [Header("Rufus App")]
     [SerializeField] private GameObject rufusSetupPanel;
@@ -98,6 +125,12 @@ public class T2MonitorNavigator : MonoBehaviour
         if (rufusAppButton != null)
             rufusAppButton.interactable = false;
 
+        if (searchField != null)
+            searchField.text = string.Empty;
+
+        if (searchNoResults != null)
+            searchNoResults.SetActive(false);
+
         GoTo(0);
     }
 
@@ -118,6 +151,27 @@ public class T2MonitorNavigator : MonoBehaviour
         Debug.Log($"[T2MonitorNavigator] Navigated to panel {panelIndex}: {shown.name}");
     }
 
+    // Called by the Search InputField's On Submit (Enter key) — also works
+    // wired to a search Button. Navigates to the download page on a match.
+    public void SubmitSearch()
+    {
+        if (searchField == null) return;
+
+        string query = searchField.text != null ? searchField.text.Trim() : string.Empty;
+        bool match = string.Equals(query, searchKeyword, StringComparison.OrdinalIgnoreCase);
+
+        if (match)
+        {
+            if (searchNoResults != null) searchNoResults.SetActive(false);
+            GoTo(downloadPanelIndex);
+        }
+        else
+        {
+            if (searchNoResults != null) searchNoResults.SetActive(true);
+            Debug.Log($"[T2MonitorNavigator] Search '{query}' did not match '{searchKeyword}'.");
+        }
+    }
+
     // Called by the Download button on the Rufus Download panel.
     public void DownloadRufus()
     {
@@ -134,7 +188,7 @@ public class T2MonitorNavigator : MonoBehaviour
         Debug.Log("[T2MonitorNavigator] Rufus downloaded — app button enabled on Desktop.");
     }
 
-    // Called by the Rufus app button on the Desktop panel.
+    // Called by the RufusApp button on the Desktop panel.
     public void OpenRufus()
     {
         if (!IsRufusDownloaded || rufusSetupPanel == null) return;
