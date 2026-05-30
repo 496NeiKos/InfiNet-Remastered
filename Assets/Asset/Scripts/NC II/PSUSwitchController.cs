@@ -103,6 +103,8 @@ public class PSUSwitchController : MonoBehaviour
         ActivityLogManager.Log($"PSU switch turned {(_isOn ? "ON" : "OFF")}",
             _isOn ? ActivityLogManager.EntryType.Install : ActivityLogManager.EntryType.Remove);
         Debug.Log($"[PSUSwitchController] PSU switch → {(_isOn ? "On" : "Off")}");
+
+        NCIITaskListManager.CheckConditions();
     }
 
     private void ApplySprite()

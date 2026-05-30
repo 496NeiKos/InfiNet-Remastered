@@ -135,6 +135,8 @@ public class AVRPowerButton : MonoBehaviour, IPowerButton
             _state == PowerState.On ? "AVR powered ON" : "AVR powered OFF",
             _state == PowerState.On ? ActivityLogManager.EntryType.Install : ActivityLogManager.EntryType.Remove);
         Debug.Log($"[AVRPowerButton] State → {_state}");
+
+        NCIITaskListManager.CheckConditions();
     }
 
     private void ApplySprites()

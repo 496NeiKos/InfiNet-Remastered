@@ -172,6 +172,8 @@ public class PowerButton : MonoBehaviour, IPowerButton
         }
 
         Debug.Log($"[PowerButton] State → {_state}");
+
+        NCIITaskListManager.CheckConditions();
     }
 
     private void ApplySprite()

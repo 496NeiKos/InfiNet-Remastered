@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class NCIITaskListManager : MonoBehaviour
 {
@@ -15,12 +14,10 @@ public class NCIITaskListManager : MonoBehaviour
     [SerializeField] private Transform disassemblyFinishedParent;
     [SerializeField] private GameObject[] disassemblyTaskObjects;
 
-    [Header("Assembly UI (future)")]
+    [Header("Assembly UI")]
     [SerializeField] private Transform assemblyTaskParent;
     [SerializeField] private Transform assemblyFinishedParent;
-
-    [Header("Toggle Button")]
-    [SerializeField] private Button toggleButton;
+    [SerializeField] private GameObject[] assemblyTaskObjects;
 
     [Header("Condition References")]
     [SerializeField] private CoverController coverController;
@@ -34,6 +31,12 @@ public class NCIITaskListManager : MonoBehaviour
     [SerializeField] private HardwareHolder cmosHolder;
     [SerializeField] private HardwareHolder ssdHolder;
 
+    [Header("Assembly Power Switches")]
+    [SerializeField] private PowerButton suPowerButton;
+    [SerializeField] private AVRPowerButton avrPowerButton;
+    [SerializeField] private MonitorPowerButton monitorPowerButton;
+    [SerializeField] private PSUSwitchController psuSwitch;
+
     private class TaskEntry
     {
         public GameObject taskObject;
@@ -43,7 +46,15 @@ public class NCIITaskListManager : MonoBehaviour
         public Func<bool> condition;
     }
 
-    private List<TaskEntry> _disassemblyTasks;
+    private class TaskPhase
+    {
+        public List<TaskEntry> tasks;
+        public Transform taskParent;
+        public Transform finishedParent;
+    }
+
+    private TaskPhase _disassembly;
+    private TaskPhase _assembly;
     private BackPortSlot[] _allBackPortSlots;
     private bool _showingAssembly = false;
     private const int WindowSize = 3;
@@ -64,61 +75,148 @@ public class NCIITaskListManager : MonoBehaviour
             return;
         }
 
-        _disassemblyTasks = new List<TaskEntry>
-        {
-            new TaskEntry
-            {
-                taskObject = disassemblyTaskObjects[0],
-                originalIndex = 0,
-                condition = () => _allBackPortSlots != null
-                               && _allBackPortSlots.Length > 0
-                               && _allBackPortSlots.All(p => p.IsUninstalled)
-            },
-            new TaskEntry
-            {
-                taskObject = disassemblyTaskObjects[1],
-                originalIndex = 1,
-                condition = () => coverController != null && coverController.IsOpen()
-            },
-            new TaskEntry
-            {
-                taskObject = disassemblyTaskObjects[2],
-                originalIndex = 2,
-                condition = () =>
-                    (motherboardController == null || motherboardController.IsUninstalledFromSystemUnit) &&
-                    (psuHolder == null || psuHolder.IsAvailable()) &&
-                    (hddHolder == null || hddHolder.IsAvailable())
-            },
-            new TaskEntry
-            {
-                taskObject = disassemblyTaskObjects[3],
-                originalIndex = 3,
-                condition = () =>
-                    (cpuHolder == null || cpuHolder.IsAvailable()) &&
-                    (heatsinkHolder == null || heatsinkHolder.IsAvailable()) &&
-                    (ram1Holder == null || ram1Holder.IsAvailable()) &&
-                    (ram2Holder == null || ram2Holder.IsAvailable()) &&
-                    (cmosHolder == null || cmosHolder.IsAvailable()) &&
-                    (ssdHolder == null || ssdHolder.IsAvailable())
-            }
-        };
+        BuildDisassemblyPhase();
+        BuildAssemblyPhase();
 
-        foreach (var task in _disassemblyTasks)
-        {
-            task.taskObject.SetActive(false);
-            task.taskObject.transform.SetParent(disassemblyTaskParent, false);
-            task.taskObject.transform.SetSiblingIndex(task.originalIndex);
-            var tmp = task.taskObject.GetComponent<TextMeshProUGUI>();
-            if (tmp != null) tmp.color = Color.white;
-        }
+        InitPhase(_disassembly);
+        InitPhase(_assembly);
 
         if (assemblyTaskParent != null)
             assemblyTaskParent.gameObject.SetActive(false);
 
-        if (toggleButton != null)
-            toggleButton.onClick.AddListener(OnToggleClicked);
+        RefreshWindow(_disassembly);
+        RefreshWindow(_assembly);
+    }
 
-        RefreshWindow();
+    private void BuildDisassemblyPhase()
+    {
+        _disassembly = new TaskPhase
+        {
+            taskParent = disassemblyTaskParent,
+            finishedParent = disassemblyFinishedParent,
+            tasks = new List<TaskEntry>
+            {
+                // Task 1: Unplug all back-panel cables
+                new TaskEntry
+                {
+                    taskObject = disassemblyTaskObjects[0],
+                    originalIndex = 0,
+                    condition = () => _allBackPortSlots != null
+                                   && _allBackPortSlots.Length > 0
+                                   && _allBackPortSlots.All(p => p.IsUninstalled)
+                },
+                // Task 2: Open the side cover
+                new TaskEntry
+                {
+                    taskObject = disassemblyTaskObjects[1],
+                    originalIndex = 1,
+                    condition = () => coverController != null && coverController.IsOpen()
+                },
+                // Task 3: Remove system unit components (motherboard, PSU, HDD)
+                new TaskEntry
+                {
+                    taskObject = disassemblyTaskObjects[2],
+                    originalIndex = 2,
+                    condition = () =>
+                        (motherboardController == null || motherboardController.IsUninstalledFromSystemUnit) &&
+                        (psuHolder == null || psuHolder.IsAvailable()) &&
+                        (hddHolder == null || hddHolder.IsAvailable())
+                },
+                // Task 4: Remove motherboard components (CPU, heatsink, RAM, CMOS, SSD)
+                new TaskEntry
+                {
+                    taskObject = disassemblyTaskObjects[3],
+                    originalIndex = 3,
+                    condition = () =>
+                        (cpuHolder == null || cpuHolder.IsAvailable()) &&
+                        (heatsinkHolder == null || heatsinkHolder.IsAvailable()) &&
+                        (ram1Holder == null || ram1Holder.IsAvailable()) &&
+                        (ram2Holder == null || ram2Holder.IsAvailable()) &&
+                        (cmosHolder == null || cmosHolder.IsAvailable()) &&
+                        (ssdHolder == null || ssdHolder.IsAvailable())
+                }
+            }
+        };
+    }
+
+    private void BuildAssemblyPhase()
+    {
+        if (assemblyTaskObjects == null || assemblyTaskObjects.Length < 4)
+        {
+            Debug.LogWarning("[NCIITaskListManager] Assign all 4 assembly task objects in the inspector — assembly tab will be empty.");
+            return;
+        }
+
+        _assembly = new TaskPhase
+        {
+            taskParent = assemblyTaskParent,
+            finishedParent = assemblyFinishedParent,
+            tasks = new List<TaskEntry>
+            {
+                // Task 1: Install all motherboard components (CPU, heatsink, RAM, CMOS, SSD).
+                // "Installed" = the storage holder is no longer available (prefab is active in the scene),
+                // which is the exact inverse of the disassembly removal check.
+                new TaskEntry
+                {
+                    taskObject = assemblyTaskObjects[0],
+                    originalIndex = 0,
+                    condition = () =>
+                        (cpuHolder == null || !cpuHolder.IsAvailable()) &&
+                        (heatsinkHolder == null || !heatsinkHolder.IsAvailable()) &&
+                        (ram1Holder == null || !ram1Holder.IsAvailable()) &&
+                        (ram2Holder == null || !ram2Holder.IsAvailable()) &&
+                        (cmosHolder == null || !cmosHolder.IsAvailable()) &&
+                        (ssdHolder == null || !ssdHolder.IsAvailable())
+                },
+                // Task 2: Install system unit components (motherboard back in the case, PSU, HDD).
+                new TaskEntry
+                {
+                    taskObject = assemblyTaskObjects[1],
+                    originalIndex = 1,
+                    condition = () =>
+                        (motherboardController == null || !motherboardController.IsUninstalledFromSystemUnit) &&
+                        (psuHolder == null || !psuHolder.IsAvailable()) &&
+                        (hddHolder == null || !hddHolder.IsAvailable())
+                },
+                // Task 3: Plug all the cables (every back-panel port reports installed).
+                new TaskEntry
+                {
+                    taskObject = assemblyTaskObjects[2],
+                    originalIndex = 2,
+                    condition = () => _allBackPortSlots != null
+                                   && _allBackPortSlots.Length > 0
+                                   && _allBackPortSlots.All(p => p.IsInstalled)
+                },
+                // Task 4: Turn on all power button switches (PSU switch, AVR, monitor, system unit).
+                new TaskEntry
+                {
+                    taskObject = assemblyTaskObjects[3],
+                    originalIndex = 3,
+                    condition = () => AnyPowerSwitchAssigned() &&
+                        (suPowerButton == null || suPowerButton.IsPoweredOn) &&
+                        (avrPowerButton == null || avrPowerButton.IsPoweredOn) &&
+                        (monitorPowerButton == null || monitorPowerButton.IsPoweredOn) &&
+                        (psuSwitch == null || psuSwitch.IsOn)
+                }
+            }
+        };
+    }
+
+    private bool AnyPowerSwitchAssigned() =>
+        suPowerButton != null || avrPowerButton != null || monitorPowerButton != null || psuSwitch != null;
+
+    private void InitPhase(TaskPhase phase)
+    {
+        if (phase == null || phase.tasks == null) return;
+
+        foreach (var task in phase.tasks)
+        {
+            task.taskObject.SetActive(false);
+            task.taskObject.transform.SetParent(phase.taskParent, false);
+            task.taskObject.transform.SetSiblingIndex(task.originalIndex);
+            var tmp = task.taskObject.GetComponent<TextMeshProUGUI>();
+            if (tmp != null) tmp.color = Color.white;
+        }
     }
 
     public static void CheckConditions()
@@ -129,9 +227,17 @@ public class NCIITaskListManager : MonoBehaviour
 
     private void EvaluateConditions()
     {
-        if (_disassemblyTasks == null) return;
+        // Only the visible tab is evaluated. The scene starts fully assembled, so the
+        // assembly conditions are all true at startup — gating on the active tab keeps
+        // them from auto-completing before the player has actually disassembled anything.
+        EvaluatePhase(_showingAssembly ? _assembly : _disassembly);
+    }
 
-        foreach (var task in _disassemblyTasks)
+    private void EvaluatePhase(TaskPhase phase)
+    {
+        if (phase == null || phase.tasks == null) return;
+
+        foreach (var task in phase.tasks)
         {
             if (task.isFlashing) continue;
 
@@ -140,32 +246,36 @@ public class NCIITaskListManager : MonoBehaviour
             if (!task.isCompleted && met)
             {
                 task.isCompleted = true;
-                StartCoroutine(FlashAndComplete(task));
+                StartCoroutine(FlashAndComplete(phase, task));
             }
             else if (task.isCompleted && !met)
             {
                 task.isCompleted = false;
-                task.taskObject.transform.SetParent(disassemblyTaskParent, false);
+                task.taskObject.transform.SetParent(phase.taskParent, false);
                 task.taskObject.transform.SetSiblingIndex(task.originalIndex);
                 task.taskObject.SetActive(false);
-                RefreshWindow();
+                RefreshWindow(phase);
                 if (task.taskObject.activeSelf)
                     StartCoroutine(FlashRevert(task));
             }
         }
     }
 
-    private IEnumerator FlashAndComplete(TaskEntry task)
+    private IEnumerator FlashAndComplete(TaskPhase phase, TaskEntry task)
     {
         task.isFlashing = true;
         var tmp = task.taskObject.GetComponent<TextMeshProUGUI>();
         if (tmp != null) tmp.color = Color.green;
         yield return new WaitForSeconds(0.6f);
         task.isFlashing = false;
-        task.taskObject.transform.SetParent(disassemblyFinishedParent, false);
+        task.taskObject.transform.SetParent(phase.finishedParent, false);
         task.taskObject.SetActive(false);
-        RefreshWindow();
-        EvaluateConditions();
+        RefreshWindow(phase);
+
+        if (phase == _disassembly && IsDisassemblyComplete())
+            SwitchToAssembly();
+        else
+            EvaluatePhase(phase);
     }
 
     private IEnumerator FlashRevert(TaskEntry task)
@@ -179,11 +289,11 @@ public class NCIITaskListManager : MonoBehaviour
         EvaluateConditions();
     }
 
-    private void RefreshWindow()
+    private void RefreshWindow(TaskPhase phase)
     {
-        if (_disassemblyTasks == null) return;
+        if (phase == null || phase.tasks == null) return;
 
-        var incomplete = _disassemblyTasks
+        var incomplete = phase.tasks
             .Where(t => !t.isCompleted)
             .OrderBy(t => t.originalIndex)
             .ToList();
@@ -193,21 +303,20 @@ public class NCIITaskListManager : MonoBehaviour
     }
 
     private bool IsDisassemblyComplete() =>
-        _disassemblyTasks != null && _disassemblyTasks.All(t => t.isCompleted);
+        _disassembly != null && _disassembly.tasks.All(t => t.isCompleted);
 
-    private void OnToggleClicked()
+    private void SwitchToAssembly()
     {
-        if (!IsDisassemblyComplete())
-        {
-            Debug.Log("[NCIITaskListManager] Assembly locked — complete disassembly first.");
-            return;
-        }
-
-        _showingAssembly = !_showingAssembly;
+        _showingAssembly = true;
 
         if (disassemblyTaskParent != null)
-            disassemblyTaskParent.gameObject.SetActive(!_showingAssembly);
+            disassemblyTaskParent.gameObject.SetActive(false);
         if (assemblyTaskParent != null)
-            assemblyTaskParent.gameObject.SetActive(_showingAssembly);
+            assemblyTaskParent.gameObject.SetActive(true);
+
+        RefreshWindow(_assembly);
+        EvaluatePhase(_assembly);
+
+        Debug.Log("[NCIITaskListManager] Disassembly complete — switching to assembly phase.");
     }
 }

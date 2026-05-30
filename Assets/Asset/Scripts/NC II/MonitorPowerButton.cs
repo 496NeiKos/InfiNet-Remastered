@@ -131,6 +131,8 @@ public class MonitorPowerButton : MonoBehaviour, IPowerButton
             _state == PowerState.On ? "Monitor powered ON" : "Monitor powered OFF",
             _state == PowerState.On ? ActivityLogManager.EntryType.Install : ActivityLogManager.EntryType.Remove);
         Debug.Log($"[MonitorPowerButton] State → {_state}");
+
+        NCIITaskListManager.CheckConditions();
     }
 
     private void ApplySprites()
