@@ -44,6 +44,20 @@ public class HeatsinkController : MonoBehaviour
         }
     }
 
+    // True when in slot, fan cable is connected (slid up), and all screws are tightened.
+    public bool IsFullyInstalled
+    {
+        get
+        {
+            if (!IsInstalledInSlot) return false;
+            HeatsinkCableConnector connector = GetComponentInChildren<HeatsinkCableConnector>(true);
+            if (connector != null && !connector.IsConnected) return false;
+            foreach (var sc in GetComponentsInChildren<ScrewController>(true))
+                if (!sc.IsScrewed()) return false;
+            return true;
+        }
+    }
+
     // Called by DragPrefab.OnEndDrag � slot ref passed directly since Heatsink
     // may have already moved away from CPUSlot hierarchy by this point
     public void OnRemovedFromSlot(CPUSlotController slot)

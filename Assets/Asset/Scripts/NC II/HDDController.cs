@@ -4,7 +4,7 @@ using UnityEngine;
 /// On the HDD root object in the system unit side view.
 /// Tracks installation state and swaps sprites when snapped to/removed from a slot.
 /// IsFullyInstalled is computed from all CableSlots and ScrewControllers in children.
-/// CanBeRemoved gates drag-out: HDD's own cable and the mobo HDD cable must be uninstalled.
+/// CanBeRemoved gates drag-out: both HDD-side cables (hdd-mobo and hdd-psu) must be uninstalled.
 /// </summary>
 public class HDDController : MonoBehaviour
 {
@@ -13,14 +13,17 @@ public class HDDController : MonoBehaviour
     [SerializeField] private Sprite snappedSprite;
 
     [Header("Removal Gates")]
-    [Tooltip("Motherboard Phase 1 cable slot (CableMOBO-HDD) — must be uninstalled before drag-out.")]
-    [SerializeField] private CablePort hddMoboCableSlot;
+    [Tooltip("HDD-side data cable port (cable hdd-mobo) — direct child of HDD. Must be uninstalled before drag-out.")]
+    [SerializeField] private CablePort cableHddMobo;
+    [Tooltip("HDD-side power cable port (cable hdd-psu) — direct child of HDD. Must be uninstalled before drag-out.")]
+    [SerializeField] private CablePort cableHddPsu;
 
     public bool CanBeRemoved
     {
         get
         {
-            if (hddMoboCableSlot != null && hddMoboCableSlot.IsInstalled) return false;
+            if (cableHddMobo != null && cableHddMobo.IsInstalled) return false;
+            if (cableHddPsu  != null && cableHddPsu.IsInstalled)  return false;
             return true;
         }
     }

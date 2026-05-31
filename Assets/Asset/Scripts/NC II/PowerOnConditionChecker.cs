@@ -31,11 +31,12 @@ public class PowerOnConditionChecker : MonoBehaviour
 
     [Header("SystemUnit Side Hardware Slots")]
     [SerializeField] private Transform motherboardSlot;
-    [SerializeField] private Transform hddSlot;
     [SerializeField] private Transform psuSlot;
 
     [Header("Motherboard Component Slots")]
     [SerializeField] private CPUSlotController cpuSlotController;
+    [SerializeField] private CPUController cpuController;
+    [SerializeField] private HeatsinkController heatsinkController;
     [SerializeField] private Transform gpuSlot;
     [SerializeField] private Transform ssdSlot;
     [SerializeField] private Transform cmosSlot;
@@ -43,7 +44,6 @@ public class PowerOnConditionChecker : MonoBehaviour
     [SerializeField] private Transform ramSlot2;
 
     [Header("Motherboard Cables")]
-    [SerializeField] private CablePort cableSlot1;
     [SerializeField] private CablePort cableSlot2;
     [SerializeField] private CablePort cableSlot3;
 
@@ -75,23 +75,36 @@ public class PowerOnConditionChecker : MonoBehaviour
         if (!IsPortInstalled(aMCableSlot)) { Warn("Cannot power on — plug in the monitor cable to the AVR."); pass = false; }
 
         if (!HasChild(motherboardSlot)) { Warn("Cannot power on — install the motherboard first."); pass = false; }
-        if (!HasChild(hddSlot))         { Warn("Cannot power on — install the HDD first."); pass = false; }
         if (!HasChild(psuSlot))         { Warn("Cannot power on — install the PSU first."); pass = false; }
 
+        // CPU: must be seated in slot
         if (cpuSlotController == null || !cpuSlotController.HasCPU())
         { Warn("Cannot power on — install the CPU first."); pass = false; }
 
-        if (cpuSlotController == null || !cpuSlotController.IsHeatsinkInstalled)
-        { Warn("Cannot power on — install the heatsink first."); pass = false; }
+        // CPU: thermal paste must be applied before mounting the heatsink
+        if (cpuController == null || cpuController.CurrentPasteState != CPUController.PasteState.PasteApplied)
+        { Warn("Cannot power on — apply thermal paste to the CPU first."); pass = false; }
 
-        if (!HasChild(gpuSlot))  { Warn("Cannot power on — install the GPU first."); pass = false; }
+        // CPU: lock lever must be in the closed (locked) position
+        if (cpuSlotController == null || !cpuSlotController.IsLockClosed)
+        { Warn("Cannot power on — close the CPU lock lever first."); pass = false; }
+
+        // Heatsink: must be in slot, fan cable connected (slid up), and all screws tightened
+        if (heatsinkController == null || !heatsinkController.IsFullyInstalled)
+        { Warn("Cannot power on — fully install the heatsink (connect the fan cable and tighten the screws)."); pass = false; }
+
+        // GPU: must be latched, cables connected, and all screws tightened
+        GPUController gpu = gpuSlot != null ? gpuSlot.GetComponentInChildren<GPUController>() : null;
+        if (gpu == null || !gpu.IsFullyInstalled)
+        { Warn("Cannot power on — fully install the GPU (latch, cables, and screws)."); pass = false; }
+
         if (!HasChild(ssdSlot))  { Warn("Cannot power on — install the SSD first."); pass = false; }
         if (!HasChild(cmosSlot)) { Warn("Cannot power on — install the CMOS battery first."); pass = false; }
 
-        if (!HasChild(ramSlot1) && !HasChild(ramSlot2))
-        { Warn("Cannot power on — install at least one RAM stick first."); pass = false; }
+        // RAM: at least one stick must be snapped to its slot AND latches engaged (slid down)
+        if (!IsRAMProperlyInstalled(ramSlot1) && !IsRAMProperlyInstalled(ramSlot2))
+        { Warn("Cannot power on — install and lock at least one RAM stick first."); pass = false; }
 
-        if (!IsPortInstalled(cableSlot1)) { Warn("Cannot power on — connect motherboard cable 1 first."); pass = false; }
         if (!IsPortInstalled(cableSlot2)) { Warn("Cannot power on — connect motherboard cable 2 first."); pass = false; }
         if (!IsPortInstalled(cableSlot3)) { Warn("Cannot power on — connect motherboard cable 3 first."); pass = false; }
 
@@ -105,7 +118,15 @@ public class PowerOnConditionChecker : MonoBehaviour
         Debug.Log($"[PowerOn] {message}");
     }
 
-    private bool HasChild(Transform slot)      => slot != null && slot.childCount > 0;
-    private bool IsScrewed(ScrewController s)  => s != null && s.IsScrewed();
-    private bool IsPortInstalled(CablePort p)  => p != null && p.IsInstalled;
+    private bool HasChild(Transform slot)     => slot != null && slot.childCount > 0;
+    private bool IsScrewed(ScrewController s) => s != null && s.IsScrewed();
+    private bool IsPortInstalled(CablePort p) => p != null && p.IsInstalled;
+
+    // Checks that a RAM stick is physically in the slot AND its latches are engaged (IsInstalled).
+    private bool IsRAMProperlyInstalled(Transform slot)
+    {
+        if (slot == null || slot.childCount == 0) return false;
+        RAMController ram = slot.GetComponentInChildren<RAMController>();
+        return ram != null && ram.IsInstalled;
+    }
 }
