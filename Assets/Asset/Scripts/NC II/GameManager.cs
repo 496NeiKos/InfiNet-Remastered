@@ -36,17 +36,17 @@ public class GameManager : MonoBehaviour
 
     private MotherboardDetailViewManager _activeMbdvm;
     private GPUPhase1CableInteraction _activeGpuPhase1Panel;
-    private T2MonitorInteraction _activeInPlaceInteraction;
+    private IInPlaceInteraction _activeInPlaceInteraction;
 
     public void RegisterGPUPhase1Panel(GPUPhase1CableInteraction panel) =>
         _activeGpuPhase1Panel = panel;
 
-    public void OpenEditorInPlace(T2MonitorInteraction interaction)
+    public void OpenEditorInPlace(IInPlaceInteraction interaction)
     {
         _activeInPlaceInteraction = interaction;
         IsEditorOpen = true;
         interaction.ShowDetail();
-        Debug.Log("[GameManager] In-place editor opened (T2Monitor).");
+        Debug.Log("[GameManager] In-place editor opened.");
     }
 
     private void Update()
@@ -85,13 +85,13 @@ public class GameManager : MonoBehaviour
 
     public void CloseEditor()
     {
-        // In-place editor (T2Monitor) — just hide the Canvas, no reparenting needed
+        // In-place editor (T2Monitor / UEFI) — just hide the Canvas, no reparenting needed
         if (_activeInPlaceInteraction != null)
         {
             _activeInPlaceInteraction.HideDetail();
             _activeInPlaceInteraction = null;
             IsEditorOpen = false;
-            Debug.Log("[GameManager] In-place editor closed (T2Monitor).");
+            Debug.Log("[GameManager] In-place editor closed.");
             return;
         }
 

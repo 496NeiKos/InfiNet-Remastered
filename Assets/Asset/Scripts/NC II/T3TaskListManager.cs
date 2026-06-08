@@ -1,46 +1,44 @@
 /*
  * ================================================================
- *  UNITY SETUP GUIDE — T2TaskListManager
+ *  UNITY SETUP GUIDE — T3TaskListManager
  * ================================================================
  *  STEP 1 — Create the manager GameObject
- *    - Create a GameObject "T2TaskListManager" inside Topic 2's
+ *    - Create a GameObject "T3TaskListManager" inside Topic 3's
  *      taskListContainer (the container assigned in TopicManager).
- *    - Add component: T2TaskListManager.
+ *    - Add component: T3TaskListManager.
  *
- *  STEP 2 — Create task text GameObjects (5 tasks)
- *    - Create 5 child TextMeshPro GameObjects for the task labels.
+ *  STEP 2 — Create task text GameObjects (4 tasks)
+ *    - Create 4 child TextMeshPro GameObjects for the task labels.
  *      Suggested text:
- *        Task 0: "Open the web browser"
- *        Task 1: "Download Rufus"
- *        Task 2: "Open Rufus"
- *        Task 3: "Download the Windows 10 ISO"
- *        Task 4: "Finish the Rufus setup"
+ *        Task 0: "Open the UEFI setup"
+ *        Task 1: "Navigate to the Boot tab"
+ *        Task 2: "Configure the boot order"
+ *        Task 3: "Save and exit UEFI"
  *    - Place them under a layout parent (taskParent) with a
  *      Vertical Layout Group so completed tasks slide up.
  *    - Create a separate off-screen parent (finishedParent) where
  *      completed tasks are parked.
  *
  *  STEP 3 — Wire the inspector
- *    T2TaskListManager:
- *      taskParent       → the layout parent holding active tasks
- *      finishedParent   → the off-screen parent for completed tasks
- *      taskObjects[0]   → "Open browser" TMP text GameObject
- *      taskObjects[1]   → "Download Rufus" TMP text GameObject
- *      taskObjects[2]   → "Open Rufus" TMP text GameObject
- *      taskObjects[3]   → "Download ISO" TMP text GameObject
- *      taskObjects[4]   → "Finish Rufus setup" TMP text GameObject
- *      usbPort          → CablePort on the USB port (reserved, not used by any active condition)
- *      monitorNavigator → T2MonitorNavigator on the T2 Monitor GameObject
+ *    T3TaskListManager:
+ *      taskParent      → the layout parent holding active tasks
+ *      finishedParent  → the off-screen parent for completed tasks
+ *      taskObjects[0]  → "Open the UEFI setup" TMP text GameObject
+ *      taskObjects[1]  → "Navigate to the Boot tab" TMP text GameObject
+ *      taskObjects[2]  → "Configure the boot order" TMP text GameObject
+ *      taskObjects[3]  → "Save and exit UEFI" TMP text GameObject
+ *      uefiNavigator   → UEFINavigator on the UEFI Monitor GameObject
  *
  *  TASK CONDITIONS
- *    Task 0 — open browser    : navigator.BrowserOpened
- *    Task 1 — download rufus  : navigator.IsRufusDownloaded
- *    Task 2 — open rufus      : navigator.RufusOpened
- *    Task 3 — download ISO    : navigator.IsIsoDownloaded
- *    Task 4 — finish setup    : navigator.IsRufusComplete
+ *    Task 0 — open UEFI        : navigator.UEFIOpened
+ *    Task 1 — boot tab visited : navigator.BootTabVisited
+ *    Task 2 — configure boot   : navigator.BootOrderConfigured
+ *                                (wire SetBootOrderConfigured() when content is built)
+ *    Task 3 — save and exit    : navigator.SavedAndExited
+ *                                (wire SaveAndExit() to the Exit panel button)
  *
- *  When all 5 tasks complete, TopicManager.MarkTopicComplete(1) is called
- *  automatically — this unlocks Topic 3 (UEFI Configuration).
+ *  When all 4 tasks complete, TopicManager.MarkTopicComplete(2) fires
+ *  automatically — marking Topic 3 (UEFI Configuration) as finished.
  * ================================================================
  */
 
@@ -51,9 +49,9 @@ using System.Linq;
 using TMPro;
 using UnityEngine;
 
-public class T2TaskListManager : MonoBehaviour
+public class T3TaskListManager : MonoBehaviour
 {
-    public static T2TaskListManager Instance { get; private set; }
+    public static T3TaskListManager Instance { get; private set; }
 
     [Header("Task UI")]
     [SerializeField] private Transform taskParent;
@@ -61,8 +59,7 @@ public class T2TaskListManager : MonoBehaviour
     [SerializeField] private GameObject[] taskObjects;
 
     [Header("Condition References")]
-    [SerializeField] private CablePort usbPort;
-    [SerializeField] private T2MonitorNavigator monitorNavigator;
+    [SerializeField] private UEFINavigator uefiNavigator;
 
     private class TaskEntry
     {
@@ -84,48 +81,43 @@ public class T2TaskListManager : MonoBehaviour
 
     private void Start()
     {
-        if (taskObjects == null || taskObjects.Length < 5)
+        if (taskObjects == null || taskObjects.Length < 4)
         {
-            Debug.LogError("[T2TaskListManager] Assign all 5 task objects in the inspector.");
+            Debug.LogError("[T3TaskListManager] Assign all 4 task objects in the inspector.");
             return;
         }
 
         _tasks = new List<TaskEntry>
         {
-            // Task 1 — open the web browser
+            // Task 1 — open the UEFI setup
             new TaskEntry
             {
-                taskObject = taskObjects[0],
+                taskObject    = taskObjects[0],
                 originalIndex = 0,
-                condition = () => monitorNavigator != null && monitorNavigator.BrowserOpened
+                condition     = () => uefiNavigator != null && uefiNavigator.UEFIOpened
             },
-            // Task 2 — download Rufus (Rufus app becomes enabled on the desktop)
+            // Task 2 — navigate to the Boot tab
             new TaskEntry
             {
-                taskObject = taskObjects[1],
+                taskObject    = taskObjects[1],
                 originalIndex = 1,
-                condition = () => monitorNavigator != null && monitorNavigator.IsRufusDownloaded
+                condition     = () => uefiNavigator != null && uefiNavigator.BootTabVisited
             },
-            // Task 3 — open Rufus
+            // Task 3 — configure the boot order
+            // Wire UEFINavigator.SetBootOrderConfigured() to a button in Panel_Boot.
             new TaskEntry
             {
-                taskObject = taskObjects[2],
+                taskObject    = taskObjects[2],
                 originalIndex = 2,
-                condition = () => monitorNavigator != null && monitorNavigator.RufusOpened
+                condition     = () => uefiNavigator != null && uefiNavigator.BootOrderConfigured
             },
-            // Task 4 — download the Windows 10 ISO
+            // Task 4 — save and exit UEFI
+            // Wire UEFINavigator.SaveAndExit() to the Save & Exit button in Panel_Exit.
             new TaskEntry
             {
-                taskObject = taskObjects[3],
+                taskObject    = taskObjects[3],
                 originalIndex = 3,
-                condition = () => monitorNavigator != null && monitorNavigator.IsIsoDownloaded
-            },
-            // Task 5 — finish the Rufus setup (formatting completes successfully)
-            new TaskEntry
-            {
-                taskObject = taskObjects[4],
-                originalIndex = 4,
-                condition = () => monitorNavigator != null && monitorNavigator.IsRufusComplete
+                condition     = () => uefiNavigator != null && uefiNavigator.SavedAndExited
             }
         };
 
@@ -189,8 +181,8 @@ public class T2TaskListManager : MonoBehaviour
 
         if (_tasks.All(t => t.isCompleted))
         {
-            TopicManager.Instance?.MarkTopicComplete(1);
-            Debug.Log("[T2TaskListManager] All tasks complete — Topic 2 marked complete.");
+            TopicManager.Instance?.MarkTopicComplete(2);
+            Debug.Log("[T3TaskListManager] All tasks complete — Topic 3 marked complete.");
             yield break;
         }
 

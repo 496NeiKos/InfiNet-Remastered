@@ -24,7 +24,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class T2MonitorInteraction : MonoBehaviour
+public class T2MonitorInteraction : MonoBehaviour, IInPlaceInteraction
 {
     [SerializeField] private T2MonitorController monitorController;
 

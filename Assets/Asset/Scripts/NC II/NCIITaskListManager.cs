@@ -276,6 +276,11 @@ public class NCIITaskListManager : MonoBehaviour
 
         if (phase == _disassembly && IsDisassemblyComplete())
             SwitchToAssembly();
+        else if (phase == _assembly && IsAssemblyComplete())
+        {
+            TopicManager.Instance?.MarkTopicComplete(0);
+            Debug.Log("[NCIITaskListManager] Assembly complete — Topic 1 marked complete.");
+        }
         else
             EvaluatePhase(phase);
     }
@@ -306,6 +311,9 @@ public class NCIITaskListManager : MonoBehaviour
 
     private bool IsDisassemblyComplete() =>
         _disassembly != null && _disassembly.tasks.All(t => t.isCompleted);
+
+    private bool IsAssemblyComplete() =>
+        _assembly != null && _assembly.tasks.All(t => t.isCompleted);
 
     private void SwitchToAssembly()
     {

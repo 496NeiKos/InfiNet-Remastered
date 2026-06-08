@@ -30,8 +30,12 @@
  *
  *      IsoFilePicker (Panel, inactive)
  *        ├─ Title Text  — "Select ISO File"
- *        ├─ IsoButton_Win10 (Button)
+ *        ├─ IsoButton_Win10_File (Button)  ← assign to isoButtonWin10File
  *        │     OnClick → SelectIso("Win10_22H2_English_x64.iso")
+ *        │     Starts non-interactable; enabled after ISO is downloaded.
+ *        ├─ IsoButton_Win10_Save (Button)  ← assign to isoButtonWin10Save
+ *        │     OnClick → SelectIso("Win10_22H2_English_x64.iso")
+ *        │     Starts non-interactable; enabled after ISO is downloaded.
  *        └─ CancelButton (Button)
  *              OnClick → CloseFilePicker()
  *
@@ -55,6 +59,8 @@
  *
  *    File Picker:
  *      filePickerPanel         → IsoFilePicker panel (starts inactive)
+ *      isoButtonWin10File      → IsoButton_Win10_File  (disabled until ISO downloaded)
+ *      isoButtonWin10Save      → IsoButton_Win10_Save  (disabled until ISO downloaded)
  *
  *    Status:
  *      statusText              → Text (Legacy) child of the "Ready" object
@@ -120,6 +126,10 @@ public class RufusSetupManager : MonoBehaviour
     [Header("ISO File Picker")]
     [Tooltip("Popup panel listing ISO files. Starts inactive.")]
     [SerializeField] private GameObject filePickerPanel;
+    [Tooltip("The file-row button for Win10 ISO inside the picker. Disabled until ISO is downloaded.")]
+    [SerializeField] private Button isoButtonWin10File;
+    [Tooltip("The save/confirm button for Win10 ISO inside the picker. Disabled until ISO is downloaded.")]
+    [SerializeField] private Button isoButtonWin10Save;
 
     [Header("Status Bar")]
     [Tooltip("Text (Legacy) component inside the 'Ready' object's child — used as the status bar.")]
@@ -142,6 +152,7 @@ public class RufusSetupManager : MonoBehaviour
         PopulateDropdowns();
         SetFormatOptionsInteractable(false);
         RefreshDeviceDropdown();
+        RefreshIsoButtons();
 
         if (volumeLabelText != null)
             volumeLabelText.text = string.Empty;
@@ -152,10 +163,11 @@ public class RufusSetupManager : MonoBehaviour
         SetStatus("Ready");
     }
 
-    // Refreshes the Device dropdown on every panel open to reflect actual USB state.
+    // Refreshes dropdowns and ISO button state on every panel open.
     private void OnEnable()
     {
         RefreshDeviceDropdown();
+        RefreshIsoButtons();
     }
 
     private void RefreshDeviceDropdown()
@@ -302,9 +314,29 @@ public class RufusSetupManager : MonoBehaviour
     //  ISO file picker
     // ----------------------------------------------------------------
 
+    // Enables or disables the Win10 ISO buttons based on whether the ISO
+    // has been downloaded via DownloadISO() in T2MonitorNavigator.
+    private void RefreshIsoButtons()
+    {
+        bool isoReady = navigator != null && navigator.IsIsoDownloaded;
+        SetIsoButtonState(isoButtonWin10File, isoReady);
+        SetIsoButtonState(isoButtonWin10Save, isoReady);
+    }
+
+    private static void SetIsoButtonState(Button btn, bool enabled)
+    {
+        if (btn == null) return;
+        btn.interactable = enabled;
+        CanvasGroup cg = btn.GetComponent<CanvasGroup>();
+        if (cg == null) cg = btn.gameObject.AddComponent<CanvasGroup>();
+        cg.alpha = enabled ? 1f : 0f;
+        cg.blocksRaycasts = enabled;
+    }
+
     // Wired to the Select button's OnClick.
     public void OpenFilePicker()
     {
+        RefreshIsoButtons();
         if (filePickerPanel != null)
             filePickerPanel.SetActive(true);
     }

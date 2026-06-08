@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 public class TopicManager : MonoBehaviour
@@ -46,6 +47,28 @@ public class TopicManager : MonoBehaviour
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
+    }
+
+    private void Update()
+    {
+#if UNITY_EDITOR
+        if (Keyboard.current != null
+            && Keyboard.current.ctrlKey.isPressed
+            && Keyboard.current.shiftKey.isPressed
+            && Keyboard.current.digit3Key.wasPressedThisFrame)
+        {
+            DebugUnlockTopic3();
+        }
+#endif
+    }
+
+    [ContextMenu("Debug: Unlock Topic 3")]
+    public void DebugUnlockTopic3()
+    {
+        MarkTopicComplete(0);
+        MarkTopicComplete(1);
+        SwitchToTopic(2);
+        Debug.Log("[TopicManager] DEBUG — Topic 3 force-unlocked.");
     }
 
     private void Start()

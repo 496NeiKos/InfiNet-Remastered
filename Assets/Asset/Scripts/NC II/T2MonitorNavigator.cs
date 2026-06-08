@@ -156,6 +156,7 @@ public class T2MonitorNavigator : MonoBehaviour
     // Milestone flags — latch true once reached (tasks don't revert).
     public bool BrowserOpened { get; private set; }
     public bool IsRufusDownloaded { get; private set; }
+    public bool IsIsoDownloaded { get; private set; }
     public bool RufusOpened { get; private set; }
     public bool IsRufusComplete { get; private set; }
 
@@ -192,6 +193,7 @@ public class T2MonitorNavigator : MonoBehaviour
     {
         BrowserOpened = false;
         IsRufusDownloaded = false;
+        IsIsoDownloaded = false;
         RufusOpened = false;
         IsRufusComplete = false;
 
@@ -208,8 +210,8 @@ public class T2MonitorNavigator : MonoBehaviour
         GameObject shown = panels[panelIndex];
         shown.SetActive(true);
 
-        if (browserPanel != null && shown == browserPanel)
-            BrowserOpened = true;
+        bool isBrowserPanel = browserPanel != null ? (shown == browserPanel) : (panelIndex == 1);
+        if (isBrowserPanel) BrowserOpened = true;
 
         T2TaskListManager.CheckConditions();
         Debug.Log($"[T2MonitorNavigator] Navigated to panel {panelIndex}: {shown.name}");
@@ -286,10 +288,13 @@ public class T2MonitorNavigator : MonoBehaviour
     }
 
     // Wired to the confirm button inside IsoPopUp.
-    // Gate validation (ISO select step) will be added later.
     public void DownloadISO()
     {
+        if (IsIsoDownloaded) return;
+
+        IsIsoDownloaded = true;
         CloseISOPopUp();
+        T2TaskListManager.CheckConditions();
         Debug.Log("[T2MonitorNavigator] ISO downloaded.");
     }
 

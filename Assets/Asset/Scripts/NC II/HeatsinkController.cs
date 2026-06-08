@@ -6,8 +6,11 @@ public class HeatsinkController : MonoBehaviour
     [SerializeField] private Sprite rootConnectedSprite;
     [SerializeField] private Sprite rootDisconnectedSprite;
 
+    [Header("Slot Reference")]
+    [Tooltip("The CPUSlotController this heatsink belongs to. Wire in the Inspector.")]
+    [SerializeField] private CPUSlotController cpuSlot;
+
     private SpriteRenderer _sr;
-    private CPUSlotController _cpuSlot;
     private Vector3 _installedLocalScale;
     private Vector3 _installedLocalPosition;
 
@@ -18,8 +21,7 @@ public class HeatsinkController : MonoBehaviour
 
     private void Start()
     {
-        _cpuSlot = GetComponentInParent<CPUSlotController>();
-        // Capture transform while correctly parented under CPUSlot
+        // Capture transform at scene start while correctly placed in the slot
         _installedLocalScale = transform.localScale;
         _installedLocalPosition = transform.localPosition;
     }
@@ -32,7 +34,7 @@ public class HeatsinkController : MonoBehaviour
 
     public Vector3 InstalledLocalScale => _installedLocalScale;
     public Vector3 InstalledLocalPosition => _installedLocalPosition;
-    public bool IsInstalledInSlot => GetComponentInParent<CPUSlotController>()?.IsHeatsinkInstalled ?? false;
+    public bool IsInstalledInSlot => cpuSlot != null && cpuSlot.IsHeatsinkInstalled;
 
     // Cable must be disconnected (via HeatsinkCableConnector slide gesture) before drag-out is allowed.
     public bool CanBeRemoved
@@ -62,7 +64,7 @@ public class HeatsinkController : MonoBehaviour
     // may have already moved away from CPUSlot hierarchy by this point
     public void OnRemovedFromSlot(CPUSlotController slot)
     {
-        CPUSlotController target = slot != null ? slot : _cpuSlot;
+        CPUSlotController target = slot != null ? slot : cpuSlot;
         if (target != null)
         {
             target.OnHeatsinkUninstalled();
@@ -77,7 +79,7 @@ public class HeatsinkController : MonoBehaviour
     // Called by HardwareHolder.TryInstallInSlot when reinstalled from hardware area
     public void OnInstalledToSlot(CPUSlotController slot)
     {
-        _cpuSlot = slot;
-        _cpuSlot?.OnHeatsinkInstalled();
+        if (slot != null) cpuSlot = slot;
+        cpuSlot?.OnHeatsinkInstalled();
     }
 }
