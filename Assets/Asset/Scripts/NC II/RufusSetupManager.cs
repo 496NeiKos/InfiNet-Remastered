@@ -6,26 +6,35 @@
  *    Add this script to the RufusSetUp GameObject.
  *
  *  STEP 2 — Convert the "Select" object to a Button
- *    The "Select" child of RufusSetUp is currently a TMP_Dropdown.
- *    In the Inspector:
- *      a) Remove the TMP_Dropdown component from "Select".
- *      b) Add a Button component.
- *      c) Wire its OnClick → RufusSetupManager.OpenFilePicker()
+ *    a) Remove the TMP_Dropdown component from "Select".
+ *    b) Add a Button component.
+ *    c) Wire OnClick → RufusSetupManager.OpenFilePicker()
  *
- *  STEP 3 — Create the ISO file picker popup
- *    Inside RufusSetUp, create a new child panel (e.g. "IsoFilePicker").
- *    It starts INACTIVE. Layout suggestion:
+ *  STEP 3 — Convert "Volume Label" to a TMP_InputField
+ *    a) Remove the TMP_Dropdown component from "Volume Label".
+ *    b) Add a TMP_InputField component.
+ *    c) The field starts non-interactable and auto-fills with the ISO
+ *       filename when the user picks an ISO from the file picker.
  *
- *      IsoFilePicker (Panel, starts inactive)
- *        ├─ Title (Text — "Select ISO File")
- *        ├─ IsoButton_Win11 (Button)  → OnClick → SelectIso("Win11_23H2_English_x64v2.iso")
- *        ├─ IsoButton_Win10 (Button)  → OnClick → SelectIso("Win10_22H2_English_x64.iso")
- *        └─ CancelButton   (Button)  → OnClick → CloseFilePicker()
+ *  STEP 4 — Fix the "Ready" status bar
+ *    The "Ready" object currently has a Button component that calls
+ *    MarkRufusComplete() directly, bypassing all validation.
+ *    → Either REMOVE the Button component from "Ready", or clear its
+ *      OnClick event list. Leave its Text (Legacy) child alone — the
+ *      script writes status messages to that Text at runtime.
  *
- *    Each button passes its ISO filename as a string to SelectIso().
- *    In Unity's OnClick (String) event field you can type the string directly.
+ *  STEP 5 — Create the IsoFilePicker popup panel
+ *    Inside RufusSetUp, add a child panel (e.g. "IsoFilePicker").
+ *    Starts INACTIVE. Layout:
  *
- *  STEP 4 — Wire Inspector fields on RufusSetupManager
+ *      IsoFilePicker (Panel, inactive)
+ *        ├─ Title Text  — "Select ISO File"
+ *        ├─ IsoButton_Win10 (Button)
+ *        │     OnClick → SelectIso("Win10_22H2_English_x64.iso")
+ *        └─ CancelButton (Button)
+ *              OnClick → CloseFilePicker()
+ *
+ *  STEP 6 — Wire Inspector fields on RufusSetupManager
  *
  *    Dropdowns — Device Properties:
  *      deviceDropdown          → Device            (TMP_Dropdown)
@@ -34,13 +43,13 @@
  *      partitionSchemeDropdown → Partition Scheme  (TMP_Dropdown)
  *      targetSystemDropdown    → Target System     (TMP_Dropdown)
  *
- *    Dropdowns — Format Options:
- *      volumeLabelDropdown     → Volume Label      (TMP_Dropdown)
+ *    Format Options:
+ *      volumeLabelField        → Volume Label      (TMP_InputField)  ← was dropdown
  *      fileSystemDropdown      → File System       (TMP_Dropdown)
  *      clusterSizeDropdown     → Cluster Size      (TMP_Dropdown)
  *
  *    File Picker:
- *      filePickerPanel         → IsoFilePicker     (the panel created in STEP 3)
+ *      filePickerPanel         → IsoFilePicker panel (starts inactive)
  *
  *    Status:
  *      statusText              → Text (Legacy) child of the "Ready" object
@@ -48,7 +57,7 @@
  *    Navigator:
  *      navigator               → T2MonitorNavigator on the T2Monitor GameObject
  *
- *  STEP 5 — Rewire the Start button
+ *  STEP 7 — Rewire the Start button
  *    Remove:  T2MonitorNavigator → MarkRufusComplete()
  *    Add:     RufusSetupManager  → OnStartClicked()
  *
@@ -57,17 +66,14 @@
  *    Image Option     → Standard Windows Installation
  *    Partition Scheme → GPT
  *    Target System    → UEFI (non CSM)
- *    Volume Label     → ESD-USB
- *    File System      → FAT32 (Default)
+ *    Volume Label     → any non-empty text (auto-filled from ISO name)
+ *    File System      → NTFS
  *    Cluster Size     → 4096 bytes (Default)
  *    Device is always valid (only one option).
  *
- *  HOW VALIDATION WORKS:
- *    - Boot Selection passes only when an ISO was picked (option text ends in .iso).
- *    - All other dropdowns pass only when the correct index is selected.
- *    - On any mismatch the Ready status bar shows a hint; task does NOT complete.
- *    - When all pass: a formatting animation plays (Starting → Writing → DONE)
- *      then MarkRufusComplete() is called.
+ *  FORMAT OPTIONS LOCK:
+ *    Volume Label, File System, and Cluster Size start non-interactable.
+ *    They become interactable only after an ISO file is selected.
  * ================================================================
  */
 
@@ -87,28 +93,28 @@ public class RufusSetupManager : MonoBehaviour
     [SerializeField] private TMP_Dropdown partitionSchemeDropdown;
     [SerializeField] private TMP_Dropdown targetSystemDropdown;
 
-    [Header("Dropdowns — Format Options")]
-    [SerializeField] private TMP_Dropdown volumeLabelDropdown;
+    [Header("Format Options")]
+    [Tooltip("Text input field for Volume Label — auto-filled with ISO filename on selection.")]
+    [SerializeField] private TMP_InputField volumeLabelField;
     [SerializeField] private TMP_Dropdown fileSystemDropdown;
     [SerializeField] private TMP_Dropdown clusterSizeDropdown;
 
     [Header("ISO File Picker")]
-    [Tooltip("The popup panel that lists ISO files. Starts inactive.")]
+    [Tooltip("Popup panel listing ISO files. Starts inactive.")]
     [SerializeField] private GameObject filePickerPanel;
 
     [Header("Status Bar")]
-    [Tooltip("Text (Legacy) component inside the 'Ready' button's child object.")]
+    [Tooltip("Text (Legacy) component inside the 'Ready' object's child — used as the status bar.")]
     [SerializeField] private Text statusText;
 
     [Header("Navigator")]
     [SerializeField] private T2MonitorNavigator navigator;
 
-    // Correct answer indices for non-Boot-Selection dropdowns.
+    // Correct answer indices.
     private const int CorrectImageOption      = 0; // "Standard Windows Installation"
     private const int CorrectPartitionScheme  = 1; // "GPT"
     private const int CorrectTargetSystem     = 1; // "UEFI (non CSM)"
-    private const int CorrectVolumeLabel      = 0; // "ESD-USB"
-    private const int CorrectFileSystem       = 0; // "FAT32 (Default)"
+    private const int CorrectFileSystem       = 1; // "NTFS"
     private const int CorrectClusterSize      = 3; // "4096 bytes (Default)"
 
     private bool _formatting;
@@ -116,10 +122,15 @@ public class RufusSetupManager : MonoBehaviour
     private void Awake()
     {
         PopulateDropdowns();
-        SetStatus("Ready");
+        SetFormatOptionsInteractable(false);
+
+        if (volumeLabelField != null)
+            volumeLabelField.text = string.Empty;
 
         if (filePickerPanel != null)
             filePickerPanel.SetActive(false);
+
+        SetStatus("Ready");
     }
 
     // ----------------------------------------------------------------
@@ -128,13 +139,11 @@ public class RufusSetupManager : MonoBehaviour
 
     private void PopulateDropdowns()
     {
-        // Device — single simulated USB drive; always valid.
         SetOptions(deviceDropdown, new[]
         {
             "Kingston DataTraveler 32GB (E:)"
         });
 
-        // Boot Selection — placeholder until the user picks an ISO via the file picker.
         SetOptions(bootSelectionDropdown, new[]
         {
             "Disk or ISO image (Please select)",
@@ -142,37 +151,24 @@ public class RufusSetupManager : MonoBehaviour
             "Non bootable"
         });
 
-        // Image Option
         SetOptions(imageOptionDropdown, new[]
         {
             "Standard Windows Installation",
             "Windows To Go"
         });
 
-        // Partition Scheme
         SetOptions(partitionSchemeDropdown, new[]
         {
             "MBR",
             "GPT"
         });
 
-        // Target System
         SetOptions(targetSystemDropdown, new[]
         {
             "BIOS (or UEFI-CSM)",
             "UEFI (non CSM)"
         });
 
-        // Volume Label
-        SetOptions(volumeLabelDropdown, new[]
-        {
-            "ESD-USB",
-            "WINDOWS",
-            "BOOT",
-            "USB_DRIVE"
-        });
-
-        // File System
         SetOptions(fileSystemDropdown, new[]
         {
             "FAT32 (Default)",
@@ -181,7 +177,6 @@ public class RufusSetupManager : MonoBehaviour
             "exFAT"
         });
 
-        // Cluster Size
         SetOptions(clusterSizeDropdown, new[]
         {
             "512 bytes",
@@ -204,6 +199,17 @@ public class RufusSetupManager : MonoBehaviour
     }
 
     // ----------------------------------------------------------------
+    //  Format options lock (disabled until ISO is selected)
+    // ----------------------------------------------------------------
+
+    private void SetFormatOptionsInteractable(bool state)
+    {
+        if (volumeLabelField != null)    volumeLabelField.interactable    = state;
+        if (fileSystemDropdown != null)  fileSystemDropdown.interactable  = state;
+        if (clusterSizeDropdown != null) clusterSizeDropdown.interactable = state;
+    }
+
+    // ----------------------------------------------------------------
     //  ISO file picker
     // ----------------------------------------------------------------
 
@@ -221,8 +227,7 @@ public class RufusSetupManager : MonoBehaviour
             filePickerPanel.SetActive(false);
     }
 
-    // Wired to each ISO button inside IsoFilePicker with the filename as the string argument.
-    // e.g. OnClick → SelectIso("Win11_23H2_English_x64v2.iso")
+    // Wired to each ISO button: OnClick → SelectIso("Win10_22H2_English_x64.iso")
     public void SelectIso(string isoName)
     {
         if (bootSelectionDropdown != null && bootSelectionDropdown.options.Count > 0)
@@ -232,6 +237,10 @@ public class RufusSetupManager : MonoBehaviour
             bootSelectionDropdown.RefreshShownValue();
         }
 
+        if (volumeLabelField != null)
+            volumeLabelField.text = isoName;
+
+        SetFormatOptionsInteractable(true);
         CloseFilePicker();
         SetStatus("Ready");
         Debug.Log($"[RufusSetupManager] ISO selected: {isoName}");
@@ -278,7 +287,6 @@ public class RufusSetupManager : MonoBehaviour
 
     private bool Validate(out string hint)
     {
-        // Boot Selection: valid only when an ISO file has been chosen (text ends in .iso).
         if (!IsIsoSelected())
         {
             hint = "Click SELECT to choose an ISO file first.";
@@ -299,14 +307,14 @@ public class RufusSetupManager : MonoBehaviour
             hint = "Set Target System to 'UEFI (non CSM)'.";
             return false;
         }
-        if (!Check(volumeLabelDropdown, CorrectVolumeLabel))
+        if (volumeLabelField == null || string.IsNullOrWhiteSpace(volumeLabelField.text))
         {
-            hint = "Set Volume Label to 'ESD-USB'.";
+            hint = "Volume Label cannot be empty.";
             return false;
         }
         if (!Check(fileSystemDropdown, CorrectFileSystem))
         {
-            hint = "Set File System to 'FAT32 (Default)'.";
+            hint = "Set File System to 'NTFS'.";
             return false;
         }
         if (!Check(clusterSizeDropdown, CorrectClusterSize))
