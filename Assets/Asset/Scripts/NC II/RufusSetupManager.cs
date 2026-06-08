@@ -58,9 +58,17 @@
  *    Navigator:
  *      navigator               → T2MonitorNavigator on the T2Monitor GameObject
  *
- *  STEP 7 — Rewire the Start button
- *    Remove:  T2MonitorNavigator → MarkRufusComplete()
- *    Add:     RufusSetupManager  → OnStartClicked()
+ *  STEP 7 — Wire buttons
+ *    Start button:
+ *      Remove:  T2MonitorNavigator → MarkRufusComplete()
+ *      Add:     RufusSetupManager  → OnStartClicked()
+ *
+ *    CLOSE button (resets everything on close):
+ *      Remove:  T2MonitorNavigator → CloseRufus()
+ *      Add:     RufusSetupManager  → CloseAndReset()
+ *
+ *    Back button (preserves dropdown state on close):
+ *      Keep:    T2MonitorNavigator → CloseRufus()   (no change needed)
  *
  *  CORRECT CONFIGURATION (for task completion):
  *    Boot Selection   → any .iso file selected via the file picker
@@ -208,6 +216,53 @@ public class RufusSetupManager : MonoBehaviour
     {
         if (fileSystemDropdown != null)  fileSystemDropdown.interactable  = state;
         if (clusterSizeDropdown != null) clusterSizeDropdown.interactable = state;
+    }
+
+    // ----------------------------------------------------------------
+    //  Close vs Back
+    //    Back button  → T2MonitorNavigator.CloseRufus()   (preserves state)
+    //    Close button → RufusSetupManager.CloseAndReset() (wipes state)
+    // ----------------------------------------------------------------
+
+    // Wired to the CLOSE button's OnClick.
+    public void CloseAndReset()
+    {
+        StopAllCoroutines();
+        _formatting = false;
+
+        // Restore Boot Selection placeholder at index 0.
+        if (bootSelectionDropdown != null && bootSelectionDropdown.options.Count > 0)
+        {
+            bootSelectionDropdown.options[0] = new TMP_Dropdown.OptionData("Disk or ISO image (Please select)");
+            bootSelectionDropdown.value = 0;
+            bootSelectionDropdown.RefreshShownValue();
+        }
+
+        ResetDropdown(imageOptionDropdown);
+        ResetDropdown(partitionSchemeDropdown);
+        ResetDropdown(targetSystemDropdown);
+        ResetDropdown(fileSystemDropdown);
+        ResetDropdown(clusterSizeDropdown);
+
+        if (volumeLabelText != null)
+            volumeLabelText.text = string.Empty;
+
+        SetFormatOptionsInteractable(false);
+
+        if (filePickerPanel != null)
+            filePickerPanel.SetActive(false);
+
+        SetStatus("Ready");
+
+        if (navigator != null)
+            navigator.CloseRufus();
+    }
+
+    private static void ResetDropdown(TMP_Dropdown dropdown)
+    {
+        if (dropdown == null) return;
+        dropdown.value = 0;
+        dropdown.RefreshShownValue();
     }
 
     // ----------------------------------------------------------------
