@@ -3,56 +3,75 @@
  *  UNITY SETUP GUIDE — RufusSetupManager
  * ================================================================
  *  STEP 1 — Component placement
- *    Add this script to the RufusSetUp GameObject (the panel that
- *    overlays the Desktop when Rufus is opened).
+ *    Add this script to the RufusSetUp GameObject.
  *
- *  STEP 2 — Wire Inspector fields
+ *  STEP 2 — Convert the "Select" object to a Button
+ *    The "Select" child of RufusSetUp is currently a TMP_Dropdown.
+ *    In the Inspector:
+ *      a) Remove the TMP_Dropdown component from "Select".
+ *      b) Add a Button component.
+ *      c) Wire its OnClick → RufusSetupManager.OpenFilePicker()
+ *
+ *  STEP 3 — Create the ISO file picker popup
+ *    Inside RufusSetUp, create a new child panel (e.g. "IsoFilePicker").
+ *    It starts INACTIVE. Layout suggestion:
+ *
+ *      IsoFilePicker (Panel, starts inactive)
+ *        ├─ Title (Text — "Select ISO File")
+ *        ├─ IsoButton_Win11 (Button)  → OnClick → SelectIso("Win11_23H2_English_x64v2.iso")
+ *        ├─ IsoButton_Win10 (Button)  → OnClick → SelectIso("Win10_22H2_English_x64.iso")
+ *        └─ CancelButton   (Button)  → OnClick → CloseFilePicker()
+ *
+ *    Each button passes its ISO filename as a string to SelectIso().
+ *    In Unity's OnClick (String) event field you can type the string directly.
+ *
+ *  STEP 4 — Wire Inspector fields on RufusSetupManager
  *
  *    Dropdowns — Device Properties:
- *      deviceDropdown        → Device           (TMP_Dropdown)
- *      bootSelectionDropdown → Boot Selection   (TMP_Dropdown)
- *      imageOptionDropdown   → Image Option     (TMP_Dropdown)
- *      partitionSchemeDropdown → Partition Scheme (TMP_Dropdown)
- *      targetSystemDropdown  → Target System    (TMP_Dropdown)
+ *      deviceDropdown          → Device            (TMP_Dropdown)
+ *      bootSelectionDropdown   → Boot Selection    (TMP_Dropdown)
+ *      imageOptionDropdown     → Image Option      (TMP_Dropdown)
+ *      partitionSchemeDropdown → Partition Scheme  (TMP_Dropdown)
+ *      targetSystemDropdown    → Target System     (TMP_Dropdown)
  *
  *    Dropdowns — Format Options:
- *      volumeLabelDropdown   → Volume Label     (TMP_Dropdown)
- *      fileSystemDropdown    → File System      (TMP_Dropdown)
- *      clusterSizeDropdown   → Cluster Size     (TMP_Dropdown)
+ *      volumeLabelDropdown     → Volume Label      (TMP_Dropdown)
+ *      fileSystemDropdown      → File System       (TMP_Dropdown)
+ *      clusterSizeDropdown     → Cluster Size      (TMP_Dropdown)
+ *
+ *    File Picker:
+ *      filePickerPanel         → IsoFilePicker     (the panel created in STEP 3)
  *
  *    Status:
- *      statusText            → Text (Legacy) child of the "Ready" object
- *                              (the Text component, not the Ready button itself)
+ *      statusText              → Text (Legacy) child of the "Ready" object
  *
  *    Navigator:
- *      navigator             → T2MonitorNavigator on the T2Monitor GameObject
+ *      navigator               → T2MonitorNavigator on the T2Monitor GameObject
  *
- *  STEP 3 — Rewire the Start button
- *    Remove the existing call:  T2MonitorNavigator → MarkRufusComplete()
- *    Add new call:              RufusSetupManager  → OnStartClicked()
- *
- *    Leave the CLOSE button wired to T2MonitorNavigator.CloseRufus() as-is.
- *    Leave the Ready object as-is (its Text child is used as the status bar).
+ *  STEP 5 — Rewire the Start button
+ *    Remove:  T2MonitorNavigator → MarkRufusComplete()
+ *    Add:     RufusSetupManager  → OnStartClicked()
  *
  *  CORRECT CONFIGURATION (for task completion):
- *    Boot Selection  → Disk or ISO image (Please select)
- *    Image Option    → Standard Windows Installation
- *    Partition Scheme→ GPT
- *    Target System   → UEFI (non CSM)
- *    Volume Label    → ESD-USB
- *    File System     → FAT32 (Default)
- *    Cluster Size    → 4096 bytes (Default)
- *    Device is auto-set (only one option) and always passes.
+ *    Boot Selection   → any .iso file selected via the file picker
+ *    Image Option     → Standard Windows Installation
+ *    Partition Scheme → GPT
+ *    Target System    → UEFI (non CSM)
+ *    Volume Label     → ESD-USB
+ *    File System      → FAT32 (Default)
+ *    Cluster Size     → 4096 bytes (Default)
+ *    Device is always valid (only one option).
  *
  *  HOW VALIDATION WORKS:
- *    Clicking Start checks every dropdown.
- *    On mismatch: the Ready status bar shows a hint (e.g. "Set Partition
- *    Scheme to GPT") and the task does NOT complete.
- *    When all settings match: status bar shows "DONE" after a short
- *    formatting animation, then MarkRufusComplete() is called.
+ *    - Boot Selection passes only when an ISO was picked (option text ends in .iso).
+ *    - All other dropdowns pass only when the correct index is selected.
+ *    - On any mismatch the Ready status bar shows a hint; task does NOT complete.
+ *    - When all pass: a formatting animation plays (Starting → Writing → DONE)
+ *      then MarkRufusComplete() is called.
  * ================================================================
  */
 
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -73,15 +92,18 @@ public class RufusSetupManager : MonoBehaviour
     [SerializeField] private TMP_Dropdown fileSystemDropdown;
     [SerializeField] private TMP_Dropdown clusterSizeDropdown;
 
+    [Header("ISO File Picker")]
+    [Tooltip("The popup panel that lists ISO files. Starts inactive.")]
+    [SerializeField] private GameObject filePickerPanel;
+
     [Header("Status Bar")]
-    [Tooltip("The Text (Legacy) component inside the 'Ready' button's child object.")]
+    [Tooltip("Text (Legacy) component inside the 'Ready' button's child object.")]
     [SerializeField] private Text statusText;
 
     [Header("Navigator")]
     [SerializeField] private T2MonitorNavigator navigator;
 
-    // Correct answer indices — matches the order options are added in PopulateDropdowns().
-    private const int CorrectBootSelection    = 0; // "Disk or ISO image (Please select)"
+    // Correct answer indices for non-Boot-Selection dropdowns.
     private const int CorrectImageOption      = 0; // "Standard Windows Installation"
     private const int CorrectPartitionScheme  = 1; // "GPT"
     private const int CorrectTargetSystem     = 1; // "UEFI (non CSM)"
@@ -95,6 +117,9 @@ public class RufusSetupManager : MonoBehaviour
     {
         PopulateDropdowns();
         SetStatus("Ready");
+
+        if (filePickerPanel != null)
+            filePickerPanel.SetActive(false);
     }
 
     // ----------------------------------------------------------------
@@ -103,13 +128,13 @@ public class RufusSetupManager : MonoBehaviour
 
     private void PopulateDropdowns()
     {
-        // Device — only one simulated USB drive; always pre-selected.
+        // Device — single simulated USB drive; always valid.
         SetOptions(deviceDropdown, new[]
         {
             "Kingston DataTraveler 32GB (E:)"
         });
 
-        // Boot Selection
+        // Boot Selection — placeholder until the user picks an ISO via the file picker.
         SetOptions(bootSelectionDropdown, new[]
         {
             "Disk or ISO image (Please select)",
@@ -179,6 +204,40 @@ public class RufusSetupManager : MonoBehaviour
     }
 
     // ----------------------------------------------------------------
+    //  ISO file picker
+    // ----------------------------------------------------------------
+
+    // Wired to the Select button's OnClick.
+    public void OpenFilePicker()
+    {
+        if (filePickerPanel != null)
+            filePickerPanel.SetActive(true);
+    }
+
+    // Wired to the Cancel button inside IsoFilePicker.
+    public void CloseFilePicker()
+    {
+        if (filePickerPanel != null)
+            filePickerPanel.SetActive(false);
+    }
+
+    // Wired to each ISO button inside IsoFilePicker with the filename as the string argument.
+    // e.g. OnClick → SelectIso("Win11_23H2_English_x64v2.iso")
+    public void SelectIso(string isoName)
+    {
+        if (bootSelectionDropdown != null && bootSelectionDropdown.options.Count > 0)
+        {
+            bootSelectionDropdown.options[0] = new TMP_Dropdown.OptionData(isoName);
+            bootSelectionDropdown.value = 0;
+            bootSelectionDropdown.RefreshShownValue();
+        }
+
+        CloseFilePicker();
+        SetStatus("Ready");
+        Debug.Log($"[RufusSetupManager] ISO selected: {isoName}");
+    }
+
+    // ----------------------------------------------------------------
     //  Start button
     // ----------------------------------------------------------------
 
@@ -219,9 +278,10 @@ public class RufusSetupManager : MonoBehaviour
 
     private bool Validate(out string hint)
     {
-        if (!Check(bootSelectionDropdown, CorrectBootSelection))
+        // Boot Selection: valid only when an ISO file has been chosen (text ends in .iso).
+        if (!IsIsoSelected())
         {
-            hint = "Set Boot Selection to 'Disk or ISO image'.";
+            hint = "Click SELECT to choose an ISO file first.";
             return false;
         }
         if (!Check(imageOptionDropdown, CorrectImageOption))
@@ -257,6 +317,14 @@ public class RufusSetupManager : MonoBehaviour
 
         hint = null;
         return true;
+    }
+
+    private bool IsIsoSelected()
+    {
+        if (bootSelectionDropdown == null || bootSelectionDropdown.options.Count == 0)
+            return false;
+        string current = bootSelectionDropdown.options[bootSelectionDropdown.value].text;
+        return current.EndsWith(".iso", StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool Check(TMP_Dropdown dropdown, int expected)
