@@ -73,7 +73,7 @@
  *  CORRECT CONFIGURATION (for task completion):
  *    Boot Selection   → any .iso file selected via the file picker
  *    Image Option     → Standard Windows Installation
- *    Partition Scheme → GPT
+ *    Partition Scheme → MBR
  *    Target System    → UEFI (non CSM)
  *    Volume Label     → auto-filled from ISO name (display only, not editable)
  *    File System      → NTFS
@@ -122,7 +122,7 @@ public class RufusSetupManager : MonoBehaviour
 
     // Correct answer indices.
     private const int CorrectImageOption      = 0; // "Standard Windows Installation"
-    private const int CorrectPartitionScheme  = 1; // "GPT"
+    private const int CorrectPartitionScheme  = 0; // "MBR"
     private const int CorrectTargetSystem     = 1; // "UEFI (non CSM)"
     private const int CorrectFileSystem       = 1; // "NTFS"
     private const int CorrectClusterSize      = 3; // "4096 bytes (Default)"
@@ -355,7 +355,7 @@ public class RufusSetupManager : MonoBehaviour
         }
         if (!Check(partitionSchemeDropdown, CorrectPartitionScheme))
         {
-            hint = "Set Partition Scheme to 'GPT'.";
+            hint = "Set Partition Scheme to 'MBR'.";
             return false;
         }
         if (!Check(targetSystemDropdown, CorrectTargetSystem))
