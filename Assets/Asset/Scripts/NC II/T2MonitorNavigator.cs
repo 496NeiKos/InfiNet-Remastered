@@ -18,17 +18,25 @@
  *        ├─ (optional) "No results" object → assign to searchNoResults
  *        └─ Back button             → GoTo(0)
  *      Rufus Download           — index 2
- *        ├─ Download link button    → DownloadRufus()
+ *        ├─ Download link button    → OpenRufusPopUp()   ← opens popup first
  *        └─ Back button             → GoTo(0)
  *      BrowserSearchedRufus     — index 3
  *        ├─ Back button             → GoTo(0)   (returns to Desktop)
  *        └─ Link button             → GoTo(2)   (opens Rufus Download)
  *      ISODownloadPanel         — index 4
- *        ├─ Download link button    → DownloadISO()
+ *        ├─ Download link button    → OpenISOPopUp()     ← opens popup first
  *        └─ Back button             → GoTo(0)
  *      BrowserSearchedISO       — index 5
  *        ├─ Back button             → GoTo(0)   (returns to Desktop)
  *        └─ Link button             → GoTo(4)   (opens ISO Download)
+ *
+ *    Pop-ups (NOT in panels array — toggled independently, start INACTIVE):
+ *      RufusPopUp  — child of RufusDownloadPanel (or canvas root)
+ *        ├─ Confirm button  → DownloadRufus()     (enables Rufus app, closes popup)
+ *        └─ Cancel button   → CloseRufusPopUp()   (optional)
+ *      IsoPopUp    — child of ISODownloadPanel (or canvas root)
+ *        ├─ Confirm button  → DownloadISO()        (closes popup)
+ *        └─ Cancel button   → CloseISOPopUp()      (optional)
  *
  *    Only Desktop starts active. Deactivate all others.
  *    Rufus Set Up also starts inactive.
@@ -71,10 +79,14 @@
  *    Back button on Browser                → GoTo(0)
  *    Back button on BrowserSearchedRufus   → GoTo(0)
  *    Link button on BrowserSearchedRufus   → GoTo(2)
- *    Download button on Rufus Download     → DownloadRufus()
+ *    Download link on Rufus Download       → OpenRufusPopUp()
  *    Back button on Rufus Download         → GoTo(0)
- *    Download button on ISODownloadPanel   → DownloadISO()
+ *    RufusPopUp confirm button             → DownloadRufus()
+ *    RufusPopUp cancel button              → CloseRufusPopUp()
+ *    Download link on ISODownloadPanel     → OpenISOPopUp()
  *    Back button on ISODownloadPanel       → GoTo(0)
+ *    IsoPopUp confirm button               → DownloadISO()
+ *    IsoPopUp cancel button                → CloseISOPopUp()
  *    Back button on BrowserSearchedISO    → GoTo(0)
  *    Link button on BrowserSearchedISO    → GoTo(4)
  *    RufusApp button on Desktop            → OpenRufus()
@@ -136,6 +148,12 @@ public class T2MonitorNavigator : MonoBehaviour
     [SerializeField] private GameObject rufusSetupPanel;
     [SerializeField] private Button rufusAppButton;
 
+    [Header("Download Pop-ups")]
+    [Tooltip("Popup shown when the Rufus download link is clicked. Starts inactive.")]
+    [SerializeField] private GameObject rufusPopUp;
+    [Tooltip("Popup shown when the ISO download link is clicked. Starts inactive.")]
+    [SerializeField] private GameObject isoPopUp;
+
     // Milestone flags — latch true once reached (tasks don't revert).
     public bool BrowserOpened { get; private set; }
     public bool IsRufusDownloaded { get; private set; }
@@ -160,6 +178,12 @@ public class T2MonitorNavigator : MonoBehaviour
 
         if (searchNoResults != null)
             searchNoResults.SetActive(false);
+
+        if (rufusPopUp != null)
+            rufusPopUp.SetActive(false);
+
+        if (isoPopUp != null)
+            isoPopUp.SetActive(false);
 
         GoTo(0);
     }
@@ -205,15 +229,23 @@ public class T2MonitorNavigator : MonoBehaviour
         }
     }
 
-    // Called by the Download button on the ISO Download panel.
-    // Gate validation (ISO select step) will be added later.
-    public void DownloadISO()
+    // ---- Rufus download popup ----
+
+    // Wired to the download link button on RufusDownloadPanel.
+    public void OpenRufusPopUp()
     {
-        GoTo(0);
-        Debug.Log("[T2MonitorNavigator] ISO downloaded — returning to Desktop.");
+        if (rufusPopUp != null)
+            rufusPopUp.SetActive(true);
     }
 
-    // Called by the Download button on the Rufus Download panel.
+    // Wired to the cancel button inside RufusPopUp (optional).
+    public void CloseRufusPopUp()
+    {
+        if (rufusPopUp != null)
+            rufusPopUp.SetActive(false);
+    }
+
+    // Wired to the confirm button inside RufusPopUp.
     public void DownloadRufus()
     {
         if (IsRufusDownloaded) return;
@@ -223,10 +255,34 @@ public class T2MonitorNavigator : MonoBehaviour
         if (rufusAppButton != null)
             rufusAppButton.interactable = true;
 
-        GoTo(0);
+        CloseRufusPopUp();
         T2TaskListManager.CheckConditions();
 
-        Debug.Log("[T2MonitorNavigator] Rufus downloaded — app button enabled on Desktop.");
+        Debug.Log("[T2MonitorNavigator] Rufus downloaded — app button enabled.");
+    }
+
+    // ---- ISO download popup ----
+
+    // Wired to the download link button on ISODownloadPanel.
+    public void OpenISOPopUp()
+    {
+        if (isoPopUp != null)
+            isoPopUp.SetActive(true);
+    }
+
+    // Wired to the cancel button inside IsoPopUp (optional).
+    public void CloseISOPopUp()
+    {
+        if (isoPopUp != null)
+            isoPopUp.SetActive(false);
+    }
+
+    // Wired to the confirm button inside IsoPopUp.
+    // Gate validation (ISO select step) will be added later.
+    public void DownloadISO()
+    {
+        CloseISOPopUp();
+        Debug.Log("[T2MonitorNavigator] ISO downloaded.");
     }
 
     // Called by the RufusApp button on the Desktop panel.
