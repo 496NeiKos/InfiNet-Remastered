@@ -246,11 +246,17 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         _detached = false;
         _isDragging = false;
 
-        transform.SetParent(port.transform, false);
-        transform.localPosition = _installedLocalPos;
-        transform.localScale = _installedLocalScale;
-        gameObject.SetActive(true);
+        // worldPositionStays = true preserves world scale across reparenting.
+        // Then snap to port's local origin so the cable sits on the port regardless
+        // of where it came from (storage or another port).
+        transform.SetParent(port.transform, true);
+        transform.localPosition = Vector3.zero;
 
+        // Update cache so SnapBack always uses the correct port-relative values.
+        _installedLocalPos   = Vector3.zero;
+        _installedLocalScale = transform.localScale;
+
+        gameObject.SetActive(true);
         port.SetInstalled();
         ActivityLogManager.Log($"{cableType} cable plugged in", ActivityLogManager.EntryType.Install);
         Debug.Log($"[CableBehavior] {cableType} installed to {port.name}.");
