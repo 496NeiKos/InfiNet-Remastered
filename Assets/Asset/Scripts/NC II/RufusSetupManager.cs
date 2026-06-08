@@ -10,11 +10,12 @@
  *    b) Add a Button component.
  *    c) Wire OnClick → RufusSetupManager.OpenFilePicker()
  *
- *  STEP 3 — Convert "Volume Label" to a TMP_InputField
- *    a) Remove the TMP_Dropdown component from "Volume Label".
- *    b) Add a TMP_InputField component.
- *    c) The field starts non-interactable and auto-fills with the ISO
- *       filename when the user picks an ISO from the file picker.
+ *  STEP 3 — Convert "Volume Label" to a plain Text display
+ *    a) Remove the TMP_Dropdown (or any other component) from "Volume Label".
+ *    b) Add (or keep) a Text (Legacy) component on it — same pattern as
+ *       the "Ready" status bar.
+ *    c) The script writes the ISO filename to it when the user picks an ISO.
+ *       The student never types into it.
  *
  *  STEP 4 — Fix the "Ready" status bar
  *    The "Ready" object currently has a Button component that calls
@@ -44,7 +45,7 @@
  *      targetSystemDropdown    → Target System     (TMP_Dropdown)
  *
  *    Format Options:
- *      volumeLabelField        → Volume Label      (TMP_InputField)  ← was dropdown
+ *      volumeLabelText         → Volume Label      (Text Legacy — display only)
  *      fileSystemDropdown      → File System       (TMP_Dropdown)
  *      clusterSizeDropdown     → Cluster Size      (TMP_Dropdown)
  *
@@ -66,14 +67,15 @@
  *    Image Option     → Standard Windows Installation
  *    Partition Scheme → GPT
  *    Target System    → UEFI (non CSM)
- *    Volume Label     → any non-empty text (auto-filled from ISO name)
+ *    Volume Label     → auto-filled from ISO name (display only, not editable)
  *    File System      → NTFS
  *    Cluster Size     → 4096 bytes (Default)
  *    Device is always valid (only one option).
  *
  *  FORMAT OPTIONS LOCK:
- *    Volume Label, File System, and Cluster Size start non-interactable.
+ *    File System and Cluster Size start non-interactable.
  *    They become interactable only after an ISO file is selected.
+ *    Volume Label is display-only and never interactable.
  * ================================================================
  */
 
@@ -94,8 +96,8 @@ public class RufusSetupManager : MonoBehaviour
     [SerializeField] private TMP_Dropdown targetSystemDropdown;
 
     [Header("Format Options")]
-    [Tooltip("Text input field for Volume Label — auto-filled with ISO filename on selection.")]
-    [SerializeField] private TMP_InputField volumeLabelField;
+    [Tooltip("Text (Legacy) display for Volume Label — auto-filled with the ISO filename. Not editable by the student.")]
+    [SerializeField] private Text volumeLabelText;
     [SerializeField] private TMP_Dropdown fileSystemDropdown;
     [SerializeField] private TMP_Dropdown clusterSizeDropdown;
 
@@ -124,8 +126,8 @@ public class RufusSetupManager : MonoBehaviour
         PopulateDropdowns();
         SetFormatOptionsInteractable(false);
 
-        if (volumeLabelField != null)
-            volumeLabelField.text = string.Empty;
+        if (volumeLabelText != null)
+            volumeLabelText.text = string.Empty;
 
         if (filePickerPanel != null)
             filePickerPanel.SetActive(false);
@@ -204,7 +206,6 @@ public class RufusSetupManager : MonoBehaviour
 
     private void SetFormatOptionsInteractable(bool state)
     {
-        if (volumeLabelField != null)    volumeLabelField.interactable    = state;
         if (fileSystemDropdown != null)  fileSystemDropdown.interactable  = state;
         if (clusterSizeDropdown != null) clusterSizeDropdown.interactable = state;
     }
@@ -237,8 +238,8 @@ public class RufusSetupManager : MonoBehaviour
             bootSelectionDropdown.RefreshShownValue();
         }
 
-        if (volumeLabelField != null)
-            volumeLabelField.text = isoName;
+        if (volumeLabelText != null)
+            volumeLabelText.text = isoName;
 
         SetFormatOptionsInteractable(true);
         CloseFilePicker();
@@ -307,9 +308,9 @@ public class RufusSetupManager : MonoBehaviour
             hint = "Set Target System to 'UEFI (non CSM)'.";
             return false;
         }
-        if (volumeLabelField == null || string.IsNullOrWhiteSpace(volumeLabelField.text))
+        if (volumeLabelText == null || string.IsNullOrWhiteSpace(volumeLabelText.text))
         {
-            hint = "Volume Label cannot be empty.";
+            hint = "Select an ISO file to set the Volume Label.";
             return false;
         }
         if (!Check(fileSystemDropdown, CorrectFileSystem))
