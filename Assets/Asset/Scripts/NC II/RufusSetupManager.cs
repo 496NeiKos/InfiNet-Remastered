@@ -37,6 +37,10 @@
  *
  *  STEP 6 — Wire Inspector fields on RufusSetupManager
  *
+ *    USB Port (checked on every open):
+ *      usbPort                 → CablePort on the system unit's front USB slot
+ *                                Device dropdown shows USB only when this is Installed.
+ *
  *    Dropdowns — Device Properties:
  *      deviceDropdown          → Device            (TMP_Dropdown)
  *      bootSelectionDropdown   → Boot Selection    (TMP_Dropdown)
@@ -103,6 +107,10 @@ public class RufusSetupManager : MonoBehaviour
     [SerializeField] private TMP_Dropdown partitionSchemeDropdown;
     [SerializeField] private TMP_Dropdown targetSystemDropdown;
 
+    [Header("USB Port")]
+    [Tooltip("The CablePort on the system unit's front USB slot. Checked every time the panel opens.")]
+    [SerializeField] private CablePort usbPort;
+
     [Header("Format Options")]
     [Tooltip("Text (Legacy) display for Volume Label — auto-filled with the ISO filename. Not editable by the student.")]
     [SerializeField] private Text volumeLabelText;
@@ -133,6 +141,7 @@ public class RufusSetupManager : MonoBehaviour
     {
         PopulateDropdowns();
         SetFormatOptionsInteractable(false);
+        RefreshDeviceDropdown();
 
         if (volumeLabelText != null)
             volumeLabelText.text = string.Empty;
@@ -143,16 +152,33 @@ public class RufusSetupManager : MonoBehaviour
         SetStatus("Ready");
     }
 
+    // Refreshes the Device dropdown on every panel open to reflect actual USB state.
+    private void OnEnable()
+    {
+        RefreshDeviceDropdown();
+    }
+
+    private void RefreshDeviceDropdown()
+    {
+        if (deviceDropdown == null) return;
+        deviceDropdown.ClearOptions();
+
+        bool pluggedIn = usbPort != null && usbPort.IsInstalled;
+        deviceDropdown.AddOptions(new System.Collections.Generic.List<string>
+        {
+            pluggedIn ? "Kingston DataTraveler 32GB (E:)" : "(No device detected)"
+        });
+        deviceDropdown.value = 0;
+        deviceDropdown.RefreshShownValue();
+    }
+
     // ----------------------------------------------------------------
     //  Dropdown population
     // ----------------------------------------------------------------
 
     private void PopulateDropdowns()
     {
-        SetOptions(deviceDropdown, new[]
-        {
-            "Kingston DataTraveler 32GB (E:)"
-        });
+        // Device is handled by RefreshDeviceDropdown() instead.
 
         SetOptions(bootSelectionDropdown, new[]
         {
@@ -343,6 +369,11 @@ public class RufusSetupManager : MonoBehaviour
 
     private bool Validate(out string hint)
     {
+        if (usbPort == null || !usbPort.IsInstalled)
+        {
+            hint = "Plug a USB flash drive into the front USB port first.";
+            return false;
+        }
         if (!IsIsoSelected())
         {
             hint = "Click SELECT to choose an ISO file first.";

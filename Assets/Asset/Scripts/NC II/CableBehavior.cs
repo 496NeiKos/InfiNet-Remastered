@@ -142,9 +142,9 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         homePort?.SetUninstalled();
         ActivityLogManager.Log($"{cableType} cable unplugged", ActivityLogManager.EntryType.Remove);
 
-        Vector3 worldScale = transform.lossyScale;
+        // SetParent with worldPositionStays=true already preserves world scale.
+        // Do NOT reassign localScale here — it would corrupt the transform.
         transform.SetParent(GameManager.Instance.worldRoot, true);
-        transform.localScale = worldScale;
 
         _dragIndicator = new GameObject("CableDragIndicator");
         SpriteRenderer sr = _dragIndicator.AddComponent<SpriteRenderer>();
