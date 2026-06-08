@@ -20,12 +20,15 @@
  *      Rufus Download           — index 2
  *        ├─ Download link button    → DownloadRufus()
  *        └─ Back button             → GoTo(0)
- *      BrowserSearchedRufus     — index 3  ← NEW
+ *      BrowserSearchedRufus     — index 3
  *        ├─ Back button             → GoTo(0)   (returns to Desktop)
  *        └─ Link button             → GoTo(2)   (opens Rufus Download)
+ *      ISODownloadPanel         — index 4
+ *        ├─ Download link button    → DownloadISO()
+ *        └─ Back button             → GoTo(0)
  *
- *    Only Desktop starts active. Deactivate Browser, Rufus Download,
- *    and BrowserSearchedRufus. Rufus Set Up also starts inactive.
+ *    Only Desktop starts active. Deactivate all others.
+ *    Rufus Set Up also starts inactive.
  *
  *    NAMING TIP: the BrowserApp button on the Desktop and the Browser
  *    panel are different objects — give them distinct names (e.g.
@@ -44,12 +47,15 @@
  *      panels[0]              → Desktop
  *      panels[1]              → Browser
  *      panels[2]              → Rufus Download
- *      panels[3]              → BrowserSearchedRufus       ← NEW
+ *      panels[3]              → BrowserSearchedRufus
+ *      panels[4]              → ISODownloadPanel
  *      browserPanel           → Browser            (same object as panels[1])
  *      searchField            → Search InputField (TMP) on the Browser panel
- *      searchKeyword          → "rufus" (default; case-insensitive, trimmed)
+ *      searchKeyword          → "rufus"            (case-insensitive, trimmed)
+ *      isoSearchKeyword       → "iso windows 10"  (case-insensitive, trimmed)
  *      downloadPanelIndex     → 2
- *      searchResultsPanelIndex→ 3                          ← NEW
+ *      searchResultsPanelIndex→ 3
+ *      isoDownloadPanelIndex  → 4
  *      searchNoResults        → optional "no results" object (leave empty to skip)
  *      rufusSetupPanel        → Rufus Set Up       (direct child of Desktop)
  *      rufusAppButton         → the RufusApp Button on Desktop
@@ -58,10 +64,12 @@
  *    BrowserApp button on Desktop          → GoTo(1)
  *    Search InputField (On Submit)         → SubmitSearch()   ← fires on Enter
  *    Back button on Browser                → GoTo(0)
- *    Back button on BrowserSearchedRufus   → GoTo(0)          ← NEW
- *    Link button on BrowserSearchedRufus   → GoTo(2)          ← NEW
+ *    Back button on BrowserSearchedRufus   → GoTo(0)
+ *    Link button on BrowserSearchedRufus   → GoTo(2)
  *    Download button on Rufus Download     → DownloadRufus()
  *    Back button on Rufus Download         → GoTo(0)
+ *    Download button on ISODownloadPanel   → DownloadISO()
+ *    Back button on ISODownloadPanel       → GoTo(0)
  *    RufusApp button on Desktop            → OpenRufus()
  *    Close/X button in Rufus Set Up        → CloseRufus()
  *
@@ -92,7 +100,7 @@ using UnityEngine.UI;
 
 public class T2MonitorNavigator : MonoBehaviour
 {
-    [Tooltip("Top-level navigation panels (Desktop=0, Browser=1, Download=2). Do NOT include Rufus Set Up here.")]
+    [Tooltip("Top-level navigation panels: Desktop=0, Browser=1, RufusDownload=2, BrowserSearchedRufus=3, ISODownload=4. Do NOT include Rufus Set Up here.")]
     [SerializeField] private GameObject[] panels;
 
     [Header("Task Tracking")]
@@ -106,8 +114,12 @@ public class T2MonitorNavigator : MonoBehaviour
     [SerializeField] private string searchKeyword = "rufus";
     [Tooltip("Index in 'panels' of the Rufus Download page.")]
     [SerializeField] private int downloadPanelIndex = 2;
-    [Tooltip("Index in 'panels' of the BrowserSearchedRufus results page (shown after a successful search, before download).")]
+    [Tooltip("Index in 'panels' of the BrowserSearchedRufus results page.")]
     [SerializeField] private int searchResultsPanelIndex = 3;
+    [Tooltip("Keyword that navigates to the ISO Download panel (case-insensitive, trimmed).")]
+    [SerializeField] private string isoSearchKeyword = "iso windows 10";
+    [Tooltip("Index in 'panels' of the ISO Download page.")]
+    [SerializeField] private int isoDownloadPanelIndex = 4;
     [Tooltip("Optional object shown when the search query does not match (e.g. a 'No results' label). Leave empty to skip.")]
     [SerializeField] private GameObject searchNoResults;
 
@@ -160,25 +172,36 @@ public class T2MonitorNavigator : MonoBehaviour
         Debug.Log($"[T2MonitorNavigator] Navigated to panel {panelIndex}: {shown.name}");
     }
 
-    // Called by the Search InputField's On Submit (Enter key) — also works
-    // wired to a search Button. Navigates to the download page on a match.
+    // Called by the Search InputField's On Submit (Enter key).
     public void SubmitSearch()
     {
         if (searchField == null) return;
 
         string query = searchField.text != null ? searchField.text.Trim() : string.Empty;
-        bool match = string.Equals(query, searchKeyword, StringComparison.OrdinalIgnoreCase);
 
-        if (match)
+        if (string.Equals(query, searchKeyword, StringComparison.OrdinalIgnoreCase))
         {
             if (searchNoResults != null) searchNoResults.SetActive(false);
             GoTo(searchResultsPanelIndex);
         }
+        else if (string.Equals(query, isoSearchKeyword, StringComparison.OrdinalIgnoreCase))
+        {
+            if (searchNoResults != null) searchNoResults.SetActive(false);
+            GoTo(isoDownloadPanelIndex);
+        }
         else
         {
             if (searchNoResults != null) searchNoResults.SetActive(true);
-            Debug.Log($"[T2MonitorNavigator] Search '{query}' did not match '{searchKeyword}'.");
+            Debug.Log($"[T2MonitorNavigator] Search '{query}' did not match any keyword.");
         }
+    }
+
+    // Called by the Download button on the ISO Download panel.
+    // Gate validation (ISO select step) will be added later.
+    public void DownloadISO()
+    {
+        GoTo(0);
+        Debug.Log("[T2MonitorNavigator] ISO downloaded — returning to Desktop.");
     }
 
     // Called by the Download button on the Rufus Download panel.
