@@ -8,21 +8,24 @@
  *  STEP 2 — Panel hierarchy (inside the monitor detail Canvas)
  *
  *    Detail root (Canvas content)
- *      Desktop          — index 0, shown first on open
- *        ├─ BrowserApp button   → GoTo(1)
- *        ├─ RufusApp button     → OpenRufus()   (starts greyed out)
- *        └─ Rufus Set Up        — DIRECT child of Desktop, starts INACTIVE
- *             └─ close button   → CloseRufus()
- *      Browser          — index 1
- *        ├─ Search InputField (TMP)  → On Submit → SubmitSearch()
+ *      Desktop                  — index 0, shown first on open
+ *        ├─ BrowserApp button       → GoTo(1)
+ *        ├─ RufusApp button         → OpenRufus()   (starts greyed out)
+ *        └─ Rufus Set Up            — DIRECT child of Desktop, starts INACTIVE
+ *             └─ close button       → CloseRufus()
+ *      Browser                  — index 1
+ *        ├─ Search InputField (TMP) → On Submit → SubmitSearch()
  *        ├─ (optional) "No results" object → assign to searchNoResults
- *        └─ Back button → GoTo(0)
- *      Rufus Download   — index 2
- *        ├─ Download link button → DownloadRufus()
- *        └─ Back button → GoTo(0)
+ *        └─ Back button             → GoTo(0)
+ *      Rufus Download           — index 2
+ *        ├─ Download link button    → DownloadRufus()
+ *        └─ Back button             → GoTo(0)
+ *      BrowserSearchedRufus     — index 3  ← NEW
+ *        ├─ Back button             → GoTo(0)   (returns to Desktop)
+ *        └─ Link button             → GoTo(2)   (opens Rufus Download)
  *
- *    Only Desktop starts active. Deactivate Browser and Rufus Download.
- *    Rufus Set Up also starts inactive.
+ *    Only Desktop starts active. Deactivate Browser, Rufus Download,
+ *    and BrowserSearchedRufus. Rufus Set Up also starts inactive.
  *
  *    NAMING TIP: the BrowserApp button on the Desktop and the Browser
  *    panel are different objects — give them distinct names (e.g.
@@ -38,25 +41,29 @@
  *
  *  STEP 3 — Wire the inspector
  *    T2MonitorNavigator:
- *      panels[0]        → Desktop
- *      panels[1]        → Browser
- *      panels[2]        → Rufus Download
- *      browserPanel     → Browser            (same object as panels[1])
- *      searchField      → Search InputField (TMP) on the Browser panel
- *      searchKeyword    → "rufus" (default; case-insensitive, trimmed)
- *      downloadPanelIndex → 2
- *      searchNoResults  → optional "no results" object (leave empty to skip)
- *      rufusSetupPanel  → Rufus Set Up       (direct child of Desktop)
- *      rufusAppButton   → the RufusApp Button on Desktop
+ *      panels[0]              → Desktop
+ *      panels[1]              → Browser
+ *      panels[2]              → Rufus Download
+ *      panels[3]              → BrowserSearchedRufus       ← NEW
+ *      browserPanel           → Browser            (same object as panels[1])
+ *      searchField            → Search InputField (TMP) on the Browser panel
+ *      searchKeyword          → "rufus" (default; case-insensitive, trimmed)
+ *      downloadPanelIndex     → 2
+ *      searchResultsPanelIndex→ 3                          ← NEW
+ *      searchNoResults        → optional "no results" object (leave empty to skip)
+ *      rufusSetupPanel        → Rufus Set Up       (direct child of Desktop)
+ *      rufusAppButton         → the RufusApp Button on Desktop
  *
  *  STEP 4 — Wire buttons / events
- *    BrowserApp button on Desktop   → GoTo(1)
- *    Search InputField (On Submit)  → SubmitSearch()   ← fires on Enter
- *    Back button on Browser         → GoTo(0)
- *    Download button on Download    → DownloadRufus()
- *    Back button on Rufus Download  → GoTo(0)
- *    RufusApp button on Desktop     → OpenRufus()
- *    Close/X button in Rufus Set Up → CloseRufus()
+ *    BrowserApp button on Desktop          → GoTo(1)
+ *    Search InputField (On Submit)         → SubmitSearch()   ← fires on Enter
+ *    Back button on Browser                → GoTo(0)
+ *    Back button on BrowserSearchedRufus   → GoTo(0)          ← NEW
+ *    Link button on BrowserSearchedRufus   → GoTo(2)          ← NEW
+ *    Download button on Rufus Download     → DownloadRufus()
+ *    Back button on Rufus Download         → GoTo(0)
+ *    RufusApp button on Desktop            → OpenRufus()
+ *    Close/X button in Rufus Set Up        → CloseRufus()
  *
  *    NOTE on the search: SubmitSearch() reads the InputField directly, so
  *    it works wired to the InputField's "On Submit (String)" (Enter key)
@@ -99,6 +106,8 @@ public class T2MonitorNavigator : MonoBehaviour
     [SerializeField] private string searchKeyword = "rufus";
     [Tooltip("Index in 'panels' of the Rufus Download page.")]
     [SerializeField] private int downloadPanelIndex = 2;
+    [Tooltip("Index in 'panels' of the BrowserSearchedRufus results page (shown after a successful search, before download).")]
+    [SerializeField] private int searchResultsPanelIndex = 3;
     [Tooltip("Optional object shown when the search query does not match (e.g. a 'No results' label). Leave empty to skip.")]
     [SerializeField] private GameObject searchNoResults;
 
@@ -163,7 +172,7 @@ public class T2MonitorNavigator : MonoBehaviour
         if (match)
         {
             if (searchNoResults != null) searchNoResults.SetActive(false);
-            GoTo(downloadPanelIndex);
+            GoTo(searchResultsPanelIndex);
         }
         else
         {
