@@ -252,6 +252,10 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         transform.SetParent(port.transform, true);
         transform.localPosition = Vector3.zero;
 
+        // Force the physics engine to sync with the new transform position.
+        // Without this, a Rigidbody2D's collider can lag behind and break click detection.
+        Physics2D.SyncTransforms();
+
         // Update cache so SnapBack always uses the correct port-relative values.
         _installedLocalPos   = Vector3.zero;
         _installedLocalScale = transform.localScale;
@@ -299,8 +303,21 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
     private bool IsMouseOver()
     {
         Vector2 mouseWorld = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
-        foreach (Collider2D col in GetComponents<Collider2D>())
+
+        foreach (Collider2D col in GetComponentsInChildren<Collider2D>())
+        {
+            if (!col.enabled) continue;
+            // Skip colliders with a near-zero size — they can never be clicked.
+            if (col is BoxCollider2D box && (box.size.x < 0.01f || box.size.y < 0.01f)) continue;
             if (col.OverlapPoint(mouseWorld)) return true;
+        }
+
+        // Fallback: use the SpriteRenderer world bounds so a misconfigured collider
+        // doesn't silently break hold-to-detach.
+        SpriteRenderer sr = GetComponent<SpriteRenderer>();
+        if (sr != null)
+            return sr.bounds.Contains(new Vector3(mouseWorld.x, mouseWorld.y, sr.bounds.center.z));
+
         return false;
     }
 }
