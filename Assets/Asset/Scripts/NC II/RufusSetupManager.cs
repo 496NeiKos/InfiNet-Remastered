@@ -163,13 +163,20 @@ public class RufusSetupManager : MonoBehaviour
         if (deviceDropdown == null) return;
         deviceDropdown.ClearOptions();
 
-        bool pluggedIn = usbPort != null && usbPort.IsInstalled;
         deviceDropdown.AddOptions(new System.Collections.Generic.List<string>
         {
-            pluggedIn ? "Kingston DataTraveler 32GB (E:)" : "(No device detected)"
+            IsUsbPhysicallyInstalled() ? "Kingston DataTraveler 32GB (E:)" : "(No device detected)"
         });
         deviceDropdown.value = 0;
         deviceDropdown.RefreshShownValue();
+    }
+
+    // Checks whether a CableBehavior is physically a child of the USB port transform.
+    // CablePort.IsInstalled can't be trusted here — it defaults to true before
+    // CablePort.Awake() runs (the port lives in an initially-inactive hierarchy).
+    private bool IsUsbPhysicallyInstalled()
+    {
+        return usbPort != null && usbPort.GetComponentInChildren<CableBehavior>() != null;
     }
 
     // ----------------------------------------------------------------
@@ -369,7 +376,7 @@ public class RufusSetupManager : MonoBehaviour
 
     private bool Validate(out string hint)
     {
-        if (usbPort == null || !usbPort.IsInstalled)
+        if (!IsUsbPhysicallyInstalled())
         {
             hint = "Plug a USB flash drive into the front USB port first.";
             return false;
