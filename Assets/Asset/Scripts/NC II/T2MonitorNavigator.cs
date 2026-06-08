@@ -48,13 +48,9 @@
  *    IMPORTANT:
  *      - Rufus Set Up is NOT in the panels array. It is toggled
  *        independently by OpenRufus() / CloseRufus().
- *      - The RufusApp button GameObject must be ACTIVE in the scene.
- *        The script hides it (alpha=0, interactable=false) until Rufus is
- *        downloaded — do NOT leave the GameObject itself inactive, or
- *        it can never be toggled back on.
- *      - Add a CanvasGroup component to the RufusApp button GameObject,
- *        then wire it to rufusAppCanvasGroup in the Inspector. The script
- *        fades it in when Rufus is downloaded.
+ *      - The RufusApp button can start ACTIVE or INACTIVE in the scene —
+ *        the script calls SetActive(false) on Start() and SetActive(true)
+ *        when Rufus is downloaded. No CanvasGroup needed.
  *
  *  STEP 3 — Wire the inspector
  *    T2MonitorNavigator:
@@ -75,7 +71,6 @@
  *      searchNoResults        → optional "no results" object (leave empty to skip)
  *      rufusSetupPanel        → Rufus Set Up       (direct child of Desktop)
  *      rufusAppButton         → the RufusApp Button on Desktop
- *      rufusAppCanvasGroup    → CanvasGroup on the RufusApp Button (controls opacity)
  *
  *  STEP 4 — Wire buttons / events
  *    BrowserApp button on Desktop          → GoTo(1)
@@ -151,8 +146,6 @@ public class T2MonitorNavigator : MonoBehaviour
     [Header("Rufus App")]
     [SerializeField] private GameObject rufusSetupPanel;
     [SerializeField] private Button rufusAppButton;
-    [Tooltip("CanvasGroup on the RufusApp button — controls alpha (hidden until Rufus is downloaded).")]
-    [SerializeField] private CanvasGroup rufusAppCanvasGroup;
 
     [Header("Download Pop-ups")]
     [Tooltip("Popup shown when the Rufus download link is clicked. Starts inactive.")]
@@ -172,13 +165,12 @@ public class T2MonitorNavigator : MonoBehaviour
         SetRufusAppState(false);
     }
 
-    // Sets the Rufus app button's visibility and interactability together.
+    // Shows or hides the Rufus app icon. Navigator holds a reference so it
+    // can reactivate the button even when the GameObject is inactive.
     private void SetRufusAppState(bool visible)
     {
         if (rufusAppButton != null)
-            rufusAppButton.interactable = visible;
-        if (rufusAppCanvasGroup != null)
-            rufusAppCanvasGroup.alpha = visible ? 1f : 0f;
+            rufusAppButton.gameObject.SetActive(visible);
     }
 
     // Called when the monitor detail canvas opens.
