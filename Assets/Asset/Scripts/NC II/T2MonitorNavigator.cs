@@ -160,6 +160,20 @@ public class T2MonitorNavigator : MonoBehaviour
     public bool RufusOpened { get; private set; }
     public bool IsRufusComplete { get; private set; }
 
+    // Called when the monitor detail canvas opens.
+    // Resets transient UI (popups, search, active panel) but preserves milestone
+    // flags and the Rufus app button state so progress survives canvas close/reopen.
+    public void Open()
+    {
+        if (rufusSetupPanel != null) rufusSetupPanel.SetActive(false);
+        if (searchField != null)     searchField.text = string.Empty;
+        if (searchNoResults != null) searchNoResults.SetActive(false);
+        if (rufusPopUp != null)      rufusPopUp.SetActive(false);
+        if (isoPopUp != null)        isoPopUp.SetActive(false);
+        GoTo(0);
+    }
+
+    // Hard reset — only call this when resetting the whole topic from scratch.
     public void ResetToDefault()
     {
         BrowserOpened = false;
@@ -167,25 +181,10 @@ public class T2MonitorNavigator : MonoBehaviour
         RufusOpened = false;
         IsRufusComplete = false;
 
-        if (rufusSetupPanel != null)
-            rufusSetupPanel.SetActive(false);
-
         if (rufusAppButton != null)
             rufusAppButton.interactable = false;
 
-        if (searchField != null)
-            searchField.text = string.Empty;
-
-        if (searchNoResults != null)
-            searchNoResults.SetActive(false);
-
-        if (rufusPopUp != null)
-            rufusPopUp.SetActive(false);
-
-        if (isoPopUp != null)
-            isoPopUp.SetActive(false);
-
-        GoTo(0);
+        Open();
     }
 
     public void GoTo(int panelIndex)

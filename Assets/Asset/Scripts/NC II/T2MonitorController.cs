@@ -60,7 +60,7 @@ public class T2MonitorController : MonoBehaviour, IHardwareController
     public void ShowDetailAtCenter()
     {
         monitorDetailRoot?.SetActive(true);
-        navigator?.ResetToDefault();
+        navigator?.Open();
     }
 
     public void HideDetail()
