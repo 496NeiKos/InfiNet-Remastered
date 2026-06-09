@@ -10,11 +10,11 @@
  *  STEP 2 — Create task text GameObjects (5 tasks)
  *    - Create 5 child TextMeshPro GameObjects for the task labels.
  *      Suggested text:
- *        Task 0: "Open the web browser"
- *        Task 1: "Download Rufus"
- *        Task 2: "Open Rufus"
- *        Task 3: "Download the Windows 10 ISO"
- *        Task 4: "Finish the Rufus setup"
+ *        Task 0: "Install the flash drive to the USB port"
+ *        Task 1: "Click Chrome to open the web browser"
+ *        Task 2: "Download Rufus and the Windows 10 ISO"
+ *        Task 3: "Open Rufus from the desktop"
+ *        Task 4: "Configure Rufus to create a bootable flash drive"
  *    - Place them under a layout parent (taskParent) with a
  *      Vertical Layout Group so completed tasks slide up.
  *    - Create a separate off-screen parent (finishedParent) where
@@ -24,20 +24,20 @@
  *    T2TaskListManager:
  *      taskParent       → the layout parent holding active tasks
  *      finishedParent   → the off-screen parent for completed tasks
- *      taskObjects[0]   → "Open browser" TMP text GameObject
- *      taskObjects[1]   → "Download Rufus" TMP text GameObject
- *      taskObjects[2]   → "Open Rufus" TMP text GameObject
- *      taskObjects[3]   → "Download ISO" TMP text GameObject
- *      taskObjects[4]   → "Finish Rufus setup" TMP text GameObject
- *      usbPort          → CablePort on the USB port (reserved, not used by any active condition)
+ *      taskObjects[0]   → "Install flash drive" TMP text GameObject
+ *      taskObjects[1]   → "Open browser" TMP text GameObject
+ *      taskObjects[2]   → "Download Rufus and ISO" TMP text GameObject
+ *      taskObjects[3]   → "Open Rufus" TMP text GameObject
+ *      taskObjects[4]   → "Configure Rufus" TMP text GameObject
+ *      usbPort          → CablePort on the USB port of T2SystemUnitFront
  *      monitorNavigator → T2MonitorNavigator on the T2 Monitor GameObject
  *
  *  TASK CONDITIONS
- *    Task 0 — open browser    : navigator.BrowserOpened
- *    Task 1 — download rufus  : navigator.IsRufusDownloaded
- *    Task 2 — open rufus      : navigator.RufusOpened
- *    Task 3 — download ISO    : navigator.IsIsoDownloaded
- *    Task 4 — finish setup    : navigator.IsRufusComplete
+ *    Task 0 — install flash drive : usbPort.IsInstalled
+ *    Task 1 — open browser        : navigator.BrowserOpened  (BrowserApp button → GoTo(1))
+ *    Task 2 — download both       : navigator.IsRufusDownloaded && navigator.IsIsoDownloaded
+ *    Task 3 — open rufus          : navigator.RufusOpened    (RufusApp button on Desktop)
+ *    Task 4 — configure rufus     : navigator.IsRufusComplete
  *
  *  When all 5 tasks complete, TopicManager.MarkTopicComplete(1) is called
  *  automatically — this unlocks Topic 3 (UEFI Configuration).
@@ -92,35 +92,39 @@ public class T2TaskListManager : MonoBehaviour
 
         _tasks = new List<TaskEntry>
         {
-            // Task 1 — open the web browser
+            // Task 1 — install flash drive to USB port.
+            // CablePort._isInstalled can't be trusted here: T2SystemUnitFront starts
+            // inactive so CablePort.Awake() (which sets _isInstalled = !startEmpty) may
+            // never have run. Instead check whether a CableBehavior is a child of the
+            // port — InstallToPort() reparents it there, so this is always accurate.
             new TaskEntry
             {
                 taskObject = taskObjects[0],
                 originalIndex = 0,
-                condition = () => monitorNavigator != null && monitorNavigator.BrowserOpened
+                condition = () => usbPort != null && usbPort.GetComponentInChildren<CableBehavior>(true) != null
             },
-            // Task 2 — download Rufus (Rufus app becomes enabled on the desktop)
+            // Task 2 — click Chrome to open the browser
             new TaskEntry
             {
                 taskObject = taskObjects[1],
                 originalIndex = 1,
-                condition = () => monitorNavigator != null && monitorNavigator.IsRufusDownloaded
+                condition = () => monitorNavigator != null && monitorNavigator.BrowserOpened
             },
-            // Task 3 — open Rufus
+            // Task 3 — download both Rufus and the Windows 10 ISO
             new TaskEntry
             {
                 taskObject = taskObjects[2],
                 originalIndex = 2,
-                condition = () => monitorNavigator != null && monitorNavigator.RufusOpened
+                condition = () => monitorNavigator != null && monitorNavigator.IsRufusDownloaded && monitorNavigator.IsIsoDownloaded
             },
-            // Task 4 — download the Windows 10 ISO
+            // Task 4 — open Rufus from the desktop
             new TaskEntry
             {
                 taskObject = taskObjects[3],
                 originalIndex = 3,
-                condition = () => monitorNavigator != null && monitorNavigator.IsIsoDownloaded
+                condition = () => monitorNavigator != null && monitorNavigator.RufusOpened
             },
-            // Task 5 — finish the Rufus setup (formatting completes successfully)
+            // Task 5 — configure Rufus to create a bootable flash drive
             new TaskEntry
             {
                 taskObject = taskObjects[4],
@@ -139,7 +143,14 @@ public class T2TaskListManager : MonoBehaviour
         }
 
         RefreshWindow();
+        EvaluateConditions();
     }
+
+    // Only re-evaluate on re-enable (tab switch back to Topic 2).
+    // _tasks is null until Start() runs, so we skip the very first activation where
+    // other components' Awake() may not have fired yet and CablePort._isInstalled
+    // would still be true (its field initializer) before Awake sets it to !startEmpty.
+    private void OnEnable() { if (_tasks != null) EvaluateConditions(); }
 
     public static void CheckConditions()
     {

@@ -104,10 +104,10 @@
  *    sets IsRufusComplete; hook it into Task 4 later when the step is final.
  *
  *  TASK CONDITIONS (read by T2TaskListManager):
- *    Task 1 (open browser)   → BrowserOpened
- *    Task 2 (download rufus) → IsRufusDownloaded
- *    Task 3 (open rufus)     → RufusOpened
- *    Task 4 (finish setup)   → tentative, not active yet
+ *    Task 2 (open browser)          → BrowserOpened         (BrowserApp button → GoTo(1))
+ *    Task 3 (download rufus + ISO)  → IsRufusDownloaded && IsIsoDownloaded
+ *    Task 4 (open rufus)            → RufusOpened           (RufusApp button → OpenRufus())
+ *    Task 5 (configure rufus)       → IsRufusComplete       (MarkRufusComplete())
  * ================================================================
  */
 
