@@ -52,11 +52,16 @@
  */
 
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class UEFINavigator : MonoBehaviour
 {
     [Tooltip("Tab content panels in order: Main=0, Advanced=1, Boot=2, Security=3, Exit=4.")]
     [SerializeField] private GameObject[] tabPanels;
+
+    [Header("Save Confirmation")]
+    [Tooltip("Child popup shown when the player presses F10. Assign UEFISaveConfirmationPopup child of UEFIPanel.")]
+    [SerializeField] private UEFISaveConfirmationPopup saveConfirmPopup;
 
     // Milestone flags — latch true once reached (tasks don't revert).
     public bool UEFIOpened          { get; private set; }
@@ -64,7 +69,37 @@ public class UEFINavigator : MonoBehaviour
     public bool BootOrderConfigured { get; private set; }
     public bool SavedAndExited      { get; private set; }
 
-    // Called by T3MonitorController when the canvas is shown.
+    // Set true when the player presses F10 → Save Changes.
+    public bool BootStateSaved { get; private set; }
+
+    // Injected by T3MonitorController.Start() — used to gate the F10 listener.
+    private GameObject _uefiPanel;
+
+    public void SetUEFIPanel(GameObject panel) => _uefiPanel = panel;
+
+    private void Update()
+    {
+        // Only listen for F10 while the UEFI panel itself is visible.
+        if (_uefiPanel == null || !_uefiPanel.activeSelf) return;
+        if (Keyboard.current == null || !Keyboard.current.f10Key.wasPressedThisFrame) return;
+
+        // Don't open the save popup while an option selection popup is already open.
+        if (UEFIOptionPopup.Instance != null && UEFIOptionPopup.Instance.gameObject.activeSelf) return;
+
+        // Don't open the save popup again while it is already showing.
+        if (saveConfirmPopup != null && saveConfirmPopup.IsVisible) return;
+
+        if (saveConfirmPopup == null)
+        {
+            Debug.LogWarning("[UEFINavigator] F10 pressed but saveConfirmPopup is not assigned.");
+            return;
+        }
+
+        saveConfirmPopup.Show();
+        Debug.Log("[UEFINavigator] F10 detected — save confirmation opened.");
+    }
+
+    // Called by T3MonitorController when the UEFI panel is shown.
     public void Open()
     {
         GoToTab(0);
@@ -77,6 +112,20 @@ public class UEFINavigator : MonoBehaviour
         }
     }
 
+    // Called by T3MonitorController when the canvas is hidden (ESC or after save).
+    public void Close()
+    {
+        saveConfirmPopup?.gameObject.SetActive(false);
+    }
+
+    // Called by UEFISaveConfirmationPopup.SaveChanges().
+    public void CommitSave()
+    {
+        BootStateSaved = true;
+        T3TaskListManager.CheckConditions();
+        Debug.Log("[UEFINavigator] Boot state saved via F10.");
+    }
+
     // Hard reset — only call this when resetting the whole topic from scratch.
     public void ResetToDefault()
     {
@@ -84,6 +133,7 @@ public class UEFINavigator : MonoBehaviour
         BootTabVisited      = false;
         BootOrderConfigured = false;
         SavedAndExited      = false;
+        BootStateSaved      = false;
 
         GoToTab(0);
     }

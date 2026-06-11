@@ -60,6 +60,10 @@ public class T3TaskListManager : MonoBehaviour
 
     [Header("Condition References")]
     [SerializeField] private UEFINavigator uefiNavigator;
+    [SerializeField] private UEFIBootStateValidator bootStateValidator;
+
+    [Tooltip("How many tasks (from index 0) must complete to mark Topic 3 done. Task 3 is reserved for Windows Setup.")]
+    [SerializeField] private int requiredTaskCount = 3;
 
     private class TaskEntry
     {
@@ -96,28 +100,26 @@ public class T3TaskListManager : MonoBehaviour
                 originalIndex = 0,
                 condition     = () => uefiNavigator != null && uefiNavigator.UEFIOpened
             },
-            // Task 2 — navigate to the Boot tab
+            // Task 2 — configure all required UEFI settings correctly
             new TaskEntry
             {
                 taskObject    = taskObjects[1],
                 originalIndex = 1,
-                condition     = () => uefiNavigator != null && uefiNavigator.BootTabVisited
+                condition     = () => bootStateValidator != null && bootStateValidator.AllCorrect()
             },
-            // Task 3 — configure the boot order
-            // Wire UEFINavigator.SetBootOrderConfigured() to a button in Panel_Boot.
+            // Task 3 — save the UEFI boot state via F10
             new TaskEntry
             {
                 taskObject    = taskObjects[2],
                 originalIndex = 2,
-                condition     = () => uefiNavigator != null && uefiNavigator.BootOrderConfigured
+                condition     = () => uefiNavigator != null && uefiNavigator.BootStateSaved
             },
-            // Task 4 — save and exit UEFI
-            // Wire UEFINavigator.SaveAndExit() to the Save & Exit button in Panel_Exit.
+            // Task 4 — placeholder for Windows Setup (future)
             new TaskEntry
             {
                 taskObject    = taskObjects[3],
                 originalIndex = 3,
-                condition     = () => uefiNavigator != null && uefiNavigator.SavedAndExited
+                condition     = () => false
             }
         };
 
@@ -179,10 +181,11 @@ public class T3TaskListManager : MonoBehaviour
         task.taskObject.SetActive(false);
         RefreshWindow();
 
-        if (_tasks.All(t => t.isCompleted))
+        int required = Mathf.Clamp(requiredTaskCount, 1, _tasks.Count);
+        if (_tasks.Take(required).All(t => t.isCompleted))
         {
             TopicManager.Instance?.MarkTopicComplete(2);
-            Debug.Log("[T3TaskListManager] All tasks complete — Topic 3 marked complete.");
+            Debug.Log("[T3TaskListManager] Required tasks complete — Topic 3 marked complete.");
             yield break;
         }
 

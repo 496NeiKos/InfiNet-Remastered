@@ -57,18 +57,42 @@ public class UEFISettingButton : MonoBehaviour
     [Tooltip("Index into options[] that is active on scene load.")]
     [SerializeField] private int defaultIndex = 0;
 
-    public string CurrentValue { get; private set; }
+    [Header("Dynamic USB Option (Boot Priority field only)")]
+    [Tooltip("If assigned and IsInstalled, appends usbDeviceLabel as a second option.")]
+    [SerializeField] private CablePort usbPort;
+    [Tooltip("Label added when USB device is installed, e.g. \"UEFI: Kingston USB\".")]
+    [SerializeField] private string usbDeviceLabel = "UEFI: Kingston USB";
+
+    // Backing field so the getter can lazy-initialize before Start() runs.
+    // UEFIPanel starts inactive, so Start() is deferred until the panel is first opened.
+    // The validator reads CurrentValue on inactive buttons — lazy init ensures the default
+    // value is returned correctly without requiring the player to open UEFI first.
+    private string _currentValue;
+    private bool _valueInitialized;
+
+    public string CurrentValue
+    {
+        get
+        {
+            if (!_valueInitialized) InitFromDefault();
+            return _currentValue;
+        }
+    }
+
+    private void InitFromDefault()
+    {
+        _valueInitialized = true;
+        _currentValue = (options != null && options.Length > 0)
+            ? options[Mathf.Clamp(defaultIndex, 0, options.Length - 1)]
+            : string.Empty;
+    }
 
     private TMP_Text _label;
 
     private void Start()
     {
         _label = GetComponentInChildren<TMP_Text>();
-
-        CurrentValue = (options != null && options.Length > 0)
-            ? options[Mathf.Clamp(defaultIndex, 0, options.Length - 1)]
-            : string.Empty;
-
+        if (!_valueInitialized) InitFromDefault();
         UpdateLabel();
     }
 
@@ -90,12 +114,25 @@ public class UEFISettingButton : MonoBehaviour
             return;
         }
 
-        popup.Show(settingLabel, options, OnValueSelected);
+        popup.Show(settingLabel, BuildLiveOptions(), OnValueSelected);
+    }
+
+    // Returns the static options list, extended with the USB device label if the port is installed.
+    private string[] BuildLiveOptions()
+    {
+        if (usbPort == null || !usbPort.IsInstalled)
+            return options;
+
+        var list = new System.Collections.Generic.List<string>(options);
+        if (!list.Contains(usbDeviceLabel))
+            list.Add(usbDeviceLabel);
+        return list.ToArray();
     }
 
     private void OnValueSelected(string value)
     {
-        CurrentValue = value;
+        _valueInitialized = true;
+        _currentValue = value;
         UpdateLabel();
         T3TaskListManager.CheckConditions();
         Debug.Log($"[UEFISettingButton] {settingLabel} set to: {value}");

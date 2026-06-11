@@ -12,9 +12,14 @@
  *  STEP 2 — Wire the inspector
  *    T3MonitorInteraction:
  *      monitorController → T3MonitorController on this same GameObject
+ *      systemUnit        → T3SystemUnitController on the T3 System Unit
+ *                          (right-click is blocked while unit is OFF)
  *
  *  HOW IT WORKS
- *    Right-click UEFI Monitor → UEFICanvas enables (no reparenting).
+ *    Right-click UEFI Monitor (only when system unit is ON)
+ *      → UEFICanvas enables (no reparenting).
+ *    If UEFI was never entered → LoadingPanel shown first.
+ *    If UEFI was already entered → UEFI panel shown directly.
  *    Escape → canvas closes. Uses the same GameManager.OpenEditorInPlace
  *    path as T2Monitor so the Escape key and IsEditorOpen flag work
  *    identically.
@@ -27,6 +32,7 @@ using UnityEngine.InputSystem;
 public class T3MonitorInteraction : MonoBehaviour, IInPlaceInteraction
 {
     [SerializeField] private T3MonitorController monitorController;
+    [SerializeField] private T3SystemUnitController systemUnit;
 
     private void Start()
     {
@@ -38,6 +44,7 @@ public class T3MonitorInteraction : MonoBehaviour, IInPlaceInteraction
     {
         if (!Mouse.current.rightButton.wasPressedThisFrame) return;
         if (GameManager.Instance != null && GameManager.Instance.IsEditorOpen) return;
+        if (systemUnit != null && !systemUnit.IsPoweredOn) return;
         if (!IsMouseOver()) return;
 
         GameManager.Instance.OpenEditorInPlace(this);
