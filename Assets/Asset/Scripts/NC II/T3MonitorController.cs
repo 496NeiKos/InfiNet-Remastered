@@ -53,10 +53,12 @@
  *    T3MonitorController:
  *      uefiCanvasRoot    → UEFICanvas child GameObject
  *      loadingPanel      → LoadingPanel child inside UEFICanvas
+ *      uefiLoadingPanel  → UEFILoadingPanel component on LoadingPanel
  *      uefiPanel         → UEFIPanel wrapper child inside UEFICanvas
  *      windowsSetupPanel → WindowsSetupPanel child inside UEFICanvas
  *      navigator         → UEFINavigator on this same root GameObject
  *      systemUnit        → T3SystemUnitController on the T3 System Unit
+ *      windows10Manager  → Windows10Manager on Windows10Panel (child of WindowsSetupPanel)
  *
  *  HOW IT WORKS — Panel state machine (resets on every power cycle)
  *
@@ -77,10 +79,18 @@
  *    State: WindowsSetup
  *      Right-click (after ESC) → shows WindowsSetupPanel directly.
  *
+ *    State: Windows10
+ *      Entered after Windows Setup wizard completes AND W10 password is set up.
+ *      Right-click → LoadingPanel plays again → ProceedToWindowsSetup detects
+ *      W10_PasswordSet == 1 → skips wizard, calls ProceedToWindows10Panel.
+ *      Shutdown button → ResetToLoading() → state = Loading → canvas closed.
+ *
  *    Power cycle (OFF → ON):
  *      _panelState resets to Loading; UEFILoadingPanel.ResetState() resets its timer.
  *      navigator.BootStateSaved is NOT cleared — it persists so the next timeout
  *      validation can succeed without pressing F10 again.
+ *      If W10_PasswordSet == 1, the Loading timeout routes to Windows10Panel instead
+ *      of the setup wizard.
  * ================================================================
  */
 
@@ -88,15 +98,20 @@ using UnityEngine;
 
 public class T3MonitorController : MonoBehaviour
 {
-    private enum PanelState { Loading, UEFI, WindowsSetup }
+    private enum PanelState { Loading, UEFI, WindowsSetup, Windows10 }
 
     [Header("References")]
     [SerializeField] private GameObject uefiCanvasRoot;
     [SerializeField] private GameObject loadingPanel;
+    [SerializeField] private UEFILoadingPanel uefiLoadingPanel;
     [SerializeField] private GameObject uefiPanel;
     [SerializeField] private GameObject windowsSetupPanel;
     [SerializeField] private UEFINavigator navigator;
     [SerializeField] private T3SystemUnitController systemUnit;
+
+    [Header("Windows10")]
+    [Tooltip("Windows10Manager component on the Windows10Panel GameObject (child of WindowsSetupPanel).")]
+    [SerializeField] private Windows10Manager windows10Manager;
 
     private PanelState _panelState = PanelState.Loading;
     private WindowsSetupNavigator _windowsSetupNavigator;
@@ -154,6 +169,11 @@ public class T3MonitorController : MonoBehaviour
             case PanelState.WindowsSetup:
                 windowsSetupPanel?.SetActive(true);
                 break;
+            // After Shutdown the state becomes Loading (via ResetToLoading), so
+            // the next right-click always plays LoadingPanel → then routes to Windows10Panel.
+            case PanelState.Windows10:
+                loadingPanel?.SetActive(true);
+                break;
         }
     }
 
@@ -187,10 +207,42 @@ public class T3MonitorController : MonoBehaviour
     // Called by UEFILoadingPanel.TransitionToTimedOut() when boot conditions pass.
     public void ProceedToWindowsSetup()
     {
+        // If the user has already completed Windows Setup and set a password,
+        // skip the entire setup wizard and go straight to the Windows10 login screen.
+        if (windows10Manager != null && windows10Manager.IsPasswordSetUp)
+        {
+            ProceedToWindows10Panel();
+            return;
+        }
+
         _panelState = PanelState.WindowsSetup;
         loadingPanel?.SetActive(false);
-        _windowsSetupNavigator?.ResetToStart(); // always opens at the beginning
+        _windowsSetupNavigator?.ResetToStart();
         windowsSetupPanel?.SetActive(true);
         Debug.Log("[T3MonitorController] Boot validated — proceeding to Windows Setup.");
+    }
+
+    // Called by ProceedToWindowsSetup (skip path) after Windows Setup has been completed once.
+    // Also available for direct calls if needed.
+    public void ProceedToWindows10Panel()
+    {
+        _panelState = PanelState.Windows10;
+        loadingPanel?.SetActive(false);
+        windowsSetupPanel?.SetActive(true);
+        windows10Manager?.InitWindows10Panel();
+        Debug.Log("[T3MonitorController] Windows10Panel — password login.");
+    }
+
+    // Called by Windows10Manager.OnShutdown() to reset the boot cycle.
+    // The next right-click will play LoadingPanel again, then route to Windows10Panel.
+    public void ResetToLoading()
+    {
+        _panelState = PanelState.Loading;
+
+        // UEFILoadingPanel stays in TimedOut after a successful boot, so we must
+        // explicitly reset it here — otherwise its Update() bails immediately next open.
+        uefiLoadingPanel?.ResetState();
+
+        Debug.Log("[T3MonitorController] Reset to Loading state (Shutdown).");
     }
 }

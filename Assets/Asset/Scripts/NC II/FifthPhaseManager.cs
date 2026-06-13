@@ -64,6 +64,7 @@
  *    noInternetPanel          → FithPhase > NoInternetPanel
  *    privacySettingPanel      → FithPhase > PrivacySetting
  *    windows10Panel           → WindowsSetupPanel > Windows10Panel
+ *    windows10Manager         → Windows10Panel (Windows10Manager component)
  *
  *  Option Containers (script finds all Button children automatically)
  *    regionOptionContainer          → Region > RegionOption              (Transform)
@@ -113,6 +114,9 @@ public class FifthPhaseManager : MonoBehaviour
     [SerializeField] private GameObject noInternetPanel;
     [SerializeField] private GameObject privacySettingPanel;
     [SerializeField] private GameObject windows10Panel;
+
+    [Header("Windows10")]
+    [SerializeField] private Windows10Manager windows10Manager;
 
     // ----------------------------------------------------------------
     //  Option containers — children are auto-wired on Start
@@ -371,9 +375,18 @@ public class FifthPhaseManager : MonoBehaviour
     // Wired to: PrivacySetting > Footer > Accept button > OnClick
     public void OnAcceptPrivacy()
     {
-        // Hide the whole FithPhase and reveal Windows10Panel
         gameObject.SetActive(false);
         windows10Panel?.SetActive(true);
+
+        // Resolve manager via inspector ref first, then fall back to GetComponent
+        var mgr = windows10Manager;
+        if (mgr == null && windows10Panel != null)
+            mgr = windows10Panel.GetComponent<Windows10Manager>();
+
+        if (mgr != null)
+            mgr.InitWindows10Panel();
+        else
+            Debug.LogError("[FifthPhaseManager] Windows10Manager not found — assign it in the Inspector or place it on Windows10Panel.");
 
         Debug.Log("[FifthPhaseManager] Privacy accepted → Windows10Panel");
     }
