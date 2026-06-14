@@ -222,10 +222,53 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
         Vector3 worldPos = Camera.main.ScreenToWorldPoint(
             new Vector3(eventData.position.x, eventData.position.y, 10f));
         worldPos.z = 0f;
+        worldPos = ClampToWorkspace(worldPos);
         transform.position = worldPos;
 
         if (_dragIndicator != null)
             _dragIndicator.transform.position = worldPos;
+    }
+
+    // Clamps a world-space drag position so the object's collider stays inside workspaceArea.
+    // The workspace rect is re-sampled every call so it responds to panel resize and camera pan/zoom.
+    private Vector3 ClampToWorkspace(Vector3 worldPos)
+    {
+        if (workspaceArea == null) return worldPos;
+
+        // Convert workspace UI corners to screen space, then to the same world depth as dragged objects.
+        Vector3[] corners = new Vector3[4];
+        workspaceArea.GetWorldCorners(corners);
+        Camera uiCam = workspaceArea.GetComponentInParent<Canvas>()?.worldCamera;
+
+        Vector2 screenBL = RectTransformUtility.WorldToScreenPoint(uiCam, corners[0]);
+        Vector2 screenTR = RectTransformUtility.WorldToScreenPoint(uiCam, corners[2]);
+
+        Vector3 wBL = Camera.main.ScreenToWorldPoint(new Vector3(screenBL.x, screenBL.y, 10f));
+        Vector3 wTR = Camera.main.ScreenToWorldPoint(new Vector3(screenTR.x, screenTR.y, 10f));
+
+        // Use the object's active collider half-size so the edge of the object, not the pivot, stops at the boundary.
+        Vector2 ext = GetActiveColliderExtents();
+
+        return new Vector3(
+            Mathf.Clamp(worldPos.x, wBL.x + ext.x, wTR.x - ext.x),
+            Mathf.Clamp(worldPos.y, wBL.y + ext.y, wTR.y - ext.y),
+            0f);
+    }
+
+    // workspaceProxy's collider is active while the object is in the world container
+    // (root collider is disabled to avoid double-hits — see Update).
+    private Vector2 GetActiveColliderExtents()
+    {
+        Collider2D col = workspaceProxy != null
+            ? workspaceProxy.GetComponent<Collider2D>()
+            : null;
+        if (col == null) col = GetComponent<Collider2D>();
+        if (col != null) return new Vector2(col.bounds.extents.x, col.bounds.extents.y);
+
+        SpriteRenderer sr = GetComponentInChildren<SpriteRenderer>();
+        if (sr != null) return new Vector2(sr.bounds.extents.x, sr.bounds.extents.y);
+
+        return Vector2.zero;
     }
 
     public void OnEndDrag(PointerEventData eventData)
