@@ -1,51 +1,61 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
 /// <summary>
-/// Zoom controller for the COC I workspace camera.
+/// Zoom and pan controller for the COC I workspace camera.
 ///
-/// Two modes:
-///   Scroll wheel  — zooms in/out while the mouse is over the workspace panel.
-///   AutoFit()     — called by SimPanelLayoutManager after a panel toggle animation
-///                   completes; computes the orthographic size needed to keep every
-///                   placed object visible inside the current workspace viewport and
-///                   animates to it.
+/// Scroll wheel  — zooms in/out while the mouse is over the workspace panel.
+///                 Camera position is NOT changed; only orthographic size.
+///
+/// Left-click drag on blank space — pans the camera (moves the view).
+///                 Detected by Physics2D.Raycast: if no 3D collider is under the cursor
+///                 the press is treated as a pan, otherwise DragPrefab handles it.
+///
+/// AutoFit()     — called by SimPanelLayoutManager after each panel toggle animation.
+///                 Computes the ortho size that keeps every placed object visible inside
+///                 the new workspace viewport AND centers the camera on their centroid.
+///                 No hard clamp on ortho size so all objects are always reachable.
 ///
 /// SCENE SETUP
-///   1. Attach this script to the same SimPanelManager GameObject (or any persistent GO).
-///   2. workspaceCamera — the Camera that renders the 3D hardware objects.
-///   3. workspaceRect   — the RectTransform of the Workspace UI panel (same reference
-///                        already used by SimPanelLayoutManager).
+///   Attach to the SimPanelManager GameObject (or any persistent GO).
+///   workspaceCamera — Camera that renders the 3D hardware objects.
+///   workspaceRect   — Workspace RectTransform (same ref used by SimPanelLayoutManager).
 /// </summary>
 public class WorkspaceZoomController : MonoBehaviour
 {
     public static WorkspaceZoomController Instance { get; private set; }
 
     [Header("References")]
-    [Tooltip("The Camera that renders the 3D hardware objects in the workspace.")]
+    [Tooltip("Camera that renders the 3D hardware objects in the workspace.")]
     [SerializeField] private Camera workspaceCamera;
-    [Tooltip("RectTransform of the Workspace UI panel – used to determine which " +
-             "fraction of the screen the workspace occupies.")]
+    [Tooltip("RectTransform of the Workspace UI panel.")]
     [SerializeField] private RectTransform workspaceRect;
 
     [Header("Scroll Zoom")]
     [Tooltip("Orthographic size change per scroll unit.")]
     [SerializeField] private float scrollStep = 0.3f;
     [SerializeField] private float minOrthoSize = 1f;
-    [SerializeField] private float maxOrthoSize = 14f;
+    [SerializeField] private float maxOrthoSize = 30f;
 
     [Header("Auto-Fit")]
-    [Tooltip("Multiplier applied to the bounding box before fitting – adds breathing room.")]
+    [Tooltip("Scale multiplier applied to the bounding box — adds breathing room around objects.")]
     [SerializeField] private float autoFitPadding = 1.25f;
 
     [Header("Animation")]
     [SerializeField] private float animDuration = 0.25f;
 
     private float _defaultOrthoSize;
-    private float _targetOrthoSize;
-    private Coroutine _zoomAnim;
+    private Vector3 _defaultCameraPos;
+    private float   _targetOrthoSize;
+
+    private Coroutine _animCoroutine;
+
+    // Pan state
+    private bool    _isPanning;
+    private Vector2 _panLastScreenPos;
 
     private void Awake()
     {
@@ -57,8 +67,9 @@ public class WorkspaceZoomController : MonoBehaviour
     {
         if (workspaceCamera != null)
         {
-            _defaultOrthoSize = workspaceCamera.orthographicSize;
-            _targetOrthoSize  = _defaultOrthoSize;
+            _defaultOrthoSize  = workspaceCamera.orthographicSize;
+            _defaultCameraPos  = workspaceCamera.transform.position;
+            _targetOrthoSize   = _defaultOrthoSize;
         }
     }
 
@@ -67,24 +78,89 @@ public class WorkspaceZoomController : MonoBehaviour
         if (workspaceCamera == null || workspaceRect == null) return;
         if (Mouse.current == null) return;
 
+        HandleScroll();
+        HandlePan();
+    }
+
+    // ── Scroll zoom ───────────────────────────────────────────────────────────────────────────
+
+    private void HandleScroll()
+    {
         float scroll = Mouse.current.scroll.ReadValue().y;
         if (scroll == 0f) return;
 
-        // Only respond when the mouse is actually over the workspace panel
         Vector2 mousePos = Mouse.current.position.ReadValue();
         if (!RectTransformUtility.RectangleContainsScreenPoint(workspaceRect, mousePos, GetUICamera()))
             return;
 
         float next = Mathf.Clamp(_targetOrthoSize - scroll * scrollStep, minOrthoSize, maxOrthoSize);
-        ZoomTo(next);
+        // Scroll only changes zoom; camera position stays where it is.
+        SmoothZoom(next, workspaceCamera.transform.position);
     }
 
-    // ── Called by SimPanelLayoutManager at the end of every panel toggle animation ─────────
+    // ── Workspace pan ─────────────────────────────────────────────────────────────────────────
+
+    private void HandlePan()
+    {
+        if (GameManager.Instance != null && GameManager.Instance.IsEditorOpen) return;
+
+        Vector2 mousePos = Mouse.current.position.ReadValue();
+
+        if (!_isPanning)
+        {
+            if (!Mouse.current.leftButton.wasPressedThisFrame) return;
+            if (!RectTransformUtility.RectangleContainsScreenPoint(workspaceRect, mousePos, GetUICamera())) return;
+
+            // If pointer is over a UI element (buttons, etc.) skip pan
+            if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) return;
+
+            // If cursor is over a 3D physics object, let DragPrefab handle it
+            Vector2 worldPos = workspaceCamera.ScreenToWorldPoint(new Vector3(mousePos.x, mousePos.y, 0f));
+            if (Physics2D.Raycast(worldPos, Vector2.zero).collider != null) return;
+
+            // Blank space — start pan; stop any running zoom/fit animation
+            if (_animCoroutine != null)
+            {
+                StopCoroutine(_animCoroutine);
+                _animCoroutine = null;
+                // Snap target to current so next ZoomTo reads the right value
+                _targetOrthoSize = workspaceCamera.orthographicSize;
+            }
+
+            _isPanning = true;
+            _panLastScreenPos = mousePos;
+        }
+        else
+        {
+            if (!Mouse.current.leftButton.isPressed)
+            {
+                _isPanning = false;
+                return;
+            }
+
+            Vector2 delta = mousePos - _panLastScreenPos;
+            _panLastScreenPos = mousePos;
+
+            if (delta.sqrMagnitude < 0.001f) return;
+
+            // Convert screen-pixel delta to world-unit camera shift.
+            // Dragging right (delta.x > 0) should make objects appear to move right,
+            // so the camera must move left (subtract delta).
+            float aspect = (float)Screen.width / Screen.height;
+            float wpu_x  = 2f * workspaceCamera.orthographicSize * aspect / Screen.width;
+            float wpu_y  = 2f * workspaceCamera.orthographicSize          / Screen.height;
+
+            Vector3 shift = new Vector3(-delta.x * wpu_x, -delta.y * wpu_y, 0f);
+            workspaceCamera.transform.position += shift;
+        }
+    }
+
+    // ── Auto-fit (called by SimPanelLayoutManager) ────────────────────────────────────────────
 
     /// <summary>
-    /// Computes the smallest orthographic size that keeps every placed object visible
-    /// inside the current workspace viewport, then animates to it.
-    /// Falls back to the default size if no objects are placed.
+    /// Zooms to fit every placed object inside the current workspace viewport and
+    /// centers the camera on their bounding-box centroid. No hard upper clamp on
+    /// ortho size so all objects are guaranteed to be visible.
     /// </summary>
     public void AutoFit()
     {
@@ -94,81 +170,75 @@ public class WorkspaceZoomController : MonoBehaviour
 
         if (objectBounds.Count == 0)
         {
-            ZoomTo(_defaultOrthoSize);
+            SmoothZoom(_defaultOrthoSize, _defaultCameraPos);
             return;
         }
 
-        // Combine all object bounds into one world-space AABB
+        // Merge all object bounds into one world-space AABB
         Bounds total = objectBounds[0];
         for (int i = 1; i < objectBounds.Count; i++)
             total.Encapsulate(objectBounds[i]);
 
-        // Get workspace panel screen-pixel dimensions
+        // Workspace size in screen pixels
         GetWorkspaceScreenSize(out float wsScreenW, out float wsScreenH);
         if (wsScreenW <= 0f || wsScreenH <= 0f) return;
 
-        float screenW = Screen.width;
-        float screenH = Screen.height;
-        float aspect  = screenW / screenH;
+        float aspect  = (float)Screen.width / Screen.height;
+        float wsFracW = wsScreenW / Screen.width;
+        float wsFracH = wsScreenH / Screen.height;
 
-        // Fractions of the full screen that the workspace occupies
-        float wsFracW = wsScreenW / screenW;
-        float wsFracH = wsScreenH / screenH;
-
-        // The camera's orthographic size (s) controls how many world units fit on screen:
-        //   full-screen world height = 2s
-        //   full-screen world width  = 2s * aspect
-        // Through the workspace viewport:
-        //   workspace world height   = 2s * wsFracH
-        //   workspace world width    = 2s * aspect * wsFracW
-        //
-        // We need both padded dimensions of the bounding box to fit, so:
-        //   s >= (total.size.y * padding) / (2 * wsFracH)          [height constraint]
-        //   s >= (total.size.x * padding) / (2 * aspect * wsFracW) [width  constraint]
-
+        // Camera ortho size s → visible through workspace:
+        //   world height = 2s * wsFracH,  world width = 2s * aspect * wsFracW
+        // Solve for s so padded bounds fit:
         float paddedH = total.size.y * autoFitPadding;
         float paddedW = total.size.x * autoFitPadding;
 
-        float sizeForHeight = paddedH / (2f * wsFracH);
-        float sizeForWidth  = paddedW / (2f * aspect * wsFracW);
+        float sizeForH = paddedH / (2f * wsFracH);
+        float sizeForW = paddedW / (2f * aspect * wsFracW);
 
-        float target = Mathf.Max(sizeForHeight, sizeForWidth);
-        target = Mathf.Clamp(target, minOrthoSize, maxOrthoSize);
+        // No clamp to maxOrthoSize here — must show all objects regardless
+        float targetSize = Mathf.Max(sizeForH, sizeForW, minOrthoSize);
 
-        ZoomTo(target);
+        // Center the camera on the objects
+        Vector3 targetCamPos = new Vector3(
+            total.center.x,
+            total.center.y,
+            workspaceCamera.transform.position.z);
+
+        SmoothZoom(targetSize, targetCamPos);
     }
 
-    // ── Internals ────────────────────────────────────────────────────────────────────────────
+    // ── Internals ─────────────────────────────────────────────────────────────────────────────
 
-    private void ZoomTo(float target)
+    private void SmoothZoom(float targetSize, Vector3 targetCamPos)
     {
-        _targetOrthoSize = target;
-        if (_zoomAnim != null) StopCoroutine(_zoomAnim);
-        _zoomAnim = StartCoroutine(AnimateZoom(target));
+        _targetOrthoSize = targetSize;
+        if (_animCoroutine != null) StopCoroutine(_animCoroutine);
+        _animCoroutine = StartCoroutine(Animate(targetSize, targetCamPos));
     }
 
-    private IEnumerator AnimateZoom(float target)
+    private IEnumerator Animate(float targetSize, Vector3 targetCamPos)
     {
-        float start   = workspaceCamera.orthographicSize;
-        float elapsed = 0f;
+        float   startSize   = workspaceCamera.orthographicSize;
+        Vector3 startCamPos = workspaceCamera.transform.position;
+        float   elapsed     = 0f;
 
         while (elapsed < animDuration)
         {
             elapsed += Time.unscaledDeltaTime;
             float t = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(elapsed / animDuration));
-            workspaceCamera.orthographicSize = Mathf.LerpUnclamped(start, target, t);
+
+            workspaceCamera.orthographicSize    = Mathf.LerpUnclamped(startSize,   targetSize,   t);
+            workspaceCamera.transform.position  = Vector3.LerpUnclamped(startCamPos, targetCamPos, t);
+
             yield return null;
         }
 
-        workspaceCamera.orthographicSize = target;
-        _zoomAnim = null;
+        workspaceCamera.orthographicSize   = targetSize;
+        workspaceCamera.transform.position = targetCamPos;
+        _animCoroutine = null;
     }
 
-    /// <summary>
-    /// Collects the world-space Bounds of every active child of ActiveWorldContainer.
-    /// Uses SpriteRenderer bounds if available, otherwise falls back to a minimal
-    /// point-bounds at the object's position.
-    /// </summary>
     private static List<Bounds> CollectPlacedObjectBounds()
     {
         var result = new List<Bounds>();
@@ -181,8 +251,8 @@ public class WorkspaceZoomController : MonoBehaviour
         {
             if (!child.gameObject.activeInHierarchy) continue;
 
-            Bounds b = new Bounds(child.position, Vector3.zero);
-            bool found = false;
+            Bounds b     = new Bounds(child.position, Vector3.zero);
+            bool   found = false;
 
             foreach (SpriteRenderer sr in child.GetComponentsInChildren<SpriteRenderer>())
             {
@@ -191,8 +261,7 @@ public class WorkspaceZoomController : MonoBehaviour
                 else          b.Encapsulate(sr.bounds);
             }
 
-            if (!found)
-                b = new Bounds(child.position, Vector3.one * 0.5f);
+            if (!found) b = new Bounds(child.position, Vector3.one * 0.5f);
 
             result.Add(b);
         }
@@ -200,11 +269,6 @@ public class WorkspaceZoomController : MonoBehaviour
         return result;
     }
 
-    /// <summary>
-    /// Returns the workspace panel's current size in screen pixels.
-    /// Works correctly for Screen Space – Camera canvases by projecting
-    /// GetWorldCorners() through the UI camera.
-    /// </summary>
     private void GetWorkspaceScreenSize(out float width, out float height)
     {
         Vector3[] corners = new Vector3[4];
