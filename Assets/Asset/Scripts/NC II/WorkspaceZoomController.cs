@@ -1,7 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
 /// <summary>
@@ -110,9 +109,6 @@ public class WorkspaceZoomController : MonoBehaviour
         {
             if (!Mouse.current.leftButton.wasPressedThisFrame) return;
             if (!RectTransformUtility.RectangleContainsScreenPoint(workspaceRect, mousePos, GetUICamera())) return;
-
-            // If pointer is over a UI element (buttons, etc.) skip pan
-            if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) return;
 
             // If cursor is over a 3D physics object, let DragPrefab handle it
             Vector2 worldPos = workspaceCamera.ScreenToWorldPoint(new Vector3(mousePos.x, mousePos.y, 0f));
