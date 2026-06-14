@@ -84,7 +84,7 @@ public class WorkspaceZoomController : MonoBehaviour
             return;
 
         float next = Mathf.Clamp(_targetOrthoSize - scroll * scrollStep, minOrthoSize, maxOrthoSize);
-        // Scroll only changes zoom; camera position stays where it is.
+        next = ClampOrthoSizeForObjects(next);
         SmoothZoom(next, workspaceCamera.transform.position);
     }
 
@@ -141,6 +141,86 @@ public class WorkspaceZoomController : MonoBehaviour
 
             workspaceCamera.transform.position += new Vector3(-screenDelta.x * wpu_x, -screenDelta.y * wpu_y, 0f);
         }
+    }
+
+    /// <summary>
+    /// Returns the minimum orthographic size that keeps every placed object's collider
+    /// inside the workspace boundary at the current camera position.
+    ///
+    /// Math: at ortho size s, PPU = Screen.height / (2*s).
+    /// An object at world dx from camera maps to screen x = scx + dx * PPU.
+    /// Right-edge constraint:  scx + (dx + ex) * PPU ≤ wsR
+    ///   → s ≥ Screen.height * (dx + ex) / (2 * (wsR - scx))   [when dx+ex > 0]
+    /// Left-edge constraint:   scx + (dx - ex) * PPU ≥ wsL
+    ///   → s ≥ Screen.height * (ex - dx) / (2 * (scx - wsL))   [when ex-dx > 0]
+    /// Same logic applies on the Y axis.  Taking the max across all objects and sides
+    /// gives the tightest zoom-in limit.
+    /// </summary>
+    private float ClampOrthoSizeForObjects(float targetSize)
+    {
+        if (GameManager.Instance == null) return targetSize;
+        Transform container = GameManager.Instance.ActiveWorldContainer;
+        if (container == null || container.childCount == 0) return targetSize;
+
+        float sf = _canvas != null ? _canvas.scaleFactor : 1f;
+        Vector2 oMin = workspaceRect.offsetMin;
+        Vector2 oMax = workspaceRect.offsetMax;
+        float wsL = oMin.x * sf;
+        float wsB = oMin.y * sf;
+        float wsR = Screen.width  + oMax.x * sf;
+        float wsT = Screen.height + oMax.y * sf;
+
+        // Camera world position maps to the screen centre.
+        float scx = Screen.width  * 0.5f;
+        float scy = Screen.height * 0.5f;
+        Vector3 camPos = workspaceCamera.transform.position;
+
+        float minSize = minOrthoSize;
+
+        foreach (Transform child in container)
+        {
+            if (!child.gameObject.activeInHierarchy) continue;
+
+            // World-space extents from the first enabled collider, fall back to sprite bounds.
+            Vector2 extW = Vector2.zero;
+            foreach (Collider2D col in child.GetComponentsInChildren<Collider2D>())
+            {
+                if (!col.enabled) continue;
+                extW = new Vector2(col.bounds.extents.x, col.bounds.extents.y);
+                break;
+            }
+            if (extW == Vector2.zero)
+            {
+                SpriteRenderer sr = child.GetComponentInChildren<SpriteRenderer>();
+                if (sr != null) extW = new Vector2(sr.bounds.extents.x, sr.bounds.extents.y);
+            }
+
+            float dx = child.position.x - camPos.x;
+            float dy = child.position.y - camPos.y;
+
+            // Right edge
+            float rOff = dx + extW.x;
+            if (rOff > 0f && wsR > scx)
+                minSize = Mathf.Max(minSize, Screen.height * rOff / (2f * (wsR - scx)));
+
+            // Left edge
+            float lOff = extW.x - dx;
+            if (lOff > 0f && scx > wsL)
+                minSize = Mathf.Max(minSize, Screen.height * lOff / (2f * (scx - wsL)));
+
+            // Top edge
+            float tOff = dy + extW.y;
+            if (tOff > 0f && wsT > scy)
+                minSize = Mathf.Max(minSize, Screen.height * tOff / (2f * (wsT - scy)));
+
+            // Bottom edge
+            float bOff = extW.y - dy;
+            if (bOff > 0f && scy > wsB)
+                minSize = Mathf.Max(minSize, Screen.height * bOff / (2f * (scy - wsB)));
+        }
+
+        // minSize is the zoom-in floor; if targetSize is larger (zoom-out) it passes through unchanged.
+        return Mathf.Max(targetSize, minSize);
     }
 
     /// <summary>
