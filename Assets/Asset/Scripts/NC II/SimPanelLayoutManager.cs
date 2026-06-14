@@ -125,27 +125,46 @@ public class SimPanelLayoutManager : MonoBehaviour
 
     private void Start()
     {
-        // Force a canvas layout pass so rect.width/height are valid
+        StartCoroutine(Initialize());
+    }
+
+    private IEnumerator Initialize()
+    {
+        // Wait one frame so the Screen Space Camera canvas has applied its viewport size.
+        // rect.width / rect.height return 0 on the first frame for this canvas mode.
+        yield return new WaitForEndOfFrame();
         Canvas.ForceUpdateCanvases();
 
+        // Capture the expanded offsets for HardwareArea and Workspace
         _hwMinExp = hardwareAreaRect.offsetMin;
         _hwMaxExp = hardwareAreaRect.offsetMax;
-        _hwExpandedWidth = hardwareAreaRect.rect.width;
-
-        if (terminalRect != null)
-            _termExpandedHeight = terminalRect.rect.height;
 
         _wsMinExp = workspaceRect.offsetMin;
         _wsMaxExp = workspaceRect.offsetMax;
 
+        // Derive panel pixel dimensions from offsets + canvas size.
+        // For a full-stretch rect (AnchorMin=0,0 / AnchorMax=1,1):
+        //   width  = canvasW + offsetMax.x - offsetMin.x   (offsetMax.x is ≤ 0)
+        //   height = canvasH + offsetMax.y - offsetMin.y   (offsetMax.y is ≤ 0)
+        // This is reliable at any point in the frame unlike rect.width / rect.height.
+        var canvasRT = hardwareAreaRect.parent as RectTransform;
+        float canvasW = canvasRT != null ? canvasRT.rect.width  : Screen.width;
+        float canvasH = canvasRT != null ? canvasRT.rect.height : Screen.height;
+
+        _hwExpandedWidth = canvasW + _hwMaxExp.x - _hwMinExp.x;
+
+        if (terminalRect != null)
+        {
+            var tMin = terminalRect.offsetMin;
+            var tMax = terminalRect.offsetMax;
+            _termExpandedHeight = canvasH + tMax.y - tMin.y;
+        }
+
         // HW_Toggle is a child of HardwareArea whose pivot shifts during the collapse animation,
-        // which drags the button off-screen. Reparenting it to the Canvas root fixes its
-        // position permanently so it never moves during animation.
+        // dragging the button off-screen. Reparenting it to Canvas root keeps it stationary.
         ReparentToCanvas(hardwareAreaArrow, hardwareAreaRect);
 
-        // All three toggle buttons live inside panels that have root CanvasGroups.
-        // IgnoreParentGroups=true keeps each button visible and clickable even when
-        // its panel's CanvasGroup is set to alpha=0.
+        // Stamp all three toggle buttons so they ignore any parent CanvasGroup going to alpha=0.
         StampIgnoreParentGroup(hardwareAreaArrow);
         StampIgnoreParentGroup(terminalArrow);
         StampIgnoreParentGroup(taskListArrow);
