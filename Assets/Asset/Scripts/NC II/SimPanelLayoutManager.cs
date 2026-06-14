@@ -5,8 +5,8 @@ using UnityEngine.UI;
 /// <summary>
 /// Collapsible tray system for the COC I simulation.
 ///
-/// HardwareArea (left)   - RectTransform is resized; a collapsed strip with toggle stays visible.
-///                         Workspace left edge expands to fill the freed space.
+/// HardwareArea (left)   - RectTransform is resized; collapses to zero width (fully hidden).
+///                         Workspace AND Terminal left edges expand to fill the freed space.
 ///
 /// Terminal (bottom)     - Root CanvasGroup is toggled (entire panel fades out including background).
 ///                         Workspace bottom edge expands downward. Toggle button lives as a Canvas
@@ -15,6 +15,14 @@ using UnityEngine.UI;
 /// TaskListPanel (right) - Root CanvasGroup is toggled. Workspace already extends to the right
 ///                         edge behind it, so no layout change needed. Toggle button is a Canvas
 ///                         sibling as well.
+///
+/// Panel resize rules (what actually changes SIZE, not just position):
+///   HardwareArea OFF  → HardwareArea collapses (width → 0)
+///                     → Workspace left edge moves LEFT  (width grows)
+///                     → Terminal  left edge moves LEFT  (width grows)
+///   Terminal OFF      → Terminal hidden via CanvasGroup (RectTransform unchanged)
+///                     → Workspace bottom edge moves DOWN (height grows)
+///   Both OFF          → All three effects combine.
 ///
 /// Background logic continues running while panels are hidden:
 ///   - ActivityLogManager keeps appending to its string; logText shows the latest on re-open.
@@ -69,7 +77,7 @@ public class SimPanelLayoutManager : MonoBehaviour
     [Header("Panel RectTransforms")]
     [SerializeField] private RectTransform hardwareAreaRect;
     [SerializeField] private RectTransform workspaceRect;
-    [Tooltip("Used only to read the initial height at Start; never resized.")]
+    [Tooltip("Terminal root RectTransform. Resized horizontally when HardwareArea collapses.")]
     [SerializeField] private RectTransform terminalRect;
     [Tooltip("Used only to read the initial width at Start; never resized.")]
     [SerializeField] private RectTransform taskListPanelRect;
@@ -99,13 +107,12 @@ public class SimPanelLayoutManager : MonoBehaviour
     [SerializeField] private RectTransform taskListArrow;
 
     [Header("Settings")]
-    [Tooltip("Width of the HardwareArea strip that remains when collapsed.")]
-    [SerializeField] private float collapsedSize = 35f;
     [SerializeField] private float animDuration = 0.2f;
 
     // Offsets captured at Start (the 'expanded' state)
-    private Vector2 _hwMinExp, _hwMaxExp;
-    private Vector2 _wsMinExp, _wsMaxExp;
+    private Vector2 _hwMinExp,   _hwMaxExp;
+    private Vector2 _termMinExp, _termMaxExp;
+    private Vector2 _wsMinExp,   _wsMaxExp;
 
     // Pixel dimensions captured at Start
     private float _hwExpandedWidth;
@@ -135,12 +142,18 @@ public class SimPanelLayoutManager : MonoBehaviour
         yield return new WaitForEndOfFrame();
         Canvas.ForceUpdateCanvases();
 
-        // Capture the expanded offsets for HardwareArea and Workspace
+        // Capture the expanded offsets for all resizable panels
         _hwMinExp = hardwareAreaRect.offsetMin;
         _hwMaxExp = hardwareAreaRect.offsetMax;
 
         _wsMinExp = workspaceRect.offsetMin;
         _wsMaxExp = workspaceRect.offsetMax;
+
+        if (terminalRect != null)
+        {
+            _termMinExp = terminalRect.offsetMin;
+            _termMaxExp = terminalRect.offsetMax;
+        }
 
         // Derive panel pixel dimensions from offsets + canvas size.
         // For a full-stretch rect (AnchorMin=0,0 / AnchorMax=1,1):
@@ -154,11 +167,7 @@ public class SimPanelLayoutManager : MonoBehaviour
         _hwExpandedWidth = canvasW + _hwMaxExp.x - _hwMinExp.x;
 
         if (terminalRect != null)
-        {
-            var tMin = terminalRect.offsetMin;
-            var tMax = terminalRect.offsetMax;
-            _termExpandedHeight = canvasH + tMax.y - tMin.y;
-        }
+            _termExpandedHeight = canvasH + _termMaxExp.y - _termMinExp.y;
 
         // HW_Toggle is a child of HardwareArea whose pivot shifts during the collapse animation,
         // dragging the button off-screen. Reparenting it to Canvas root keeps it stationary.
@@ -244,43 +253,59 @@ public class SimPanelLayoutManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Calculates the target offsetMin/offsetMax for HardwareArea and Workspace.
-    /// Terminal and TaskListPanel RectTransforms are never touched (they have
-    /// 3D-world children whose world positions are anchored to the pivot, which
-    /// would shift if we changed anchoredPosition).
+    /// Calculates target offsetMin/offsetMax for HardwareArea, Workspace, and Terminal.
+    ///
+    /// HardwareArea OFF → HardwareArea width collapses to zero.
+    ///                  → Workspace  left edge moves LEFT  (width grows to fill freed space).
+    ///                  → Terminal   left edge moves LEFT  (width grows to fill freed space).
+    /// Terminal OFF     → Terminal hidden via CanvasGroup; its RectTransform is NOT resized.
+    ///                  → Workspace  bottom edge moves DOWN (height grows to fill freed space).
     /// </summary>
     private void ComputeTargets(
-        out Vector2 hwMin, out Vector2 hwMax,
-        out Vector2 wsMin, out Vector2 wsMax)
+        out Vector2 hwMin,   out Vector2 hwMax,
+        out Vector2 wsMin,   out Vector2 wsMax,
+        out Vector2 termMin, out Vector2 termMax)
     {
-        // HardwareArea collapses to 0 width (fully hidden); Terminal collapses to 0 height.
-        // collapsedSize is no longer used here — both panels disappear completely.
         float hwDelta   = _hwExpandedWidth;
         float termDelta = _termExpandedHeight;
 
-        // HardwareArea: right edge moves LEFT when collapsed (offsetMax.x decreases)
+        // HardwareArea: right edge moves LEFT when collapsed (shrinks until hidden)
         hwMin = _hwMinExp;
         hwMax = new Vector2(
             _hwMaxExp.x - (_hwCollapsed ? hwDelta : 0f),
             _hwMaxExp.y);
 
-        // Workspace: left edge tracks HardwareArea's right edge;
-        //            bottom edge drops down when Terminal is hidden.
+        // Workspace:
+        //   left edge  → moves LEFT when HW area is hidden  (width  grows leftward)
+        //   bottom edge → moves DOWN when Terminal is hidden (height grows downward)
         wsMin = new Vector2(
             _wsMinExp.x - (_hwCollapsed   ? hwDelta   : 0f),
             _wsMinExp.y - (_termCollapsed ? termDelta : 0f));
         wsMax = _wsMaxExp;
+
+        // Terminal:
+        //   left edge → moves LEFT when HW area is hidden (width grows leftward)
+        //   height stays the same (Terminal is hidden via CanvasGroup, not by resizing)
+        termMin = new Vector2(
+            _termMinExp.x - (_hwCollapsed ? hwDelta : 0f),
+            _termMinExp.y);
+        termMax = _termMaxExp;
     }
 
     private IEnumerator RunAnimation()
     {
-        ComputeTargets(out var hwTMin, out var hwTMax, out var wsTMin, out var wsTMax);
+        ComputeTargets(
+            out var hwTMin, out var hwTMax,
+            out var wsTMin, out var wsTMax,
+            out var termTMin, out var termTMax);
 
         // Snapshot starting values for the lerp
-        var hwSMin = hardwareAreaRect.offsetMin;
-        var hwSMax = hardwareAreaRect.offsetMax;
-        var wsSMin = workspaceRect.offsetMin;
-        var wsSMax = workspaceRect.offsetMax;
+        var hwSMin   = hardwareAreaRect.offsetMin;
+        var hwSMax   = hardwareAreaRect.offsetMax;
+        var wsSMin   = workspaceRect.offsetMin;
+        var wsSMax   = workspaceRect.offsetMax;
+        var termSMin = terminalRect != null ? terminalRect.offsetMin : default;
+        var termSMax = terminalRect != null ? terminalRect.offsetMax : default;
 
         float elapsed = 0f;
         while (elapsed < animDuration)
@@ -294,6 +319,12 @@ public class SimPanelLayoutManager : MonoBehaviour
             workspaceRect.offsetMin    = Vector2.LerpUnclamped(wsSMin, wsTMin, t);
             workspaceRect.offsetMax    = Vector2.LerpUnclamped(wsSMax, wsTMax, t);
 
+            if (terminalRect != null)
+            {
+                terminalRect.offsetMin = Vector2.LerpUnclamped(termSMin, termTMin, t);
+                terminalRect.offsetMax = Vector2.LerpUnclamped(termSMax, termTMax, t);
+            }
+
             yield return null;
         }
 
@@ -302,5 +333,11 @@ public class SimPanelLayoutManager : MonoBehaviour
         hardwareAreaRect.offsetMax = hwTMax;
         workspaceRect.offsetMin    = wsTMin;
         workspaceRect.offsetMax    = wsTMax;
+
+        if (terminalRect != null)
+        {
+            terminalRect.offsetMin = termTMin;
+            terminalRect.offsetMax = termTMax;
+        }
     }
 }
