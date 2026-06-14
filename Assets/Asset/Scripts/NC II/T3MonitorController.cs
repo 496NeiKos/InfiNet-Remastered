@@ -126,6 +126,16 @@ public class T3MonitorController : MonoBehaviour
         if (windowsSetupPanel != null)
             _windowsSetupNavigator = windowsSetupPanel.GetComponent<WindowsSetupNavigator>();
 
+        // Auto-resolve uefiLoadingPanel from loadingPanel if not wired in the Inspector.
+        if (uefiLoadingPanel == null && loadingPanel != null)
+        {
+            uefiLoadingPanel = loadingPanel.GetComponent<UEFILoadingPanel>();
+            if (uefiLoadingPanel != null)
+                Debug.Log("[T3MonitorController] uefiLoadingPanel auto-resolved from loadingPanel.");
+            else
+                Debug.LogError("[T3MonitorController] uefiLoadingPanel is NULL — assign it in the Inspector or add UEFILoadingPanel to LoadingPanel.");
+        }
+
         if (systemUnit != null)
             systemUnit.OnPoweredOn += OnPowerCycle;
 
@@ -155,11 +165,13 @@ public class T3MonitorController : MonoBehaviour
     // ESC only hides the canvas — it does not reset state.
     public void ShowDetailAtCenter()
     {
+        Debug.Log($"[T3MonitorController] ShowDetailAtCenter — _panelState = {_panelState}");
         uefiCanvasRoot?.SetActive(true);
 
         switch (_panelState)
         {
             case PanelState.Loading:
+                Debug.Log($"[T3MonitorController] Activating LoadingPanel — uefiLoadingPanel ref: {(uefiLoadingPanel == null ? "NULL" : "OK")}");
                 loadingPanel?.SetActive(true);
                 break;
             case PanelState.UEFI:
@@ -207,9 +219,10 @@ public class T3MonitorController : MonoBehaviour
     // Called by UEFILoadingPanel.TransitionToTimedOut() when boot conditions pass.
     public void ProceedToWindowsSetup()
     {
-        // If the user has already completed Windows Setup and set a password,
-        // skip the entire setup wizard and go straight to the Windows10 login screen.
-        if (windows10Manager != null && windows10Manager.IsPasswordSetUp)
+        // The Accept button in FifthPhase > PrivacySetting marks the setup as complete.
+        // Once the user has clicked Accept, every subsequent boot skips SetUpInitialize
+        // and SetUpLicenseAgreement and goes straight to the Windows10 login screen.
+        if (FifthPhaseManager.PrivacyAccepted)
         {
             ProceedToWindows10Panel();
             return;
@@ -228,7 +241,13 @@ public class T3MonitorController : MonoBehaviour
     {
         _panelState = PanelState.Windows10;
         loadingPanel?.SetActive(false);
+
+        // Clean up any leftover setup children before showing the panel, so that
+        // SetUpInitialize, SetUpLicenseAgreement, etc. don't bleed through.
+        _windowsSetupNavigator?.PrepareForWindows10();
+
         windowsSetupPanel?.SetActive(true);
+        windows10Manager?.gameObject.SetActive(true); // ensure Windows10Panel itself is visible
         windows10Manager?.InitWindows10Panel();
         Debug.Log("[T3MonitorController] Windows10Panel — password login.");
     }
@@ -237,12 +256,17 @@ public class T3MonitorController : MonoBehaviour
     // The next right-click will play LoadingPanel again, then route to Windows10Panel.
     public void ResetToLoading()
     {
+        Debug.Log($"[T3MonitorController] ResetToLoading — uefiLoadingPanel is {(uefiLoadingPanel == null ? "NULL (not assigned!)" : "assigned")}");
+
         _panelState = PanelState.Loading;
 
         // UEFILoadingPanel stays in TimedOut after a successful boot, so we must
         // explicitly reset it here — otherwise its Update() bails immediately next open.
         uefiLoadingPanel?.ResetState();
 
-        Debug.Log("[T3MonitorController] Reset to Loading state (Shutdown).");
+        // Hide windowsSetupPanel so it doesn't bleed through during the next LoadingPanel phase.
+        windowsSetupPanel?.SetActive(false);
+
+        Debug.Log("[T3MonitorController] Reset to Loading state (Shutdown) — done.");
     }
 }

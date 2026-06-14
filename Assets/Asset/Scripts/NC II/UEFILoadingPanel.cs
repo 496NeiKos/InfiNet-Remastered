@@ -109,15 +109,33 @@ public class UEFILoadingPanel : MonoBehaviour
         bootPopup?.SetActive(false);
     }
 
+    private void OnEnable()
+    {
+        Debug.Log($"[UEFILoadingPanel] OnEnable — _state={_state}, _timer={_timer:F2}s | hintText={(hintText == null ? "NULL" : "OK")} | bootPopup={(bootPopup == null ? "NULL" : "OK")} | monitorController={(monitorController == null ? "NULL" : "OK")} | navigator={(navigator == null ? "NULL" : "OK")}");
+        if (_state == LoadingState.TimedOut)
+            Debug.LogWarning("[UEFILoadingPanel] State is TimedOut on activation — Update() will bail immediately. ResetState() was not called before this open.");
+    }
+
     private void OnDestroy()
     {
         if (systemUnit != null)
             systemUnit.OnPoweredOn -= ResetState;
     }
 
+    private bool _loggedTimedOutBail;
+
     private void Update()
     {
-        if (_state == LoadingState.TimedOut) return;
+        if (_state == LoadingState.TimedOut)
+        {
+            if (!_loggedTimedOutBail)
+            {
+                Debug.LogWarning("[UEFILoadingPanel] Update() bailing — state is TimedOut. LoadingPanel is visible but frozen.");
+                _loggedTimedOutBail = true;
+            }
+            return;
+        }
+        _loggedTimedOutBail = false;
 
         _timer += Time.deltaTime;
 
@@ -148,6 +166,15 @@ public class UEFILoadingPanel : MonoBehaviour
     {
         _state = LoadingState.TimedOut;
         hintText?.SetActive(false);
+
+        // If the OS is already installed, skip all boot validation — the system boots
+        // from the internal drive regardless of USB or UEFI boot settings.
+        if (FifthPhaseManager.PrivacyAccepted)
+        {
+            Debug.Log("[UEFILoadingPanel] OS already installed — bypassing boot validation, proceeding to Windows.");
+            monitorController?.ProceedToWindowsSetup();
+            return;
+        }
 
         // If the player saved a valid boot state via F10, proceed to Windows Setup.
         bool bootReady = navigator != null && navigator.BootStateSaved
@@ -209,14 +236,17 @@ public class UEFILoadingPanel : MonoBehaviour
         return fallbackBootMessage;
     }
 
-    // Called via T3SystemUnitController.OnPoweredOn event (OFF → ON transition).
+    // Called via T3SystemUnitController.OnPoweredOn event (OFF → ON transition)
+    // and directly by T3MonitorController.ResetToLoading() on Shutdown.
     public void ResetState()
     {
+        Debug.Log($"[UEFILoadingPanel] ResetState called — was {_state}, timer was {_timer:F2}s. Resetting to Fresh.");
         _state = LoadingState.Fresh;
         _timer = 0f;
+        _loggedTimedOutBail = false;
         hintText?.SetActive(false);
         bootPopup?.SetActive(false);
-        Debug.Log("[UEFILoadingPanel] State reset to Fresh.");
+        Debug.Log("[UEFILoadingPanel] State reset to Fresh — done.");
     }
 }
 

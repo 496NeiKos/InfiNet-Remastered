@@ -165,6 +165,12 @@ public class FifthPhaseManager : MonoBehaviour
     //  Runtime state
     // ----------------------------------------------------------------
 
+    // Set to true the moment the user clicks Accept on PrivacySetting.
+    // Used by T3MonitorController to skip SetUpInitialize and SetUpLicenseAgreement
+    // on every subsequent boot after the first full setup run.
+    private static bool _privacyAccepted;
+    public static bool PrivacyAccepted => _privacyAccepted;
+
     private Button selectedRegionButton;
     private Button selectedKeyboardButton;
     private bool[] privacyToggles; // true = enabled
@@ -375,6 +381,8 @@ public class FifthPhaseManager : MonoBehaviour
     // Wired to: PrivacySetting > Footer > Accept button > OnClick
     public void OnAcceptPrivacy()
     {
+        _privacyAccepted = true;
+
         gameObject.SetActive(false);
         windows10Panel?.SetActive(true);
 

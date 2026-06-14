@@ -135,6 +135,21 @@ public class WindowsSetupNavigator : MonoBehaviour
     //  Reset — called by T3MonitorController.ProceedToWindowsSetup()
     // ----------------------------------------------------------------
 
+    // Called by T3MonitorController.ProceedToWindows10Panel() on the skip path.
+    // Hides every setup child so only Windows10Panel (managed separately) is visible.
+    public void PrepareForWindows10()
+    {
+        setupInitialize?.SetActive(false);
+        setupLicenseAgreement?.SetActive(false);
+        licenseFirstPhase?.SetActive(false);
+        licenseSecondPhase?.SetActive(false);
+        licenseThirdPhase?.SetActive(false);
+        licenseFourthPhase?.SetActive(false);
+        licenseFifthPhase?.SetActive(false);
+
+        Debug.Log("[WindowsSetupNavigator] Prepared for Windows10 skip path — all setup panels hidden.");
+    }
+
     public void ResetToStart()
     {
         // SetUpInitialize: show, start on FirstPhase
