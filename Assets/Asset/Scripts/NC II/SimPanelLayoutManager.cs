@@ -138,11 +138,27 @@ public class SimPanelLayoutManager : MonoBehaviour
         _wsMinExp = workspaceRect.offsetMin;
         _wsMaxExp = workspaceRect.offsetMax;
 
-        // Terminal_Toggle and TaskList_Toggle are children of their panels, which have root
-        // CanvasGroups. Without IgnoreParentGroups=true the buttons disappear when the panel
-        // is hidden. Stamping it here means the buttons never need to be moved in the scene.
+        // HW_Toggle is a child of HardwareArea whose pivot shifts during the collapse animation,
+        // which drags the button off-screen. Reparenting it to the Canvas root fixes its
+        // position permanently so it never moves during animation.
+        ReparentToCanvas(hardwareAreaArrow, hardwareAreaRect);
+
+        // All three toggle buttons live inside panels that have root CanvasGroups.
+        // IgnoreParentGroups=true keeps each button visible and clickable even when
+        // its panel's CanvasGroup is set to alpha=0.
+        StampIgnoreParentGroup(hardwareAreaArrow);
         StampIgnoreParentGroup(terminalArrow);
         StampIgnoreParentGroup(taskListArrow);
+    }
+
+    // Moves a button to Canvas level (sibling of the panels) while keeping its visual position.
+    // After this the button is no longer a child of the panel and won't move when the panel animates.
+    private static void ReparentToCanvas(RectTransform button, RectTransform anyPanelChild)
+    {
+        if (button == null || anyPanelChild == null) return;
+        var canvasRT = anyPanelChild.parent as RectTransform;
+        if (canvasRT == null || button.parent == canvasRT) return;
+        button.SetParent(canvasRT, worldPositionStays: true);
     }
 
     // Adds (or finds) a CanvasGroup on the given RectTransform's GameObject and marks it
@@ -218,9 +234,10 @@ public class SimPanelLayoutManager : MonoBehaviour
         out Vector2 hwMin, out Vector2 hwMax,
         out Vector2 wsMin, out Vector2 wsMax)
     {
-        // How many pixels each panel shrinks when it collapses
-        float hwDelta   = Mathf.Max(0f, _hwExpandedWidth   - collapsedSize);
-        float termDelta = Mathf.Max(0f, _termExpandedHeight - collapsedSize);
+        // HardwareArea collapses to 0 width (fully hidden); Terminal collapses to 0 height.
+        // collapsedSize is no longer used here — both panels disappear completely.
+        float hwDelta   = _hwExpandedWidth;
+        float termDelta = _termExpandedHeight;
 
         // HardwareArea: right edge moves LEFT when collapsed (offsetMax.x decreases)
         hwMin = _hwMinExp;
