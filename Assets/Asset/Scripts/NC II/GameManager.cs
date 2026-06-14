@@ -45,8 +45,16 @@ public class GameManager : MonoBehaviour
     {
         _activeInPlaceInteraction = interaction;
         IsEditorOpen = true;
+        WorkspaceZoomController.Instance?.EnterDetailPanel();
         interaction.ShowDetail();
         Debug.Log("[GameManager] In-place editor opened.");
+    }
+
+    /// <summary>Re-centers the active editor object inside its detail layer (called after panel resize).</summary>
+    public void RecenterActiveEditor()
+    {
+        if (!IsEditorOpen) return;
+        _activeInteraction?.ShowDetailCentered();
     }
 
     private void Update()
@@ -68,6 +76,7 @@ public class GameManager : MonoBehaviour
 
         _activeInteraction = interaction;
         IsEditorOpen = true;
+        WorkspaceZoomController.Instance?.EnterDetailPanel();
 
         _activeMbdvm = interaction.GetComponent<MotherboardDetailViewManager>();
 
@@ -91,6 +100,7 @@ public class GameManager : MonoBehaviour
             _activeInPlaceInteraction.HideDetail();
             _activeInPlaceInteraction = null;
             IsEditorOpen = false;
+            WorkspaceZoomController.Instance?.ExitDetailPanel();
             Debug.Log("[GameManager] In-place editor closed.");
             return;
         }
@@ -118,6 +128,7 @@ public class GameManager : MonoBehaviour
         }
 
         IsEditorOpen = false;
+        WorkspaceZoomController.Instance?.ExitDetailPanel();
 
         if (_activeInteraction != null)
         {

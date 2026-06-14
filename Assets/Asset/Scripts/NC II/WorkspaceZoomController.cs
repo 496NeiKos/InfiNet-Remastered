@@ -40,8 +40,15 @@ public class WorkspaceZoomController : MonoBehaviour
     [Header("Animation")]
     [SerializeField] private float animDuration = 0.25f;
 
+    private float   _defaultOrthoSize;
+    private Vector3 _defaultCameraPos;
     private float   _targetOrthoSize;
     private Coroutine _animCoroutine;
+
+    // Detail-panel save/restore
+    private float   _savedOrthoSize;
+    private Vector3 _savedCameraPos;
+    private bool    _isInDetailPanel;
 
     // Pan state
     private bool    _isPanning;
@@ -59,7 +66,11 @@ public class WorkspaceZoomController : MonoBehaviour
     private void Start()
     {
         if (workspaceCamera != null)
-            _targetOrthoSize = workspaceCamera.orthographicSize;
+        {
+            _defaultOrthoSize = workspaceCamera.orthographicSize;
+            _defaultCameraPos = workspaceCamera.transform.position;
+            _targetOrthoSize  = _defaultOrthoSize;
+        }
         _canvas = workspaceRect != null ? workspaceRect.GetComponentInParent<Canvas>() : null;
     }
 
@@ -76,6 +87,8 @@ public class WorkspaceZoomController : MonoBehaviour
 
     private void HandleScroll()
     {
+        if (GameManager.Instance != null && GameManager.Instance.IsEditorOpen) return;
+
         float scroll = Mouse.current.scroll.ReadValue().y;
         if (scroll == 0f) return;
 
@@ -346,6 +359,46 @@ public class WorkspaceZoomController : MonoBehaviour
                 child.position = newWorld;
             }
         }
+    }
+
+    // ── Detail-panel zoom save/restore ───────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Called by GameManager when any detail panel opens.
+    /// Saves the current viewport and snaps the camera to its authored default zoom so objects
+    /// always appear at the same size inside the detail panel regardless of workspace zoom level.
+    /// </summary>
+    public void EnterDetailPanel()
+    {
+        if (_isInDetailPanel || workspaceCamera == null) return;
+        _isInDetailPanel = true;
+
+        // Save the user's current viewport
+        _savedOrthoSize = workspaceCamera.orthographicSize;
+        _savedCameraPos = workspaceCamera.transform.position;
+
+        // Stop any running animation and snap to the authored default zoom
+        if (_animCoroutine != null) { StopCoroutine(_animCoroutine); _animCoroutine = null; }
+        workspaceCamera.orthographicSize   = _defaultOrthoSize;
+        workspaceCamera.transform.position = _defaultCameraPos;
+        _targetOrthoSize = _defaultOrthoSize;
+
+        _isPanning = false; // cancel any in-progress pan
+    }
+
+    /// <summary>
+    /// Called by GameManager when the detail panel fully closes.
+    /// Restores the viewport the user had before opening the panel.
+    /// </summary>
+    public void ExitDetailPanel()
+    {
+        if (!_isInDetailPanel || workspaceCamera == null) return;
+        _isInDetailPanel = false;
+
+        if (_animCoroutine != null) { StopCoroutine(_animCoroutine); _animCoroutine = null; }
+        workspaceCamera.orthographicSize   = _savedOrthoSize;
+        workspaceCamera.transform.position = _savedCameraPos;
+        _targetOrthoSize = _savedOrthoSize;
     }
 
     // ── Internals ─────────────────────────────────────────────────────────────────────────────

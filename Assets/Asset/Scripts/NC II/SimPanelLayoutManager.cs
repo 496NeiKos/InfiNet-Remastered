@@ -82,6 +82,11 @@ public class SimPanelLayoutManager : MonoBehaviour
     [Tooltip("Used only to read the initial width at Start; never resized.")]
     [SerializeField] private RectTransform taskListPanelRect;
 
+    [Header("Detail Panel Layers")]
+    [Tooltip("firstLayer, secondLayer, thirdLayer RectTransforms. " +
+             "They mirror the workspace offsetMin/offsetMax so they resize with the workspace.")]
+    [SerializeField] private RectTransform[] detailPanelLayers;
+
     [Header("Content Groups")]
     [Tooltip("CanvasGroup on the ContentGroup CHILD of HardwareArea (not the root). " +
              "Hides icons and buttons; the root background strip stays visible.")]
@@ -325,6 +330,16 @@ public class SimPanelLayoutManager : MonoBehaviour
                 terminalRect.offsetMax = Vector2.LerpUnclamped(termSMax, termTMax, t);
             }
 
+            if (detailPanelLayers != null)
+            {
+                foreach (var layer in detailPanelLayers)
+                {
+                    if (layer == null) continue;
+                    layer.offsetMin = Vector2.LerpUnclamped(wsSMin, wsTMin, t);
+                    layer.offsetMax = Vector2.LerpUnclamped(wsSMax, wsTMax, t);
+                }
+            }
+
             yield return null;
         }
 
@@ -340,7 +355,20 @@ public class SimPanelLayoutManager : MonoBehaviour
             terminalRect.offsetMax = termTMax;
         }
 
+        if (detailPanelLayers != null)
+        {
+            foreach (var layer in detailPanelLayers)
+            {
+                if (layer == null) continue;
+                layer.offsetMin = wsTMin;
+                layer.offsetMax = wsTMax;
+            }
+        }
+
         // After the workspace has its final size, push any objects outside the new boundary to its edge.
         WorkspaceZoomController.Instance?.ClampObjectsToWorkspace();
+
+        // If a detail panel was open during the toggle, recenter the object in its new layer size.
+        GameManager.Instance?.RecenterActiveEditor();
     }
 }
