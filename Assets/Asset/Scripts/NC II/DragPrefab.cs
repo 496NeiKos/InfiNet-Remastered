@@ -8,6 +8,7 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
 
     private RectTransform workspaceArea;
     private RectTransform hardwareArea;
+    private Canvas _workspaceCanvas;
     private Vector3 _originalPos;
     private Transform _originalParent;
     private Vector3 _originalLocalPos;
@@ -21,7 +22,10 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
     private void Start()
     {
         workspaceArea = GameManager.Instance.workspaceArea;
-        hardwareArea = GameManager.Instance.hardwareArea;
+        hardwareArea  = GameManager.Instance.hardwareArea;
+        _workspaceCanvas = workspaceArea != null
+            ? workspaceArea.GetComponentInParent<Canvas>()
+            : null;
     }
 
     private void Update()
@@ -230,23 +234,38 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
     }
 
     // Clamps a world-space drag position so the object's collider stays inside workspaceArea.
-    // The workspace rect is re-sampled every call so it responds to panel resize and camera pan/zoom.
+    // Reads offsetMin/offsetMax directly (same values SimPanelLayoutManager manages) so the
+    // bounds stay correct after panel toggles, camera pan, and zoom — every frame.
     private Vector3 ClampToWorkspace(Vector3 worldPos)
     {
-        if (workspaceArea == null) return worldPos;
+        if (workspaceArea == null || _workspaceCanvas == null) return worldPos;
 
-        // Convert workspace UI corners to screen space, then to the same world depth as dragged objects.
-        Vector3[] corners = new Vector3[4];
-        workspaceArea.GetWorldCorners(corners);
-        Camera uiCam = workspaceArea.GetComponentInParent<Canvas>()?.worldCamera;
+        // Canvas rect dimensions in canvas units (= screen pixels for scaleFactor 1).
+        RectTransform canvasRT = _workspaceCanvas.GetComponent<RectTransform>();
+        float canvasW = canvasRT.rect.width;
+        float canvasH = canvasRT.rect.height;
+        float sf      = _workspaceCanvas.scaleFactor;
 
-        Vector2 screenBL = RectTransformUtility.WorldToScreenPoint(uiCam, corners[0]);
-        Vector2 screenTR = RectTransformUtility.WorldToScreenPoint(uiCam, corners[2]);
+        // Workspace edges in screen pixels.
+        // For a full-stretch rect: edge = anchor * canvasSize + offset.
+        // anchorMin=(0,0), anchorMax=(1,1), so:
+        //   left   = offsetMin.x * sf
+        //   bottom = offsetMin.y * sf
+        //   right  = (canvasW + offsetMax.x) * sf
+        //   top    = (canvasH + offsetMax.y) * sf
+        Vector2 oMin = workspaceArea.offsetMin;
+        Vector2 oMax = workspaceArea.offsetMax;
 
-        Vector3 wBL = Camera.main.ScreenToWorldPoint(new Vector3(screenBL.x, screenBL.y, 10f));
-        Vector3 wTR = Camera.main.ScreenToWorldPoint(new Vector3(screenTR.x, screenTR.y, 10f));
+        float screenL = oMin.x * sf;
+        float screenB = oMin.y * sf;
+        float screenR = (canvasW + oMax.x) * sf;
+        float screenT = (canvasH + oMax.y) * sf;
 
-        // Use the object's active collider half-size so the edge of the object, not the pivot, stops at the boundary.
+        // Convert screen edges to world space at the same depth as dragged objects (z=10 from camera).
+        Vector3 wBL = Camera.main.ScreenToWorldPoint(new Vector3(screenL, screenB, 10f));
+        Vector3 wTR = Camera.main.ScreenToWorldPoint(new Vector3(screenR, screenT, 10f));
+
+        // Shrink bounds by the object's world-space collider extents so the edge stops at the boundary.
         Vector2 ext = GetActiveColliderExtents();
 
         return new Vector3(
