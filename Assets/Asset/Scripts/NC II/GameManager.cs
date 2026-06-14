@@ -33,6 +33,7 @@ public class GameManager : MonoBehaviour
     private PrefabInteraction _activeInteraction;
     private Transform _prefabOriginalParent;
     private Vector3 _prefabOriginalWorldPos;
+    private Vector3 _savedObjectLocalScale;
 
     private MotherboardDetailViewManager _activeMbdvm;
     private GPUPhase1CableInteraction _activeGpuPhase1Panel;
@@ -50,11 +51,20 @@ public class GameManager : MonoBehaviour
         Debug.Log("[GameManager] In-place editor opened.");
     }
 
-    /// <summary>Re-centers the active editor object inside its detail layer (called after panel resize).</summary>
+    /// <summary>
+    /// Moves the active editor object to the workspace centre after a panel toggle resizes the workspace.
+    /// Uses workspaceArea directly — does NOT call ShowDetailCentered so hardware controller
+    /// side-effects (phase changes, cover state, etc.) are not re-triggered.
+    /// </summary>
     public void RecenterActiveEditor()
     {
-        if (!IsEditorOpen) return;
-        _activeInteraction?.ShowDetailCentered();
+        if (!IsEditorOpen || _activeInteraction == null) return;
+        if (workspaceArea == null) return;
+
+        Vector3 wsCenter = workspaceArea.TransformPoint(
+            new Vector3(workspaceArea.rect.center.x, workspaceArea.rect.center.y, 0f));
+        wsCenter.z = 0f;
+        _activeInteraction.transform.position = wsCenter;
     }
 
     private void Update()
@@ -76,7 +86,11 @@ public class GameManager : MonoBehaviour
 
         _activeInteraction = interaction;
         IsEditorOpen = true;
-        WorkspaceZoomController.Instance?.EnterDetailPanel();
+
+        // Save scale NOW, before EnterDetailPanel changes the canvas scale (which would corrupt
+        // worldPositionStays=true reparenting if we saved after).
+        _savedObjectLocalScale = interaction.transform.localScale;
+        WorkspaceZoomController.Instance?.EnterDetailPanel(); // snaps ortho to default BEFORE SetParent
 
         _activeMbdvm = interaction.GetComponent<MotherboardDetailViewManager>();
 
@@ -128,16 +142,22 @@ public class GameManager : MonoBehaviour
         }
 
         IsEditorOpen = false;
-        WorkspaceZoomController.Instance?.ExitDetailPanel();
 
         if (_activeInteraction != null)
         {
+            // Reparent BEFORE ExitDetailPanel so the canvas ortho is still at default when
+            // worldPositionStays=true resolves the new localScale.  Then we override with the
+            // saved pre-enter scale so there is no drift across open/close cycles.
             _activeInteraction.transform.SetParent(_prefabOriginalParent, true);
-            _activeInteraction.transform.position = _prefabOriginalWorldPos;
+            _activeInteraction.transform.position   = _prefabOriginalWorldPos;
+            _activeInteraction.transform.localScale = _savedObjectLocalScale;
 
             _activeInteraction.OnEditorClosed();
             _activeInteraction = null;
         }
+
+        // Restore user's workspace viewport now that the object is no longer in the canvas.
+        WorkspaceZoomController.Instance?.ExitDetailPanel();
 
         _activeMbdvm = null;
         _activeGpuPhase1Panel = null;
