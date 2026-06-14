@@ -238,40 +238,35 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
     // bounds stay correct after panel toggles, camera pan, and zoom — every frame.
     private Vector3 ClampToWorkspace(Vector3 worldPos)
     {
-        if (workspaceArea == null || _workspaceCanvas == null) return worldPos;
+        if (workspaceArea == null || Camera.main == null) return worldPos;
 
-        // Canvas rect dimensions in canvas units (= screen pixels for scaleFactor 1).
-        RectTransform canvasRT = _workspaceCanvas.GetComponent<RectTransform>();
-        float canvasW = canvasRT.rect.width;
-        float canvasH = canvasRT.rect.height;
-        float sf      = _workspaceCanvas.scaleFactor;
+        // Work in screen space: orthographic cameras have uniform pixels-per-unit.
+        Vector2 sp = Camera.main.WorldToScreenPoint(worldPos);
 
         // Workspace edges in screen pixels.
-        // For a full-stretch rect: edge = anchor * canvasSize + offset.
-        // anchorMin=(0,0), anchorMax=(1,1), so:
-        //   left   = offsetMin.x * sf
-        //   bottom = offsetMin.y * sf
-        //   right  = (canvasW + offsetMax.x) * sf
-        //   top    = (canvasH + offsetMax.y) * sf
-        Vector2 oMin = workspaceArea.offsetMin;
-        Vector2 oMax = workspaceArea.offsetMax;
+        // offsetMin/offsetMax are in canvas units; for Constant Pixel Size canvas sf=1
+        // so canvas units == screen pixels. We use Screen.width/Height directly instead
+        // of canvasRT.rect.width because the canvas root stores sizeDelta (0,0) in the
+        // scene file and its rect can read as 0 before the Canvas drives it at runtime.
+        float    sf   = _workspaceCanvas != null ? _workspaceCanvas.scaleFactor : 1f;
+        Vector2  oMin = workspaceArea.offsetMin;
+        Vector2  oMax = workspaceArea.offsetMax;
 
-        float screenL = oMin.x * sf;
-        float screenB = oMin.y * sf;
-        float screenR = (canvasW + oMax.x) * sf;
-        float screenT = (canvasH + oMax.y) * sf;
+        float wsL = oMin.x * sf;
+        float wsB = oMin.y * sf;
+        float wsR = Screen.width  + oMax.x * sf;   // (Screen.width/sf  + oMax.x) * sf
+        float wsT = Screen.height + oMax.y * sf;   // (Screen.height/sf + oMax.y) * sf
 
-        // Convert screen edges to world space at the same depth as dragged objects (z=10 from camera).
-        Vector3 wBL = Camera.main.ScreenToWorldPoint(new Vector3(screenL, screenB, 10f));
-        Vector3 wTR = Camera.main.ScreenToWorldPoint(new Vector3(screenR, screenT, 10f));
-
-        // Shrink bounds by the object's world-space collider extents so the edge stops at the boundary.
+        // Convert object world extents to screen pixels and shrink the clamp boundary.
+        float   ppu = Screen.height / (2f * Camera.main.orthographicSize);
         Vector2 ext = GetActiveColliderExtents();
 
-        return new Vector3(
-            Mathf.Clamp(worldPos.x, wBL.x + ext.x, wTR.x - ext.x),
-            Mathf.Clamp(worldPos.y, wBL.y + ext.y, wTR.y - ext.y),
-            0f);
+        float cx = Mathf.Clamp(sp.x, wsL + ext.x * ppu, wsR - ext.x * ppu);
+        float cy = Mathf.Clamp(sp.y, wsB + ext.y * ppu, wsT - ext.y * ppu);
+
+        Vector3 result = Camera.main.ScreenToWorldPoint(new Vector3(cx, cy, 10f));
+        result.z = 0f;
+        return result;
     }
 
     // workspaceProxy's collider is active while the object is in the world container

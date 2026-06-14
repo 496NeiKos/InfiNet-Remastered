@@ -265,31 +265,26 @@ public class WorkspaceZoomController : MonoBehaviour
         return result;
     }
 
-    // Reads offsetMin/offsetMax directly instead of GetWorldCorners, which is unreliable for
-    // SS-Camera canvases whose root transform has scale (0,0,0) stored in the scene file.
+    // Reads offsetMin/offsetMax + Screen dimensions instead of canvasRT.rect, which returns 0
+    // for SS-Camera canvases whose root stores sizeDelta (0,0) in the scene file.
     private void GetWorkspaceScreenSize(out float width, out float height)
     {
         Canvas canvas = workspaceRect != null
             ? workspaceRect.GetComponentInParent<Canvas>()
             : null;
 
-        if (canvas == null) { width = Screen.width; height = Screen.height; return; }
-
-        RectTransform canvasRT = canvas.GetComponent<RectTransform>();
-        float canvasW = canvasRT.rect.width;
-        float canvasH = canvasRT.rect.height;
-        float sf      = canvas.scaleFactor;
+        float sf = canvas != null ? canvas.scaleFactor : 1f;
 
         Vector2 oMin = workspaceRect.offsetMin;
         Vector2 oMax = workspaceRect.offsetMax;
 
-        float screenL = oMin.x * sf;
-        float screenB = oMin.y * sf;
-        float screenR = (canvasW + oMax.x) * sf;
-        float screenT = (canvasH + oMax.y) * sf;
+        float wsL = oMin.x * sf;
+        float wsB = oMin.y * sf;
+        float wsR = Screen.width  + oMax.x * sf;
+        float wsT = Screen.height + oMax.y * sf;
 
-        width  = Mathf.Abs(screenR - screenL);
-        height = Mathf.Abs(screenT - screenB);
+        width  = Mathf.Max(0f, wsR - wsL);
+        height = Mathf.Max(0f, wsT - wsB);
     }
 
     private Camera GetUICamera()
