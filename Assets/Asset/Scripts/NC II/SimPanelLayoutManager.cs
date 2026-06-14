@@ -340,7 +340,7 @@ public class SimPanelLayoutManager : MonoBehaviour
             terminalRect.offsetMax = termTMax;
         }
 
-        // After the workspace has its final size, auto-fit all placed objects.
-        WorkspaceZoomController.Instance?.AutoFit();
+        // After the workspace has its final size, push any objects outside the new boundary to its edge.
+        WorkspaceZoomController.Instance?.ClampObjectsToWorkspace();
     }
 }

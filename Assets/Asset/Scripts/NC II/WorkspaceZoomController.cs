@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -13,10 +12,9 @@ using UnityEngine.InputSystem;
 ///                 Detected by Physics2D.Raycast: if no 3D collider is under the cursor
 ///                 the press is treated as a pan, otherwise DragPrefab handles it.
 ///
-/// AutoFit()     — called by SimPanelLayoutManager after each panel toggle animation.
-///                 Computes the ortho size that keeps every placed object visible inside
-///                 the new workspace viewport AND centers the camera on their centroid.
-///                 No hard clamp on ortho size so all objects are always reachable.
+/// ClampObjectsToWorkspace() — called by SimPanelLayoutManager after each panel toggle.
+///                 Moves any placed object whose collider falls outside the new workspace
+///                 boundary to the nearest edge. Camera position and zoom are unchanged.
 ///
 /// SCENE SETUP
 ///   Attach to the SimPanelManager GameObject (or any persistent GO).
@@ -39,17 +37,10 @@ public class WorkspaceZoomController : MonoBehaviour
     [SerializeField] private float minOrthoSize = 1f;
     [SerializeField] private float maxOrthoSize = 30f;
 
-    [Header("Auto-Fit")]
-    [Tooltip("Scale multiplier applied to the bounding box — adds breathing room around objects.")]
-    [SerializeField] private float autoFitPadding = 1.25f;
-
     [Header("Animation")]
     [SerializeField] private float animDuration = 0.25f;
 
-    private float _defaultOrthoSize;
-    private Vector3 _defaultCameraPos;
     private float   _targetOrthoSize;
-
     private Coroutine _animCoroutine;
 
     // Pan state
@@ -68,11 +59,7 @@ public class WorkspaceZoomController : MonoBehaviour
     private void Start()
     {
         if (workspaceCamera != null)
-        {
-            _defaultOrthoSize = workspaceCamera.orthographicSize;
-            _defaultCameraPos = workspaceCamera.transform.position;
-            _targetOrthoSize  = _defaultOrthoSize;
-        }
+            _targetOrthoSize = workspaceCamera.orthographicSize;
         _canvas = workspaceRect != null ? workspaceRect.GetComponentInParent<Canvas>() : null;
     }
 
@@ -223,57 +210,62 @@ public class WorkspaceZoomController : MonoBehaviour
             Mathf.Clamp(screenDelta.y, minDy, maxDy));
     }
 
-    // ── Auto-fit (called by SimPanelLayoutManager) ────────────────────────────────────────────
+    // ── Object clamping (called by SimPanelLayoutManager after panel toggle) ─────────────────────
 
     /// <summary>
-    /// Zooms to fit every placed object inside the current workspace viewport and
-    /// centers the camera on their bounding-box centroid. No hard upper clamp on
-    /// ortho size so all objects are guaranteed to be visible.
+    /// After a panel toggle changes the workspace size, moves any placed object whose
+    /// collider would be outside the new workspace boundary to the nearest edge.
+    /// The camera position and zoom are not changed.
     /// </summary>
-    public void AutoFit()
+    public void ClampObjectsToWorkspace()
     {
-        if (workspaceCamera == null) return;
+        if (workspaceCamera == null || workspaceRect == null) return;
+        if (GameManager.Instance == null) return;
 
-        List<Bounds> objectBounds = CollectPlacedObjectBounds();
+        Transform container = GameManager.Instance.ActiveWorldContainer;
+        if (container == null) return;
 
-        if (objectBounds.Count == 0)
+        float sf   = _canvas != null ? _canvas.scaleFactor : 1f;
+        Vector2 oMin = workspaceRect.offsetMin;
+        Vector2 oMax = workspaceRect.offsetMax;
+        float wsL = oMin.x * sf;
+        float wsB = oMin.y * sf;
+        float wsR = Screen.width  + oMax.x * sf;
+        float wsT = Screen.height + oMax.y * sf;
+
+        float ppu = Screen.height / (2f * workspaceCamera.orthographicSize);
+
+        foreach (Transform child in container)
         {
-            SmoothZoom(_defaultOrthoSize, _defaultCameraPos);
-            return;
+            if (!child.gameObject.activeInHierarchy) continue;
+
+            Vector2 sp = workspaceCamera.WorldToScreenPoint(child.position);
+
+            // Collect extents from the first enabled collider, fall back to SpriteRenderer
+            Vector2 extPx = Vector2.zero;
+            foreach (Collider2D col in child.GetComponentsInChildren<Collider2D>())
+            {
+                if (!col.enabled) continue;
+                extPx = new Vector2(col.bounds.extents.x * ppu, col.bounds.extents.y * ppu);
+                break;
+            }
+            if (extPx == Vector2.zero)
+            {
+                SpriteRenderer sr = child.GetComponentInChildren<SpriteRenderer>();
+                if (sr != null)
+                    extPx = new Vector2(sr.bounds.extents.x * ppu, sr.bounds.extents.y * ppu);
+            }
+
+            float cx = Mathf.Clamp(sp.x, wsL + extPx.x, wsR - extPx.x);
+            float cy = Mathf.Clamp(sp.y, wsB + extPx.y, wsT - extPx.y);
+
+            if (Mathf.Abs(cx - sp.x) > 0.5f || Mathf.Abs(cy - sp.y) > 0.5f)
+            {
+                Vector3 newWorld = workspaceCamera.ScreenToWorldPoint(new Vector3(cx, cy, 10f));
+                newWorld.z = 0f;
+                child.position = newWorld;
+            }
         }
-
-        // Merge all object bounds into one world-space AABB
-        Bounds total = objectBounds[0];
-        for (int i = 1; i < objectBounds.Count; i++)
-            total.Encapsulate(objectBounds[i]);
-
-        // Workspace size in screen pixels
-        GetWorkspaceScreenSize(out float wsScreenW, out float wsScreenH);
-        if (wsScreenW <= 0f || wsScreenH <= 0f) return;
-
-        float aspect  = (float)Screen.width / Screen.height;
-        float wsFracW = wsScreenW / Screen.width;
-        float wsFracH = wsScreenH / Screen.height;
-
-        // Camera ortho size s → visible through workspace:
-        //   world height = 2s * wsFracH,  world width = 2s * aspect * wsFracW
-        // Solve for s so padded bounds fit:
-        float paddedH = total.size.y * autoFitPadding;
-        float paddedW = total.size.x * autoFitPadding;
-
-        float sizeForH = paddedH / (2f * wsFracH);
-        float sizeForW = paddedW / (2f * aspect * wsFracW);
-
-        // No clamp to maxOrthoSize here — must show all objects regardless
-        float targetSize = Mathf.Max(sizeForH, sizeForW, minOrthoSize);
-
-        // Center the camera on the objects
-        Vector3 targetCamPos = new Vector3(
-            total.center.x,
-            total.center.y,
-            workspaceCamera.transform.position.z);
-
-        SmoothZoom(targetSize, targetCamPos);
     }
 
     // ── Internals ─────────────────────────────────────────────────────────────────────────────
@@ -305,52 +297,6 @@ public class WorkspaceZoomController : MonoBehaviour
         workspaceCamera.orthographicSize   = targetSize;
         workspaceCamera.transform.position = targetCamPos;
         _animCoroutine = null;
-    }
-
-    private static List<Bounds> CollectPlacedObjectBounds()
-    {
-        var result = new List<Bounds>();
-        if (GameManager.Instance == null) return result;
-
-        Transform container = GameManager.Instance.ActiveWorldContainer;
-        if (container == null) return result;
-
-        foreach (Transform child in container)
-        {
-            if (!child.gameObject.activeInHierarchy) continue;
-
-            Bounds b     = new Bounds(child.position, Vector3.zero);
-            bool   found = false;
-
-            foreach (SpriteRenderer sr in child.GetComponentsInChildren<SpriteRenderer>())
-            {
-                if (!sr.gameObject.activeInHierarchy) continue;
-                if (!found) { b = sr.bounds; found = true; }
-                else          b.Encapsulate(sr.bounds);
-            }
-
-            if (!found) b = new Bounds(child.position, Vector3.one * 0.5f);
-
-            result.Add(b);
-        }
-
-        return result;
-    }
-
-    private void GetWorkspaceScreenSize(out float width, out float height)
-    {
-        float sf = _canvas != null ? _canvas.scaleFactor : 1f;
-
-        Vector2 oMin = workspaceRect.offsetMin;
-        Vector2 oMax = workspaceRect.offsetMax;
-
-        float wsL = oMin.x * sf;
-        float wsB = oMin.y * sf;
-        float wsR = Screen.width  + oMax.x * sf;
-        float wsT = Screen.height + oMax.y * sf;
-
-        width  = Mathf.Max(0f, wsR - wsL);
-        height = Mathf.Max(0f, wsT - wsB);
     }
 
     private Camera GetUICamera() => _canvas != null ? _canvas.worldCamera : null;
