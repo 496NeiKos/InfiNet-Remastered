@@ -88,11 +88,14 @@ public class SimPanelLayoutManager : MonoBehaviour
     [SerializeField] private CanvasGroup taskListRootGroup;
 
     [Header("Arrow Images  (z-rotation: 0 = expanded direction, 180 = collapsed direction)")]
-    [Tooltip("Assign the Image child of HW_Toggle button.")]
+    [Tooltip("Assign the HW_Toggle button RectTransform (or its arrow Image child).")]
     [SerializeField] private RectTransform hardwareAreaArrow;
-    [Tooltip("Assign the Image child of Terminal_Toggle button.")]
+    [Tooltip("Assign the Terminal_Toggle button ROOT RectTransform. " +
+             "The script will automatically add CanvasGroup(ignoreParentGroups=true) " +
+             "so the button stays visible when Terminal is hidden.")]
     [SerializeField] private RectTransform terminalArrow;
-    [Tooltip("Assign the Image child of TaskList_Toggle button.")]
+    [Tooltip("Assign the TaskList_Toggle button ROOT RectTransform. " +
+             "Same IgnoreParentGroups treatment as Terminal_Toggle.")]
     [SerializeField] private RectTransform taskListArrow;
 
     [Header("Settings")]
@@ -134,6 +137,25 @@ public class SimPanelLayoutManager : MonoBehaviour
 
         _wsMinExp = workspaceRect.offsetMin;
         _wsMaxExp = workspaceRect.offsetMax;
+
+        // Terminal_Toggle and TaskList_Toggle are children of their panels, which have root
+        // CanvasGroups. Without IgnoreParentGroups=true the buttons disappear when the panel
+        // is hidden. Stamping it here means the buttons never need to be moved in the scene.
+        StampIgnoreParentGroup(terminalArrow);
+        StampIgnoreParentGroup(taskListArrow);
+    }
+
+    // Adds (or finds) a CanvasGroup on the given RectTransform's GameObject and marks it
+    // as ignoring parent CanvasGroups so the button stays visible when its panel is hidden.
+    private static void StampIgnoreParentGroup(RectTransform rt)
+    {
+        if (rt == null) return;
+        var cg = rt.GetComponent<CanvasGroup>();
+        if (cg == null) cg = rt.gameObject.AddComponent<CanvasGroup>();
+        cg.ignoreParentGroups = true;
+        cg.alpha = 1f;
+        cg.interactable = true;
+        cg.blocksRaycasts = true;
     }
 
     // ── Public toggle methods – wire each to its Button.onClick in the Inspector ──────────────
