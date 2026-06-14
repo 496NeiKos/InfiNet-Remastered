@@ -52,19 +52,14 @@ public class GameManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Moves the active editor object to the workspace centre after a panel toggle resizes the workspace.
-    /// Uses workspaceArea directly — does NOT call ShowDetailCentered so hardware controller
-    /// side-effects (phase changes, cover state, etc.) are not re-triggered.
+    /// Re-fits the active editor object in the (now resized) workspace after a panel toggle.
+    /// Delegates to FitDetailPanel which recomputes both the camera ortho and the object position
+    /// analytically — no controller side-effects are triggered.
     /// </summary>
     public void RecenterActiveEditor()
     {
         if (!IsEditorOpen || _activeInteraction == null) return;
-        if (workspaceArea == null) return;
-
-        Vector3 wsCenter = workspaceArea.TransformPoint(
-            new Vector3(workspaceArea.rect.center.x, workspaceArea.rect.center.y, 0f));
-        wsCenter.z = 0f;
-        _activeInteraction.transform.position = wsCenter;
+        WorkspaceZoomController.Instance?.FitDetailPanel(_activeInteraction.transform);
     }
 
     private void Update()
@@ -98,7 +93,11 @@ public class GameManager : MonoBehaviour
         _prefabOriginalWorldPos = interaction.transform.position;
 
         interaction.transform.SetParent(firstLayer.transform, true);
-        _activeInteraction.ShowDetailCentered();
+        _activeInteraction.ShowDetailCentered(); // triggers side-effects (phase state, cover, etc.)
+
+        // Override position and ortho so the object always fills the workspace at a consistent
+        // scale, regardless of the camera zoom the user had set before opening.
+        WorkspaceZoomController.Instance?.FitDetailPanel(interaction.transform);
 
         if (firstLayer != null)
             firstLayer.SetActive(true);

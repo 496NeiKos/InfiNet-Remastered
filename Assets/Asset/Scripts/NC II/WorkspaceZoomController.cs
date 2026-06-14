@@ -37,6 +37,10 @@ public class WorkspaceZoomController : MonoBehaviour
     [SerializeField] private float minOrthoSize = 1f;
     [SerializeField] private float maxOrthoSize = 30f;
 
+    [Header("Detail Panel")]
+    [Tooltip("Padding multiplier applied to the object bounds when fitting it in the workspace.")]
+    [SerializeField] private float autoFitPadding = 1.25f;
+
     [Header("Animation")]
     [SerializeField] private float animDuration = 0.25f;
 
@@ -301,6 +305,64 @@ public class WorkspaceZoomController : MonoBehaviour
         return new Vector2(
             Mathf.Clamp(screenDelta.x, minDx, maxDx),
             Mathf.Clamp(screenDelta.y, minDy, maxDy));
+    }
+
+    /// <summary>
+    /// Snaps the camera to show <paramref name="obj"/> filling an appropriate fraction of the
+    /// current workspace, then repositions <paramref name="obj"/> so it appears centred in that
+    /// workspace region.  Call after opening the detail panel AND after each panel-toggle resize.
+    ///
+    /// No animation — animating would cause screen-space drift because PPU changes while the
+    /// object world position is fixed, shifting it away from the workspace centre mid-tween.
+    /// </summary>
+    public void FitDetailPanel(Transform obj)
+    {
+        if (workspaceCamera == null || workspaceRect == null || obj == null) return;
+
+        // Stop any running zoom so we can set ortho directly.
+        if (_animCoroutine != null) { StopCoroutine(_animCoroutine); _animCoroutine = null; }
+
+        // 1. Collect sprite bounds (world space) from all active children.
+        Bounds total = new Bounds(obj.position, Vector3.zero);
+        bool   found = false;
+        foreach (SpriteRenderer sr in obj.GetComponentsInChildren<SpriteRenderer>())
+        {
+            if (!sr.gameObject.activeInHierarchy || !sr.enabled) continue;
+            if (!found) { total = sr.bounds; found = true; }
+            else          total.Encapsulate(sr.bounds);
+        }
+        if (!found) total = new Bounds(obj.position, Vector3.one);
+
+        // 2. Workspace screen bounds.
+        float sf   = _canvas != null ? _canvas.scaleFactor : 1f;
+        Vector2 oMin = workspaceRect.offsetMin;
+        Vector2 oMax = workspaceRect.offsetMax;
+        float wsL = oMin.x * sf,   wsR = Screen.width  + oMax.x * sf;
+        float wsB = oMin.y * sf,   wsT = Screen.height + oMax.y * sf;
+        float wsW = wsR - wsL;
+        float wsH = wsT - wsB;
+        if (wsW <= 0f || wsH <= 0f) return;
+
+        // 3. Ortho size that makes padded bounds fill the workspace.
+        //    At ortho S:  object screen width = bounds.x * (Screen.height / (2S))
+        //    Set equal to wsW/padding and wsH/padding, take the larger S so both dimensions fit.
+        float sizeForW = total.size.x * autoFitPadding * Screen.height / (2f * wsW);
+        float sizeForH = total.size.y * autoFitPadding * Screen.height / (2f * wsH);
+        float targetSize = Mathf.Max(sizeForW, sizeForH, minOrthoSize);
+
+        workspaceCamera.orthographicSize = targetSize;
+        _targetOrthoSize = targetSize;
+
+        // 4. Reposition obj so it appears at the workspace screen centre for the current camera.
+        //    screen_x = Screen.width/2  + (world_x - cam_x) * PPU  →  world_x = cam_x + (wsCX - scw/2) / PPU
+        float ppu  = Screen.height / (2f * targetSize);
+        float wsCX = (wsL + wsR) * 0.5f;
+        float wsCY = (wsB + wsT) * 0.5f;
+        Vector3 cam = workspaceCamera.transform.position;
+        obj.position = new Vector3(
+            cam.x + (wsCX - Screen.width  * 0.5f) / ppu,
+            cam.y + (wsCY - Screen.height * 0.5f) / ppu,
+            0f);
     }
 
     // ── Object clamping (called by SimPanelLayoutManager after panel toggle) ─────────────────────
