@@ -49,6 +49,17 @@ public class T2MonitorController : MonoBehaviour, IHardwareController
     [SerializeField] private GameObject monitorDetailRoot;
     [SerializeField] private T2MonitorNavigator navigator;
 
+    private SpriteRenderer[] _renderers;
+    private int[] _originalOrders;
+
+    private void Awake()
+    {
+        _renderers = GetComponentsInChildren<SpriteRenderer>(true);
+        _originalOrders = new int[_renderers.Length];
+        for (int i = 0; i < _renderers.Length; i++)
+            _originalOrders[i] = _renderers[i].sortingOrder;
+    }
+
     private void Start()
     {
         if (navigator == null)
@@ -66,5 +77,17 @@ public class T2MonitorController : MonoBehaviour, IHardwareController
     public void HideDetail()
     {
         monitorDetailRoot?.SetActive(false);
+    }
+
+    public void PushBehind()
+    {
+        foreach (var sr in _renderers)
+            sr.sortingOrder = -10;
+    }
+
+    public void RestoreLayer()
+    {
+        for (int i = 0; i < _renderers.Length; i++)
+            _renderers[i].sortingOrder = _originalOrders[i];
     }
 }

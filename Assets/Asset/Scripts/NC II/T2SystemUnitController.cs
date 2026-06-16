@@ -40,6 +40,9 @@ public class T2SystemUnitController : MonoBehaviour, IHardwareController
     [Header("Views")]
     [SerializeField] private GameObject frontView;
 
+    [Header("References")]
+    [SerializeField] private T2MonitorController monitorController;
+
     private void Start()
     {
         frontView?.SetActive(false);
@@ -47,11 +50,29 @@ public class T2SystemUnitController : MonoBehaviour, IHardwareController
 
     public void ShowDetailAtCenter()
     {
+        var layer = GameManager.Instance?.firstLayer;
+        if (layer != null)
+        {
+            RectTransform rect = layer.GetComponent<RectTransform>();
+            if (rect != null)
+            {
+                Vector3 panelCenter = rect.TransformPoint(
+                    new Vector3(rect.rect.center.x, rect.rect.center.y, 0f));
+                panelCenter.z = 0f;
+                transform.position = panelCenter;
+
+                if (frontView != null)
+                    frontView.transform.position = panelCenter;
+            }
+        }
+
         frontView?.SetActive(true);
+        monitorController?.PushBehind();
     }
 
     public void HideDetail()
     {
         frontView?.SetActive(false);
+        monitorController?.RestoreLayer();
     }
 }

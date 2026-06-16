@@ -39,4 +39,27 @@ public class MonitorController : MonoBehaviour, IHardwareController
         monitorFront?.SetActive(false);
         monitorBack?.SetActive(false);
     }
+
+    private SpriteRenderer[] _renderers;
+    private int[] _originalOrders;
+
+    private void Awake()
+    {
+        _renderers = GetComponentsInChildren<SpriteRenderer>(true);
+        _originalOrders = new int[_renderers.Length];
+        for (int i = 0; i < _renderers.Length; i++)
+            _originalOrders[i] = _renderers[i].sortingOrder;
+    }
+
+    public void PushBehind()
+    {
+        foreach (var sr in _renderers)
+            sr.sortingOrder = 0;
+    }
+
+    public void RestoreLayer()
+    {
+        for (int i = 0; i < _renderers.Length; i++)
+            _renderers[i].sortingOrder = _originalOrders[i];
+    }
 }

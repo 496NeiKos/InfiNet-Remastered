@@ -14,6 +14,7 @@ public class SystemUnitController : MonoBehaviour, IHardwareController
     [Header("References")]
     [SerializeField] private CoverController coverController;
     [SerializeField] private HardwareViewController viewController;
+    [SerializeField] private MonitorController monitorController;
 
     void Start()
     {
@@ -36,6 +37,21 @@ public class SystemUnitController : MonoBehaviour, IHardwareController
         if (viewController == null)
             viewController = GetComponent<HardwareViewController>();
 
+        var layer = GameManager.Instance?.firstLayer;
+        if (layer != null)
+        {
+            RectTransform rect = layer.GetComponent<RectTransform>();
+            if (rect != null)
+            {
+                Vector3 panelCenter = rect.TransformPoint(
+                    new Vector3(rect.rect.center.x, rect.rect.center.y, 0f));
+                panelCenter.z = 0f;
+                transform.position = panelCenter;
+            }
+        }
+
+        monitorController?.PushBehind();
+
         viewController?.SetDefaultIfNone(systemUnitFront);
         viewController?.WireButtons();
         viewController?.ShowLastActive();
@@ -54,6 +70,8 @@ public class SystemUnitController : MonoBehaviour, IHardwareController
         systemUnitFront?.SetActive(false);
         systemUnitSide?.SetActive(false);
         systemUnitBack?.SetActive(false);
+
+        monitorController?.RestoreLayer();
     }
 
     public void RemoveCover()
