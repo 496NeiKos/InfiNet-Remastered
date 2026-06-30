@@ -46,21 +46,11 @@ public class GameManager : MonoBehaviour
     {
         _activeInPlaceInteraction = interaction;
         IsEditorOpen = true;
-        WorkspaceZoomController.Instance?.EnterDetailPanel();
         interaction.ShowDetail();
         Debug.Log("[GameManager] In-place editor opened.");
     }
 
-    /// <summary>
-    /// Re-fits the active editor object in the (now resized) workspace after a panel toggle.
-    /// Delegates to FitDetailPanel which recomputes both the camera ortho and the object position
-    /// analytically — no controller side-effects are triggered.
-    /// </summary>
-    public void RecenterActiveEditor()
-    {
-        if (!IsEditorOpen || _activeInteraction == null) return;
-        WorkspaceZoomController.Instance?.FitDetailPanel(_activeInteraction.transform);
-    }
+    public void RecenterActiveEditor() { }
 
     private void Update()
     {
@@ -82,10 +72,18 @@ public class GameManager : MonoBehaviour
         _activeInteraction = interaction;
         IsEditorOpen = true;
 
-        // Save scale NOW, before EnterDetailPanel changes the canvas scale (which would corrupt
-        // worldPositionStays=true reparenting if we saved after).
+        // Snap all detail layer rects to match the current workspace bounds (accounts for any
+        // tray that may already be collapsed).  Must happen before SetParent so that CenterView
+        // uses the correct firstLayer world-space centre.
+        SimPanelLayoutManager.Instance?.SyncDetailLayersNow();
+
+        // Save localScale before reparenting — worldPositionStays=true adjusts localScale to
+        // maintain world scale relative to the new parent, and we restore it on close to prevent
+        // any accumulated drift across open/close cycles.
         _savedObjectLocalScale = interaction.transform.localScale;
-        WorkspaceZoomController.Instance?.EnterDetailPanel(); // snaps ortho to default BEFORE SetParent
+
+        // Force the Canvas to flush its layout before SetParent so world-scale is up-to-date.
+        Canvas.ForceUpdateCanvases();
 
         _activeMbdvm = interaction.GetComponent<MotherboardDetailViewManager>();
 
@@ -94,10 +92,6 @@ public class GameManager : MonoBehaviour
 
         interaction.transform.SetParent(firstLayer.transform, true);
         _activeInteraction.ShowDetailCentered(); // triggers side-effects (phase state, cover, etc.)
-
-        // Override position and ortho so the object always fills the workspace at a consistent
-        // scale, regardless of the camera zoom the user had set before opening.
-        WorkspaceZoomController.Instance?.FitDetailPanel(interaction.transform);
 
         if (firstLayer != null)
             firstLayer.SetActive(true);
@@ -113,7 +107,6 @@ public class GameManager : MonoBehaviour
             _activeInPlaceInteraction.HideDetail();
             _activeInPlaceInteraction = null;
             IsEditorOpen = false;
-            WorkspaceZoomController.Instance?.ExitDetailPanel();
             Debug.Log("[GameManager] In-place editor closed.");
             return;
         }
@@ -144,9 +137,6 @@ public class GameManager : MonoBehaviour
 
         if (_activeInteraction != null)
         {
-            // Reparent BEFORE ExitDetailPanel so the canvas ortho is still at default when
-            // worldPositionStays=true resolves the new localScale.  Then we override with the
-            // saved pre-enter scale so there is no drift across open/close cycles.
             _activeInteraction.transform.SetParent(_prefabOriginalParent, true);
             _activeInteraction.transform.position   = _prefabOriginalWorldPos;
             _activeInteraction.transform.localScale = _savedObjectLocalScale;
@@ -155,8 +145,8 @@ public class GameManager : MonoBehaviour
             _activeInteraction = null;
         }
 
-        // Restore user's workspace viewport now that the object is no longer in the canvas.
-        WorkspaceZoomController.Instance?.ExitDetailPanel();
+        // Re-clamp in case the workspace was resized while the panel was open.
+        WorkspaceZoomController.Instance?.ClampObjectsToWorkspace();
 
         _activeMbdvm = null;
         _activeGpuPhase1Panel = null;

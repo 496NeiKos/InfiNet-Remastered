@@ -37,22 +37,11 @@ public class WorkspaceZoomController : MonoBehaviour
     [SerializeField] private float minOrthoSize = 1f;
     [SerializeField] private float maxOrthoSize = 30f;
 
-    [Header("Detail Panel")]
-    [Tooltip("Padding multiplier applied to the object bounds when fitting it in the workspace.")]
-    [SerializeField] private float autoFitPadding = 1.25f;
-
     [Header("Animation")]
     [SerializeField] private float animDuration = 0.25f;
 
-    private float   _defaultOrthoSize;
-    private Vector3 _defaultCameraPos;
-    private float   _targetOrthoSize;
-    private Coroutine _animCoroutine;
-
-    // Detail-panel save/restore
-    private float   _savedOrthoSize;
-    private Vector3 _savedCameraPos;
-    private bool    _isInDetailPanel;
+    private float      _targetOrthoSize;
+    private Coroutine  _animCoroutine;
 
     // Pan state
     private bool    _isPanning;
@@ -70,11 +59,7 @@ public class WorkspaceZoomController : MonoBehaviour
     private void Start()
     {
         if (workspaceCamera != null)
-        {
-            _defaultOrthoSize = workspaceCamera.orthographicSize;
-            _defaultCameraPos = workspaceCamera.transform.position;
-            _targetOrthoSize  = _defaultOrthoSize;
-        }
+            _targetOrthoSize = workspaceCamera.orthographicSize;
         _canvas = workspaceRect != null ? workspaceRect.GetComponentInParent<Canvas>() : null;
     }
 
@@ -163,15 +148,6 @@ public class WorkspaceZoomController : MonoBehaviour
     /// <summary>
     /// Returns the minimum orthographic size that keeps every placed object's collider
     /// inside the workspace boundary at the current camera position.
-    ///
-    /// Math: at ortho size s, PPU = Screen.height / (2*s).
-    /// An object at world dx from camera maps to screen x = scx + dx * PPU.
-    /// Right-edge constraint:  scx + (dx + ex) * PPU ≤ wsR
-    ///   → s ≥ Screen.height * (dx + ex) / (2 * (wsR - scx))   [when dx+ex > 0]
-    /// Left-edge constraint:   scx + (dx - ex) * PPU ≥ wsL
-    ///   → s ≥ Screen.height * (ex - dx) / (2 * (scx - wsL))   [when ex-dx > 0]
-    /// Same logic applies on the Y axis.  Taking the max across all objects and sides
-    /// gives the tightest zoom-in limit.
     /// </summary>
     private float ClampOrthoSizeForObjects(float targetSize)
     {
@@ -243,12 +219,6 @@ public class WorkspaceZoomController : MonoBehaviour
     /// <summary>
     /// Clamps a proposed screen-pixel pan delta so that no placed object whose centre
     /// is currently inside the workspace exits the workspace boundary after the pan.
-    ///
-    /// After panning by (dx, dy) screen pixels an object at screen position (sx, sy)
-    /// moves to (sx + dx, sy + dy).  The constraint per axis per object is:
-    ///   wsL + extPx  <=  sx + dx  <=  wsR - extPx
-    ///   => wsL + extPx - sx  <=  dx  <=  wsR - extPx - sx
-    /// Taking the intersection of all objects gives the tightest allowed delta.
     /// </summary>
     private Vector2 ClampPanToKeepObjectsInWorkspace(Vector2 screenDelta)
     {
@@ -256,7 +226,6 @@ public class WorkspaceZoomController : MonoBehaviour
         Transform container = GameManager.Instance.ActiveWorldContainer;
         if (container == null || container.childCount == 0) return screenDelta;
 
-        // Workspace screen-pixel bounds (same formula used in DragPrefab)
         float sf   = _canvas != null ? _canvas.scaleFactor : 1f;
         Vector2 oMin = workspaceRect.offsetMin;
         Vector2 oMax = workspaceRect.offsetMax;
@@ -265,7 +234,6 @@ public class WorkspaceZoomController : MonoBehaviour
         float wsR = Screen.width  + oMax.x * sf;
         float wsT = Screen.height + oMax.y * sf;
 
-        // Pixels per world unit for this ortho size
         float ppu = Screen.height / (2f * workspaceCamera.orthographicSize);
 
         float minDx = float.NegativeInfinity, maxDx = float.PositiveInfinity;
@@ -277,11 +245,8 @@ public class WorkspaceZoomController : MonoBehaviour
 
             Vector2 sp = workspaceCamera.WorldToScreenPoint(child.position);
 
-            // Skip objects already outside the workspace centre — don't force the camera to
-            // drag them back in; they should not exist in this state after the drag-clamp fix.
             if (sp.x < wsL || sp.x > wsR || sp.y < wsB || sp.y > wsT) continue;
 
-            // Find the first enabled collider (root collider may be disabled when proxy is active)
             Vector2 extPx = Vector2.zero;
             foreach (Collider2D col in child.GetComponentsInChildren<Collider2D>())
             {
@@ -305,67 +270,6 @@ public class WorkspaceZoomController : MonoBehaviour
         return new Vector2(
             Mathf.Clamp(screenDelta.x, minDx, maxDx),
             Mathf.Clamp(screenDelta.y, minDy, maxDy));
-    }
-
-    /// <summary>
-    /// Fits the camera so the active detail-panel content fills an appropriate fraction of the
-    /// current workspace, and centres the camera on that content.
-    ///
-    /// Moves the CAMERA, not the object.  HardwareViewController.CenterView positions the
-    /// *child view* (not the root) at the canvas pivot; moving the root would displace those
-    /// children.  Instead we collect the world-space SpriteRenderer bounds to find where the
-    /// visible content actually is, then move the camera to centre on it at the right ortho size.
-    ///
-    /// No animation — animating ortho while the camera position is fixed would drift the
-    /// content off-centre as PPU changes frame-by-frame.
-    /// </summary>
-    public void FitDetailPanel(Transform obj)
-    {
-        if (workspaceCamera == null || workspaceRect == null || obj == null) return;
-
-        if (_animCoroutine != null) { StopCoroutine(_animCoroutine); _animCoroutine = null; }
-
-        // 1. Collect world-space bounds from every active SpriteRenderer on obj and its children.
-        //    This captures the actual visible content regardless of whether a child view was
-        //    repositioned independently (e.g. by HardwareViewController.CenterView).
-        Bounds total = new Bounds(obj.position, Vector3.zero);
-        bool   found = false;
-        foreach (SpriteRenderer sr in obj.GetComponentsInChildren<SpriteRenderer>())
-        {
-            if (!sr.gameObject.activeInHierarchy || !sr.enabled) continue;
-            if (!found) { total = sr.bounds; found = true; }
-            else          total.Encapsulate(sr.bounds);
-        }
-        if (!found) total = new Bounds(obj.position, Vector3.one);
-
-        // 2. Workspace screen bounds.
-        float sf = _canvas != null ? _canvas.scaleFactor : 1f;
-        Vector2 oMin = workspaceRect.offsetMin;
-        Vector2 oMax = workspaceRect.offsetMax;
-        float wsL = oMin.x * sf,  wsR = Screen.width  + oMax.x * sf;
-        float wsB = oMin.y * sf,  wsT = Screen.height + oMax.y * sf;
-        float wsW = wsR - wsL;
-        float wsH = wsT - wsB;
-        if (wsW <= 0f || wsH <= 0f) return;
-
-        // 3. Ortho size to make the padded bounds fill the workspace.
-        float sizeForW = total.size.x * autoFitPadding * Screen.height / (2f * wsW);
-        float sizeForH = total.size.y * autoFitPadding * Screen.height / (2f * wsH);
-        float targetSize = Mathf.Max(sizeForW, sizeForH, minOrthoSize);
-
-        workspaceCamera.orthographicSize = targetSize;
-        _targetOrthoSize = targetSize;
-
-        // 4. Move the CAMERA so that bounds.center appears at the workspace screen centre.
-        //    screen_x = Screen.width/2 + (world_x - cam_x) * ppu
-        //    → cam_x  = world_x - (wsCX - Screen.width/2)  / ppu
-        float ppu  = Screen.height / (2f * targetSize);
-        float wsCX = (wsL + wsR) * 0.5f;
-        float wsCY = (wsB + wsT) * 0.5f;
-        workspaceCamera.transform.position = new Vector3(
-            total.center.x - (wsCX - Screen.width  * 0.5f) / ppu,
-            total.center.y - (wsCY - Screen.height * 0.5f) / ppu,
-            workspaceCamera.transform.position.z);
     }
 
     // ── Object clamping (called by SimPanelLayoutManager after panel toggle) ─────────────────────
@@ -399,7 +303,6 @@ public class WorkspaceZoomController : MonoBehaviour
 
             Vector2 sp = workspaceCamera.WorldToScreenPoint(child.position);
 
-            // Collect extents from the first enabled collider, fall back to SpriteRenderer
             Vector2 extPx = Vector2.zero;
             foreach (Collider2D col in child.GetComponentsInChildren<Collider2D>())
             {
@@ -424,46 +327,6 @@ public class WorkspaceZoomController : MonoBehaviour
                 child.position = newWorld;
             }
         }
-    }
-
-    // ── Detail-panel zoom save/restore ───────────────────────────────────────────────────────────
-
-    /// <summary>
-    /// Called by GameManager when any detail panel opens.
-    /// Saves the current viewport and snaps the camera to its authored default zoom so objects
-    /// always appear at the same size inside the detail panel regardless of workspace zoom level.
-    /// </summary>
-    public void EnterDetailPanel()
-    {
-        if (_isInDetailPanel || workspaceCamera == null) return;
-        _isInDetailPanel = true;
-
-        // Save the user's current viewport
-        _savedOrthoSize = workspaceCamera.orthographicSize;
-        _savedCameraPos = workspaceCamera.transform.position;
-
-        // Stop any running animation and snap to the authored default zoom
-        if (_animCoroutine != null) { StopCoroutine(_animCoroutine); _animCoroutine = null; }
-        workspaceCamera.orthographicSize   = _defaultOrthoSize;
-        workspaceCamera.transform.position = _defaultCameraPos;
-        _targetOrthoSize = _defaultOrthoSize;
-
-        _isPanning = false; // cancel any in-progress pan
-    }
-
-    /// <summary>
-    /// Called by GameManager when the detail panel fully closes.
-    /// Restores the viewport the user had before opening the panel.
-    /// </summary>
-    public void ExitDetailPanel()
-    {
-        if (!_isInDetailPanel || workspaceCamera == null) return;
-        _isInDetailPanel = false;
-
-        if (_animCoroutine != null) { StopCoroutine(_animCoroutine); _animCoroutine = null; }
-        workspaceCamera.orthographicSize   = _savedOrthoSize;
-        workspaceCamera.transform.position = _savedCameraPos;
-        _targetOrthoSize = _savedOrthoSize;
     }
 
     // ── Internals ─────────────────────────────────────────────────────────────────────────────

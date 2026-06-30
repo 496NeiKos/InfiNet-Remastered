@@ -5,6 +5,8 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
 {
     [SerializeField] public HardwareHolder hardwareHolder;
     [SerializeField] private GameObject workspaceProxy;
+    [Tooltip("When false the object always snaps back and can never be placed in the workspace (e.g. thermal paste, towel cloth).")]
+    [SerializeField] public bool canPlaceInWorkspace = true;
 
     private RectTransform workspaceArea;
     private RectTransform hardwareArea;
@@ -345,7 +347,7 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
         {
             bool onWorkspace = RectTransformUtility.RectangleContainsScreenPoint(
                 workspaceArea, eventData.position, eventData.pressEventCamera);
-            if (!onWorkspace)
+            if (!onWorkspace || !canPlaceInWorkspace)
                 transform.position = _originalPos;
         }
     }

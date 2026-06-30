@@ -2,7 +2,8 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
+public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler,
+                              IPointerEnterHandler, IPointerExitHandler
 {
     [Header("Hardware Reference")]
     public GameObject hardwarePrefab;
@@ -13,6 +14,10 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
 
     [Header("Slot Install Proximity (world units)")]
     public float slotInstallRadius = 1.5f;
+
+    [Header("Tooltip")]
+    [Tooltip("Name shown in the hover tooltip. Defaults to the hardware prefab's name if left empty.")]
+    [SerializeField] private string tooltipName;
 
     private GameObject _dragIndicator;
     private bool _isDragging = false;
@@ -42,6 +47,20 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         gameObject.SetActive(prefabInactive);
     }
 
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        if (HardwareAreaTooltip.Instance == null) return;
+        string text = !string.IsNullOrEmpty(tooltipName)
+            ? tooltipName
+            : hardwarePrefab != null ? hardwarePrefab.name : gameObject.name;
+        HardwareAreaTooltip.Instance.Show(text);
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        HardwareAreaTooltip.Instance?.Hide();
+    }
+
     public bool IsAvailable() => hardwarePrefab != null && !hardwarePrefab.activeSelf;
 
     public void StoreHardware()
@@ -56,11 +75,14 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
     {
         if (!IsAvailable()) return;
 
+        // Cancel tooltip when drag starts
+        HardwareAreaTooltip.Instance?.Hide();
+
         _isDragging = true;
 
         _dragIndicator = new GameObject("DragIndicator");
         SpriteRenderer sr = _dragIndicator.AddComponent<SpriteRenderer>();
-        sr.sprite = GetComponent<Image>()?.sprite;
+        sr.sprite = hardwarePrefab.GetComponent<SpriteRenderer>()?.sprite;
         sr.sortingOrder = 999;
 
         Vector3 worldPos = Camera.main.ScreenToWorldPoint(

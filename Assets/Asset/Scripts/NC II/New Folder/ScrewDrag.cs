@@ -6,7 +6,7 @@ using UnityEngine.UI;
 /// Drag behavior for the Screw icon in the hardware area.
 /// Creates a temporary drag visual. On DROP, raycasts to find a
 /// ScrewController in Empty state and places the screw there.
-/// No longer relies on collision — only drop position matters.
+/// No longer relies on collision ï¿½ only drop position matters.
 /// </summary>
 public class ScrewDrag : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
@@ -35,6 +35,19 @@ public class ScrewDrag : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
         );
         worldPos.z = 0f;
         _dragObject.transform.position = worldPos;
+        _dragObject.transform.localScale = Vector3.one * ComputeWorldScale(sr.sprite);
+    }
+
+    private float ComputeWorldScale(Sprite s)
+    {
+        if (s == null || Camera.main == null) return 1f;
+        RectTransform rt = GetComponent<RectTransform>();
+        if (rt == null) return 1f;
+        Vector3[] corners = new Vector3[4];
+        rt.GetWorldCorners(corners);
+        float iconWorldHeight = Vector3.Distance(corners[0], corners[1]);
+        float spriteWorldHeight = s.rect.height / s.pixelsPerUnit;
+        return spriteWorldHeight > 0f ? iconWorldHeight / spriteWorldHeight : 1f;
     }
 
     public void OnDrag(PointerEventData eventData)

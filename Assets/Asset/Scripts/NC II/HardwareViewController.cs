@@ -1,10 +1,11 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 /// <summary>
 /// Generic view controller for any hardware with multiple angles (Top, Front, Side, Back).
 /// Attach to hardware root. Assign only the views that exist — null views are skipped.
-/// Wires FirstLayer buttons: FirstLayerTop, FirstLayerFront, FirstLayerSide, FirstLayerBack.
+/// Keys 1-4 switch views while the editor is open; FirstLayer angle buttons are no longer shown.
 /// </summary>
 public class HardwareViewController : MonoBehaviour
 {
@@ -29,6 +30,21 @@ public class HardwareViewController : MonoBehaviour
         if (backView != null) backView.SetActive(false);
 
         _activeView = GetViewObject(defaultView) ?? topView ?? frontView ?? sideView ?? backView;
+    }
+
+    private void Update()
+    {
+        if (GameManager.Instance == null || !GameManager.Instance.IsEditorOpen) return;
+        if (GameManager.Instance.firstLayer == null ||
+            !transform.IsChildOf(GameManager.Instance.firstLayer.transform)) return;
+
+        Keyboard kb = Keyboard.current;
+        if (kb == null) return;
+
+        if (kb.digit1Key.wasPressedThisFrame && topView   != null) ShowView(topView);
+        else if (kb.digit2Key.wasPressedThisFrame && frontView != null) ShowView(frontView);
+        else if (kb.digit3Key.wasPressedThisFrame && sideView  != null) ShowView(sideView);
+        else if (kb.digit4Key.wasPressedThisFrame && backView  != null) ShowView(backView);
     }
 
     public void ShowLastActive()
@@ -90,7 +106,7 @@ public class HardwareViewController : MonoBehaviour
 
         btn.onClick.RemoveAllListeners();
         btn.onClick.AddListener(() => ShowView(targetView));
-        btn.gameObject.SetActive(true);
+        // Buttons are hidden — keyboard 1-4 drives view switching instead.
     }
 
     private void CenterView(GameObject view)

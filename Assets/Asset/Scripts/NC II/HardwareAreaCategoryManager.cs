@@ -43,6 +43,16 @@ public class HardwareAreaCategoryManager : MonoBehaviour
 
     private void Start()
     {
+        // Ensure the hardware area always renders and receives input above detail panel layers,
+        // which sit later in the canvas sibling order and would otherwise block events here.
+        // Mirrors the same pattern used for toggle buttons in SimPanelLayoutManager.
+        Canvas overrideCanvas = GetComponent<Canvas>();
+        if (overrideCanvas == null) overrideCanvas = gameObject.AddComponent<Canvas>();
+        overrideCanvas.overrideSorting = true;
+        overrideCanvas.sortingOrder = 50;
+        if (GetComponent<GraphicRaycaster>() == null)
+            gameObject.AddComponent<GraphicRaycaster>();
+
         // Wire burger button
         if (burgerButton != null)
             burgerButton.onClick.AddListener(ToggleDropdown);

@@ -41,8 +41,21 @@ public class ToolDrag : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDrag
             new Vector3(eventData.position.x, eventData.position.y, 10f));
         worldPos.z = 0f;
         _dragObject.transform.position = worldPos;
+        _dragObject.transform.localScale = Vector3.one * ComputeWorldScale(sr.sprite);
 
         Debug.Log($"[ToolDrag] Started dragging {toolTag}");
+    }
+
+    private float ComputeWorldScale(Sprite s)
+    {
+        if (s == null || Camera.main == null) return 1f;
+        RectTransform rt = GetComponent<RectTransform>();
+        if (rt == null) return 1f;
+        Vector3[] corners = new Vector3[4];
+        rt.GetWorldCorners(corners);
+        float iconWorldHeight = Vector3.Distance(corners[0], corners[1]);
+        float spriteWorldHeight = s.rect.height / s.pixelsPerUnit;
+        return spriteWorldHeight > 0f ? iconWorldHeight / spriteWorldHeight : 1f;
     }
 
     public void OnDrag(PointerEventData eventData)

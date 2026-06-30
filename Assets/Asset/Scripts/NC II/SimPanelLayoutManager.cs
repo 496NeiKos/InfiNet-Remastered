@@ -2,123 +2,41 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>
-/// Collapsible tray system for the COC I simulation.
-///
-/// HardwareArea (left)   - RectTransform is resized; collapses to zero width (fully hidden).
-///                         Workspace AND Terminal left edges expand to fill the freed space.
-///
-/// Terminal (bottom)     - Root CanvasGroup is toggled (entire panel fades out including background).
-///                         Workspace bottom edge expands downward. Toggle button lives as a Canvas
-///                         sibling so it remains visible when Terminal is hidden.
-///
-/// TaskListPanel (right) - Root CanvasGroup is toggled. Workspace already extends to the right
-///                         edge behind it, so no layout change needed. Toggle button is a Canvas
-///                         sibling as well.
-///
-/// Panel resize rules (what actually changes SIZE, not just position):
-///   HardwareArea OFF  → HardwareArea collapses (width → 0)
-///                     → Workspace left edge moves LEFT  (width grows)
-///                     → Terminal  left edge moves LEFT  (width grows)
-///   Terminal OFF      → Terminal hidden via CanvasGroup (RectTransform unchanged)
-///                     → Workspace bottom edge moves DOWN (height grows)
-///   Both OFF          → All three effects combine.
-///
-/// Background logic continues running while panels are hidden:
-///   - ActivityLogManager keeps appending to its string; logText shows the latest on re-open.
-///   - NCIITaskListManager keeps evaluating task conditions; the panel reflects current progress
-///     the moment it becomes visible again.
-///
-/// ── SCENE SETUP ────────────────────────────────────────────────────────────────────────────────
-///
-/// HardwareArea
-///   1. Create an empty child "ContentGroup" under HardwareArea.
-///      Set its RectTransform: AnchorMin=(0,0), AnchorMax=(1,1), all offsets = 0.
-///      Move all four existing children (BurgerButton, CategoryDropdown, icon containers)
-///      into ContentGroup.
-///      Add a CanvasGroup component to ContentGroup → assign to hardwareAreaContent.
-///   2. Add a Button child "HW_Toggle" directly under HardwareArea (sibling of ContentGroup).
-///      RectTransform: AnchorMin=(1,0.5), AnchorMax=(1,0.5), Pivot=(0,0.5),
-///      AnchoredPos=(0,0), Size=(30,60).  This pins it to HardwareArea's right edge.
-///      Add an Image child "Arrow" to the button with a left-pointing (◄) sprite.
-///      Assign the Arrow's RectTransform → hardwareAreaArrow.
-///      Wire Button.onClick → SimPanelLayoutManager.ToggleHardwareArea()
-///
-/// Terminal
-///   1. Add a CanvasGroup component to the Terminal root GameObject.
-///      Assign it → terminalRootGroup.
-///   2. Create a Button as a direct child of the CANVAS (sibling of Terminal, not child).
-///      Name it "Terminal_Toggle".
-///      RectTransform: position it at Terminal's top-left edge so it is visible
-///      when Terminal collapses (e.g., AnchorMin=(0,0), AnchoredPos=(600,307), Size=(80,30)).
-///      Add an Image child "Arrow" with an up-pointing (▲) sprite.
-///      Assign the Arrow's RectTransform → terminalArrow.
-///      Wire Button.onClick → SimPanelLayoutManager.ToggleTerminal()
-///
-/// TaskListPanel
-///   1. Add a CanvasGroup component to the TaskListPanel root GameObject.
-///      Assign it → taskListRootGroup.
-///   2. Create a Button as a direct child of the CANVAS (sibling of TaskListPanel).
-///      Name it "TaskList_Toggle".
-///      Position at TaskListPanel's left edge (e.g., AnchoredPos=(1645,800), Size=(30,60)).
-///      Add an Image child "Arrow" with a right-pointing (►) sprite.
-///      Assign the Arrow's RectTransform → taskListArrow.
-///      Wire Button.onClick → SimPanelLayoutManager.ToggleTaskListPanel()
-///
-/// Manager
-///   Create an empty "SimPanelManager" GameObject anywhere in the scene.
-///   Attach this script and assign all Inspector fields.
-/// ───────────────────────────────────────────────────────────────────────────────────────────────
-/// </summary>
 public class SimPanelLayoutManager : MonoBehaviour
 {
     public static SimPanelLayoutManager Instance { get; private set; }
 
     [Header("Panel RectTransforms")]
-    [SerializeField] private RectTransform hardwareAreaRect;
     [SerializeField] private RectTransform workspaceRect;
-    [Tooltip("Terminal root RectTransform. Resized horizontally when HardwareArea collapses.")]
+    [Tooltip("Terminal root RectTransform. Height read at Start to know how much workspace expands.")]
     [SerializeField] private RectTransform terminalRect;
-    [Tooltip("Used only to read the initial width at Start; never resized.")]
-    [SerializeField] private RectTransform taskListPanelRect;
 
     [Header("Content Groups")]
-    [Tooltip("CanvasGroup on the ContentGroup CHILD of HardwareArea (not the root). " +
-             "Hides icons and buttons; the root background strip stays visible.")]
-    [SerializeField] private CanvasGroup hardwareAreaContent;
-
     [Tooltip("CanvasGroup on the Terminal ROOT (hides the whole panel including background). " +
-             "Workspace expands to cover the freed area.")]
+             "Workspace bottom edge expands downward when hidden.")]
     [SerializeField] private CanvasGroup terminalRootGroup;
 
     [Tooltip("CanvasGroup on the TaskListPanel ROOT (hides the whole panel). " +
              "Workspace is already behind it so no layout change is needed.")]
     [SerializeField] private CanvasGroup taskListRootGroup;
 
-    [Header("Arrow Images  (z-rotation: 0 = expanded direction, 180 = collapsed direction)")]
-    [Tooltip("Assign the HW_Toggle button RectTransform (or its arrow Image child).")]
-    [SerializeField] private RectTransform hardwareAreaArrow;
-    [Tooltip("Assign the Terminal_Toggle button ROOT RectTransform. " +
-             "The script will automatically add CanvasGroup(ignoreParentGroups=true) " +
-             "so the button stays visible when Terminal is hidden.")]
+    [Header("Arrow Images  (z-rotation: 0 = expanded, 180 = collapsed)")]
+    [Tooltip("Terminal_Toggle button ROOT RectTransform.")]
     [SerializeField] private RectTransform terminalArrow;
-    [Tooltip("Assign the TaskList_Toggle button ROOT RectTransform. " +
-             "Same IgnoreParentGroups treatment as Terminal_Toggle.")]
+    [Tooltip("TaskList_Toggle button ROOT RectTransform.")]
     [SerializeField] private RectTransform taskListArrow;
+
+    [Header("Detail Panel Layers (sync with workspace bounds)")]
+    [Tooltip("Assign the outer container RectTransforms (direct Canvas children). " +
+             "They are resized to match the workspace whenever a tray is toggled.")]
+    [SerializeField] private RectTransform[] detailLayerRects;
 
     [Header("Settings")]
     [SerializeField] private float animDuration = 0.2f;
 
-    // Offsets captured at Start (the 'expanded' state)
-    private Vector2 _hwMinExp,   _hwMaxExp;
-    private Vector2 _termMinExp, _termMaxExp;
-    private Vector2 _wsMinExp,   _wsMaxExp;
+    private Vector2 _wsMinExp, _wsMaxExp;
+    private float   _termExpandedHeight;
 
-    // Pixel dimensions captured at Start
-    private float _hwExpandedWidth;
-    private float _termExpandedHeight;
-
-    private bool _hwCollapsed;
     private bool _termCollapsed;
     private bool _tlCollapsed;
 
@@ -138,79 +56,48 @@ public class SimPanelLayoutManager : MonoBehaviour
     private IEnumerator Initialize()
     {
         // Wait one frame so the Screen Space Camera canvas has applied its viewport size.
-        // rect.width / rect.height return 0 on the first frame for this canvas mode.
         yield return new WaitForEndOfFrame();
         Canvas.ForceUpdateCanvases();
-
-        // Capture the expanded offsets for all resizable panels
-        _hwMinExp = hardwareAreaRect.offsetMin;
-        _hwMaxExp = hardwareAreaRect.offsetMax;
 
         _wsMinExp = workspaceRect.offsetMin;
         _wsMaxExp = workspaceRect.offsetMax;
 
         if (terminalRect != null)
-        {
-            _termMinExp = terminalRect.offsetMin;
-            _termMaxExp = terminalRect.offsetMax;
-        }
+            _termExpandedHeight = terminalRect.rect.height;
 
-        // Derive panel pixel dimensions from offsets + canvas size.
-        // For a full-stretch rect (AnchorMin=0,0 / AnchorMax=1,1):
-        //   width  = canvasW + offsetMax.x - offsetMin.x   (offsetMax.x is ≤ 0)
-        //   height = canvasH + offsetMax.y - offsetMin.y   (offsetMax.y is ≤ 0)
-        // This is reliable at any point in the frame unlike rect.width / rect.height.
-        var canvasRT = hardwareAreaRect.parent as RectTransform;
-        float canvasW = canvasRT != null ? canvasRT.rect.width  : Screen.width;
-        float canvasH = canvasRT != null ? canvasRT.rect.height : Screen.height;
+        // Override Canvas sort order so these buttons always render and receive input
+        // above detail panel layers, regardless of sibling order.
+        StampToggleButton(terminalArrow);
+        StampToggleButton(taskListArrow);
 
-        _hwExpandedWidth = canvasW + _hwMaxExp.x - _hwMinExp.x;
-
-        if (terminalRect != null)
-            _termExpandedHeight = canvasH + _termMaxExp.y - _termMinExp.y;
-
-        // HW_Toggle is a child of HardwareArea whose pivot shifts during the collapse animation,
-        // dragging the button off-screen. Reparenting it to Canvas root keeps it stationary.
-        ReparentToCanvas(hardwareAreaArrow, hardwareAreaRect);
-
-        // Stamp all three toggle buttons so they ignore any parent CanvasGroup going to alpha=0.
-        StampIgnoreParentGroup(hardwareAreaArrow);
-        StampIgnoreParentGroup(terminalArrow);
-        StampIgnoreParentGroup(taskListArrow);
+        SyncDetailLayersNow();
     }
 
-    // Moves a button to Canvas level (sibling of the panels) while keeping its visual position.
-    // After this the button is no longer a child of the panel and won't move when the panel animates.
-    private static void ReparentToCanvas(RectTransform button, RectTransform anyPanelChild)
-    {
-        if (button == null || anyPanelChild == null) return;
-        var canvasRT = anyPanelChild.parent as RectTransform;
-        if (canvasRT == null || button.parent == canvasRT) return;
-        button.SetParent(canvasRT, worldPositionStays: true);
-    }
-
-    // Adds (or finds) a CanvasGroup on the given RectTransform's GameObject and marks it
-    // as ignoring parent CanvasGroups so the button stays visible when its panel is hidden.
-    private static void StampIgnoreParentGroup(RectTransform rt)
+    // Ensures a toggle button stays visible when its parent panel is hidden AND renders
+    // on top of any detail panel overlay.
+    private static void StampToggleButton(RectTransform rt)
     {
         if (rt == null) return;
+
         var cg = rt.GetComponent<CanvasGroup>();
         if (cg == null) cg = rt.gameObject.AddComponent<CanvasGroup>();
         cg.ignoreParentGroups = true;
-        cg.alpha = 1f;
-        cg.interactable = true;
-        cg.blocksRaycasts = true;
+        cg.alpha             = 1f;
+        cg.interactable      = true;
+        cg.blocksRaycasts    = true;
+
+        // Override Canvas so this button sorts above detail panels (sortingOrder > 0).
+        var canvas = rt.GetComponent<Canvas>();
+        if (canvas == null) canvas = rt.gameObject.AddComponent<Canvas>();
+        canvas.overrideSorting = true;
+        canvas.sortingOrder    = 100;
+
+        // A nested override Canvas needs its own GraphicRaycaster to receive clicks.
+        if (rt.GetComponent<GraphicRaycaster>() == null)
+            rt.gameObject.AddComponent<GraphicRaycaster>();
     }
 
     // ── Public toggle methods – wire each to its Button.onClick in the Inspector ──────────────
-
-    public void ToggleHardwareArea()
-    {
-        _hwCollapsed = !_hwCollapsed;
-        SetGroup(hardwareAreaContent, !_hwCollapsed);
-        SetArrow(hardwareAreaArrow, _hwCollapsed);
-        Animate();
-    }
 
     public void ToggleTerminal()
     {
@@ -226,7 +113,7 @@ public class SimPanelLayoutManager : MonoBehaviour
         SetGroup(taskListRootGroup, !_tlCollapsed);
         SetArrow(taskListArrow, _tlCollapsed);
         // TaskListPanel is already behind the Workspace so no layout change is needed,
-        // but we still call Animate so any in-flight HW animation is properly restarted.
+        // but Animate is called so any in-flight animation is properly restarted.
         Animate();
     }
 
@@ -235,8 +122,8 @@ public class SimPanelLayoutManager : MonoBehaviour
     private static void SetGroup(CanvasGroup cg, bool visible)
     {
         if (cg == null) return;
-        cg.alpha = visible ? 1f : 0f;
-        cg.interactable = visible;
+        cg.alpha          = visible ? 1f : 0f;
+        cg.interactable   = visible;
         cg.blocksRaycasts = visible;
     }
 
@@ -252,99 +139,88 @@ public class SimPanelLayoutManager : MonoBehaviour
         _anim = StartCoroutine(RunAnimation());
     }
 
-    /// <summary>
-    /// Calculates target offsetMin/offsetMax for HardwareArea, Workspace, and Terminal.
-    ///
-    /// HardwareArea OFF → HardwareArea width collapses to zero.
-    ///                  → Workspace  left edge moves LEFT  (width grows to fill freed space).
-    ///                  → Terminal   left edge moves LEFT  (width grows to fill freed space).
-    /// Terminal OFF     → Terminal hidden via CanvasGroup; its RectTransform is NOT resized.
-    ///                  → Workspace  bottom edge moves DOWN (height grows to fill freed space).
-    /// </summary>
-    private void ComputeTargets(
-        out Vector2 hwMin,   out Vector2 hwMax,
-        out Vector2 wsMin,   out Vector2 wsMax,
-        out Vector2 termMin, out Vector2 termMax)
+    // Terminal OFF → workspace bottom edge moves DOWN (height grows to fill freed space).
+    private void ComputeTargets(out Vector2 wsMin, out Vector2 wsMax)
     {
-        float hwDelta   = _hwExpandedWidth;
-        float termDelta = _termExpandedHeight;
-
-        // HardwareArea: right edge moves LEFT when collapsed (shrinks until hidden)
-        hwMin = _hwMinExp;
-        hwMax = new Vector2(
-            _hwMaxExp.x - (_hwCollapsed ? hwDelta : 0f),
-            _hwMaxExp.y);
-
-        // Workspace:
-        //   left edge  → moves LEFT when HW area is hidden  (width  grows leftward)
-        //   bottom edge → moves DOWN when Terminal is hidden (height grows downward)
         wsMin = new Vector2(
-            _wsMinExp.x - (_hwCollapsed   ? hwDelta   : 0f),
-            _wsMinExp.y - (_termCollapsed ? termDelta : 0f));
+            _wsMinExp.x,
+            _wsMinExp.y - (_termCollapsed ? _termExpandedHeight : 0f));
         wsMax = _wsMaxExp;
-
-        // Terminal:
-        //   left edge → moves LEFT when HW area is hidden (width grows leftward)
-        //   height stays the same (Terminal is hidden via CanvasGroup, not by resizing)
-        termMin = new Vector2(
-            _termMinExp.x - (_hwCollapsed ? hwDelta : 0f),
-            _termMinExp.y);
-        termMax = _termMaxExp;
     }
 
     private IEnumerator RunAnimation()
     {
-        ComputeTargets(
-            out var hwTMin, out var hwTMax,
-            out var wsTMin, out var wsTMax,
-            out var termTMin, out var termTMax);
+        ComputeTargets(out var wsTMin, out var wsTMax);
 
-        // Snapshot starting values for the lerp
-        var hwSMin   = hardwareAreaRect.offsetMin;
-        var hwSMax   = hardwareAreaRect.offsetMax;
-        var wsSMin   = workspaceRect.offsetMin;
-        var wsSMax   = workspaceRect.offsetMax;
-        var termSMin = terminalRect != null ? terminalRect.offsetMin : default;
-        var termSMax = terminalRect != null ? terminalRect.offsetMax : default;
+        var wsSMin = workspaceRect.offsetMin;
+        var wsSMax = workspaceRect.offsetMax;
 
         float elapsed = 0f;
         while (elapsed < animDuration)
         {
-            // Use unscaled time so the animation survives Time.timeScale = 0
             elapsed += Time.unscaledDeltaTime;
             float t = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(elapsed / animDuration));
 
-            hardwareAreaRect.offsetMin = Vector2.LerpUnclamped(hwSMin, hwTMin, t);
-            hardwareAreaRect.offsetMax = Vector2.LerpUnclamped(hwSMax, hwTMax, t);
-            workspaceRect.offsetMin    = Vector2.LerpUnclamped(wsSMin, wsTMin, t);
-            workspaceRect.offsetMax    = Vector2.LerpUnclamped(wsSMax, wsTMax, t);
-
-            if (terminalRect != null)
-            {
-                terminalRect.offsetMin = Vector2.LerpUnclamped(termSMin, termTMin, t);
-                terminalRect.offsetMax = Vector2.LerpUnclamped(termSMax, termTMax, t);
-            }
+            workspaceRect.offsetMin = Vector2.LerpUnclamped(wsSMin, wsTMin, t);
+            workspaceRect.offsetMax = Vector2.LerpUnclamped(wsSMax, wsTMax, t);
+            SyncDetailLayersNow();
 
             yield return null;
         }
 
-        // Snap to exact targets
-        hardwareAreaRect.offsetMin = hwTMin;
-        hardwareAreaRect.offsetMax = hwTMax;
-        workspaceRect.offsetMin    = wsTMin;
-        workspaceRect.offsetMax    = wsTMax;
+        workspaceRect.offsetMin = wsTMin;
+        workspaceRect.offsetMax = wsTMax;
+        SyncDetailLayersNow();
 
-        if (terminalRect != null)
-        {
-            terminalRect.offsetMin = termTMin;
-            terminalRect.offsetMax = termTMax;
-        }
-
-        // After the workspace has its final size, push any workspace objects outside the new boundary to its edge.
-        WorkspaceZoomController.Instance?.ClampObjectsToWorkspace();
-
-        // If a detail panel was open, re-centre the object at the new workspace centre.
-        // RecenterActiveEditor uses workspaceArea directly (no controller side-effects).
+        // Skip clamping while the detail panel is open — the workspace camera is parked at its
+        // default position (not the user's pan/zoom), so WorldToScreenPoint projects workspace
+        // objects to wrong screen coordinates and collapses them all onto the same edge.
+        // CloseEditor() calls ClampObjectsToWorkspace() after restoring the real camera.
+        if (GameManager.Instance == null || !GameManager.Instance.IsEditorOpen)
+            WorkspaceZoomController.Instance?.ClampObjectsToWorkspace();
         GameManager.Instance?.RecenterActiveEditor();
+    }
+
+    /// <summary>
+    /// Resizes every rect in detailLayerRects to cover exactly the same canvas area as
+    /// workspaceRect. Called by GameManager when a detail panel opens and after each
+    /// animation frame so the detail view always fills the correct available area.
+    /// </summary>
+    public void SyncDetailLayersNow()
+    {
+        if (detailLayerRects == null || workspaceRect == null) return;
+
+        var canvasRT = workspaceRect.parent as RectTransform;
+        if (canvasRT == null) return;
+
+        float canvasW = canvasRT.rect.width;
+        float canvasH = canvasRT.rect.height;
+        if (canvasW <= 0f || canvasH <= 0f) return;
+
+        float wsL = workspaceRect.offsetMin.x;
+        float wsB = workspaceRect.offsetMin.y;
+        float wsR = canvasW + workspaceRect.offsetMax.x;
+        float wsT = canvasH + workspaceRect.offsetMax.y;
+
+        foreach (RectTransform r in detailLayerRects)
+        {
+            if (r == null) continue;
+
+            if (r.parent != canvasRT)
+            {
+                Debug.LogWarning($"[SimPanelLayoutManager] '{r.name}' is not a direct Canvas child " +
+                                 "and was skipped by SyncDetailLayersNow. " +
+                                 "Assign the OUTER container rect (e.g. DetailPanel), not an inner child.", r);
+                continue;
+            }
+
+            float anchorL = r.anchorMin.x * canvasW;
+            float anchorB = r.anchorMin.y * canvasH;
+            float anchorR = r.anchorMax.x * canvasW;
+            float anchorT = r.anchorMax.y * canvasH;
+
+            r.offsetMin = new Vector2(wsL - anchorL, wsB - anchorB);
+            r.offsetMax = new Vector2(wsR - anchorR, wsT - anchorT);
+        }
     }
 }

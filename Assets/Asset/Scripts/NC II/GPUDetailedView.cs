@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 /// <summary>
@@ -27,6 +28,17 @@ public class GPUDetailedView : MonoBehaviour
         WireButtons();
         ShowView(_activeView != null ? _activeView : topView);
         ApplyHardwareInteractable();
+    }
+
+    private void Update()
+    {
+        if (GameManager.Instance == null || !GameManager.Instance.IsEditorOpen) return;
+
+        Keyboard kb = Keyboard.current;
+        if (kb == null) return;
+
+        if (kb.digit1Key.wasPressedThisFrame && topView  != null) ShowView(topView);
+        else if (kb.digit2Key.wasPressedThisFrame && sideView != null) ShowView(sideView);
     }
 
     private void OnDisable()
@@ -111,7 +123,7 @@ public class GPUDetailedView : MonoBehaviour
         if (btn == null) return;
         btn.onClick.RemoveAllListeners();
         btn.onClick.AddListener(() => ShowView(targetView));
-        btn.gameObject.SetActive(true);
+        // Buttons are hidden — keyboard 1/2 drives view switching instead.
     }
 
     private void HideButton(GameObject panel, string buttonName)
