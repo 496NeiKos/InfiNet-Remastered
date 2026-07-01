@@ -8,22 +8,29 @@
  *  HIERARCHY
  *
  *    Windows10Panel  (this script here)
- *      ├─ Default                         ← always active while on login screen
- *      │    ├─ PasswordInput              → passwordLoginInput   (TMP_InputField)
- *      │    └─ WrongPasswordText          → wrongPasswordText    (TMP_Text, start INACTIVE)
- *      └─ SetupPassword                   ← active only on first access
- *           ├─ CreatePasswordInput        → createPasswordInput  (TMP_InputField)
- *           ├─ ConfirmPasswordInput       → confirmPasswordInput (TMP_InputField)
- *           └─ WrongPasswordText          → setupWrongText       (TMP_Text, start INACTIVE)
- *
- *    Windows10Desktop                     → windows10Desktop     (sibling of Windows10Panel)
- *      └─ Shutdown                        → OnClick: Windows10Manager.OnShutdown()
+ *      ├─ PasswordLogin                   → passwordLoginPanel   (start ACTIVE — hides on login, shown on init)
+ *      │    ├─ Default                    ← shown only on re-entry (password already created)
+ *      │    │    ├─ PasswordInput         → passwordLoginInput   (TMP_InputField)
+ *      │    │    ├─ WrongPasswordText     → wrongPasswordText    (TMP_Text, start INACTIVE)
+ *      │    │    └─ LoginButton           → OnClick: Windows10Manager.OnLoginButtonClick()
+ *      │    └─ SetupPassword              ← shown only on first access
+ *      │         ├─ CreatePasswordInput   → createPasswordInput  (TMP_InputField)
+ *      │         ├─ ConfirmPasswordInput  → confirmPasswordInput (TMP_InputField)
+ *      │         ├─ WrongPasswordText     → setupWrongText       (TMP_Text, start INACTIVE)
+ *      │         └─ SignUpButton          → OnClick: Windows10Manager.OnSignUpButtonClick()
+ *      └─ Windows10Desktop                → windows10Desktop     (child of Windows10Panel)
+ *           └─ [desktop content + TaskBar]
+ *                TaskBar > ShutdownTray > Shutdown → OnClick: Windows10Manager.OnShutdown()
  *
  *  INSPECTOR ASSIGNMENTS
- *    defaultPanel          → Windows10Panel > Default
- *    setupPasswordPanel    → Windows10Panel > SetupPassword
- *    windows10Desktop      → Windows10Desktop panel
+ *    passwordLoginPanel    → Windows10Panel > PasswordLogin
+ *    defaultPanel          → PasswordLogin > Default
+ *    setupPasswordPanel    → PasswordLogin > SetupPassword
+ *    windows10Desktop      → Windows10Panel > Windows10Desktop
  *    monitorController     → T3MonitorController on the monitor root GameObject
+ *    settingController        → SettingPanelController on Windows10Desktop > WindowsContent > SettingPanel
+ *    deviceManagerController  → DeviceManagerController on Windows10Desktop > WindowsContent > DeviceManagerPanel
+ *    taskBarController        → TaskBarController on Windows10Desktop > TaskBar
  *    passwordLoginInput    → Default > PasswordInput
  *    wrongPasswordText     → Default > WrongPasswordText
  *    createPasswordInput   → SetupPassword > CreatePasswordInput
@@ -33,23 +40,28 @@
  *  HOW IT WORKS
  *    Enter key detection is done in Update() via Input.GetKeyDown + isFocused,
  *    which is more reliable than TMP_InputField.onSubmit / onEndEdit events.
+ *    Buttons (SignUpButton, LoginButton) call the same logic directly.
  *
- *    First access (W10_PasswordSet == 0):
- *      Both Default and SetupPassword panels are shown.
- *      User types in CreatePasswordInput, presses Enter → focus moves to ConfirmPasswordInput.
- *      User types in ConfirmPasswordInput, presses Enter:
- *        – Passwords match    → saves to PlayerPrefs, hides both panels, shows Windows10Desktop.
+ *    First access (_sessionPasswordSet == false):
+ *      PasswordLogin is shown; only SetupPassword sub-panel is visible.
+ *      User fills CreatePasswordInput and ConfirmPasswordInput, then clicks SignUpButton
+ *      (or presses Enter while focused on ConfirmPasswordInput):
+ *        – Passwords match    → saves password, hides PasswordLogin, shows Windows10Desktop.
  *        – Passwords mismatch → clears ConfirmPasswordInput, shows setupWrongText.
+ *      Pressing Enter in CreatePasswordInput moves focus to ConfirmPasswordInput.
  *
- *    Subsequent access (W10_PasswordSet == 1):
- *      Only Default panel is shown (SetupPassword stays inactive forever).
- *      User types in PasswordInput, presses Enter:
- *        – Correct password → hides Default, shows Windows10Desktop.
+ *    Subsequent access (_sessionPasswordSet == true):
+ *      PasswordLogin is shown; only Default sub-panel is visible.
+ *      User types in PasswordInput, presses Enter or LoginButton:
+ *        – Correct password → hides PasswordLogin, shows Windows10Desktop.
  *        – Wrong password   → clears PasswordInput, shows wrongPasswordText.
  *
- *    Shutdown button:
- *      Hides Windows10Desktop, resets T3MonitorController to Loading, closes canvas.
- *      Next right-click: canvas → LoadingPanel → (timeout) → Windows10Panel (skips full setup).
+ *    Shutdown button (TaskBar > ShutdownTray > Shutdown OR any caller):
+ *      Resets SettingPanel navigation to 1stLevel and hides it.
+ *      Hides Windows10Desktop, re-enables PasswordLogin, resets T3MonitorController
+ *      to Loading, closes canvas.
+ *      Next right-click: canvas → LoadingPanel → (timeout) → Windows10Panel.
+ *      Player must log in again; SettingPanel opens at 1stLevel.
  *
  *  PERSISTENCE
  *    Session-only (static fields) — resets when the game restarts.
@@ -73,6 +85,7 @@ public class Windows10Manager : MonoBehaviour
     // ----------------------------------------------------------------
 
     [Header("Panels")]
+    [SerializeField] private GameObject passwordLoginPanel;
     [SerializeField] private GameObject defaultPanel;
     [SerializeField] private GameObject setupPasswordPanel;
     [SerializeField] private GameObject windows10Desktop;
@@ -99,7 +112,10 @@ public class Windows10Manager : MonoBehaviour
     // ----------------------------------------------------------------
 
     [Header("References")]
-    [SerializeField] private T3MonitorController monitorController;
+    [SerializeField] private T3MonitorController    monitorController;
+    [SerializeField] private SettingPanelController settingController;
+    [SerializeField] private DeviceManagerController deviceManagerController;
+    [SerializeField] private TaskBarController      taskBarController;
 
     // ----------------------------------------------------------------
     //  Runtime state
@@ -120,11 +136,8 @@ public class Windows10Manager : MonoBehaviour
     {
         bool isSetUp = IsPasswordSetUp;
 
-        defaultPanel?.SetActive(true);
         windows10Desktop?.SetActive(false);
-
-        if (passwordLoginInput != null) passwordLoginInput.text = "";
-        SetActive(wrongPasswordText, false);
+        passwordLoginPanel?.SetActive(true);
 
         _pendingPassword  = "";
         _awaitingConfirm  = false;
@@ -132,16 +145,23 @@ public class Windows10Manager : MonoBehaviour
 
         if (isSetUp)
         {
+            // Re-entry: show login panel only
+            defaultPanel?.SetActive(true);
             setupPasswordPanel?.SetActive(false);
+
+            if (passwordLoginInput != null) passwordLoginInput.text = "";
+            SetActive(wrongPasswordText, false);
+            passwordLoginInput?.ActivateInputField();
         }
         else
         {
+            // First entry: show setup panel only, keep Default hidden
+            defaultPanel?.SetActive(false);
             setupPasswordPanel?.SetActive(true);
+
             if (createPasswordInput  != null) createPasswordInput.text  = "";
             if (confirmPasswordInput != null) confirmPasswordInput.text = "";
             SetActive(setupWrongText, false);
-
-            // Give focus to the first setup field
             createPasswordInput?.ActivateInputField();
         }
 
@@ -173,15 +193,16 @@ public class Windows10Manager : MonoBehaviour
         // Step 3: dispatch using the field that was focused the frame before Enter fired
         if (setupPasswordPanel != null && setupPasswordPanel.activeSelf)
         {
-            if (!_awaitingConfirm && _lastFocusedField == createPasswordInput)
+            if (_lastFocusedField == createPasswordInput)
             {
-                OnCreatePasswordSubmit(createPasswordInput.text);
+                // Move focus to confirm field; user clicks SignUpButton to submit
+                confirmPasswordInput?.ActivateInputField();
                 return;
             }
 
-            if (_awaitingConfirm && _lastFocusedField == confirmPasswordInput)
+            if (_lastFocusedField == confirmPasswordInput)
             {
-                OnConfirmPasswordSubmit(confirmPasswordInput.text);
+                OnSignUpButtonClick();
                 return;
             }
         }
@@ -226,6 +247,7 @@ public class Windows10Manager : MonoBehaviour
 
         setupPasswordPanel?.SetActive(false);
         defaultPanel?.SetActive(false);
+        passwordLoginPanel?.SetActive(false);
         windows10Desktop?.SetActive(true);
 
         Debug.Log("[Windows10Manager] Password created — entering Windows10Desktop.");
@@ -256,9 +278,51 @@ public class Windows10Manager : MonoBehaviour
 
         SetActive(wrongPasswordText, false);
         defaultPanel?.SetActive(false);
+        passwordLoginPanel?.SetActive(false);
         windows10Desktop?.SetActive(true);
 
         Debug.Log("[Windows10Manager] Login successful — entering Windows10Desktop.");
+    }
+
+    // ----------------------------------------------------------------
+    //  Button click handlers — wired to UI buttons in the scene
+    // ----------------------------------------------------------------
+
+    // SetupPassword > SignUpButton: validates both fields match, then enters Windows10Desktop
+    public void OnSignUpButtonClick()
+    {
+        string create  = createPasswordInput  != null ? createPasswordInput.text  : "";
+        string confirm = confirmPasswordInput != null ? confirmPasswordInput.text : "";
+
+        if (string.IsNullOrEmpty(create))
+        {
+            ShowSetupError("Password cannot be empty.");
+            return;
+        }
+
+        if (create != confirm)
+        {
+            ShowSetupError("Passwords do not match.");
+            if (confirmPasswordInput != null) confirmPasswordInput.text = "";
+            confirmPasswordInput?.ActivateInputField();
+            return;
+        }
+
+        _sessionPassword    = create;
+        _sessionPasswordSet = true;
+        _awaitingConfirm    = false;
+
+        setupPasswordPanel?.SetActive(false);
+        passwordLoginPanel?.SetActive(false);
+        windows10Desktop?.SetActive(true);
+
+        Debug.Log("[Windows10Manager] Password created — entering Windows10Desktop.");
+    }
+
+    // Default > LoginButton: validate password and enter Windows10Desktop
+    public void OnLoginButtonClick()
+    {
+        OnLoginPasswordSubmit(passwordLoginInput != null ? passwordLoginInput.text : "");
     }
 
     // ----------------------------------------------------------------
@@ -267,6 +331,13 @@ public class Windows10Manager : MonoBehaviour
 
     public void OnShutdown()
     {
+        // Close the tray UI before the desktop hides.
+        taskBarController?.CloseAll();
+
+        // Reset panels back to their default closed state.
+        settingController?.Exit();
+        deviceManagerController?.Exit();
+
         windows10Desktop?.SetActive(false);
         monitorController?.ResetToLoading();
         GameManager.Instance?.CloseEditor();

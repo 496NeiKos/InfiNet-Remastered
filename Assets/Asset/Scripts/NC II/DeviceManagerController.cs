@@ -13,36 +13,105 @@
  *      │         ├─ DM_NavControl  [4 buttons — no function yet]
  *      │         ├─ DM_Minimize → OnClick: DeviceManagerController.Minimize()
  *      │         └─ DM_Exit     → OnClick: DeviceManagerController.Exit()
- *      └─ DeviceManagerContent
- *           └─ [category buttons → sub-panels — deferred]
+ *      └─ DeviceManagerContent  (VerticalLayoutGroup)
+ *           ├─ btn1   → entries[0].toggleButton  (Button)
+ *           ├─ p1     → entries[0].panel         (GameObject, start INACTIVE)
+ *           ├─ bt2    → entries[1].toggleButton
+ *           ├─ p2     → entries[1].panel
+ *           ├─ bt3    → entries[2].toggleButton
+ *           ├─ p3     → entries[2].panel
+ *           ├─ btn4   → entries[3].toggleButton
+ *           ├─ p4     → entries[3].panel
+ *           ├─ btn5   → entries[4].toggleButton
+ *           ├─ p5     → entries[4].panel
+ *           ├─ btn6   → entries[5].toggleButton
+ *           ├─ p6     → entries[5].panel
+ *           ├─ btn7   → entries[6].toggleButton
+ *           ├─ p7     → entries[6].panel
+ *           ├─ btn8   → entries[7].toggleButton
+ *           ├─ p8     → entries[7].panel
+ *           ├─ btn9   → entries[8].toggleButton
+ *           ├─ p9     → entries[8].panel
+ *           ├─ btn10  → entries[9].toggleButton
+ *           └─ p10    → entries[9].panel
  *
  *  INSPECTOR ASSIGNMENTS
- *    contentSubPanels → all sub-panel GameObjects inside DeviceManagerContent
- *                       that should be hidden on Exit/reset (assign as array).
+ *    entries  — array of 10 entries, each pairing a Button with its panel GameObject.
+ *               Assign in order: entries[0] = btn1 + p1, entries[1] = bt2 + p2, etc.
+ *    Buttons do NOT need OnClick wired manually — the script wires them in Awake.
  *
- *  BUTTON OnClick WIRING
+ *  BUTTON OnClick WIRING  (manual — navbar only)
  *    DM_Minimize → DeviceManagerController.Minimize()
  *    DM_Exit     → DeviceManagerController.Exit()
  *
  *  HOW IT WORKS
- *    Minimize(): hides the entire DeviceManagerPanel while preserving its
- *    internal state (expanded sub-panels remain open on next show).
- *    Re-opening is done by the TaskBarController calling SetActive(true).
- *
- *    Exit(): resets all internal sub-panels to closed, then hides the panel.
- *    The next time the panel is opened it starts in a clean state.
+ *    Each entries[i].toggleButton independently toggles entries[i].panel on or off.
+ *    Multiple panels can be open at the same time — toggling one does not affect others.
+ *    Minimize(): hides the entire panel while preserving which sub-panels are open.
+ *    Exit(): closes all sub-panels, then hides the panel.
  * ================================================================
  */
 
 using UnityEngine;
+using UnityEngine.UI;
 
 public class DeviceManagerController : MonoBehaviour
 {
-    [Header("Content Sub-Panels (hidden on Exit)")]
-    [SerializeField] private GameObject[] contentSubPanels;
+    // ----------------------------------------------------------------
+    //  Data
+    // ----------------------------------------------------------------
+
+    [System.Serializable]
+    public class DeviceEntry
+    {
+        public Button     toggleButton;
+        public GameObject panel;
+    }
 
     // ----------------------------------------------------------------
-    //  Public — wired to DM_Minimize and DM_Exit buttons
+    //  Inspector
+    // ----------------------------------------------------------------
+
+    [Header("Category Entries  (button + panel pairs, index 0–9)")]
+    [SerializeField] private DeviceEntry[] entries = new DeviceEntry[10];
+
+    // ----------------------------------------------------------------
+    //  Lifecycle
+    // ----------------------------------------------------------------
+
+    private void Awake()
+    {
+        for (int i = 0; i < entries.Length; i++)
+        {
+            int captured = i;
+            if (entries[i].toggleButton != null)
+                entries[i].toggleButton.onClick.AddListener(() => OnToggle(captured));
+
+            // Ensure panels start closed
+            if (entries[i].panel != null)
+                entries[i].panel.SetActive(false);
+        }
+    }
+
+    // ----------------------------------------------------------------
+    //  Toggle logic
+    // ----------------------------------------------------------------
+
+    private void OnToggle(int index)
+    {
+        if (index < 0 || index >= entries.Length) return;
+
+        var panel = entries[index].panel;
+        if (panel == null) return;
+
+        bool nowActive = !panel.activeSelf;
+        panel.SetActive(nowActive);
+
+        Debug.Log($"[DeviceManagerController] Entry {index} {(nowActive ? "opened" : "closed")}.");
+    }
+
+    // ----------------------------------------------------------------
+    //  Navbar buttons
     // ----------------------------------------------------------------
 
     public void Minimize()
@@ -53,7 +122,7 @@ public class DeviceManagerController : MonoBehaviour
 
     public void Exit()
     {
-        ResetContent();
+        CloseAll();
         gameObject.SetActive(false);
         Debug.Log("[DeviceManagerController] Exited — state reset.");
     }
@@ -62,12 +131,12 @@ public class DeviceManagerController : MonoBehaviour
     //  Helpers
     // ----------------------------------------------------------------
 
-    private void ResetContent()
+    private void CloseAll()
     {
-        foreach (GameObject panel in contentSubPanels)
+        for (int i = 0; i < entries.Length; i++)
         {
-            if (panel != null)
-                panel.SetActive(false);
+            if (entries[i].panel != null)
+                entries[i].panel.SetActive(false);
         }
     }
 }
