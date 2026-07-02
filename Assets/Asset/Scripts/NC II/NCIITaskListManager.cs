@@ -9,6 +9,9 @@ public class NCIITaskListManager : MonoBehaviour
 {
     public static NCIITaskListManager Instance { get; private set; }
 
+    // Fires whenever a task completes or reverts — SingleTaskDisplay subscribes to this.
+    public static event Action OnTasksUpdated;
+
     [Header("Disassembly UI")]
     [SerializeField] private Transform disassemblyTaskParent;
     [SerializeField] private Transform disassemblyFinishedParent;
@@ -202,6 +205,18 @@ public class NCIITaskListManager : MonoBehaviour
         };
     }
 
+    // Returns the text of the next incomplete task in the currently active phase.
+    // Returns null if all tasks are done or tasks haven't initialised yet.
+    public string GetNextIncompleteTaskText()
+    {
+        TaskPhase active = _showingAssembly ? _assembly : _disassembly;
+        if (active?.tasks == null) return null;
+        var next = active.tasks.FirstOrDefault(t => !t.isCompleted);
+        if (next == null) return null;
+        var tmp = next.taskObject.GetComponent<TextMeshProUGUI>();
+        return tmp != null ? tmp.text : null;
+    }
+
     private bool AnyPowerSwitchAssigned() =>
         suPowerButton != null || avrPowerButton != null || monitorPowerButton != null || psuSwitch != null;
 
@@ -273,6 +288,7 @@ public class NCIITaskListManager : MonoBehaviour
         task.taskObject.transform.SetParent(phase.finishedParent, false);
         task.taskObject.SetActive(false);
         RefreshWindow(phase);
+        OnTasksUpdated?.Invoke();
 
         if (phase == _disassembly && IsDisassemblyComplete())
             SwitchToAssembly();
@@ -293,6 +309,7 @@ public class NCIITaskListManager : MonoBehaviour
         yield return new WaitForSeconds(0.6f);
         task.isFlashing = false;
         if (tmp != null) tmp.color = Color.white;
+        OnTasksUpdated?.Invoke();
         EvaluateConditions();
     }
 
@@ -326,6 +343,7 @@ public class NCIITaskListManager : MonoBehaviour
 
         RefreshWindow(_assembly);
         EvaluatePhase(_assembly);
+        OnTasksUpdated?.Invoke();
 
         Debug.Log("[NCIITaskListManager] Disassembly complete — switching to assembly phase.");
     }

@@ -94,6 +94,26 @@ public class UEFISettingButton : MonoBehaviour
         _label = GetComponentInChildren<TMP_Text>();
         if (!_valueInitialized) InitFromDefault();
         UpdateLabel();
+
+        // When the USB device is pulled, automatically revert this button to its first static
+        // option so the label and validator never show a device that's no longer connected.
+        if (usbPort != null)
+            usbPort.OnUninstalled += OnUSBPortUninstalled;
+    }
+
+    private void OnDestroy()
+    {
+        if (usbPort != null)
+            usbPort.OnUninstalled -= OnUSBPortUninstalled;
+    }
+
+    private void OnUSBPortUninstalled()
+    {
+        if (_currentValue != usbDeviceLabel) return;
+        _currentValue = options != null && options.Length > 0 ? options[0] : string.Empty;
+        UpdateLabel();
+        T3TaskListManager.CheckConditions();
+        Debug.Log($"[UEFISettingButton] USB removed — '{settingLabel}' reset to '{_currentValue}'.");
     }
 
     // Wire Button OnClick → this method.

@@ -32,45 +32,47 @@
  *
  *    Pop-ups (NOT in panels array — toggled independently, start INACTIVE):
  *      RufusPopUp  — child of RufusDownloadPanel (or canvas root)
- *        ├─ Confirm button  → DownloadRufus()     (enables Rufus app, closes popup)
+ *        ├─ Confirm button  → DownloadRufus()
+ *        │     (closes popup → shows progress bar → IsRufusDownloaded latches on complete)
  *        └─ Cancel button   → CloseRufusPopUp()   (optional)
  *      IsoPopUp    — child of ISODownloadPanel (or canvas root)
- *        ├─ Confirm button  → DownloadISO()        (closes popup)
+ *        ├─ Confirm button  → DownloadISO()
+ *        │     (closes popup → shows progress bar → IsIsoDownloaded latches on complete)
  *        └─ Cancel button   → CloseISOPopUp()      (optional)
+ *
+ *    Download Progress (NOT in panels array — overlay, starts INACTIVE):
+ *      DownloadProgressContainer — direct child of the Canvas content root (or Desktop)
+ *        ├─ ProgressBar    (UI Slider, Min=0, Max=1, Interactable OFF)
+ *        └─ ProgressLabel  (TMP_Text, optional — shows "Downloading... 45%")
  *
  *    Only Desktop starts active. Deactivate all others.
  *    Rufus Set Up also starts inactive.
  *
- *    NAMING TIP: the BrowserApp button on the Desktop and the Browser
- *    panel are different objects — give them distinct names (e.g.
- *    "BrowserIcon" vs "Browser") so wiring isn't mixed up.
- *
- *    IMPORTANT:
- *      - Rufus Set Up is NOT in the panels array. It is toggled
- *        independently by OpenRufus() / CloseRufus().
- *      - The RufusApp button can start ACTIVE or INACTIVE in the scene —
- *        the script calls SetActive(false) on Start() and SetActive(true)
- *        when Rufus is downloaded. No CanvasGroup needed.
- *
  *  STEP 3 — Wire the inspector
  *    T2MonitorNavigator:
- *      panels[0]              → Desktop
- *      panels[1]              → Browser
- *      panels[2]              → Rufus Download
- *      panels[3]              → BrowserSearchedRufus
- *      panels[4]              → ISODownloadPanel
- *      panels[5]              → BrowserSearchedISO
- *      browserPanel           → Browser            (same object as panels[1])
- *      searchField            → Search InputField (TMP) on the Browser panel
- *      searchKeyword          → "rufus"            (case-insensitive, trimmed)
- *      isoSearchKeyword          → "iso windows 10"  (case-insensitive, trimmed)
- *      downloadPanelIndex        → 2
- *      searchResultsPanelIndex   → 3
- *      isoDownloadPanelIndex     → 4
- *      isoSearchResultsPanelIndex→ 5
- *      searchNoResults        → optional "no results" object (leave empty to skip)
- *      rufusSetupPanel        → Rufus Set Up       (direct child of Desktop)
- *      rufusAppButton         → the RufusApp Button on Desktop
+ *      panels[0]                   → Desktop
+ *      panels[1]                   → Browser
+ *      panels[2]                   → Rufus Download
+ *      panels[3]                   → BrowserSearchedRufus
+ *      panels[4]                   → ISODownloadPanel
+ *      panels[5]                   → BrowserSearchedISO
+ *      browserPanel                → Browser            (same object as panels[1])
+ *      searchField                 → Search InputField (TMP) on the Browser panel
+ *      searchKeyword               → "rufus"            (case-insensitive, trimmed)
+ *      isoSearchKeyword            → "iso windows 10"  (case-insensitive, trimmed)
+ *      downloadPanelIndex          → 2
+ *      searchResultsPanelIndex     → 3
+ *      isoDownloadPanelIndex       → 4
+ *      isoSearchResultsPanelIndex  → 5
+ *      searchNoResults             → optional "no results" object (leave empty to skip)
+ *      rufusSetupPanel             → Rufus Set Up       (direct child of Desktop)
+ *      rufusAppButton              → the RufusApp Button on Desktop
+ *      rufusPopUp                  → RufusPopUp panel
+ *      isoPopUp                    → IsoPopUp panel
+ *      downloadProgressContainer   → DownloadProgressContainer (starts INACTIVE)
+ *      downloadProgressBar         → ProgressBar Slider inside the container
+ *      progressLabel               → ProgressLabel TMP_Text inside the container (optional)
+ *      downloadDuration            → seconds to fill the bar (default 5)
  *
  *  STEP 4 — Wire buttons / events
  *    BrowserApp button on Desktop          → GoTo(1)
@@ -86,32 +88,26 @@
  *    Back button on ISODownloadPanel       → GoTo(0)
  *    IsoPopUp confirm button               → DownloadISO()
  *    IsoPopUp cancel button                → CloseISOPopUp()
- *    Back button on BrowserSearchedISO    → GoTo(0)
- *    Link button on BrowserSearchedISO    → GoTo(4)
+ *    Back button on BrowserSearchedISO     → GoTo(0)
+ *    Link button on BrowserSearchedISO     → GoTo(4)
  *    RufusApp button on Desktop            → OpenRufus()
  *    Close/X button in Rufus Set Up        → CloseRufus()
  *
- *    NOTE on the search: SubmitSearch() reads the InputField directly, so
- *    it works wired to the InputField's "On Submit (String)" (Enter key)
- *    OR to a search Button. If you use Enter, the separate search button
- *    can be deleted. Prefer "On Submit" over "On End Edit" — On End Edit
- *    also fires when the field loses focus.
- *
- *  STEP 5 — Mark Rufus complete (Task 4 — tentative)
- *    The final confirm/flash button inside Rufus Set Up:
- *      Function: MarkRufusComplete()
- *    NOTE: Task 4's condition is not wired yet (tentative). Calling this
- *    sets IsRufusComplete; hook it into Task 4 later when the step is final.
+ *  DOWNLOAD FLOW
+ *    Both Rufus and ISO use the shared DownloadProgressContainer.
+ *    Confirm button → closes popup → bar fills over downloadDuration seconds →
+ *      bar hides → flag (IsRufusDownloaded / IsIsoDownloaded) latches →
+ *      T2TaskListManager task 3 can complete once BOTH are true.
  *
  *  TASK CONDITIONS (read by T2TaskListManager):
- *    Task 2 (open browser)          → BrowserOpened         (BrowserApp button → GoTo(1))
- *    Task 3 (download rufus + ISO)  → IsRufusDownloaded && IsIsoDownloaded
- *    Task 4 (open rufus)            → RufusOpened           (RufusApp button → OpenRufus())
- *    Task 5 (configure rufus)       → IsRufusComplete       (MarkRufusComplete())
+ *    Task 2  (canvas opened)        → MonitorCanvasOpened    (set on first Open() call)
+ *    Task 3  (download rufus + ISO) → IsRufusDownloaded && IsIsoDownloaded
+ *    Task 4  (open rufus)           → RufusOpened            (RufusApp button → OpenRufus())
+ *    Task 12 (configure rufus)      → IsRufusComplete        (via RufusSetupManager)
  * ================================================================
  */
 
-using System;
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -128,7 +124,7 @@ public class T2MonitorNavigator : MonoBehaviour
     [Header("Browser Search")]
     [Tooltip("The TMP InputField on the Browser panel.")]
     [SerializeField] private TMP_InputField searchField;
-    [Tooltip("Query that must be typed to reach the download page (case-insensitive, trimmed).")]
+    [Tooltip("Query that must be typed to reach the Rufus download page (case-insensitive, trimmed).")]
     [SerializeField] private string searchKeyword = "rufus";
     [Tooltip("Index in 'panels' of the Rufus Download page.")]
     [SerializeField] private int downloadPanelIndex = 2;
@@ -138,9 +134,9 @@ public class T2MonitorNavigator : MonoBehaviour
     [SerializeField] private string isoSearchKeyword = "iso windows 10";
     [Tooltip("Index in 'panels' of the ISO Download page.")]
     [SerializeField] private int isoDownloadPanelIndex = 4;
-    [Tooltip("Index in 'panels' of the BrowserSearchedISO results page (shown after ISO search, before download).")]
+    [Tooltip("Index in 'panels' of the BrowserSearchedISO results page.")]
     [SerializeField] private int isoSearchResultsPanelIndex = 5;
-    [Tooltip("Optional object shown when the search query does not match (e.g. a 'No results' label). Leave empty to skip.")]
+    [Tooltip("Optional object shown when the search query does not match. Leave empty to skip.")]
     [SerializeField] private GameObject searchNoResults;
 
     [Header("Rufus App")]
@@ -153,51 +149,84 @@ public class T2MonitorNavigator : MonoBehaviour
     [Tooltip("Popup shown when the ISO download link is clicked. Starts inactive.")]
     [SerializeField] private GameObject isoPopUp;
 
+    [Header("Download Progress")]
+    [Tooltip("Overlay container shown during download. Starts inactive.")]
+    [SerializeField] private GameObject downloadProgressContainer;
+    [Tooltip("UI Slider (Min=0 Max=1, Interactable OFF) that fills during download.")]
+    [SerializeField] private Slider downloadProgressBar;
+    [Tooltip("Optional TMP_Text that shows 'Downloading... X%'.")]
+    [SerializeField] private TMP_Text progressLabel;
+    [Tooltip("Seconds the progress bar takes to fill (default 5).")]
+    [SerializeField] [Range(1f, 30f)] private float downloadDuration = 5f;
+
     // Milestone flags — latch true once reached (tasks don't revert).
-    public bool BrowserOpened { get; private set; }
-    public bool IsRufusDownloaded { get; private set; }
-    public bool IsIsoDownloaded { get; private set; }
-    public bool RufusOpened { get; private set; }
-    public bool IsRufusComplete { get; private set; }
+    public bool MonitorCanvasOpened { get; private set; }
+    public bool BrowserOpened       { get; private set; }
+    public bool IsRufusDownloaded   { get; private set; }
+    public bool IsIsoDownloaded     { get; private set; }
+    public bool RufusOpened         { get; private set; }
+    public bool IsRufusComplete     { get; private set; }
+
+    private enum DownloadType { Rufus, ISO }
+    private Coroutine _downloadCoroutine;
+    private bool _downloadRunning;
 
     private void Start()
     {
-        // Ensure the Rufus app button starts hidden on scene load.
         SetRufusAppState(false);
     }
 
-    // Shows or hides the Rufus app icon. Navigator holds a reference so it
-    // can reactivate the button even when the GameObject is inactive.
+    // Shows or hides the Rufus app icon.
     private void SetRufusAppState(bool visible)
     {
         if (rufusAppButton != null)
             rufusAppButton.gameObject.SetActive(visible);
     }
 
-    // Called when the monitor detail canvas opens.
-    // Resets transient UI (popups, search, active panel) but preserves milestone
-    // flags and Rufus app button state so progress survives canvas close/reopen.
+    // Called when the monitor detail canvas opens (via T2MonitorController.ShowDetailAtCenter).
+    // Latches MonitorCanvasOpened, resets transient UI, preserves milestone flags.
     public void Open()
+    {
+        MonitorCanvasOpened = true;
+        OpenPanels();
+        T2TaskListManager.CheckConditions();
+    }
+
+    // Internal panel reset shared by Open() and ResetToDefault().
+    private void OpenPanels()
     {
         if (rufusSetupPanel != null) rufusSetupPanel.SetActive(false);
         if (searchField != null)     searchField.text = string.Empty;
         if (searchNoResults != null) searchNoResults.SetActive(false);
         if (rufusPopUp != null)      rufusPopUp.SetActive(false);
         if (isoPopUp != null)        isoPopUp.SetActive(false);
+
+        // Preserve the progress container if a download is still in flight.
+        if (!_downloadRunning && downloadProgressContainer != null)
+            downloadProgressContainer.SetActive(false);
+
         SetRufusAppState(IsRufusDownloaded);
         GoTo(0);
     }
 
-    // Hard reset — only call this when resetting the whole topic from scratch.
+    // Hard reset — only call when resetting the whole topic from scratch.
     public void ResetToDefault()
     {
-        BrowserOpened = false;
-        IsRufusDownloaded = false;
-        IsIsoDownloaded = false;
-        RufusOpened = false;
-        IsRufusComplete = false;
+        MonitorCanvasOpened = false;
+        BrowserOpened       = false;
+        IsRufusDownloaded   = false;
+        IsIsoDownloaded     = false;
+        RufusOpened         = false;
+        IsRufusComplete     = false;
 
-        Open();
+        if (_downloadCoroutine != null)
+        {
+            StopCoroutine(_downloadCoroutine);
+            _downloadCoroutine = null;
+            _downloadRunning   = false;
+        }
+
+        OpenPanels();
     }
 
     public void GoTo(int panelIndex)
@@ -224,12 +253,12 @@ public class T2MonitorNavigator : MonoBehaviour
 
         string query = searchField.text != null ? searchField.text.Trim() : string.Empty;
 
-        if (string.Equals(query, searchKeyword, StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(query, searchKeyword, System.StringComparison.OrdinalIgnoreCase))
         {
             if (searchNoResults != null) searchNoResults.SetActive(false);
             GoTo(searchResultsPanelIndex);
         }
-        else if (string.Equals(query, isoSearchKeyword, StringComparison.OrdinalIgnoreCase))
+        else if (string.Equals(query, isoSearchKeyword, System.StringComparison.OrdinalIgnoreCase))
         {
             if (searchNoResults != null) searchNoResults.SetActive(false);
             GoTo(isoSearchResultsPanelIndex);
@@ -243,14 +272,12 @@ public class T2MonitorNavigator : MonoBehaviour
 
     // ---- Rufus download popup ----
 
-    // Wired to the download link button on RufusDownloadPanel.
     public void OpenRufusPopUp()
     {
         if (rufusPopUp != null)
             rufusPopUp.SetActive(true);
     }
 
-    // Wired to the cancel button inside RufusPopUp (optional).
     public void CloseRufusPopUp()
     {
         if (rufusPopUp != null)
@@ -258,29 +285,28 @@ public class T2MonitorNavigator : MonoBehaviour
     }
 
     // Wired to the confirm button inside RufusPopUp.
+    // Closes the popup and starts the download progress bar.
+    // IsRufusDownloaded latches only after the bar finishes.
     public void DownloadRufus()
     {
         if (IsRufusDownloaded) return;
 
-        IsRufusDownloaded = true;
-        SetRufusAppState(true);
-
         CloseRufusPopUp();
-        T2TaskListManager.CheckConditions();
 
-        Debug.Log("[T2MonitorNavigator] Rufus downloaded — app button enabled.");
+        if (_downloadCoroutine != null) StopCoroutine(_downloadCoroutine);
+        _downloadCoroutine = StartCoroutine(RunDownload(DownloadType.Rufus));
+
+        Debug.Log("[T2MonitorNavigator] Rufus download started.");
     }
 
     // ---- ISO download popup ----
 
-    // Wired to the download link button on ISODownloadPanel.
     public void OpenISOPopUp()
     {
         if (isoPopUp != null)
             isoPopUp.SetActive(true);
     }
 
-    // Wired to the cancel button inside IsoPopUp (optional).
     public void CloseISOPopUp()
     {
         if (isoPopUp != null)
@@ -288,15 +314,83 @@ public class T2MonitorNavigator : MonoBehaviour
     }
 
     // Wired to the confirm button inside IsoPopUp.
+    // Closes the popup and starts the download progress bar.
+    // IsIsoDownloaded latches only after the bar finishes.
     public void DownloadISO()
     {
         if (IsIsoDownloaded) return;
 
-        IsIsoDownloaded = true;
         CloseISOPopUp();
-        T2TaskListManager.CheckConditions();
-        Debug.Log("[T2MonitorNavigator] ISO downloaded.");
+
+        if (_downloadCoroutine != null) StopCoroutine(_downloadCoroutine);
+        _downloadCoroutine = StartCoroutine(RunDownload(DownloadType.ISO));
+
+        Debug.Log("[T2MonitorNavigator] ISO download started.");
     }
+
+    // ---- Download progress coroutine ----
+
+    private IEnumerator RunDownload(DownloadType type)
+    {
+        _downloadRunning = true;
+
+        if (downloadProgressContainer != null) downloadProgressContainer.SetActive(true);
+        if (downloadProgressBar != null)       downloadProgressBar.value = 0f;
+
+        SetProgressLabel("Downloading... 0%");
+
+        float duration = Mathf.Max(0.1f, downloadDuration);
+        float elapsed  = 0f;
+        int   lastPct  = -1;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            int pct = Mathf.Clamp(Mathf.FloorToInt((elapsed / duration) * 100f), 0, 99);
+
+            if (pct != lastPct)
+            {
+                lastPct = pct;
+                if (downloadProgressBar != null)
+                    downloadProgressBar.value = elapsed / duration;
+                SetProgressLabel($"Downloading... {pct}%");
+            }
+
+            yield return null;
+        }
+
+        if (downloadProgressBar != null) downloadProgressBar.value = 1f;
+        SetProgressLabel("Download complete!");
+
+        _downloadRunning   = false;
+        _downloadCoroutine = null;
+
+        // Latch the milestone flag after progress finishes.
+        if (type == DownloadType.Rufus)
+        {
+            IsRufusDownloaded = true;
+            SetRufusAppState(true);
+            Debug.Log("[T2MonitorNavigator] Rufus downloaded — app button enabled.");
+        }
+        else
+        {
+            IsIsoDownloaded = true;
+            Debug.Log("[T2MonitorNavigator] ISO downloaded.");
+        }
+
+        T2TaskListManager.CheckConditions();
+
+        yield return new WaitForSeconds(1.5f);
+        if (downloadProgressContainer != null) downloadProgressContainer.SetActive(false);
+    }
+
+    private void SetProgressLabel(string text)
+    {
+        if (progressLabel != null)
+            progressLabel.text = text;
+    }
+
+    // ---- Rufus app ----
 
     // Called by the RufusApp button on the Desktop panel.
     public void OpenRufus()
@@ -318,7 +412,7 @@ public class T2MonitorNavigator : MonoBehaviour
         Debug.Log("[T2MonitorNavigator] Rufus setup closed.");
     }
 
-    // Called by the final flash/confirm button inside Rufus Set Up (Task 4 — tentative).
+    // Called by RufusSetupManager after formatting completes successfully.
     public void MarkRufusComplete()
     {
         IsRufusComplete = true;

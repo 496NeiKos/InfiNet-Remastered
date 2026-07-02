@@ -58,11 +58,46 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         if (homePort == null)
             homePort = GetComponentInParent<CablePort>();
 
+        // Auto-resolve hardwareHolder by direct object reference if not wired in the inspector.
+        // Name-based matching is fragile; this check is always reliable.
+        if (hardwareHolder == null)
+            hardwareHolder = FindHardwareHolderForThis();
+
         _installedLocalPos = transform.localPosition;
         _installedLocalScale = transform.localScale;
 
         if (powerButtonSource != null)
             _powerButton = powerButtonSource as IPowerButton;
+    }
+
+    // Finds the HardwareHolder whose hardwarePrefab IS this GameObject.
+    // Pass 1 favours a holder whose parent container is currently active — this handles
+    // the edge case where two holders in different topic containers reference the same
+    // prefab name. Pass 2 and 3 are fallbacks for when only one holder exists.
+    private HardwareHolder FindHardwareHolderForThis()
+    {
+        // Pass 1: direct reference + parent container is active.
+        // We check the PARENT's activeInHierarchy (not the holder itself) because the holder
+        // object may legitimately be inactive while its topic container is active.
+        foreach (HardwareHolder h in FindObjectsOfType<HardwareHolder>(true))
+        {
+            if (h.hardwarePrefab != gameObject) continue;
+            Transform p = h.transform.parent;
+            bool parentActive = p == null || p.gameObject.activeInHierarchy;
+            if (parentActive) return h;
+        }
+        // Pass 2: direct reference, any hierarchy (fallback — e.g. only one holder exists).
+        foreach (HardwareHolder h in FindObjectsOfType<HardwareHolder>(true))
+        {
+            if (h.hardwarePrefab == gameObject) return h;
+        }
+        // Pass 3: name match (legacy cables without a direct scene-object reference).
+        foreach (HardwareHolder h in FindObjectsOfType<HardwareHolder>(true))
+        {
+            if (h.hardwarePrefab != null && h.hardwarePrefab.name == gameObject.name)
+                return h;
+        }
+        return null;
     }
 
     private void Update()
@@ -141,6 +176,10 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
 
         homePort?.SetUninstalled();
         ActivityLogManager.Log($"{cableType} cable unplugged", ActivityLogManager.EntryType.Remove);
+
+        // Refresh the cached holder ref but do NOT show the icon yet —
+        // the icon only appears once the player explicitly drops the cable onto the hardware area.
+        hardwareHolder = FindHardwareHolderForThis();
 
         // SetParent with worldPositionStays=true already preserves world scale.
         // Do NOT reassign localScale here — it would corrupt the transform.
@@ -262,6 +301,12 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
 
         gameObject.SetActive(true);
         port.SetInstalled();
+
+        // Cable landed in a port — hide the holder (HardwareHolder.TryInstallInSlot already
+        // does this when called from the holder, but direct-drag installs skip that path).
+        if (hardwareHolder != null)
+            hardwareHolder.gameObject.SetActive(false);
+
         ActivityLogManager.Log($"{cableType} cable plugged in", ActivityLogManager.EntryType.Install);
         Debug.Log($"[CableBehavior] {cableType} installed to {port.name}.");
     }
@@ -275,6 +320,9 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
             transform.localPosition = _installedLocalPos;
             transform.localScale = _installedLocalScale;
             homePort.SetInstalled();
+            // Cable returned to its port — re-hide the holder that Detach() re-activated.
+            if (hardwareHolder != null)
+                hardwareHolder.gameObject.SetActive(false);
             Debug.Log($"[CableBehavior] {cableType} snapped back to {homePort.name}.");
         }
         else
@@ -286,17 +334,17 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
 
     private void SendToHolder()
     {
-        if (hardwareHolder != null) { hardwareHolder.StoreHardware(); return; }
-        foreach (HardwareHolder h in FindObjectsOfType<HardwareHolder>(true))
+        // Always search fresh — the inspector-wired or previously cached ref may belong to a
+        // different topic's container (e.g. shared FlashDrive used in both Topic 2 and Topic 3).
+        hardwareHolder = FindHardwareHolderForThis();
+
+        if (hardwareHolder != null)
         {
-            if (h.hardwarePrefab != null && h.hardwarePrefab.name == gameObject.name)
-            {
-                hardwareHolder = h;
-                h.StoreHardware();
-                return;
-            }
+            hardwareHolder.StoreHardware();
+            return;
         }
-        Debug.LogWarning($"[CableBehavior] No HardwareHolder found for '{gameObject.name}'.");
+
+        Debug.LogWarning($"[CableBehavior] No HardwareHolder found for '{gameObject.name}' — hiding cable.");
         gameObject.SetActive(false);
     }
 

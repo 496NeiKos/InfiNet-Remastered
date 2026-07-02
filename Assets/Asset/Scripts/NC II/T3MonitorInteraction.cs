@@ -40,6 +40,10 @@ public class T3MonitorInteraction : MonoBehaviour, IInPlaceInteraction
             monitorController = GetComponent<T3MonitorController>();
     }
 
+    // Number of times the player has right-clicked to open this monitor canvas.
+    // Task 2 reads >= 1; Task 5 reads >= 2.
+    public int CanvasOpenCount { get; private set; }
+
     private void Update()
     {
         if (!Mouse.current.rightButton.wasPressedThisFrame) return;
@@ -47,6 +51,8 @@ public class T3MonitorInteraction : MonoBehaviour, IInPlaceInteraction
         if (systemUnit != null && !systemUnit.IsPoweredOn) return;
         if (!IsMouseOver()) return;
 
+        CanvasOpenCount++;
+        T3TaskListManager.CheckConditions();
         GameManager.Instance.OpenEditorInPlace(this);
     }
 

@@ -149,6 +149,18 @@ public class WU_DriverPanelManager : MonoBehaviour
     private bool       _started;
     private Coroutine[] _feedback;
 
+    // True once every driver has reached the Downloaded state (Task 7).
+    public bool AllDriversDownloaded
+    {
+        get
+        {
+            if (drivers == null || drivers.Length == 0) return false;
+            foreach (var d in drivers)
+                if (d.state != DriverState.Downloaded) return false;
+            return true;
+        }
+    }
+
     // ----------------------------------------------------------------
     //  Lifecycle
     // ----------------------------------------------------------------
@@ -235,6 +247,7 @@ public class WU_DriverPanelManager : MonoBehaviour
             {
                 drivers[i].progress = 1f;
                 drivers[i].state    = DriverState.Downloaded;
+                T3TaskListManager.CheckConditions();
             }
         }
 

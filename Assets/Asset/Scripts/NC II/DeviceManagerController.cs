@@ -75,9 +75,18 @@ public class DeviceManagerController : MonoBehaviour
     [Header("Category Entries  (button + panel pairs, index 0–9)")]
     [SerializeField] private DeviceEntry[] entries = new DeviceEntry[10];
 
+    // Latches true the first time this panel is made active (Task 8).
+    public bool WasOpened { get; private set; }
+
     // ----------------------------------------------------------------
     //  Lifecycle
     // ----------------------------------------------------------------
+
+    private void OnEnable()
+    {
+        WasOpened = true;
+        T3TaskListManager.CheckConditions();
+    }
 
     private void Awake()
     {

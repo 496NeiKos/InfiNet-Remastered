@@ -12,8 +12,7 @@
  *
  *  STEP 3 — Convert "Volume Label" to a plain Text display
  *    a) Remove the TMP_Dropdown (or any other component) from "Volume Label".
- *    b) Add (or keep) a Text (Legacy) component on it — same pattern as
- *       the "Ready" status bar.
+ *    b) Add (or keep) a Text (Legacy) component on it.
  *    c) The script writes the ISO filename to it when the user picks an ISO.
  *       The student never types into it.
  *
@@ -43,7 +42,6 @@
  *
  *    USB Port (checked on every open):
  *      usbPort                 → CablePort on the system unit's front USB slot
- *                                Device dropdown shows USB only when this is Installed.
  *
  *    Dropdowns — Device Properties:
  *      deviceDropdown          → Device            (TMP_Dropdown)
@@ -82,18 +80,27 @@
  *
  *  CORRECT CONFIGURATION (for task completion):
  *    Boot Selection   → any .iso file selected via the file picker
- *    Image Option     → Standard Windows Installation
- *    Partition Scheme → MBR
- *    Target System    → UEFI (non CSM)
+ *    Image Option     → Standard Windows Installation   (index 0)
+ *    Partition Scheme → MBR                             (index 0)
+ *    Target System    → UEFI (non CSM)                  (index 1)
  *    Volume Label     → auto-filled from ISO name (display only, not editable)
- *    File System      → NTFS
- *    Cluster Size     → 4096 bytes (Default)
+ *    File System      → NTFS                            (index 1)
+ *    Cluster Size     → 4096 bytes (Default)            (index 3)
  *    Device is always valid (only one option).
  *
  *  FORMAT OPTIONS LOCK:
  *    File System and Cluster Size start non-interactable.
  *    They become interactable only after an ISO file is selected.
  *    Volume Label is display-only and never interactable.
+ *
+ *  TASK CONDITIONS (exposed as public properties — read by T2TaskListManager):
+ *    Task  5 — IsIsoInBootSelection  : a .iso filename is in the Boot Selection dropdown
+ *    Task  6 — IsImageOptionSet      : Image Option == Standard Windows Installation
+ *    Task  7 — IsPartitionSet        : Partition Scheme == MBR
+ *    Task  8 — IsTargetSystemSet     : Target System == UEFI (non CSM)
+ *    Task  9 — IsFileSystemSet       : File System == NTFS
+ *    Task 10 — IsClusterSizeSet      : Cluster Size == 4096 bytes (Default)
+ *    Task 11 — FormattingStarted     : Start button was clicked with valid config
  * ================================================================
  */
 
@@ -145,6 +152,20 @@ public class RufusSetupManager : MonoBehaviour
     private const int CorrectFileSystem       = 1; // "NTFS"
     private const int CorrectClusterSize      = 3; // "4096 bytes (Default)"
 
+    // ----------------------------------------------------------------
+    //  Public task-condition properties (read by T2TaskListManager)
+    // ----------------------------------------------------------------
+
+    public bool IsIsoInBootSelection => IsIsoSelected();
+    public bool IsImageOptionSet     => Check(imageOptionDropdown,     CorrectImageOption);
+    public bool IsPartitionSet       => Check(partitionSchemeDropdown, CorrectPartitionScheme);
+    public bool IsTargetSystemSet    => Check(targetSystemDropdown,    CorrectTargetSystem);
+    public bool IsFileSystemSet      => Check(fileSystemDropdown,      CorrectFileSystem);
+    public bool IsClusterSizeSet     => Check(clusterSizeDropdown,     CorrectClusterSize);
+
+    // Latches true when the Start button is clicked with a valid configuration.
+    public bool FormattingStarted { get; private set; }
+
     private bool _formatting;
 
     private void Awake()
@@ -161,6 +182,36 @@ public class RufusSetupManager : MonoBehaviour
             filePickerPanel.SetActive(false);
 
         SetStatus("Ready");
+
+        // Notify the task list whenever any relevant dropdown changes.
+        AddCheckListener(bootSelectionDropdown);
+        AddCheckListener(imageOptionDropdown);
+        AddCheckListener(partitionSchemeDropdown);
+        AddCheckListener(targetSystemDropdown);
+        AddCheckListener(fileSystemDropdown);
+        AddCheckListener(clusterSizeDropdown);
+    }
+
+    private void OnDestroy()
+    {
+        RemoveCheckListener(bootSelectionDropdown);
+        RemoveCheckListener(imageOptionDropdown);
+        RemoveCheckListener(partitionSchemeDropdown);
+        RemoveCheckListener(targetSystemDropdown);
+        RemoveCheckListener(fileSystemDropdown);
+        RemoveCheckListener(clusterSizeDropdown);
+    }
+
+    private static void AddCheckListener(TMP_Dropdown dropdown)
+    {
+        if (dropdown != null)
+            dropdown.onValueChanged.AddListener(_ => T2TaskListManager.CheckConditions());
+    }
+
+    private static void RemoveCheckListener(TMP_Dropdown dropdown)
+    {
+        if (dropdown != null)
+            dropdown.onValueChanged.RemoveAllListeners();
     }
 
     // Refreshes dropdowns and ISO button state on every panel open.
@@ -175,7 +226,7 @@ public class RufusSetupManager : MonoBehaviour
         if (deviceDropdown == null) return;
         deviceDropdown.ClearOptions();
 
-        deviceDropdown.AddOptions(new System.Collections.Generic.List<string>
+        deviceDropdown.AddOptions(new List<string>
         {
             IsUsbPhysicallyInstalled() ? "Kingston DataTraveler 32GB (E:)" : "(No device detected)"
         });
@@ -184,8 +235,6 @@ public class RufusSetupManager : MonoBehaviour
     }
 
     // Checks whether a CableBehavior is physically a child of the USB port transform.
-    // CablePort.IsInstalled can't be trusted here — it defaults to true before
-    // CablePort.Awake() runs (the port lives in an initially-inactive hierarchy).
     private bool IsUsbPhysicallyInstalled()
     {
         return usbPort != null && usbPort.GetComponentInChildren<CableBehavior>() != null;
@@ -197,8 +246,6 @@ public class RufusSetupManager : MonoBehaviour
 
     private void PopulateDropdowns()
     {
-        // Device is handled by RefreshDeviceDropdown() instead.
-
         SetOptions(bootSelectionDropdown, new[]
         {
             "Disk or ISO image (Please select)",
@@ -269,11 +316,11 @@ public class RufusSetupManager : MonoBehaviour
     //    Close button → RufusSetupManager.CloseAndReset() (wipes state)
     // ----------------------------------------------------------------
 
-    // Wired to the CLOSE button's OnClick.
     public void CloseAndReset()
     {
         StopAllCoroutines();
-        _formatting = false;
+        _formatting      = false;
+        FormattingStarted = false;
 
         // Restore Boot Selection placeholder at index 0.
         if (bootSelectionDropdown != null && bootSelectionDropdown.options.Count > 0)
@@ -314,8 +361,6 @@ public class RufusSetupManager : MonoBehaviour
     //  ISO file picker
     // ----------------------------------------------------------------
 
-    // Enables or disables the Win10 ISO buttons based on whether the ISO
-    // has been downloaded via DownloadISO() in T2MonitorNavigator.
     private void RefreshIsoButtons()
     {
         bool isoReady = navigator != null && navigator.IsIsoDownloaded;
@@ -329,11 +374,10 @@ public class RufusSetupManager : MonoBehaviour
         btn.interactable = enabled;
         CanvasGroup cg = btn.GetComponent<CanvasGroup>();
         if (cg == null) cg = btn.gameObject.AddComponent<CanvasGroup>();
-        cg.alpha = enabled ? 1f : 0f;
+        cg.alpha         = enabled ? 1f : 0f;
         cg.blocksRaycasts = enabled;
     }
 
-    // Wired to the Select button's OnClick.
     public void OpenFilePicker()
     {
         RefreshIsoButtons();
@@ -341,7 +385,6 @@ public class RufusSetupManager : MonoBehaviour
             filePickerPanel.SetActive(true);
     }
 
-    // Wired to the Cancel button inside IsoFilePicker.
     public void CloseFilePicker()
     {
         if (filePickerPanel != null)
@@ -364,6 +407,7 @@ public class RufusSetupManager : MonoBehaviour
         SetFormatOptionsInteractable(true);
         CloseFilePicker();
         SetStatus("Ready");
+        T2TaskListManager.CheckConditions();
         Debug.Log($"[RufusSetupManager] ISO selected: {isoName}");
     }
 
@@ -371,7 +415,6 @@ public class RufusSetupManager : MonoBehaviour
     //  Start button
     // ----------------------------------------------------------------
 
-    // Wired to the Start button's OnClick.
     public void OnStartClicked()
     {
         if (_formatting) return;
@@ -384,7 +427,10 @@ public class RufusSetupManager : MonoBehaviour
 
     private IEnumerator RunFormatting()
     {
-        _formatting = true;
+        _formatting       = true;
+        FormattingStarted = true;
+        T2TaskListManager.CheckConditions();
+
         SetStatus("Starting...");
         yield return new WaitForSeconds(1f);
 
@@ -463,11 +509,7 @@ public class RufusSetupManager : MonoBehaviour
 
     private static bool Check(TMP_Dropdown dropdown, int expected)
     {
-        if (dropdown == null)
-        {
-            Debug.LogWarning("[RufusSetupManager] A dropdown is not assigned in the Inspector.");
-            return false;
-        }
+        if (dropdown == null) return false;
         return dropdown.value == expected;
     }
 

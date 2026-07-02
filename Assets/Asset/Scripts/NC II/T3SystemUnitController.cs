@@ -80,10 +80,14 @@ public class T3SystemUnitController : MonoBehaviour, IHardwareController
     [SerializeField] private Sprite frontOffSprite;
     [SerializeField] private Sprite frontOnSprite;
 
-    public bool IsPoweredOn { get; private set; }
+    public bool IsPoweredOn     { get; private set; }
+    // True once the unit has been powered OFF then back ON at least once (Task 5).
+    public bool HasPowerCycled  { get; private set; }
 
-    // Fired on OFF → ON transition. UEFILoadingPanel subscribes to reset its state.
+    // Fired on OFF → ON transition. UEFILoadingPanel and T3TaskListManager subscribe.
     public event Action OnPoweredOn;
+
+    private bool _hasPoweredOff;
 
     private void Start()
     {
@@ -119,11 +123,14 @@ public class T3SystemUnitController : MonoBehaviour, IHardwareController
 
         if (!wasOn && IsPoweredOn)
         {
+            if (_hasPoweredOff) HasPowerCycled = true;
             OnPoweredOn?.Invoke();
             Debug.Log("[T3SystemUnitController] System unit powered ON — loading panel reset.");
         }
         else
         {
+            _hasPoweredOff = true;
+            T3TaskListManager.CheckConditions();
             Debug.Log("[T3SystemUnitController] System unit powered OFF.");
         }
     }

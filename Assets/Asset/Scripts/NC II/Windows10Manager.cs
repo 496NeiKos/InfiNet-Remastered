@@ -80,6 +80,14 @@ public class Windows10Manager : MonoBehaviour
     private static bool   _sessionPasswordSet;
     private static string _sessionPassword = "";
 
+    // Latches true the first time InitWindows10Panel() runs — signals Task 6 completion.
+    private static bool _passwordLoginShown;
+    public static bool PasswordLoginShown => _passwordLoginShown;
+
+    // Latches true when the player clicks the TaskBar shutdown button — signals Task 11 completion.
+    private static bool _shutdownTriggered;
+    public static bool ShutdownTriggered => _shutdownTriggered;
+
     // ----------------------------------------------------------------
     //  Panels
     // ----------------------------------------------------------------
@@ -138,6 +146,9 @@ public class Windows10Manager : MonoBehaviour
 
         windows10Desktop?.SetActive(false);
         passwordLoginPanel?.SetActive(true);
+
+        _passwordLoginShown = true;
+        T3TaskListManager.CheckConditions();
 
         _pendingPassword  = "";
         _awaitingConfirm  = false;
@@ -331,6 +342,9 @@ public class Windows10Manager : MonoBehaviour
 
     public void OnShutdown()
     {
+        _shutdownTriggered = true;
+        T3TaskListManager.CheckConditions();
+
         // Close the tray UI before the desktop hides.
         taskBarController?.CloseAll();
 

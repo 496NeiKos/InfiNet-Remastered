@@ -60,6 +60,10 @@ public class DesktopManager : MonoBehaviour
 
     public static bool IsInstalled(AppType app) => _installedApps.Contains(app);
 
+    // Latch flags for Task 10 — set when the player opens each app panel.
+    public bool ChromeExecuted  { get; private set; }
+    public bool WinrarExecuted  { get; private set; }
+
     // ----------------------------------------------------------------
     //  Lifecycle
     // ----------------------------------------------------------------
@@ -90,12 +94,16 @@ public class DesktopManager : MonoBehaviour
     public void OpenChromeApp()
     {
         chromePanel?.SetActive(true);
+        ChromeExecuted = true;
+        T3TaskListManager.CheckConditions();
         Debug.Log("[DesktopManager] Chrome opened.");
     }
 
     public void OpenWinRarApp()
     {
         winRarPanel?.SetActive(true);
+        WinrarExecuted = true;
+        T3TaskListManager.CheckConditions();
         Debug.Log("[DesktopManager] WinRar opened.");
     }
 
@@ -115,6 +123,8 @@ public class DesktopManager : MonoBehaviour
                 Debug.Log("[DesktopManager] WinRar installed — button activated.");
                 break;
         }
+
+        T3TaskListManager.CheckConditions();
     }
 
     // ----------------------------------------------------------------

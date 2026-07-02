@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 /// <summary>
@@ -8,6 +9,10 @@ using UnityEngine;
 /// </summary>
 public class CablePort : MonoBehaviour
 {
+    // Fired the moment a cable is plugged in. T3TaskListManager subscribes for Task 1.
+    public event Action OnInstalled;
+    // Fired the moment a cable is unplugged. T3TaskListManager and UEFISettingButton subscribe.
+    public event Action OnUninstalled;
     [Header("Accepted Cables")]
     [Tooltip("Cable type strings this port accepts. One entry for a single cable, more for shared ports.")]
     [SerializeField] private string[] acceptedCableTypes = new string[0];
@@ -70,6 +75,7 @@ public class CablePort : MonoBehaviour
     {
         _isInstalled = true;
         NotifyControllers();
+        OnInstalled?.Invoke();
         Debug.Log($"[CablePort] {name} → Installed");
     }
 
@@ -77,6 +83,7 @@ public class CablePort : MonoBehaviour
     {
         _isInstalled = false;
         NotifyControllers();
+        OnUninstalled?.Invoke();
         Debug.Log($"[CablePort] {name} → Uninstalled");
     }
 
