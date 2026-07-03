@@ -24,8 +24,9 @@ public class AVRPowerButton : MonoBehaviour, IPowerButton
     [SerializeField] private BackPortSlot aMPort;
 
     [Header("Power Off Gate")]
-    [Tooltip("SU front power button must be off before AVR can be turned off.")]
+    [Tooltip("SU front power button AND monitor power button must both be off before AVR can be turned off.")]
     [SerializeField] private PowerButton suPowerButton;
+    [SerializeField] private MonitorPowerButton monitorPowerButton;
 
     [Header("Initial State")]
     [SerializeField] private bool startOn = false;
@@ -47,6 +48,10 @@ public class AVRPowerButton : MonoBehaviour, IPowerButton
     private void Awake()
     {
         _sr = GetComponent<SpriteRenderer>();
+
+        if (monitorPowerButton == null)
+            monitorPowerButton = FindObjectOfType<MonitorPowerButton>(true);
+
         _state = startOn ? PowerState.On : PowerState.Off;
         _initialized = true;
         ApplySprites();
@@ -94,24 +99,6 @@ public class AVRPowerButton : MonoBehaviour, IPowerButton
 
     private void TryTurnOn()
     {
-        bool pass = true;
-
-        if (aPSUPort == null || aPSUPort.IsUninstalled)
-        {
-            ActivityLogManager.Log("Cannot turn on AVR — connect the AVR PSU cable first.", ActivityLogManager.EntryType.Warning);
-            Debug.Log("[AVRPowerButton] FAIL — AVR PSU port cable not connected.");
-            pass = false;
-        }
-
-        if (aMPort == null || aMPort.IsUninstalled)
-        {
-            ActivityLogManager.Log("Cannot turn on AVR — connect the AVR monitor cable first.", ActivityLogManager.EntryType.Warning);
-            Debug.Log("[AVRPowerButton] FAIL — AVR monitor cable not connected.");
-            pass = false;
-        }
-
-        if (!pass) return;
-
         SetState(PowerState.On);
     }
 
@@ -121,6 +108,13 @@ public class AVRPowerButton : MonoBehaviour, IPowerButton
         {
             ActivityLogManager.Log("Cannot turn off AVR — turn off the System Unit first.", ActivityLogManager.EntryType.Warning);
             Debug.Log("[AVRPowerButton] Cannot turn off — System Unit power button is still on.");
+            return;
+        }
+
+        if (monitorPowerButton != null && monitorPowerButton.IsPoweredOn)
+        {
+            ActivityLogManager.Log("Cannot turn off AVR — turn off the Monitor first.", ActivityLogManager.EntryType.Warning);
+            Debug.Log("[AVRPowerButton] Cannot turn off — Monitor power button is still on.");
             return;
         }
 

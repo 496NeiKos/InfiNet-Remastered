@@ -21,6 +21,7 @@ public class PowerButton : MonoBehaviour, IPowerButton
 
     [Header("References")]
     [SerializeField] private PowerOnConditionChecker conditionChecker;
+    [SerializeField] private MonitorPowerButton monitorPowerButton;
 
     [Header("Initial State")]
     [SerializeField] private bool startOn = false;
@@ -49,9 +50,11 @@ public class PowerButton : MonoBehaviour, IPowerButton
     {
         _sr = GetComponent<SpriteRenderer>();
 
-        // Auto-find checker on parent root if not wired
         if (conditionChecker == null)
             conditionChecker = GetComponentInParent<PowerOnConditionChecker>();
+
+        if (monitorPowerButton == null)
+            monitorPowerButton = FindObjectOfType<MonitorPowerButton>(true);
 
         _state = startOn ? PowerState.On : PowerState.Off;
         _initialized = true;
@@ -162,9 +165,11 @@ public class PowerButton : MonoBehaviour, IPowerButton
         {
             case PowerState.On:
                 ActivityLogManager.Log("System unit powered ON", ActivityLogManager.EntryType.Install);
+                monitorPowerButton?.ForceOn();
                 break;
             case PowerState.Off:
                 ActivityLogManager.Log("System unit powered OFF", ActivityLogManager.EntryType.Remove);
+                monitorPowerButton?.ForceOff();
                 break;
             case PowerState.Restarting:
                 ActivityLogManager.Log("System unit restarting...", ActivityLogManager.EntryType.Action);

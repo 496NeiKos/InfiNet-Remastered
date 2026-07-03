@@ -48,8 +48,8 @@ public class RAMController : MonoBehaviour
 
     public void OnSnappedToSlot()
     {
+        SetInstalled();
         ApplySlotSprite(true);
-        GetComponentInParent<MotherboardController>()?.RefreshCableSprite();
     }
 
     public void OnRemovedFromSlot()

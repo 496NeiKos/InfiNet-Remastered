@@ -19,13 +19,13 @@ public class MonitorPowerButton : MonoBehaviour, IPowerButton
     [SerializeField] private Sprite monitorDetailedSpriteOn;
     [SerializeField] private Sprite monitorDetailedSpriteOff;
 
-    [Header("Turn On Condition")]
-    [Tooltip("Monitor back VGA port cable must be installed before the monitor can turn on.")]
+    [Header("Turn On Conditions")]
+    [Tooltip("AVR must be powered on before the monitor can turn on.")]
+    [SerializeField] private AVRPowerButton avrPowerButton;
+    [Tooltip("Monitor back VGA cable port must be installed.")]
     [SerializeField] private BackPortSlot monitorVGAPort;
-
-    [Header("Power Off Gate")]
-    [Tooltip("SU front power button must be off before the monitor can be turned off.")]
-    [SerializeField] private PowerButton suPowerButton;
+    [Tooltip("Monitor back power cable port must be installed.")]
+    [SerializeField] private CablePort monitorPowerCablePort;
 
     [Header("Initial State")]
     [SerializeField] private bool startOn = false;
@@ -47,6 +47,10 @@ public class MonitorPowerButton : MonoBehaviour, IPowerButton
     private void Awake()
     {
         _sr = GetComponent<SpriteRenderer>();
+
+        if (avrPowerButton == null)
+            avrPowerButton = FindObjectOfType<AVRPowerButton>(true);
+
         _state = startOn ? PowerState.On : PowerState.Off;
         _initialized = true;
         ApplySprites();
@@ -94,17 +98,24 @@ public class MonitorPowerButton : MonoBehaviour, IPowerButton
 
     private void TryTurnOn()
     {
-        if (suPowerButton != null && !suPowerButton.IsPoweredOn)
+        if (avrPowerButton == null || !avrPowerButton.IsPoweredOn)
         {
-            ActivityLogManager.Log("Cannot turn on monitor — turn on the System Unit first.", ActivityLogManager.EntryType.Warning);
-            Debug.Log("[MonitorPowerButton] FAIL — System Unit power button is off.");
+            ActivityLogManager.Log("Cannot turn on monitor — turn on the AVR first.", ActivityLogManager.EntryType.Warning);
+            Debug.Log("[MonitorPowerButton] FAIL — AVR power button is off.");
             return;
         }
 
         if (monitorVGAPort == null || monitorVGAPort.IsUninstalled)
         {
-            ActivityLogManager.Log("Cannot turn on monitor — connect the VGA cable first.", ActivityLogManager.EntryType.Warning);
+            ActivityLogManager.Log("Cannot turn on monitor — connect the VGA cable to the monitor first.", ActivityLogManager.EntryType.Warning);
             Debug.Log("[MonitorPowerButton] FAIL — monitor VGA port cable not connected.");
+            return;
+        }
+
+        if (monitorPowerCablePort == null || monitorPowerCablePort.IsUninstalled)
+        {
+            ActivityLogManager.Log("Cannot turn on monitor — connect the power cable to the monitor first.", ActivityLogManager.EntryType.Warning);
+            Debug.Log("[MonitorPowerButton] FAIL — monitor power cable port not connected.");
             return;
         }
 
@@ -113,13 +124,16 @@ public class MonitorPowerButton : MonoBehaviour, IPowerButton
 
     private void TryTurnOff()
     {
-        if (suPowerButton != null && suPowerButton.IsPoweredOn)
-        {
-            ActivityLogManager.Log("Cannot turn off monitor — turn off the System Unit first.", ActivityLogManager.EntryType.Warning);
-            Debug.Log("[MonitorPowerButton] Cannot turn off — System Unit power button is still on.");
-            return;
-        }
+        SetState(PowerState.Off);
+    }
 
+    public void ForceOn()
+    {
+        SetState(PowerState.On);
+    }
+
+    public void ForceOff()
+    {
         SetState(PowerState.Off);
     }
 
