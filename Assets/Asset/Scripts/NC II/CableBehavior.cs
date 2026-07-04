@@ -17,6 +17,30 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
 {
     [Header("Identity")]
     [SerializeField] private string cableType;
+    [Tooltip("Human-readable name shown in the activity log. E.g. 'PSU Cable'. Auto-derived from cableType if left blank.")]
+    [SerializeField] private string displayName;
+
+    private string LogName => !string.IsNullOrEmpty(displayName) ? displayName : DeriveName(cableType);
+
+    private static string DeriveName(string raw)
+    {
+        if (string.IsNullOrEmpty(raw)) return "Cable";
+        string s = raw;
+
+        // Strip trailing Port / Slot / Cable (case-insensitive)
+        foreach (string suffix in new[] { "Port", "Slot", "Cable" })
+            if (s.EndsWith(suffix, System.StringComparison.OrdinalIgnoreCase))
+                s = s.Substring(0, s.Length - suffix.Length).TrimEnd();
+
+        // Expand known device prefixes (check longer ones first)
+        if      (s.StartsWith("SU", System.StringComparison.OrdinalIgnoreCase))  s = "System Unit " + s.Substring(2).TrimStart();
+        else if (s.StartsWith("MB", System.StringComparison.OrdinalIgnoreCase))  s = "Motherboard " + s.Substring(2).TrimStart();
+        else if (s.StartsWith("GPU", System.StringComparison.OrdinalIgnoreCase)) s = "GPU " + s.Substring(3).TrimStart();
+        else if (s.StartsWith("M", System.StringComparison.OrdinalIgnoreCase))   s = "Monitor " + s.Substring(1).TrimStart();
+        else if (s.StartsWith("A", System.StringComparison.OrdinalIgnoreCase))   s = "AVR " + s.Substring(1).TrimStart();
+
+        return s.Trim() + " Cable";
+    }
 
     [Header("Home Port")]
     [Tooltip("The CablePort this cable starts installed in. Auto-detected from parent if blank. Updated at runtime when installed to a new port.")]
@@ -147,22 +171,22 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
     {
         if (_powerButton != null && _powerButton.IsPoweredOn)
         {
-            ActivityLogManager.Log($"Cannot unplug {cableType} — turn off its power source first.", ActivityLogManager.EntryType.Warning);
+            ActivityLogManager.Log($"Cannot unplug {LogName} — turn off its power source first.", ActivityLogManager.EntryType.Warning);
             return false;
         }
         if (secondaryPowerGate != null && secondaryPowerGate.IsPoweredOn)
         {
-            ActivityLogManager.Log($"Cannot unplug {cableType} — turn off the System Unit first.", ActivityLogManager.EntryType.Warning);
+            ActivityLogManager.Log($"Cannot unplug {LogName} — turn off the System Unit first.", ActivityLogManager.EntryType.Warning);
             return false;
         }
         if (monitorPowerGate != null && monitorPowerGate.IsPoweredOn)
         {
-            ActivityLogManager.Log($"Cannot unplug {cableType} — turn off the Monitor first.", ActivityLogManager.EntryType.Warning);
+            ActivityLogManager.Log($"Cannot unplug {LogName} — turn off the Monitor first.", ActivityLogManager.EntryType.Warning);
             return false;
         }
         if (psuSwitchGate != null && psuSwitchGate.IsOn)
         {
-            ActivityLogManager.Log($"Cannot unplug {cableType} — turn off the PSU switch first.", ActivityLogManager.EntryType.Warning);
+            ActivityLogManager.Log($"Cannot unplug {LogName} — turn off the PSU switch first.", ActivityLogManager.EntryType.Warning);
             return false;
         }
         return true;
@@ -175,7 +199,7 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         _isDragging = false;
 
         homePort?.SetUninstalled();
-        ActivityLogManager.Log($"{cableType} cable unplugged", ActivityLogManager.EntryType.Remove);
+        ActivityLogManager.Log($"{LogName} unplugged", ActivityLogManager.EntryType.Remove);
 
         // Refresh the cached holder ref but do NOT show the icon yet —
         // the icon only appears once the player explicitly drops the cable onto the hardware area.
@@ -307,7 +331,7 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         if (hardwareHolder != null)
             hardwareHolder.gameObject.SetActive(false);
 
-        ActivityLogManager.Log($"{cableType} cable plugged in", ActivityLogManager.EntryType.Install);
+        ActivityLogManager.Log($"{LogName} plugged in", ActivityLogManager.EntryType.Install);
         Debug.Log($"[CableBehavior] {cableType} installed to {port.name}.");
     }
 

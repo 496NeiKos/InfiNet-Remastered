@@ -139,6 +139,7 @@ public class MonitorPowerButton : MonoBehaviour, IPowerButton
 
     private void SetState(PowerState newState)
     {
+        _initialized = true;
         _state = newState;
         ApplySprites();
         ActivityLogManager.Log(

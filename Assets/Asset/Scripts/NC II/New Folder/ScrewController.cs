@@ -27,6 +27,10 @@ public class ScrewController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
 
     [Header("Settings")]
     [SerializeField] private float screwdriverDuration = 2f;
+    [Tooltip("Human-readable name shown in the activity log. E.g. 'System Unit Cover Screw 1'. Auto-derived from parent hierarchy if left blank.")]
+    [SerializeField] private string displayName;
+
+    private string _resolvedName;  // cached on first use
 
     [Header("References")]
     [SerializeField] private CoverController coverController;
@@ -290,18 +294,55 @@ public class ScrewController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         UpdateSprite();
         OnStateChanged?.Invoke(this);
 
+        string label = ResolveName();
         switch (newState)
         {
             case ScrewState.Screwed:
-                ActivityLogManager.Log($"{name}: screw tightened", ActivityLogManager.EntryType.Install);
+                ActivityLogManager.Log($"{label} tightened", ActivityLogManager.EntryType.Install);
                 break;
             case ScrewState.Pending:
-                ActivityLogManager.Log($"{name}: screw placed", ActivityLogManager.EntryType.Action);
+                ActivityLogManager.Log($"{label} placed", ActivityLogManager.EntryType.Action);
                 break;
             case ScrewState.Empty:
-                ActivityLogManager.Log($"{name}: screw removed", ActivityLogManager.EntryType.Remove);
+                ActivityLogManager.Log($"{label} removed", ActivityLogManager.EntryType.Remove);
                 break;
         }
+    }
+
+    private string ResolveName()
+    {
+        if (!string.IsNullOrEmpty(displayName)) return displayName;
+        if (!string.IsNullOrEmpty(_resolvedName)) return _resolvedName;
+
+        // Determine category from parent hierarchy
+        string category;
+        if (GetComponentInParent<CoverController>(true) != null)
+            category = "System Unit Cover Screw";
+        else if (GetComponentInParent<GPUController>(true) != null)
+            category = "GPU Screw";
+        else if (GetComponentInParent<HeatsinkController>(true) != null)
+            category = "Heatsink Screw";
+        else if (GetComponentInParent<SSDController>(true) != null)
+            category = "SSD Screw";
+        else if (GetComponentInParent<MotherboardController>(true) != null)
+            category = "Motherboard Screw";
+        else
+            category = "Screw";
+
+        // Number by position among sibling ScrewControllers under the same parent
+        int index = 1;
+        if (transform.parent != null)
+        {
+            int n = 0;
+            foreach (ScrewController s in transform.parent.GetComponentsInChildren<ScrewController>(true))
+            {
+                n++;
+                if (s == this) { index = n; break; }
+            }
+        }
+
+        _resolvedName = $"{category} {index}";
+        return _resolvedName;
     }
 
     private void SetStateVisualOnly(ScrewState visualState)

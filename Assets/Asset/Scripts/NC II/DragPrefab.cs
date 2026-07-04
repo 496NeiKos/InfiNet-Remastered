@@ -5,6 +5,15 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
 {
     [SerializeField] public HardwareHolder hardwareHolder;
     [SerializeField] private GameObject workspaceProxy;
+    [Tooltip("Human-readable name shown in the activity log. E.g. 'System Unit'. Auto-derived from the GameObject name if left blank.")]
+    [SerializeField] public string displayName;
+
+    public string LogDisplayName =>
+        !string.IsNullOrEmpty(displayName) ? displayName : SplitCamelCase(name);
+
+    private static string SplitCamelCase(string s) =>
+        System.Text.RegularExpressions.Regex.Replace(s,
+            @"(?<=[a-z\d])(?=[A-Z])|(?<=[A-Z]+)(?=[A-Z][a-z])", " ").Trim();
     [Tooltip("When false the object always snaps back and can never be placed in the workspace (e.g. thermal paste, towel cloth).")]
     [SerializeField] public bool canPlaceInWorkspace = true;
 
@@ -228,47 +237,79 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
         Vector3 worldPos = Camera.main.ScreenToWorldPoint(
             new Vector3(eventData.position.x, eventData.position.y, 10f));
         worldPos.z = 0f;
-        worldPos = ClampToWorkspace(worldPos);
+        worldPos = ClampToWorkspace(worldPos, eventData.position, eventData.pressEventCamera);
         transform.position = worldPos;
 
         if (_dragIndicator != null)
             _dragIndicator.transform.position = worldPos;
     }
 
-    // Clamps a world-space drag position so the object's collider stays inside workspaceArea.
-    // Reads offsetMin/offsetMax directly (same values SimPanelLayoutManager manages) so the
-    // bounds stay correct after panel toggles, camera pan, and zoom — every frame.
-    private Vector3 ClampToWorkspace(Vector3 worldPos)
+    // Clamps a world-space drag position so the object's collider stays inside whichever
+    // valid zone the cursor is currently over — hardware area takes priority, otherwise
+    // falls back to workspaceArea. Reads offsetMin/offsetMax for the workspace (same values
+    // SimPanelLayoutManager manages) and GetWorldCorners for the hardware area so both
+    // stay correct after panel toggles, camera pan, and zoom — every frame.
+    private Vector3 ClampToWorkspace(Vector3 worldPos, Vector2 cursorScreenPos, Camera eventCamera)
     {
         if (workspaceArea == null || Camera.main == null) return worldPos;
 
-        // Work in screen space: orthographic cameras have uniform pixels-per-unit.
-        Vector2 sp = Camera.main.WorldToScreenPoint(worldPos);
+        float   ppu = Screen.height / (2f * Camera.main.orthographicSize);
+        Vector2 ext = GetActiveColliderExtents();
 
-        // Workspace edges in screen pixels.
+        // If the cursor is over the hardware area, clamp the object position to that region.
+        if (hardwareArea != null &&
+            RectTransformUtility.RectangleContainsScreenPoint(hardwareArea, cursorScreenPos, eventCamera))
+        {
+            // GetWorldCorners returns world-space positions. For Screen Space Camera canvases
+            // those are NOT screen pixels, so we must convert via RectTransformUtility to get
+            // actual screen-pixel coordinates before clamping against sp (which IS pixels).
+            Canvas rootCanvas = hardwareArea.GetComponentInParent<Canvas>();
+            if (rootCanvas != null) rootCanvas = rootCanvas.rootCanvas;
+            Camera uiCam = (rootCanvas != null && rootCanvas.renderMode == RenderMode.ScreenSpaceCamera)
+                ? rootCanvas.worldCamera
+                : null;
+
+            Vector3[] hwCorners = new Vector3[4];
+            hardwareArea.GetWorldCorners(hwCorners);
+            // corners[0]=bottom-left, [2]=top-right after conversion to screen pixels
+            Vector2 hwMin = RectTransformUtility.WorldToScreenPoint(uiCam, hwCorners[0]);
+            Vector2 hwMax = RectTransformUtility.WorldToScreenPoint(uiCam, hwCorners[2]);
+
+            float haL = hwMin.x;
+            float haB = hwMin.y;
+            float haR = hwMax.x;
+            float haT = hwMax.y;
+
+            Vector2 sp = Camera.main.WorldToScreenPoint(worldPos);
+            float cx = Mathf.Clamp(sp.x, haL + ext.x * ppu, haR - ext.x * ppu);
+            float cy = Mathf.Clamp(sp.y, haB + ext.y * ppu, haT - ext.y * ppu);
+
+            Vector3 result = Camera.main.ScreenToWorldPoint(new Vector3(cx, cy, 10f));
+            result.z = 0f;
+            return result;
+        }
+
+        // Default: clamp to workspace bounds.
         // offsetMin/offsetMax are in canvas units; for Constant Pixel Size canvas sf=1
         // so canvas units == screen pixels. We use Screen.width/Height directly instead
         // of canvasRT.rect.width because the canvas root stores sizeDelta (0,0) in the
         // scene file and its rect can read as 0 before the Canvas drives it at runtime.
-        float    sf   = _workspaceCanvas != null ? _workspaceCanvas.scaleFactor : 1f;
-        Vector2  oMin = workspaceArea.offsetMin;
-        Vector2  oMax = workspaceArea.offsetMax;
+        float   sf   = _workspaceCanvas != null ? _workspaceCanvas.scaleFactor : 1f;
+        Vector2 oMin = workspaceArea.offsetMin;
+        Vector2 oMax = workspaceArea.offsetMax;
 
         float wsL = oMin.x * sf;
         float wsB = oMin.y * sf;
         float wsR = Screen.width  + oMax.x * sf;   // (Screen.width/sf  + oMax.x) * sf
         float wsT = Screen.height + oMax.y * sf;   // (Screen.height/sf + oMax.y) * sf
 
-        // Convert object world extents to screen pixels and shrink the clamp boundary.
-        float   ppu = Screen.height / (2f * Camera.main.orthographicSize);
-        Vector2 ext = GetActiveColliderExtents();
+        Vector2 wsp = Camera.main.WorldToScreenPoint(worldPos);
+        float cwx = Mathf.Clamp(wsp.x, wsL + ext.x * ppu, wsR - ext.x * ppu);
+        float cwy = Mathf.Clamp(wsp.y, wsB + ext.y * ppu, wsT - ext.y * ppu);
 
-        float cx = Mathf.Clamp(sp.x, wsL + ext.x * ppu, wsR - ext.x * ppu);
-        float cy = Mathf.Clamp(sp.y, wsB + ext.y * ppu, wsT - ext.y * ppu);
-
-        Vector3 result = Camera.main.ScreenToWorldPoint(new Vector3(cx, cy, 10f));
-        result.z = 0f;
-        return result;
+        Vector3 res = Camera.main.ScreenToWorldPoint(new Vector3(cwx, cwy, 10f));
+        res.z = 0f;
+        return res;
     }
 
     // workspaceProxy's collider is active while the object is in the world container
@@ -303,7 +344,7 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
 
         if (_wasInSlot && onHardwareArea)
         {
-            ActivityLogManager.Log($"{name} removed to storage", ActivityLogManager.EntryType.Remove);
+            ActivityLogManager.Log($"{LogDisplayName} returned to storage", ActivityLogManager.EntryType.Remove);
 
             // Cache slot ref before reparenting removes it from the hierarchy
             CPUSlotController cpuSlot = _originalParent?.GetComponent<CPUSlotController>();

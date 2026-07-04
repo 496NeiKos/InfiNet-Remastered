@@ -147,6 +147,8 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         if (hardwarePrefab == null) return;
 
         string prefabName = hardwarePrefab.name;
+        DragPrefab dp = hardwarePrefab.GetComponent<DragPrefab>();
+        string prefabDisplay = dp != null ? dp.LogDisplayName : prefabName;
 
         Vector3 dropWorldPos = Camera.main.ScreenToWorldPoint(
             new Vector3(eventData.position.x, eventData.position.y, 10f));
@@ -315,7 +317,7 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
 
         hardwarePrefab.SetActive(true);
         bestSlotContainer.InstallChild(hardwarePrefab, prefabName);
-        ActivityLogManager.Log($"{prefabName} installed", ActivityLogManager.EntryType.Install);
+        ActivityLogManager.Log($"{prefabDisplay} placed in workspace", ActivityLogManager.EntryType.Install);
 
         var mb = hardwarePrefab.GetComponent<MotherboardController>();
         if (mb != null) mb.MarkInstalled();

@@ -52,8 +52,6 @@ public class SystemUnitController : MonoBehaviour, IHardwareController
 
         monitorController?.PushBehind();
 
-        viewController?.SetDefaultIfNone(systemUnitFront);
-        viewController?.WireButtons();
         viewController?.ShowLastActive();
 
         if (systemUnitCover != null)
@@ -65,7 +63,7 @@ public class SystemUnitController : MonoBehaviour, IHardwareController
 
     public void HideDetail()
     {
-        viewController?.HideButtons();
+        viewController?.HideIndicator();
 
         systemUnitFront?.SetActive(false);
         systemUnitSide?.SetActive(false);

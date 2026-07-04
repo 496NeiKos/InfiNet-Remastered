@@ -17,10 +17,6 @@ public class PSUSwitchController : MonoBehaviour
     [Tooltip("The BackPortSlot the PSU cable plugs into — cable must be installed to allow toggling.")]
     [SerializeField] private BackPortSlot psuPort;
 
-    [Header("Power Off Gate")]
-    [Tooltip("AVR power button must be off before the PSU switch can be turned off.")]
-    [SerializeField] private AVRPowerButton avrPowerButton;
-
     [Header("Initial State")]
     [SerializeField] private bool startOn = false;
 
@@ -88,13 +84,6 @@ public class PSUSwitchController : MonoBehaviour
         {
             ActivityLogManager.Log("Cannot toggle PSU switch — plug in the PSU cable first.", ActivityLogManager.EntryType.Warning);
             Debug.Log("[PSUSwitchController] Cannot toggle — PSU cable not installed.");
-            return;
-        }
-
-        if (_isOn && avrPowerButton != null && avrPowerButton.IsPoweredOn)
-        {
-            ActivityLogManager.Log("Cannot turn off PSU switch — turn off the AVR first.", ActivityLogManager.EntryType.Warning);
-            Debug.Log("[PSUSwitchController] Cannot turn off — AVR power button is still on.");
             return;
         }
 

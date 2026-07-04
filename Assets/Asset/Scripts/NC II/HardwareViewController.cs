@@ -1,11 +1,12 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.UI;
 
 /// <summary>
-/// Generic view controller for any hardware with multiple angles (Top, Front, Side, Back).
-/// Attach to hardware root. Assign only the views that exist — null views are skipped.
-/// Keys 1-4 switch views while the editor is open; FirstLayer angle buttons are no longer shown.
+/// Generic view controller for hardware with multiple angles (Top, Front, Side, Back).
+/// Attach to the hardware root. Assign only the views that exist — null views are skipped.
+/// Builds a sequential list at start: the first assigned view maps to key 1, the second to
+/// key 2, and so on. This means System Unit (Front/Side/Back, no Top) uses keys 1/2/3.
 /// </summary>
 public class HardwareViewController : MonoBehaviour
 {
@@ -15,21 +16,27 @@ public class HardwareViewController : MonoBehaviour
     [SerializeField] private GameObject sideView;
     [SerializeField] private GameObject backView;
 
-    [Header("Default View")]
-    [SerializeField] private ViewType defaultView = ViewType.Front;
+    private static readonly Key[] NumberKeys = { Key.Digit1, Key.Digit2, Key.Digit3, Key.Digit4 };
 
-    public enum ViewType { Top, Front, Side, Back }
+    private HardwareAngleIndicator Indicator => GameManager.Instance?.angleIndicator;
 
-    private GameObject _activeView;
+    private readonly List<(string label, GameObject view)> _views = new();
+    private int _activeIndex;
 
     private void Start()
     {
-        if (topView != null) topView.SetActive(false);
-        if (frontView != null) frontView.SetActive(false);
-        if (sideView != null) sideView.SetActive(false);
-        if (backView != null) backView.SetActive(false);
+        BuildViewList();
+        foreach (var (_, view) in _views)
+            view.SetActive(false);
+    }
 
-        _activeView = GetViewObject(defaultView) ?? topView ?? frontView ?? sideView ?? backView;
+    private void BuildViewList()
+    {
+        _views.Clear();
+        if (topView   != null) _views.Add(("Top",   topView));
+        if (frontView != null) _views.Add(("Front", frontView));
+        if (sideView  != null) _views.Add(("Side",  sideView));
+        if (backView  != null) _views.Add(("Back",  backView));
     }
 
     private void Update()
@@ -41,102 +48,68 @@ public class HardwareViewController : MonoBehaviour
         Keyboard kb = Keyboard.current;
         if (kb == null) return;
 
-        if (kb.digit1Key.wasPressedThisFrame && topView   != null) ShowView(topView);
-        else if (kb.digit2Key.wasPressedThisFrame && frontView != null) ShowView(frontView);
-        else if (kb.digit3Key.wasPressedThisFrame && sideView  != null) ShowView(sideView);
-        else if (kb.digit4Key.wasPressedThisFrame && backView  != null) ShowView(backView);
-    }
-
-    public void ShowLastActive()
-    {
-        ShowView(_activeView ?? GetViewObject(defaultView));
-    }
-
-    // Sets _activeView to the supplied view only when no view has been chosen yet
-    // (first open). Call this before ShowLastActive so there is always a default.
-    public void SetDefaultIfNone(GameObject defaultFirstView)
-    {
-        if (_activeView == null)
-            _activeView = defaultFirstView;
-    }
-
-    public void ShowView(GameObject view)
-    {
-        if (topView != null) topView.SetActive(false);
-        if (frontView != null) frontView.SetActive(false);
-        if (sideView != null) sideView.SetActive(false);
-        if (backView != null) backView.SetActive(false);
-
-        if (view != null)
+        for (int i = 0; i < _views.Count && i < NumberKeys.Length; i++)
         {
-            view.SetActive(true);
-            _activeView = view;
-            CenterView(view);
+            if (kb[NumberKeys[i]].wasPressedThisFrame)
+            {
+                ShowViewAt(i);
+                break;
+            }
         }
     }
 
-    public void WireButtons()
+    /// <summary>Called by hardware controllers when the detail panel opens.</summary>
+    public void ShowLastActive()
     {
-        GameObject panel = GameManager.Instance?.firstLayer;
-        if (panel == null) return;
-
-        WireButton(panel, "FirstLayerTop", topView);
-        WireButton(panel, "FirstLayerFront", frontView);
-        WireButton(panel, "FirstLayerSide", sideView);
-        WireButton(panel, "FirstLayerBack", backView);
+        SetupIndicator();
+        ShowViewAt(_activeIndex);
     }
 
-    public void HideButtons()
-    {
-        GameObject panel = GameManager.Instance?.firstLayer;
-        if (panel == null) return;
+    /// <summary>
+    /// Hides the angle indicator. Call from HideDetail() in hardware controllers.
+    /// </summary>
+    public void HideIndicator() => Indicator?.Hide();
 
-        FindButton(panel, "FirstLayerTop")?.gameObject.SetActive(false);
-        FindButton(panel, "FirstLayerFront")?.gameObject.SetActive(false);
-        FindButton(panel, "FirstLayerSide")?.gameObject.SetActive(false);
-        FindButton(panel, "FirstLayerBack")?.gameObject.SetActive(false);
+    /// <summary>
+    /// Kept for API compatibility — the first view in the list is always the default.
+    /// </summary>
+    public void SetDefaultIfNone(GameObject defaultFirstView) { }
+
+    public void ShowView(GameObject view)
+    {
+        int idx = _views.FindIndex(v => v.view == view);
+        if (idx >= 0) ShowViewAt(idx);
     }
 
-    private void WireButton(GameObject panel, string buttonName, GameObject targetView)
+    private void ShowViewAt(int index)
     {
-        if (targetView == null) return;
+        if (index < 0 || index >= _views.Count) return;
 
-        Button btn = FindButton(panel, buttonName);
-        if (btn == null) return;
+        foreach (var (_, view) in _views)
+            view.SetActive(false);
 
-        btn.onClick.RemoveAllListeners();
-        btn.onClick.AddListener(() => ShowView(targetView));
-        // Buttons are hidden — keyboard 1-4 drives view switching instead.
+        _views[index].view.SetActive(true);
+        _activeIndex = index;
+        CenterView(_views[index].view);
+        Indicator?.SetActive(index);
+    }
+
+    private void SetupIndicator()
+    {
+        if (Indicator == null) return;
+        var labels = new string[_views.Count];
+        for (int i = 0; i < _views.Count; i++)
+            labels[i] = _views[i].label;
+        Indicator.Setup(labels);
     }
 
     private void CenterView(GameObject view)
     {
         if (view == null || GameManager.Instance?.firstLayer == null) return;
-
         RectTransform rect = GameManager.Instance.firstLayer.GetComponent<RectTransform>();
         if (rect == null) return;
-
         Vector3 center = rect.TransformPoint(new Vector3(rect.rect.center.x, rect.rect.center.y, 0f));
         center.z = 0f;
         view.transform.position = center;
-    }
-
-    private Button FindButton(GameObject panel, string buttonName)
-    {
-        foreach (Button btn in panel.GetComponentsInChildren<Button>(true))
-            if (btn.gameObject.name == buttonName) return btn;
-        return null;
-    }
-
-    private GameObject GetViewObject(ViewType type)
-    {
-        return type switch
-        {
-            ViewType.Top => topView,
-            ViewType.Front => frontView,
-            ViewType.Side => sideView,
-            ViewType.Back => backView,
-            _ => null
-        };
     }
 }

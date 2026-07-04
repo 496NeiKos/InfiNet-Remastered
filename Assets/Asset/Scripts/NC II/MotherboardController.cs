@@ -9,6 +9,8 @@ public class MotherboardController : MonoBehaviour
     [Tooltip("Drag the source GameObject — the script finds the correct controller automatically. Supports CableSlot, RAM, GPU, SSD, CPU, and Heatsink.")]
     [SerializeField] private GameObject[] indicatorSources;
     [SerializeField] private GameObject[] cableIndicators;
+    [Tooltip("The Indicators parent GameObject — hidden while the motherboard detail view is open.")]
+    [SerializeField] private GameObject indicators;
 
     private bool _started;
     private bool _inSlot;
@@ -19,6 +21,21 @@ public class MotherboardController : MonoBehaviour
         _inSlot = GetComponentInParent<SlotContainer>(true) != null;
         SyncCollider();
         RefreshIndicators();
+    }
+
+    private void Update()
+    {
+        if (indicators == null) return;
+        indicators.SetActive(!IsDetailActive());
+    }
+
+    private bool IsDetailActive()
+    {
+        if (GameManager.Instance == null || !GameManager.Instance.IsEditorOpen) return false;
+        var fl = GameManager.Instance.firstLayer;
+        var sl = GameManager.Instance.secondLayer;
+        return (fl != null && transform.parent == fl.transform)
+            || (sl != null && transform.parent == sl.transform);
     }
 
     public void OnSnappedToSlot()

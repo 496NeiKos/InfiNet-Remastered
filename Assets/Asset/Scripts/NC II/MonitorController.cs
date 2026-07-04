@@ -28,14 +28,12 @@ public class MonitorController : MonoBehaviour, IHardwareController
         if (viewController == null)
             viewController = GetComponent<HardwareViewController>();
 
-        viewController?.SetDefaultIfNone(monitorFront);
-        viewController?.WireButtons();
         viewController?.ShowLastActive();
     }
 
     public void HideDetail()
     {
-        viewController?.HideButtons();
+        viewController?.HideIndicator();
         monitorFront?.SetActive(false);
         monitorBack?.SetActive(false);
     }

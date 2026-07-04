@@ -16,6 +16,9 @@ public class GameManager : MonoBehaviour
     public GameObject secondLayer;  // inner component editing (was InnerEditingPanel)
     public GameObject thirdLayer;   // GPU Phase 1 cable panel (was ThirdLayerPanel)
 
+    [Header("Shared UI")]
+    public HardwareAngleIndicator angleIndicator;
+
     public static GameManager Instance { get; private set; }
 
     public bool IsEditorOpen { get; private set; } = false;
@@ -155,5 +158,6 @@ public class GameManager : MonoBehaviour
         if (firstLayer != null) firstLayer.SetActive(false);
         if (secondLayer != null) secondLayer.SetActive(false);
         if (thirdLayer != null) thirdLayer.SetActive(false);
+        angleIndicator?.Hide();
     }
 }

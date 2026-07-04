@@ -75,6 +75,7 @@ public class RAMDetailedView : MonoBehaviour
         if (_ramController == null || _ramController.IsInstalled) return;
         _ramController.SetInstalled();
         ApplySprite();
+        ActivityLogManager.Log($"{transform.parent.name} latch closed — RAM seated.", ActivityLogManager.EntryType.Install);
         Debug.Log($"[RAMDetailedView:{name}] Slide-down → Installed");
     }
 
@@ -83,6 +84,7 @@ public class RAMDetailedView : MonoBehaviour
         if (_ramController == null || !_ramController.IsInstalled) return;
         _ramController.SetUninstalled();
         ApplySprite();
+        ActivityLogManager.Log($"{transform.parent.name} latch opened — RAM released.", ActivityLogManager.EntryType.Remove);
         Debug.Log($"[RAMDetailedView:{name}] Slide-up → Uninstalled");
     }
 
