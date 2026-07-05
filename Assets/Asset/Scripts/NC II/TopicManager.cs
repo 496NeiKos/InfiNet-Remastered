@@ -34,6 +34,10 @@ public class TopicManager : MonoBehaviour
     [Header("Topics")]
     [SerializeField] private List<TopicEntry> topics = new();
 
+    [Header("Dev / Debug")]
+    [Tooltip("When ticked, all topics are accessible regardless of requiredTopicIndices. Untick to restore normal locking.")]
+    [SerializeField] private bool unlockAllTopics = true;
+
     [Header("Tab UI")]
     [SerializeField] private Button tabBurgerButton;
     [SerializeField] private GameObject tabDropdown;
@@ -49,17 +53,25 @@ public class TopicManager : MonoBehaviour
         Instance = this;
     }
 
+    private static readonly Key[] TopicDigitKeys = { Key.Digit1, Key.Digit2, Key.Digit3 };
+
     private void Update()
     {
-#if UNITY_EDITOR
-        if (Keyboard.current != null
-            && Keyboard.current.ctrlKey.isPressed
-            && Keyboard.current.shiftKey.isPressed
-            && Keyboard.current.digit3Key.wasPressedThisFrame)
+        var kb = Keyboard.current;
+        if (kb == null) return;
+        if (!kb.ctrlKey.isPressed || !kb.shiftKey.isPressed) return;
+
+        for (int i = 0; i < TopicDigitKeys.Length; i++)
         {
-            DebugUnlockTopic3();
-        }
+            if (!kb[TopicDigitKeys[i]].wasPressedThisFrame) continue;
+
+#if UNITY_EDITOR
+            // Ctrl+Shift+3 force-unlocks prerequisites before switching.
+            if (i == 2) { DebugUnlockTopic3(); return; }
 #endif
+            SwitchToTopic(i);
+            return;
+        }
     }
 
     [ContextMenu("Debug: Unlock Topic 3")]
@@ -161,6 +173,7 @@ public class TopicManager : MonoBehaviour
     public bool IsTopicUnlocked(int index)
     {
         if (index < 0 || index >= topics.Count) return false;
+        if (unlockAllTopics) return true;
         foreach (int req in topics[index].requiredTopicIndices)
         {
             if (req < 0 || req >= _topicComplete.Length || !_topicComplete[req])

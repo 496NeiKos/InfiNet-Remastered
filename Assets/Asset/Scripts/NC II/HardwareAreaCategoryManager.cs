@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 /// <summary>
@@ -7,6 +8,7 @@ using UnityEngine.UI;
 /// - Burger icon toggles category dropdown
 /// - Selecting a category shows only that category's icons
 /// - Only one category visible at a time
+/// - Shift+1 through Shift+5 select categories by index (no editor open required)
 ///
 /// Setup:
 /// 1. Attach to HardwareArea
@@ -41,6 +43,12 @@ public class HardwareAreaCategoryManager : MonoBehaviour
     private bool _isDropdownOpen = false;
     private int _activeCategoryIndex = 0;
 
+    // Digit keys 1-5 mapped in order so index 0 = Digit1Key, etc.
+    private static readonly Key[] DigitKeys =
+    {
+        Key.Digit1, Key.Digit2, Key.Digit3, Key.Digit4, Key.Digit5
+    };
+
     private void Start()
     {
         // Ensure the hardware area always renders and receives input above detail panel layers,
@@ -72,6 +80,24 @@ public class HardwareAreaCategoryManager : MonoBehaviour
         // Show default category (first one)
         if (categories.Count > 0)
             SelectCategory(0);
+    }
+
+    private void Update()
+    {
+        var kb = Keyboard.current;
+        if (kb == null) return;
+
+        // Require Shift held. Works regardless of whether a detail panel is open.
+        if (!kb.shiftKey.isPressed) return;
+
+        for (int i = 0; i < DigitKeys.Length; i++)
+        {
+            if (kb[DigitKeys[i]].wasPressedThisFrame)
+            {
+                SelectCategory(i);
+                break;
+            }
+        }
     }
 
     /// <summary>

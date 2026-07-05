@@ -48,7 +48,7 @@ public class RAMController : MonoBehaviour
 
     public void OnSnappedToSlot()
     {
-        SetInstalled();
+        SetUninstalled(); // seated in slot but latch not yet closed — player must slide-down in detail view
         ApplySlotSprite(true);
     }
 
