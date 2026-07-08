@@ -140,6 +140,30 @@ public class MotherboardController : MonoBehaviour
         _wasEverInSystemUnit = false;
     }
 
+    public bool IsPhase1CablesAndScrewsRemoved()
+    {
+        MotherboardPhaseManager phase = GetComponent<MotherboardPhaseManager>();
+        Transform p1 = phase != null ? phase.GetPhase1Root() : transform;
+        if (p1 == null) p1 = transform;
+        foreach (var s in p1.GetComponentsInChildren<ScrewController>(true))
+            if (!s.IsUnscrewed()) return false;
+        foreach (var c in p1.GetComponentsInChildren<CablePort>(true))
+            if (c.IsInstalled) return false;
+        return true;
+    }
+
+    public bool IsPhase1CablesAndScrewsInstalled()
+    {
+        MotherboardPhaseManager phase = GetComponent<MotherboardPhaseManager>();
+        Transform p1 = phase != null ? phase.GetPhase1Root() : transform;
+        if (p1 == null) p1 = transform;
+        foreach (var s in p1.GetComponentsInChildren<ScrewController>(true))
+            if (!s.IsScrewed()) return false;
+        foreach (var c in p1.GetComponentsInChildren<CablePort>(true))
+            if (!c.IsInstalled) return false;
+        return true;
+    }
+
     public bool IsPhase1Complete()
     {
         if (!_wasEverInSystemUnit) return true;

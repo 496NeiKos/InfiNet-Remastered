@@ -86,6 +86,8 @@ public class CPULockController : MonoBehaviour
             ActivityLogManager.Log("CPU lock lever opened", ActivityLogManager.EntryType.Action);
         else
             ActivityLogManager.Log("CPU lock lever closed", ActivityLogManager.EntryType.Install);
+
+        NCIITaskListManager.CheckConditions();
     }
 
     private void ApplyState()

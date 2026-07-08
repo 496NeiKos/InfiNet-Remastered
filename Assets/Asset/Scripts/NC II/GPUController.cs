@@ -71,6 +71,7 @@ public class GPUController : MonoBehaviour
         _isLatched = false;
         ActivityLogManager.Log("GPU latch released", ActivityLogManager.EntryType.Action);
         Debug.Log($"[GPUController:{name}] Unlatched");
+        NCIITaskListManager.CheckConditions();
     }
 
     public void OnSnappedToSlot()

@@ -27,6 +27,8 @@ public class CablePort : MonoBehaviour
     [Header("Prerequisite (optional)")]
     [Tooltip("This port only accepts a cable when the referenced port is already installed.")]
     [SerializeField] private CablePort prerequisitePort;
+    [Tooltip("This port only accepts a cable when the referenced slot already has a component installed (e.g. PSU must be in PSUSlot).")]
+    [SerializeField] private SlotContainer prerequisiteSlot;
 
     [Header("Controller Notifications (optional)")]
     [SerializeField] private GPUController gpuController;
@@ -68,8 +70,12 @@ public class CablePort : MonoBehaviour
         return false;
     }
 
-    public bool IsPrerequisiteMet() =>
-        prerequisitePort == null || prerequisitePort.IsInstalled;
+    public bool IsPrerequisiteMet()
+    {
+        if (prerequisitePort != null && !prerequisitePort.IsInstalled) return false;
+        if (prerequisiteSlot != null && !prerequisiteSlot.HasInstalledChild()) return false;
+        return true;
+    }
 
     public void SetInstalled()
     {

@@ -34,10 +34,18 @@ public class ScrewdriverDrag : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         sr.sprite = screwdriverSprite != null ? screwdriverSprite : GetComponent<Image>().sprite;
         sr.sortingOrder = 100; // Draw on top of everything
 
-        // Add a 2D collider so it can trigger screw collisions
+        // Add a 2D collider so it can trigger screw collisions.
+        // Radius is 1/4 of the original 0.3f, offset to the bottom-left
+        // so only the screwdriver tip activates screws (not the whole body).
         CircleCollider2D collider = _dragObject.AddComponent<CircleCollider2D>();
         collider.isTrigger = true;
-        collider.radius = 0.3f;
+        collider.radius = 0.075f;
+        if (sr.sprite != null)
+        {
+            float halfW = sr.sprite.rect.width  / sr.sprite.pixelsPerUnit * 0.5f;
+            float halfH = sr.sprite.rect.height / sr.sprite.pixelsPerUnit * 0.5f;
+            collider.offset = new Vector2(-halfW, -halfH);
+        }
 
         // Add Rigidbody2D (required for trigger detection)
         Rigidbody2D rb = _dragObject.AddComponent<Rigidbody2D>();

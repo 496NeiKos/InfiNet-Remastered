@@ -51,8 +51,16 @@ public class MonitorPowerButton : MonoBehaviour, IPowerButton
         if (avrPowerButton == null)
             avrPowerButton = FindObjectOfType<AVRPowerButton>(true);
 
-        _state = startOn ? PowerState.On : PowerState.Off;
-        _initialized = true;
+        // Guard: ForceOff/ForceOn may have been called before Awake ran (because this
+        // GameObject starts inactive and PowerButton finds it via FindObjectOfType with
+        // includeInactive=true). If _initialized is already true, the state was set
+        // externally and must not be overwritten by startOn.
+        if (!_initialized)
+        {
+            _state = startOn ? PowerState.On : PowerState.Off;
+            _initialized = true;
+        }
+
         ApplySprites();
     }
 

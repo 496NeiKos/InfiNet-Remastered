@@ -37,6 +37,8 @@ public class HDDController : MonoBehaviour
     private bool _inSlot;
     private bool _detailViewActive;
 
+    public bool IsInSlot => _inSlot;
+
     public bool IsFullyInstalled
     {
         get

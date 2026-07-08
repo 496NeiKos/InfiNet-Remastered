@@ -100,6 +100,8 @@ public class GameManager : MonoBehaviour
             firstLayer.SetActive(true);
         else
             Debug.LogError("GameManager: firstLayer is not assigned in the Inspector!");
+
+        NCIITaskListManager.CheckConditions();
     }
 
     public void CloseEditor()
@@ -153,6 +155,8 @@ public class GameManager : MonoBehaviour
 
         _activeMbdvm = null;
         _activeGpuPhase1Panel = null;
+
+        NCIITaskListManager.CheckConditions();
 
         // Layers are now siblings — close all explicitly
         if (firstLayer != null) firstLayer.SetActive(false);

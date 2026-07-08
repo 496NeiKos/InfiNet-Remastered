@@ -38,10 +38,19 @@ public class ScrewController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
     // Only one screw may process a screwdriver at a time across all instances.
     private static ScrewController _activeScrew = null;
 
+    // Incremented each time any screw completes an action. Every screw must record
+    // the session at the moment the screwdriver ENTERS its zone. If the session has
+    // advanced since entry (because another screw finished), re-entry is required.
+    private static int _actionSession = 0;
+
     private SpriteRenderer _spriteRenderer;
     private ScrewState _state = ScrewState.Screwed;
     private float _currentProgress = 0f;
     private bool _isScrewdriverTouching = false;
+
+    // Session ID recorded when the screwdriver last entered this screw's trigger zone.
+    // -1 means the screwdriver is not currently in the zone (or re-entry is needed).
+    private int _entrySession = -1;
 
     // Drag for pending screw
     private bool _isDragging = false;
@@ -95,7 +104,12 @@ public class ScrewController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
     private void OnTriggerEnter2D(Collider2D other)
     {
         if (other.CompareTag("Screwdriver"))
+        {
+            // Record which action session this entry belongs to.
+            // TryBeginScrewdriver will reject any screw whose entry session is stale.
+            _entrySession = _actionSession;
             TryBeginScrewdriver();
+        }
 
         // NOTE: "Screw" tag contact NO LONGER installs instantly.
         // Installation only happens on DROP via ScrewDrag.OnEndDrag().
@@ -103,8 +117,8 @@ public class ScrewController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
 
     private void OnTriggerStay2D(Collider2D other)
     {
-        // Re-attempt each frame so this screw can claim the lock the moment
-        // the previously active screw finishes and releases it.
+        // Re-attempt each frame so this screw can claim the lock the moment the
+        // previously active screw finishes — but only if entry session is still valid.
         if (other.CompareTag("Screwdriver") && !_isScrewdriverTouching)
             TryBeginScrewdriver();
     }
@@ -115,6 +129,7 @@ public class ScrewController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         {
             _isScrewdriverTouching = false;
             _currentProgress = 0f;
+            _entrySession = -1;
             if (_activeScrew == this)
                 _activeScrew = null;
         }
@@ -128,20 +143,29 @@ public class ScrewController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
             _isScrewdriverTouching = false;
             _currentProgress = 0f;
         }
+        _entrySession = -1;
     }
 
     private void TryBeginScrewdriver()
     {
         if (_state != ScrewState.Screwed && _state != ScrewState.Pending) return;
         if (_activeScrew != null && _activeScrew != this) return;
+        // Reject if the screwdriver hasn't entered this zone since the last action completed.
+        // This prevents a screw that was already overlapping from auto-claiming after another
+        // screw finishes — the user must physically lift and re-place the screwdriver.
+        if (_entrySession != _actionSession) return;
         _activeScrew = this;
         _isScrewdriverTouching = true;
     }
 
     private void ReleaseScrewdriverLock()
     {
+        // Bump the global session so any other screw currently overlapping the screwdriver
+        // cannot auto-claim — they must wait for a fresh OnTriggerEnter2D.
+        _actionSession++;
         _currentProgress = 0f;
         _isScrewdriverTouching = false;
+        _entrySession = -1; // this screw also requires re-entry for its next action
         if (_activeScrew == this)
             _activeScrew = null;
     }
@@ -307,6 +331,9 @@ public class ScrewController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
                 ActivityLogManager.Log($"{label} removed", ActivityLogManager.EntryType.Remove);
                 break;
         }
+
+        NCIITaskListManager.CheckConditions();
+        T2TaskListManager.CheckConditions();
     }
 
     private string ResolveName()

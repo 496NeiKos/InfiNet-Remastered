@@ -59,6 +59,7 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
     [SerializeField] private PSUSwitchController psuSwitchGate;
 
     private IPowerButton _powerButton;
+    private bool _isMonitorCable;
     private Vector3 _installedLocalPos;
     private Vector3 _installedLocalScale;
 
@@ -92,6 +93,14 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
 
         if (powerButtonSource != null)
             _powerButton = powerButtonSource as IPowerButton;
+
+        // Detect monitor cables by checking whether the home port lives inside a MonitorController.
+        // If so, and monitorPowerGate isn't wired in the inspector, auto-resolve it so that
+        // ForceOff (triggered by the system unit turning off) correctly unblocks these cables.
+        _isMonitorCable = homePort != null &&
+                          homePort.GetComponentInParent<MonitorController>(true) != null;
+        if (_isMonitorCable && monitorPowerGate == null)
+            monitorPowerGate = FindObjectOfType<MonitorPowerButton>(true);
     }
 
     // Finds the HardwareHolder whose hardwarePrefab IS this GameObject.
@@ -169,7 +178,14 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
 
     private bool CanDetach()
     {
-        if (_powerButton != null && _powerButton.IsPoweredOn)
+        // Monitor cables bypass the generic power gate when the monitor itself is off.
+        // This covers the auto-ForceOff path (system unit turns off → monitor turns off)
+        // where the upstream source (e.g. AVR) may still be on.
+        bool monitorExplicitlyOff = _isMonitorCable &&
+                                    monitorPowerGate != null &&
+                                    !monitorPowerGate.IsPoweredOn;
+
+        if (!monitorExplicitlyOff && _powerButton != null && _powerButton.IsPoweredOn)
         {
             ActivityLogManager.Log($"Cannot unplug {LogName} — turn off its power source first.", ActivityLogManager.EntryType.Warning);
             return false;

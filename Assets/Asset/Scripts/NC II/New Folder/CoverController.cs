@@ -157,4 +157,12 @@ public class CoverController : MonoBehaviour
     }
 
     public bool IsOpen() => _isOpen;
+
+    public bool AreAllScrewsUnscrewed() => AllScrewsUnscrewed();
+
+    public bool AreAllScrewsScrewed()
+    {
+        if (screw1 == null || screw2 == null || screw3 == null || screw4 == null) return false;
+        return screw1.IsScrewed() && screw2.IsScrewed() && screw3.IsScrewed() && screw4.IsScrewed();
+    }
 }
