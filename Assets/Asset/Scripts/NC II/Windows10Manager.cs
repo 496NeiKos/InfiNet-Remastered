@@ -80,13 +80,17 @@ public class Windows10Manager : MonoBehaviour
     private static bool   _sessionPasswordSet;
     private static string _sessionPassword = "";
 
-    // Latches true the first time InitWindows10Panel() runs — signals Task 6 completion.
+    // Latches true the first time InitWindows10Panel() runs.
     private static bool _passwordLoginShown;
     public static bool PasswordLoginShown => _passwordLoginShown;
 
-    // Latches true when the player clicks the TaskBar shutdown button — signals Task 11 completion.
+    // Latches true when the player clicks the TaskBar shutdown button.
     private static bool _shutdownTriggered;
     public static bool ShutdownTriggered => _shutdownTriggered;
+
+    // Latches true the first time Windows10Desktop becomes active (Task 14).
+    private static bool _windows10DesktopAccessed;
+    public static bool Windows10DesktopAccessed => _windows10DesktopAccessed;
 
     // ----------------------------------------------------------------
     //  Panels
@@ -134,6 +138,16 @@ public class Windows10Manager : MonoBehaviour
     private TMP_InputField _lastFocusedField; // field that was focused the frame before Enter fires
 
     public bool IsPasswordSetUp => _sessionPasswordSet;
+
+    // Called by T3TaskListManager.Awake() on scene load to wipe all static state.
+    public static void ResetAll()
+    {
+        _sessionPasswordSet       = false;
+        _sessionPassword          = "";
+        _passwordLoginShown       = false;
+        _shutdownTriggered        = false;
+        _windows10DesktopAccessed = false;
+    }
 
     // ----------------------------------------------------------------
     //  Init — called by FifthPhaseManager.OnAcceptPrivacy()
@@ -260,6 +274,7 @@ public class Windows10Manager : MonoBehaviour
         defaultPanel?.SetActive(false);
         passwordLoginPanel?.SetActive(false);
         windows10Desktop?.SetActive(true);
+        NotifyDesktopAccessed();
 
         Debug.Log("[Windows10Manager] Password created — entering Windows10Desktop.");
     }
@@ -291,6 +306,7 @@ public class Windows10Manager : MonoBehaviour
         defaultPanel?.SetActive(false);
         passwordLoginPanel?.SetActive(false);
         windows10Desktop?.SetActive(true);
+        NotifyDesktopAccessed();
 
         Debug.Log("[Windows10Manager] Login successful — entering Windows10Desktop.");
     }
@@ -326,6 +342,7 @@ public class Windows10Manager : MonoBehaviour
         setupPasswordPanel?.SetActive(false);
         passwordLoginPanel?.SetActive(false);
         windows10Desktop?.SetActive(true);
+        NotifyDesktopAccessed();
 
         Debug.Log("[Windows10Manager] Password created — entering Windows10Desktop.");
     }
@@ -360,11 +377,18 @@ public class Windows10Manager : MonoBehaviour
     }
 
     // ----------------------------------------------------------------
-    //  Helper
+    //  Helpers
     // ----------------------------------------------------------------
 
     private static void SetActive(TMP_Text text, bool value)
     {
         if (text != null) text.gameObject.SetActive(value);
+    }
+
+    private static void NotifyDesktopAccessed()
+    {
+        if (_windows10DesktopAccessed) return;
+        _windows10DesktopAccessed = true;
+        T3TaskListManager.CheckConditions();
     }
 }

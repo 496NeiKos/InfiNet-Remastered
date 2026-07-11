@@ -60,13 +60,20 @@ public class DesktopManager : MonoBehaviour
 
     public static bool IsInstalled(AppType app) => _installedApps.Contains(app);
 
-    // Latch flags for Task 10 — set when the player opens each app panel.
-    public bool ChromeExecuted  { get; private set; }
-    public bool WinrarExecuted  { get; private set; }
+    // Latch flags — set when the player opens each app panel.
+    public bool MicrosoftEdgeOpened { get; private set; }
+    public bool ChromeExecuted      { get; private set; }
+    public bool WinrarExecuted      { get; private set; }
 
     // ----------------------------------------------------------------
     //  Lifecycle
     // ----------------------------------------------------------------
+
+    // Called by T3TaskListManager.Awake() on scene load to wipe all static state.
+    public static void ResetAll()
+    {
+        _installedApps.Clear();
+    }
 
     private void Awake()
     {
@@ -88,6 +95,13 @@ public class DesktopManager : MonoBehaviour
 
         microsoftEdgePanel.SetActive(true);
         microsoftEdgeManager?.ResetToHome();
+
+        if (!MicrosoftEdgeOpened)
+        {
+            MicrosoftEdgeOpened = true;
+            T3TaskListManager.CheckConditions();
+        }
+
         Debug.Log("[DesktopManager] Microsoft Edge opened.");
     }
 

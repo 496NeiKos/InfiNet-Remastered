@@ -13,7 +13,7 @@
  *      │    ├─ MicrosoftEdgeTitle   (Button or add Button component) → OnClick: MicrosoftEdgeManager.ResetToHome()
  *      │    ├─ MinimizeBtn          → OnClick: MicrosoftEdgeManager.Minimize()
  *      │    └─ ExitBtn              → OnClick: MicrosoftEdgeManager.Exit()
- *      ├─ ME_SearchBar              → searchBar (GameObject — the whole bar, hidden on download pages)
+ *      ├─ ME_SearchBar              → searchBar (GameObject — always visible)
  *      │    ├─ TMP_InputField       → searchInput (TMP_InputField)
  *      │    └─ SearchButton         → OnClick: MicrosoftEdgeManager.SubmitSearch()
  *      ├─ MicrosoftEdgeResult       → microsoftEdgeResult (GameObject, start INACTIVE)
@@ -251,14 +251,12 @@ public class MicrosoftEdgeManager : MonoBehaviour
 
     public void ShowGoogleChromeDownloadPage()
     {
-        searchBar?.SetActive(false);
         googleChromeDownloadPage?.SetActive(true);
         Debug.Log("[MicrosoftEdgeManager] Google Chrome download page shown.");
     }
 
     public void ShowWinRarDownloadPage()
     {
-        searchBar?.SetActive(false);
         winRarDownloadPage?.SetActive(true);
         Debug.Log("[MicrosoftEdgeManager] WinRar download page shown.");
     }

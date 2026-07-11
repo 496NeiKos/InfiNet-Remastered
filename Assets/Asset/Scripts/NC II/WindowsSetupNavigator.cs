@@ -99,6 +99,12 @@ using UnityEngine.UI;
 
 public class WindowsSetupNavigator : MonoBehaviour
 {
+    // Milestone flags — latch true once reached (read by T3TaskListManager).
+    public bool SetupInitializeAccessed     { get; private set; }
+    public bool LicenseFirstPhaseNextClicked { get; private set; }
+    public bool PartitionNextClicked         { get; private set; }
+    public bool FifthPhaseAccessed           { get; private set; }
+
     [Header("SetUpInitialize")]
     [SerializeField] private GameObject setupInitialize;
     [SerializeField] private GameObject initFirstPhase;
@@ -152,6 +158,12 @@ public class WindowsSetupNavigator : MonoBehaviour
 
     public void ResetToStart()
     {
+        if (!SetupInitializeAccessed)
+        {
+            SetupInitializeAccessed = true;
+            T3TaskListManager.CheckConditions();
+        }
+
         // SetUpInitialize: show, start on FirstPhase
         setupInitialize?.SetActive(true);
         initFirstPhase?.SetActive(true);
@@ -218,6 +230,13 @@ public class WindowsSetupNavigator : MonoBehaviour
 
         licenseFirstPhase?.SetActive(false);
         licenseSecondPhase?.SetActive(true);
+
+        if (!LicenseFirstPhaseNextClicked)
+        {
+            LicenseFirstPhaseNextClicked = true;
+            T3TaskListManager.CheckConditions();
+        }
+
         Debug.Log("[WindowsSetupNavigator] Moved to SetUpLicenseAgreement SecondPhase.");
     }
 
@@ -249,6 +268,12 @@ public class WindowsSetupNavigator : MonoBehaviour
         licenseFourthPhase?.SetActive(true);
         installationManager?.StartInstallation();
 
+        if (!PartitionNextClicked)
+        {
+            PartitionNextClicked = true;
+            T3TaskListManager.CheckConditions();
+        }
+
         Debug.Log("[WindowsSetupNavigator] Entered FourthPhase — Windows installation started.");
     }
 
@@ -266,6 +291,12 @@ public class WindowsSetupNavigator : MonoBehaviour
 
         licenseFifthPhase?.SetActive(true);
         fifthPhaseManager?.InitFifthPhase();
+
+        if (!FifthPhaseAccessed)
+        {
+            FifthPhaseAccessed = true;
+            T3TaskListManager.CheckConditions();
+        }
 
         Debug.Log("[WindowsSetupNavigator] Entered FifthPhase (OOBE).");
     }

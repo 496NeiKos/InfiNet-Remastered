@@ -165,11 +165,14 @@ public class FifthPhaseManager : MonoBehaviour
     //  Runtime state
     // ----------------------------------------------------------------
 
-    // Set to true the moment the user clicks Accept on PrivacySetting.
-    // Used by T3MonitorController to skip SetUpInitialize and SetUpLicenseAgreement
-    // on every subsequent boot after the first full setup run.
     private static bool _privacyAccepted;
     public static bool PrivacyAccepted => _privacyAccepted;
+
+    private static bool _secondKeyboardSkipped;
+    public static bool SecondKeyboardSkipped => _secondKeyboardSkipped;
+
+    private static bool _limitedSetupClicked;
+    public static bool LimitedSetupClicked => _limitedSetupClicked;
 
     private Button selectedRegionButton;
     private Button selectedKeyboardButton;
@@ -202,6 +205,14 @@ public class FifthPhaseManager : MonoBehaviour
         ResetOptionHighlights(keyboardLayoutOptionContainer);
 
         Debug.Log("[FifthPhaseManager] Initialised — showing Region panel.");
+    }
+
+    // Called by T3TaskListManager.Awake() on scene load to wipe all static state.
+    public static void ResetAll()
+    {
+        _privacyAccepted       = false;
+        _secondKeyboardSkipped = false;
+        _limitedSetupClicked   = false;
     }
 
     private void Start() => InitFifthPhase();
@@ -313,6 +324,11 @@ public class FifthPhaseManager : MonoBehaviour
     // Wired to: SecondKeyboardLayout > Footer > Skip > OnClick
     public void OnSkipSecondKeyboard()
     {
+        if (!_secondKeyboardSkipped)
+        {
+            _secondKeyboardSkipped = true;
+            T3TaskListManager.CheckConditions();
+        }
         ShowOnly(connectToInternetPanel);
         Debug.Log("[FifthPhaseManager] → ConnectToInternet");
     }
@@ -342,6 +358,11 @@ public class FifthPhaseManager : MonoBehaviour
     // Wired to: NoInternetPanel > LimitedSetup > OnClick
     public void OnLimitedSetupClicked()
     {
+        if (!_limitedSetupClicked)
+        {
+            _limitedSetupClicked = true;
+            T3TaskListManager.CheckConditions();
+        }
         ShowOnly(privacySettingPanel);
         Debug.Log("[FifthPhaseManager] → PrivacySetting");
     }

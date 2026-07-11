@@ -104,6 +104,9 @@ public class SettingPanelController : MonoBehaviour
     //  Runtime state
     // ----------------------------------------------------------------
 
+    // Latches true the first time Windows Update (2ndLevel) is opened (Task 16).
+    public bool WindowsUpdateAccessed { get; private set; }
+
     private readonly HashSet<int> _selectedIndices = new HashSet<int>();
 
     // ----------------------------------------------------------------
@@ -159,6 +162,13 @@ public class SettingPanelController : MonoBehaviour
     {
         ShowLevel(secondLevel);
         if (windowsUpdate != null) windowsUpdate.SetActive(true);
+
+        if (!WindowsUpdateAccessed)
+        {
+            WindowsUpdateAccessed = true;
+            T3TaskListManager.CheckConditions();
+        }
+
         Debug.Log("[SettingPanelController] Navigated to WindowsUpdate (2ndLevel).");
     }
 
