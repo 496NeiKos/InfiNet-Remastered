@@ -212,7 +212,8 @@ public class SingleTaskDisplay : MonoBehaviour
             return;
         }
 
-        string newText = GetActiveTopicNextTask();
+        string newText     = GetActiveTopicNextTask();
+        Color  displayColor = GetActiveManagerDisplayColor(_defaultTextColor);
 
         bool panelVisible = displayPanel != null && displayPanel.activeSelf;
         bool textChanged  = taskText != null && taskText.text != newText;
@@ -226,7 +227,7 @@ public class SingleTaskDisplay : MonoBehaviour
             if (string.IsNullOrEmpty(newText))
                 _flashCoroutine = StartCoroutine(FlashThenHide());
             else
-                _flashCoroutine = StartCoroutine(FlashThenReplace(newText));
+                _flashCoroutine = StartCoroutine(FlashThenReplace(newText, displayColor));
 
             return;
         }
@@ -238,17 +239,21 @@ public class SingleTaskDisplay : MonoBehaviour
             return;
         }
 
-        if (taskText != null) taskText.text = newText;
+        if (taskText != null)
+        {
+            taskText.text  = newText;
+            taskText.color = displayColor;
+        }
         displayPanel?.SetActive(true);
     }
 
-    private IEnumerator FlashThenReplace(string newText)
+    private IEnumerator FlashThenReplace(string newText, Color restoreColor)
     {
         if (taskText != null) taskText.color = Color.green;
         yield return new WaitForSeconds(0.6f);
         if (taskText != null)
         {
-            taskText.color = _defaultTextColor;
+            taskText.color = restoreColor;
             taskText.text  = newText;
         }
         _flashCoroutine = null;
@@ -273,6 +278,19 @@ public class SingleTaskDisplay : MonoBehaviour
         if (topic3Manager != null && topic3Manager.gameObject.activeInHierarchy)
             return topic3Manager.GetNextIncompleteTaskText();
         return null;
+    }
+
+    // Returns Color.green when the active manager is showing the completion banner,
+    // otherwise returns the default text color.
+    private Color GetActiveManagerDisplayColor(Color fallback)
+    {
+        if (topic1Manager != null && topic1Manager.gameObject.activeInHierarchy)
+            return topic1Manager.GetDisplayColor(fallback);
+        if (topic2Manager != null && topic2Manager.gameObject.activeInHierarchy)
+            return topic2Manager.GetDisplayColor(fallback);
+        if (topic3Manager != null && topic3Manager.gameObject.activeInHierarchy)
+            return topic3Manager.GetDisplayColor(fallback);
+        return fallback;
     }
 
     // Flips the panel between click-through (default) and interactable (Ctrl held).

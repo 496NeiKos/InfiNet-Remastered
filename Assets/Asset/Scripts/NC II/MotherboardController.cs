@@ -164,6 +164,26 @@ public class MotherboardController : MonoBehaviour
         return true;
     }
 
+    // Requires all phase-1 screws AND all cables to be installed.
+    // Checks phase-2 root for cables if it is assigned; falls back to phase-1 root so the
+    // cable check is never silently skipped when phase2Root is unassigned in the Inspector.
+    public bool IsPhase1ScrewsAndPhase2CablesInstalled()
+    {
+        MotherboardPhaseManager pm = GetComponent<MotherboardPhaseManager>();
+        Transform p1 = pm != null ? pm.GetPhase1Root() : transform;
+        Transform p2 = pm != null ? pm.GetPhase2Root() : null;
+        if (p1 == null) p1 = transform;
+
+        foreach (var s in p1.GetComponentsInChildren<ScrewController>(true))
+            if (!s.IsScrewed()) return false;
+
+        Transform cableRoot = p2 ?? p1;
+        foreach (var c in cableRoot.GetComponentsInChildren<CablePort>(true))
+            if (!c.IsInstalled) return false;
+
+        return true;
+    }
+
     public bool IsPhase1Complete()
     {
         if (!_wasEverInSystemUnit) return true;

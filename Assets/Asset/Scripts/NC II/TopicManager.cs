@@ -34,9 +34,10 @@ public class TopicManager : MonoBehaviour
     [Header("Topics")]
     [SerializeField] private List<TopicEntry> topics = new();
 
-    [Header("Dev / Debug")]
-    [Tooltip("When ticked, all topics are accessible regardless of requiredTopicIndices. Untick to restore normal locking.")]
-    [SerializeField] private bool unlockAllTopics = true;
+    [Header("Access Control")]
+    [Tooltip("When unchecked (default): all topics are accessible from the start.\n" +
+             "When checked: Topic 2 and Topic 3 are locked until Topic 1 (NCIITaskListManager) is fully completed.")]
+    [SerializeField] private bool required = false;
 
     [Header("Tab UI")]
     [SerializeField] private Button tabBurgerButton;
@@ -107,8 +108,15 @@ public class TopicManager : MonoBehaviour
         if (tabDropdown != null)
             tabDropdown.SetActive(false);
 
+        NCIITaskListManager.OnTasksUpdated += RefreshTabUI;
+
         ActivateTopic(0);
         RefreshTabUI();
+    }
+
+    private void OnDestroy()
+    {
+        NCIITaskListManager.OnTasksUpdated -= RefreshTabUI;
     }
 
     public void ToggleDropdown()
@@ -173,13 +181,12 @@ public class TopicManager : MonoBehaviour
     public bool IsTopicUnlocked(int index)
     {
         if (index < 0 || index >= topics.Count) return false;
-        if (unlockAllTopics) return true;
-        foreach (int req in topics[index].requiredTopicIndices)
-        {
-            if (req < 0 || req >= _topicComplete.Length || !_topicComplete[req])
-                return false;
-        }
-        return true;
+        // Topic 0 (Topic 1) is always accessible.
+        if (index == 0) return true;
+        // Without the required flag, all topics are freely accessible.
+        if (!required) return true;
+        // With required: Topics 2 and 3 only unlock once Topic 1 is complete.
+        return _topicComplete[0];
     }
 
     public Transform GetActiveWorldContainer()
@@ -228,6 +235,24 @@ public class TopicManager : MonoBehaviour
         {
             if (tabButtons[i].nameText != null)
                 tabButtons[i].nameText.text = topics[i].topicName;
+
+            bool unlocked = IsTopicUnlocked(i);
+
+            if (tabButtons[i].button != null)
+                tabButtons[i].button.interactable = unlocked;
+
+            // Dim the entire tab entry when locked so the player can see it but knows it's unavailable.
+            var cg = tabButtons[i].button != null
+                ? tabButtons[i].button.GetComponent<CanvasGroup>()
+                : null;
+            if (cg == null && tabButtons[i].button != null)
+                cg = tabButtons[i].button.gameObject.AddComponent<CanvasGroup>();
+            if (cg != null)
+            {
+                cg.alpha          = unlocked ? 1f : 0.4f;
+                cg.interactable   = unlocked;
+                cg.blocksRaycasts = unlocked;
+            }
         }
     }
 }

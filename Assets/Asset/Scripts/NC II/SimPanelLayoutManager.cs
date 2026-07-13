@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 public class SimPanelLayoutManager : MonoBehaviour
@@ -40,6 +41,11 @@ public class SimPanelLayoutManager : MonoBehaviour
     private bool _termCollapsed;
     private bool _tlCollapsed;
 
+    // Chord state for Ctrl+T+L / Ctrl+T+S shortcuts.
+    private bool  _chordPending;
+    private float _chordTimer;
+    private const float ChordTimeout = 1f;
+
     private Coroutine _anim;
 
     private void Awake()
@@ -71,6 +77,54 @@ public class SimPanelLayoutManager : MonoBehaviour
         StampToggleButton(taskListArrow);
 
         SyncDetailLayersNow();
+    }
+
+    private void Update()
+    {
+        var kb = Keyboard.current;
+        if (kb == null) return;
+
+        bool ctrl = kb.ctrlKey.isPressed;
+
+        // Enter chord: Ctrl + T
+        if (ctrl && kb.tKey.wasPressedThisFrame)
+        {
+            _chordPending = true;
+            _chordTimer   = ChordTimeout;
+            return;
+        }
+
+        if (_chordPending)
+        {
+            // Cancel if Ctrl is released or timeout expires
+            if (!ctrl)
+            {
+                _chordPending = false;
+                return;
+            }
+
+            _chordTimer -= Time.unscaledDeltaTime;
+            if (_chordTimer <= 0f)
+            {
+                _chordPending = false;
+                return;
+            }
+
+            // Ctrl+T+L → TaskList
+            if (kb.lKey.wasPressedThisFrame)
+            {
+                _chordPending = false;
+                ToggleTaskListPanel();
+                return;
+            }
+
+            // Ctrl+T+S → Terminal
+            if (kb.sKey.wasPressedThisFrame)
+            {
+                _chordPending = false;
+                ToggleTerminal();
+            }
+        }
     }
 
     // Ensures a toggle button stays visible when its parent panel is hidden AND renders

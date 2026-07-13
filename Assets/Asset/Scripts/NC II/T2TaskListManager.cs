@@ -71,15 +71,21 @@ public class T2TaskListManager : MonoBehaviour
     // Fires whenever a task completes or reverts — SingleTaskDisplay subscribes to this.
     public static event Action OnTasksUpdated;
 
+    private static readonly Color GoldColor = new Color(1f, 0.843f, 0f);
+
     [Header("Task UI")]
     [SerializeField] private Transform taskParent;
     [SerializeField] private Transform finishedParent;
     [SerializeField] private GameObject[] taskObjects;
 
+    [Header("Completion UI")]
+    [SerializeField] private TextMeshProUGUI allTasksCompletedText;
+
     [Header("Condition References")]
     [SerializeField] private CablePort usbPort;
     [SerializeField] private T2MonitorNavigator monitorNavigator;
     [SerializeField] private RufusSetupManager rufusSetupManager;
+
 
     private class TaskEntry
     {
@@ -92,6 +98,9 @@ public class T2TaskListManager : MonoBehaviour
 
     private List<TaskEntry> _tasks;
     private const int WindowSize = 3;
+
+    private string _displayOverride      = null;
+    private bool   _isCompletionOverride = false;
 
     private void Awake()
     {
@@ -207,22 +216,29 @@ public class T2TaskListManager : MonoBehaviour
             task.taskObject.transform.SetParent(taskParent, false);
             task.taskObject.transform.SetSiblingIndex(task.originalIndex);
             var tmp = task.taskObject.GetComponent<TextMeshProUGUI>();
-            if (tmp != null) tmp.color = Color.white;
+            if (tmp != null) tmp.color = GoldColor;
         }
+
+        if (allTasksCompletedText != null)
+            allTasksCompletedText.gameObject.SetActive(false);
 
         RefreshWindow();
         EvaluateConditions();
     }
 
-    // Returns the text of the next incomplete task, or null if all done / not yet initialised.
+    // Returns override text (completion banner) when set, otherwise the next incomplete task.
     public string GetNextIncompleteTaskText()
     {
+        if (_displayOverride != null) return _displayOverride;
         if (_tasks == null) return null;
         var next = _tasks.FirstOrDefault(t => !t.isCompleted);
         if (next == null) return null;
         var tmp = next.taskObject.GetComponent<TextMeshProUGUI>();
         return tmp != null ? tmp.text : null;
     }
+
+    public Color GetDisplayColor(Color fallback) =>
+        (_isCompletionOverride && _displayOverride != null) ? Color.green : fallback;
 
     // Only re-evaluate on re-enable (tab switch back to Topic 2).
     private void OnEnable() { if (_tasks != null) EvaluateConditions(); }
@@ -276,6 +292,7 @@ public class T2TaskListManager : MonoBehaviour
 
         if (_tasks.All(t => t.isCompleted))
         {
+            ShowAllTasksCompleted();
             TopicManager.Instance?.MarkTopicComplete(1);
             Debug.Log("[T2TaskListManager] All tasks complete — Topic 2 marked complete.");
             yield break;
@@ -291,9 +308,22 @@ public class T2TaskListManager : MonoBehaviour
         if (tmp != null) tmp.color = new Color(1f, 0.647f, 0f);
         yield return new WaitForSeconds(0.6f);
         task.isFlashing = false;
-        if (tmp != null) tmp.color = Color.white;
+        if (tmp != null) tmp.color = GoldColor;
         OnTasksUpdated?.Invoke();
         EvaluateConditions();
+    }
+
+    private void ShowAllTasksCompleted()
+    {
+        if (allTasksCompletedText != null)
+        {
+            allTasksCompletedText.text = "All task Completed!";
+            allTasksCompletedText.color = Color.green;
+            allTasksCompletedText.gameObject.SetActive(true);
+        }
+        _displayOverride      = "All task Completed!";
+        _isCompletionOverride = true;
+        OnTasksUpdated?.Invoke();
     }
 
     private void RefreshWindow()

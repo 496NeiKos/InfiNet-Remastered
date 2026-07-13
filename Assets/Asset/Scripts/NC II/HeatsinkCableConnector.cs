@@ -60,6 +60,7 @@ public class HeatsinkCableConnector : MonoBehaviour
             connected ? "Heatsink fan cable connected" : "Heatsink fan cable disconnected",
             connected ? ActivityLogManager.EntryType.Install : ActivityLogManager.EntryType.Remove);
         Debug.Log($"[HeatsinkCableConnector] Cable {(connected ? "connected" : "disconnected")}.");
+        NCIITaskListManager.CheckConditions();
     }
 
     private void ApplySprite()

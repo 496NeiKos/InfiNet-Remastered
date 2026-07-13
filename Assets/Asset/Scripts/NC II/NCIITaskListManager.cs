@@ -12,6 +12,8 @@ public class NCIITaskListManager : MonoBehaviour
     // Fires whenever a task completes or reverts — SingleTaskDisplay subscribes to this.
     public static event Action OnTasksUpdated;
 
+    private static readonly Color GoldColor = new Color(1f, 0.843f, 0f);
+
     [Header("Disassembly UI")]
     [SerializeField] private Transform disassemblyTaskParent;
     [SerializeField] private Transform disassemblyFinishedParent;
@@ -21,6 +23,15 @@ public class NCIITaskListManager : MonoBehaviour
     [SerializeField] private Transform assemblyTaskParent;
     [SerializeField] private Transform assemblyFinishedParent;
     [SerializeField] private GameObject[] assemblyTaskObjects; // 14 entries
+
+    [Header("Transition UI")]
+    [SerializeField] private TextMeshProUGUI transitionText;
+    [Tooltip("Seconds the transition message is shown before the assembly task list appears.")]
+    [SerializeField] private float transitionDuration = 3f;
+    [SerializeField] private string transitionMessage = "Disassembly task completed! now transitioning to Assembly task";
+
+    [Header("Completion UI")]
+    [SerializeField] private TextMeshProUGUI allTasksCompletedText;
 
     [Header("Hardware Controllers")]
     [SerializeField] private CoverController coverController;
@@ -70,6 +81,12 @@ public class NCIITaskListManager : MonoBehaviour
     private bool _gpuPreparedForRemoval = false;
     private bool _mbOpenedFromWorkspace = false;
     private bool _mbAssemblyReturnedToWorkspace = false;
+    private bool _task8Latched = false;   // MB + HDD + PSU all installed — never reverts
+    private bool _task12Latched = false;  // cover closed and all screws in — never reverts
+
+    // Override text fed to SingleTaskDisplay (transition message or completion banner).
+    private string _displayOverride      = null;
+    private bool   _isCompletionOverride = false; // true → SingleTaskDisplay shows it in green
 
     // Cached component refs resolved from HardwareHolder.hardwarePrefab in Start
     private CPUController _cpuController;
@@ -106,6 +123,11 @@ public class NCIITaskListManager : MonoBehaviour
 
         if (assemblyTaskParent != null)
             assemblyTaskParent.gameObject.SetActive(false);
+
+        if (transitionText != null)
+            transitionText.gameObject.SetActive(false);
+        if (allTasksCompletedText != null)
+            allTasksCompletedText.gameObject.SetActive(false);
 
         RefreshWindow(_disassembly);
         RefreshWindow(_assembly);
@@ -388,21 +410,21 @@ public class NCIITaskListManager : MonoBehaviour
                     condition = () => cmosHolder != null && !cmosHolder.IsAvailable()
                 },
 
-                // A-Task 7: Return motherboard to the workspace / hardware area (persistent flag)
+                // A-Task 7: Drop motherboard to the hardware area to store it (persistent flag)
+                // Gate: A-Tasks 1–6 (indices 0–5) must all be complete first.
                 new TaskEntry
                 {
                     taskObject    = assemblyTaskObjects[6],
                     originalIndex = 6,
                     condition = () =>
                     {
+                        for (int i = 0; i < 6; i++)
+                            if (!_assembly.tasks[i].isCompleted) return false;
+
                         if (!_mbAssemblyReturnedToWorkspace &&
                             motherboardController != null &&
                             motherboardController.IsUninstalledFromSystemUnit &&
-                            motherboardController.gameObject.activeSelf &&
-                            (GameManager.Instance == null ||
-                             !GameManager.Instance.IsEditorOpen ||
-                             GameManager.Instance.firstLayer == null ||
-                             motherboardController.transform.parent != GameManager.Instance.firstLayer.transform))
+                            !motherboardController.gameObject.activeSelf)
                         {
                             _mbAssemblyReturnedToWorkspace = true;
                         }
@@ -411,15 +433,25 @@ public class NCIITaskListManager : MonoBehaviour
                 },
 
                 // A-Task 8: Install Motherboard, HDD and PSU into the system unit
+                // Latched: detail-view reparenting can temporarily make the live hierarchy checks
+                // return false, causing the task to revert. Once all three are confirmed installed
+                // the flag sticks and the task never resurfaces.
                 new TaskEntry
                 {
                     taskObject    = assemblyTaskObjects[7],
                     originalIndex = 7,
                     condition = () =>
-                        (motherboardController == null || !motherboardController.IsUninstalledFromSystemUnit) &&
-                        (_hddController        == null || _hddController.IsInSlot) &&
-                        (psuHolder             == null || psuHolder.hardwarePrefab == null ||
-                         psuHolder.hardwarePrefab.GetComponentInParent<SlotContainer>() != null)
+                    {
+                        if (!_task8Latched &&
+                            (motherboardController == null || !motherboardController.IsUninstalledFromSystemUnit) &&
+                            (_hddController        == null || _hddController.IsInSlot) &&
+                            (psuHolder             == null || psuHolder.hardwarePrefab == null ||
+                             psuHolder.hardwarePrefab.GetComponentInParent<SlotContainer>() != null))
+                        {
+                            _task8Latched = true;
+                        }
+                        return _task8Latched;
+                    }
                 },
 
                 // A-Task 9: Install GPU — screw, plug cable, lock the latch
@@ -430,14 +462,16 @@ public class NCIITaskListManager : MonoBehaviour
                     condition = () => gpuController != null && gpuController.IsFullyInstalled
                 },
 
-                // A-Task 10: Install motherboard phase-1 cables and screws
+                // A-Task 10: Install all four phase-1 motherboard screws AND all three phase-2 cables.
+                // IsPhase1CablesAndScrewsInstalled() only checks the phase-1 root; use the new
+                // combined method so that phase-2 cables are also required.
                 new TaskEntry
                 {
                     taskObject    = assemblyTaskObjects[9],
                     originalIndex = 9,
                     condition = () =>
                         motherboardController != null &&
-                        motherboardController.IsPhase1CablesAndScrewsInstalled()
+                        motherboardController.IsPhase1ScrewsAndPhase2CablesInstalled()
                 },
 
                 // A-Task 11: Install HDD screws and cables
@@ -448,12 +482,25 @@ public class NCIITaskListManager : MonoBehaviour
                     condition = () => _hddController != null && _hddController.IsFullyInstalled
                 },
 
-                // A-Task 12: Close system unit cover and screw it in place
+                // A-Task 12: Close system unit cover and screw it in place.
+                // Requires the cover to actually be closed (not just screws in Screwed state from
+                // a prior assembly) and all four screws tightened. Latched once met so it never
+                // reverts if the player re-opens the cover for any reason afterward.
                 new TaskEntry
                 {
                     taskObject    = assemblyTaskObjects[11],
                     originalIndex = 11,
-                    condition = () => coverController != null && coverController.AreAllScrewsScrewed()
+                    condition = () =>
+                    {
+                        if (!_task12Latched &&
+                            coverController != null &&
+                            !coverController.IsOpen() &&
+                            coverController.AreAllScrewsScrewed())
+                        {
+                            _task12Latched = true;
+                        }
+                        return _task12Latched;
+                    }
                 },
 
                 // A-Task 13: Plug all back cables (SU x2, monitor x3, AVR x2)
@@ -480,9 +527,10 @@ public class NCIITaskListManager : MonoBehaviour
 
     // ── Public API ────────────────────────────────────────────────────────────
 
-    // Returns the text of the next incomplete task in the active phase.
+    // Returns override text (transition / completion) when set, otherwise the next incomplete task.
     public string GetNextIncompleteTaskText()
     {
+        if (_displayOverride != null) return _displayOverride;
         TaskPhase active = _showingAssembly ? _assembly : _disassembly;
         if (active?.tasks == null) return null;
         var next = active.tasks.FirstOrDefault(t => !t.isCompleted);
@@ -490,6 +538,10 @@ public class NCIITaskListManager : MonoBehaviour
         var tmp = next.taskObject.GetComponent<TextMeshProUGUI>();
         return tmp != null ? tmp.text : null;
     }
+
+    // Returns Color.green while the completion banner is active, otherwise the caller's fallback.
+    public Color GetDisplayColor(Color fallback) =>
+        (_isCompletionOverride && _displayOverride != null) ? Color.green : fallback;
 
     public static void CheckConditions()
     {
@@ -512,7 +564,7 @@ public class NCIITaskListManager : MonoBehaviour
             task.taskObject.transform.SetParent(phase.taskParent, false);
             task.taskObject.transform.SetSiblingIndex(task.originalIndex);
             var tmp = task.taskObject.GetComponent<TextMeshProUGUI>();
-            if (tmp != null) tmp.color = Color.white;
+            if (tmp != null) tmp.color = GoldColor;
         }
     }
 
@@ -547,7 +599,7 @@ public class NCIITaskListManager : MonoBehaviour
                 task.taskObject.transform.SetSiblingIndex(task.originalIndex);
                 // Reset color immediately so the task doesn't reappear with its green flash color.
                 var revertTmp = task.taskObject.GetComponent<TextMeshProUGUI>();
-                if (revertTmp != null) revertTmp.color = Color.white;
+                if (revertTmp != null) revertTmp.color = GoldColor;
                 task.taskObject.SetActive(false);
                 RefreshWindow(phase);
                 if (task.taskObject.activeSelf)
@@ -569,9 +621,10 @@ public class NCIITaskListManager : MonoBehaviour
         OnTasksUpdated?.Invoke();
 
         if (phase == _disassembly && IsDisassemblyComplete())
-            SwitchToAssembly();
+            StartCoroutine(TransitionToAssembly());
         else if (phase == _assembly && IsAssemblyComplete())
         {
+            ShowAllTasksCompleted();
             TopicManager.Instance?.MarkTopicComplete(0);
             Debug.Log("[NCIITaskListManager] Assembly complete — Topic 1 marked complete.");
         }
@@ -586,7 +639,7 @@ public class NCIITaskListManager : MonoBehaviour
         if (tmp != null) tmp.color = new Color(1f, 0.647f, 0f);
         yield return new WaitForSeconds(0.6f);
         task.isFlashing = false;
-        if (tmp != null) tmp.color = Color.white;
+        if (tmp != null) tmp.color = GoldColor;
         OnTasksUpdated?.Invoke();
         EvaluateConditions();
     }
@@ -610,8 +663,27 @@ public class NCIITaskListManager : MonoBehaviour
     private bool IsAssemblyComplete() =>
         _assembly != null && _assembly.tasks.All(t => t.isCompleted);
 
-    private void SwitchToAssembly()
+    private IEnumerator TransitionToAssembly()
     {
+        // Show on the task panel TMP and mirror to SingleTaskDisplay.
+        if (transitionText != null)
+        {
+            transitionText.text = transitionMessage;
+            transitionText.gameObject.SetActive(true);
+        }
+        _displayOverride      = transitionMessage;
+        _isCompletionOverride = false;
+        OnTasksUpdated?.Invoke();
+
+        yield return new WaitForSeconds(transitionDuration);
+
+        if (transitionText != null)
+            transitionText.gameObject.SetActive(false);
+
+        // Clear override so the first assembly task takes over in SingleTaskDisplay.
+        _displayOverride      = null;
+        _isCompletionOverride = false;
+
         _showingAssembly = true;
 
         if (disassemblyTaskParent != null)
@@ -624,5 +696,19 @@ public class NCIITaskListManager : MonoBehaviour
         OnTasksUpdated?.Invoke();
 
         Debug.Log("[NCIITaskListManager] Disassembly complete — switching to assembly phase.");
+    }
+
+    private void ShowAllTasksCompleted()
+    {
+        // Show on the task panel TMP and mirror to SingleTaskDisplay.
+        if (allTasksCompletedText != null)
+        {
+            allTasksCompletedText.text = "All task Completed!";
+            allTasksCompletedText.color = Color.green;
+            allTasksCompletedText.gameObject.SetActive(true);
+        }
+        _displayOverride      = "All task Completed!";
+        _isCompletionOverride = true;
+        OnTasksUpdated?.Invoke();
     }
 }

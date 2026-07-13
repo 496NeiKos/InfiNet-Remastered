@@ -145,6 +145,10 @@ public class RufusSetupManager : MonoBehaviour
     [Header("Navigator")]
     [SerializeField] private T2MonitorNavigator navigator;
 
+    [Header("Formatting Timing")]
+    [Tooltip("Total seconds for the progress bar to go from 0% to 100%.")]
+    [SerializeField] private float formattingDuration = 25f;
+
     // Correct answer indices.
     private const int CorrectImageOption      = 0; // "Standard Windows Installation"
     private const int CorrectPartitionScheme  = 0; // "MBR"
@@ -167,6 +171,8 @@ public class RufusSetupManager : MonoBehaviour
     public bool FormattingStarted { get; private set; }
 
     private bool _formatting;
+    private string _pendingIsoName;
+    private static readonly Color IsoHighlightColor = new Color(0.6f, 0.85f, 1f);
 
     private void Awake()
     {
@@ -341,6 +347,7 @@ public class RufusSetupManager : MonoBehaviour
 
         SetFormatOptionsInteractable(false);
 
+        ClearFilePickerSelection();
         if (filePickerPanel != null)
             filePickerPanel.SetActive(false);
 
@@ -387,12 +394,46 @@ public class RufusSetupManager : MonoBehaviour
 
     public void CloseFilePicker()
     {
+        ClearFilePickerSelection();
         if (filePickerPanel != null)
             filePickerPanel.SetActive(false);
     }
 
-    // Wired to each ISO button: OnClick → SelectIso("Win10_22H2_English_x64.iso")
-    public void SelectIso(string isoName)
+    private void ClearFilePickerSelection()
+    {
+        _pendingIsoName = null;
+        if (isoButtonWin10File != null && isoButtonWin10File.image != null)
+            isoButtonWin10File.image.color = Color.white;
+    }
+
+    // First click: highlights the file row. Second click: confirms. Save button also confirms.
+    public void OnIsoFileClicked(string isoName)
+    {
+        if (_pendingIsoName == isoName)
+        {
+            ConfirmIso();
+            return;
+        }
+
+        _pendingIsoName = isoName;
+        if (isoButtonWin10File != null && isoButtonWin10File.image != null)
+            isoButtonWin10File.image.color = IsoHighlightColor;
+    }
+
+    public void OnIsoSaveClicked()
+    {
+        if (!string.IsNullOrEmpty(_pendingIsoName))
+            ConfirmIso();
+    }
+
+    private void ConfirmIso()
+    {
+        string name = _pendingIsoName;
+        ClearFilePickerSelection();
+        SelectIso(name);
+    }
+
+    private void SelectIso(string isoName)
     {
         if (bootSelectionDropdown != null && bootSelectionDropdown.options.Count > 0)
         {
@@ -417,6 +458,11 @@ public class RufusSetupManager : MonoBehaviour
 
     public void OnStartClicked()
     {
+        if (FormattingStarted)
+        {
+            SetStatus("Rufus configuration is already completed.");
+            return;
+        }
         if (_formatting) return;
 
         if (Validate(out string hint))
@@ -434,10 +480,11 @@ public class RufusSetupManager : MonoBehaviour
         SetStatus("Starting...");
         yield return new WaitForSeconds(1f);
 
-        for (int pct = 0; pct <= 100; pct += 20)
+        float stepDelay = formattingDuration / 100f;
+        for (int pct = 1; pct <= 100; pct++)
         {
             SetStatus($"Writing... {pct}%");
-            yield return new WaitForSeconds(0.25f);
+            yield return new WaitForSeconds(stepDelay);
         }
 
         SetStatus("DONE");

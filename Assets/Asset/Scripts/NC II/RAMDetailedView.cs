@@ -77,6 +77,7 @@ public class RAMDetailedView : MonoBehaviour
         ApplySprite();
         ActivityLogManager.Log($"{transform.parent.name} latch closed — RAM seated.", ActivityLogManager.EntryType.Install);
         Debug.Log($"[RAMDetailedView:{name}] Slide-down → Installed");
+        NCIITaskListManager.CheckConditions();
     }
 
     private void TryUninstall()
