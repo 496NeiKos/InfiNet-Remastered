@@ -58,7 +58,7 @@ public class SystemUnitController : MonoBehaviour, IHardwareController
             systemUnitCover.SetActive(true);
 
         if (systemUnitHardwareComponents != null)
-            systemUnitHardwareComponents.SetActive(coverController != null && coverController.IsOpen());
+            systemUnitHardwareComponents.SetActive(true);
     }
 
     public void HideDetail()
@@ -80,7 +80,5 @@ public class SystemUnitController : MonoBehaviour, IHardwareController
 
     public void AttachCover()
     {
-        if (systemUnitHardwareComponents != null)
-            systemUnitHardwareComponents.SetActive(false);
     }
 }
