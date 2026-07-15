@@ -1,0 +1,68 @@
+using UnityEngine;
+
+/// <summary>
+/// Singleton that manages click-to-swap wire selection.
+/// First click selects a wire; second click on a different wire swaps them.
+/// Second click on same wire deselects.
+/// </summary>
+public class WireSwapManager : MonoBehaviour
+{
+    public static WireSwapManager Instance { get; private set; }
+
+    [Tooltip("Duration of the swap animation in seconds.")]
+    [SerializeField] private float swapDuration = 0.3f;
+
+    private WireController _selected;
+
+    private void Awake()
+    {
+        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
+        Instance = this;
+    }
+
+    public void OnWireClicked(WireController wire)
+    {
+        if (_selected == null)
+        {
+            Select(wire);
+            return;
+        }
+
+        if (_selected == wire)
+        {
+            Deselect();
+            return;
+        }
+
+        Swap(_selected, wire);
+        Deselect();
+    }
+
+    private void Select(WireController wire)
+    {
+        _selected = wire;
+        wire.SetHighlight(true);
+    }
+
+    private void Deselect()
+    {
+        if (_selected != null) _selected.SetHighlight(false);
+        _selected = null;
+    }
+
+    private void Swap(WireController a, WireController b)
+    {
+        Vector3 posA = a.transform.localPosition;
+        Vector3 posB = b.transform.localPosition;
+        int slotA = a.CurrentSlotIndex;
+        int slotB = b.CurrentSlotIndex;
+
+        a.CurrentSlotIndex = slotB;
+        b.CurrentSlotIndex = slotA;
+
+        a.AnimateTo(posB, swapDuration);
+        b.AnimateTo(posA, swapDuration);
+
+        NetworkCableTaskManager.CheckConditions();
+    }
+}
