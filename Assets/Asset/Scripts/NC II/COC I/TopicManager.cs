@@ -48,6 +48,10 @@ public class TopicManager : MonoBehaviour
     private bool _isDropdownOpen;
     private bool[] _topicComplete;
 
+    private int _sevenPressCount;
+    private float _lastSevenPressTime;
+    private const float SevenPressWindow = 1f;
+
     private void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
@@ -60,16 +64,30 @@ public class TopicManager : MonoBehaviour
     {
         var kb = Keyboard.current;
         if (kb == null) return;
+
+        if (kb.shiftKey.isPressed && !kb.ctrlKey.isPressed && kb[Key.Digit7].wasPressedThisFrame)
+        {
+            if (_sevenPressCount > 0 && Time.unscaledTime - _lastSevenPressTime > SevenPressWindow)
+                _sevenPressCount = 0;
+
+            _sevenPressCount++;
+            _lastSevenPressTime = Time.unscaledTime;
+
+            if (_sevenPressCount >= 3)
+            {
+                _sevenPressCount = 0;
+                required = false;
+                RefreshTabUI();
+                Debug.Log("[TopicManager] Bypass activated — topic lock removed.");
+            }
+            return;
+        }
+
         if (!kb.ctrlKey.isPressed || !kb.shiftKey.isPressed) return;
 
         for (int i = 0; i < TopicDigitKeys.Length; i++)
         {
             if (!kb[TopicDigitKeys[i]].wasPressedThisFrame) continue;
-
-#if UNITY_EDITOR
-            // Ctrl+Shift+3 force-unlocks prerequisites before switching.
-            if (i == 2) { DebugUnlockTopic3(); return; }
-#endif
             SwitchToTopic(i);
             return;
         }
