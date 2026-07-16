@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 /// <summary>
 /// Singleton that manages click-to-swap wire selection.
@@ -18,6 +19,22 @@ public class WireSwapManager : MonoBehaviour
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
+    }
+
+    private void Update()
+    {
+        if (Mouse.current == null) return;
+        if (!Mouse.current.leftButton.wasPressedThisFrame) return;
+
+        Vector2 screenPos = Mouse.current.position.ReadValue();
+        Ray ray = Camera.main.ScreenPointToRay(screenPos);
+        RaycastHit2D hit = Physics2D.Raycast(ray.origin, ray.direction);
+
+        if (hit.collider == null) return;
+        WireController wire = hit.collider.GetComponent<WireController>();
+        if (wire == null || !wire.gameObject.activeInHierarchy) return;
+
+        OnWireClicked(wire);
     }
 
     public void OnWireClicked(WireController wire)

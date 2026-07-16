@@ -34,6 +34,7 @@ public class GameManager : MonoBehaviour
             : hardwareStorage;
 
     private PrefabInteraction _activeInteraction;
+    private NetworkPrefabInteraction _activeNetworkInteraction;
     private Transform _prefabOriginalParent;
     private Vector3 _prefabOriginalWorldPos;
     private Vector3 _savedObjectLocalScale;
@@ -65,6 +66,30 @@ public class GameManager : MonoBehaviour
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
+    }
+
+    public void OpenNetworkEditor(NetworkPrefabInteraction interaction)
+    {
+        if (_activeNetworkInteraction != null && _activeNetworkInteraction != interaction)
+            _activeNetworkInteraction.OnEditorClosed();
+
+        _activeNetworkInteraction = interaction;
+        IsEditorOpen = true;
+
+        SimPanelLayoutManager.Instance?.SyncDetailLayersNow();
+        _savedObjectLocalScale = interaction.transform.localScale;
+        Canvas.ForceUpdateCanvases();
+
+        _prefabOriginalParent  = interaction.transform.parent;
+        _prefabOriginalWorldPos = interaction.transform.position;
+
+        interaction.transform.SetParent(firstLayer.transform, true);
+        interaction.ShowDetailCentered();
+
+        if (firstLayer != null)
+            firstLayer.SetActive(true);
+        else
+            Debug.LogError("[GameManager] firstLayer is not assigned.");
     }
 
     public void OpenEditor(PrefabInteraction interaction)
@@ -113,6 +138,21 @@ public class GameManager : MonoBehaviour
             _activeInPlaceInteraction = null;
             IsEditorOpen = false;
             Debug.Log("[GameManager] In-place editor closed.");
+            return;
+        }
+
+        // Network editor (COC II hardware) — no inner panels, close directly
+        if (_activeNetworkInteraction != null)
+        {
+            IsEditorOpen = false;
+            _activeNetworkInteraction.transform.SetParent(_prefabOriginalParent, true);
+            _activeNetworkInteraction.transform.position   = _prefabOriginalWorldPos;
+            _activeNetworkInteraction.transform.localScale = _savedObjectLocalScale;
+            _activeNetworkInteraction.OnEditorClosed();
+            _activeNetworkInteraction = null;
+            if (firstLayer  != null) firstLayer.SetActive(false);
+            if (secondLayer != null) secondLayer.SetActive(false);
+            if (thirdLayer  != null) thirdLayer.SetActive(false);
             return;
         }
 

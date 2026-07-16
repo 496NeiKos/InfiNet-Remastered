@@ -14,9 +14,11 @@ using UnityEngine;
 /// </summary>
 public class NetworkCableEndController : MonoBehaviour
 {
-    [Header("Sprite References")]
-    [SerializeField] private GameObject defaultSprite;
-    [SerializeField] private GameObject strippedSprite;
+    [Header("Cable Body")]
+    [Tooltip("SpriteRenderer on Cable1Body (the single merged body object).")]
+    [SerializeField] private SpriteRenderer cableBody;
+    [SerializeField] private Sprite defaultSprite;
+    [SerializeField] private Sprite strippedSprite;
 
     [Header("Wires")]
     [SerializeField] private Transform wiresContainer;
@@ -25,8 +27,8 @@ public class NetworkCableEndController : MonoBehaviour
     [SerializeField] private GameObject rj45SlotObject;
 
     [Header("Slot Layout")]
-    [Tooltip("World-space X positions for wire slots 0-7 (relative to wiresContainer parent).")]
-    [SerializeField] private float[] slotLocalXPositions = new float[] { -1.75f, -1.25f, -0.75f, -0.25f, 0.25f, 0.75f, 1.25f, 1.75f };
+    [Tooltip("Local X positions for wire slots 0-7 relative to wiresContainer. Match the editor wire spacing.")]
+    [SerializeField] private float[] slotLocalXPositions = new float[] { -0.4f, -0.3f, -0.2f, -0.1f, 0f, 0.1f, 0.2f, 0.3f };
 
     public bool IsStripped { get; private set; }
     public bool IsRJ45Installed { get; private set; }
@@ -41,7 +43,9 @@ public class NetworkCableEndController : MonoBehaviour
 
     private void Start()
     {
-        if (strippedSprite != null) strippedSprite.SetActive(false);
+        IsStripped      = false;
+        IsRJ45Installed = false;
+        if (cableBody      != null) cableBody.sprite = defaultSprite;
         if (wiresContainer != null) wiresContainer.gameObject.SetActive(false);
         if (rj45SlotObject != null) rj45SlotObject.SetActive(false);
     }
@@ -52,8 +56,7 @@ public class NetworkCableEndController : MonoBehaviour
         if (IsStripped) return;
         IsStripped = true;
 
-        if (defaultSprite != null) defaultSprite.SetActive(false);
-        if (strippedSprite != null) strippedSprite.SetActive(true);
+        if (cableBody      != null) cableBody.sprite = strippedSprite;
         if (wiresContainer != null) wiresContainer.gameObject.SetActive(true);
 
         ShuffleWires();

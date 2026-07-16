@@ -25,11 +25,6 @@ public class WireController : MonoBehaviour
         _baseColor = _sr.color;
     }
 
-    private void OnMouseDown()
-    {
-        WireSwapManager.Instance?.OnWireClicked(this);
-    }
-
     public void SetHighlight(bool on)
     {
         _highlighted = on;
