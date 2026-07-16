@@ -145,9 +145,11 @@ public class CommandPromptManager : MonoBehaviour
     [SerializeField] [Range(0f, 2f)] private float resultDelay = 0.2f;
 
     // ----------------------------------------------------------------
-    //  Public task condition (read by T2TaskListManager when wired)
+    //  Public task conditions (read by T2TaskListManager)
     // ----------------------------------------------------------------
 
+    // How many steps have been successfully submitted (0 = none yet).
+    public int  CurrentStep           { get; private set; }
     public bool IsCmdSequenceComplete { get; private set; }
 
     // ----------------------------------------------------------------
@@ -362,6 +364,8 @@ public class CommandPromptManager : MonoBehaviour
             _currentPrefix = step.NextPrefix;
 
         _currentStep++;
+        CurrentStep = _currentStep;
+        T2TaskListManager.CheckConditions();
 
         if (_currentStep >= Steps.Length)
         {
@@ -443,6 +447,7 @@ public class CommandPromptManager : MonoBehaviour
             Destroy(child.gameObject);
 
         _currentStep          = 0;
+        CurrentStep           = 0;
         _currentPrefix        = InitialPrefix;
         _activeInput          = null;
         IsCmdSequenceComplete = false;

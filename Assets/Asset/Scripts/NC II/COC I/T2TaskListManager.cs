@@ -22,6 +22,20 @@
  *        taskObjects[9]  "Cluster Size: Default(4096)"
  *        taskObjects[10] "Start the configuration"
  *        taskObjects[11] "Complete Rufus set up"
+ *        taskObjects[12] "Close the Rufus application and click the task bar search field below"
+ *        taskObjects[13] "Search command prompt: cmd, command, command prompt"
+ *        taskObjects[14] "Click run as administrator"
+ *        taskObjects[15] "Type: diskpart"
+ *        taskObjects[16] "Type: list disk"
+ *        taskObjects[17] "Type: select disk 1"
+ *        taskObjects[18] "Type: clean"
+ *        taskObjects[19] "Type: create partition primary"
+ *        taskObjects[20] "Type: select partition 1"
+ *        taskObjects[21] "Type: active"
+ *        taskObjects[22] "Type: format fs=ntfs quick"
+ *        taskObjects[23] "Type: assign"
+ *        taskObjects[24] "Type: exit"
+ *        taskObjects[25] "Type: xcopy e:\\*.* f:\\ /s /e /f"
  *    - Place them under a layout parent (taskParent) with a
  *      Vertical Layout Group so completed tasks slide up.
  *    - Create a separate off-screen parent (finishedParent) where
@@ -51,8 +65,22 @@
  *    Task 10 — Cluster Size correct   : rufusSetupManager.IsClusterSizeSet
  *    Task 11 — Start clicked          : rufusSetupManager.FormattingStarted
  *    Task 12 — Rufus complete         : monitorNavigator.IsRufusComplete
+ *    Task 13 — Taskbar search opened  : taskbarSearchManager.WindowIconContentOpened
+ *    Task 14 — CMD searched           : taskbarSearchManager.SearchedPanelOpened
+ *    Task 15 — Run as admin clicked   : taskbarSearchManager.CommandPromptOpened
+ *    Task 16 — diskpart typed         : cmdManager.CurrentStep >= 1
+ *    Task 17 — list disk typed        : cmdManager.CurrentStep >= 2
+ *    Task 18 — select disk 1 typed    : cmdManager.CurrentStep >= 3
+ *    Task 19 — clean typed            : cmdManager.CurrentStep >= 4
+ *    Task 20 — create partition typed : cmdManager.CurrentStep >= 5
+ *    Task 21 — select partition typed : cmdManager.CurrentStep >= 6
+ *    Task 22 — active typed           : cmdManager.CurrentStep >= 7
+ *    Task 23 — format typed           : cmdManager.CurrentStep >= 8
+ *    Task 24 — assign typed           : cmdManager.CurrentStep >= 9
+ *    Task 25 — exit typed             : cmdManager.CurrentStep >= 10
+ *    Task 26 — xcopy typed            : cmdManager.IsCmdSequenceComplete
  *
- *  When all 12 tasks complete, TopicManager.MarkTopicComplete(1) is called
+ *  When all 26 tasks complete, TopicManager.MarkTopicComplete(1) is called
  *  automatically — this unlocks Topic 3 (UEFI Configuration).
  * ================================================================
  */
@@ -85,6 +113,8 @@ public class T2TaskListManager : MonoBehaviour
     [SerializeField] private CablePort usbPort;
     [SerializeField] private T2MonitorNavigator monitorNavigator;
     [SerializeField] private RufusSetupManager rufusSetupManager;
+    [SerializeField] private TaskbarSearchManager taskbarSearchManager;
+    [SerializeField] private CommandPromptManager cmdManager;
 
 
     private class TaskEntry
@@ -110,9 +140,9 @@ public class T2TaskListManager : MonoBehaviour
 
     private void Start()
     {
-        if (taskObjects == null || taskObjects.Length < 12)
+        if (taskObjects == null || taskObjects.Length < 26)
         {
-            Debug.LogError("[T2TaskListManager] Assign all 12 task objects in the inspector.");
+            Debug.LogError("[T2TaskListManager] Assign all 26 task objects in the inspector.");
             return;
         }
 
@@ -207,6 +237,104 @@ public class T2TaskListManager : MonoBehaviour
                 taskObject    = taskObjects[11],
                 originalIndex = 11,
                 condition     = () => monitorNavigator != null && monitorNavigator.IsRufusComplete
+            },
+            // Task 13 — close Rufus and open the taskbar search.
+            new TaskEntry
+            {
+                taskObject    = taskObjects[12],
+                originalIndex = 12,
+                condition     = () => taskbarSearchManager != null && taskbarSearchManager.WindowIconContentOpened
+            },
+            // Task 14 — type a valid search term to find Command Prompt.
+            new TaskEntry
+            {
+                taskObject    = taskObjects[13],
+                originalIndex = 13,
+                condition     = () => taskbarSearchManager != null && taskbarSearchManager.SearchedPanelOpened
+            },
+            // Task 15 — click Run as Administrator to open the CMD window.
+            new TaskEntry
+            {
+                taskObject    = taskObjects[14],
+                originalIndex = 14,
+                condition     = () => taskbarSearchManager != null && taskbarSearchManager.CommandPromptOpened
+            },
+            // Task 16 — type "diskpart" to enter DiskPart.
+            new TaskEntry
+            {
+                taskObject    = taskObjects[15],
+                originalIndex = 15,
+                condition     = () => cmdManager != null && cmdManager.CurrentStep >= 1
+            },
+            // Task 17 — type "list disk" to display connected disks.
+            new TaskEntry
+            {
+                taskObject    = taskObjects[16],
+                originalIndex = 16,
+                condition     = () => cmdManager != null && cmdManager.CurrentStep >= 2
+            },
+            // Task 18 — type "select disk 1" to target the USB drive.
+            new TaskEntry
+            {
+                taskObject    = taskObjects[17],
+                originalIndex = 17,
+                condition     = () => cmdManager != null && cmdManager.CurrentStep >= 3
+            },
+            // Task 19 — type "clean" to wipe the USB drive.
+            new TaskEntry
+            {
+                taskObject    = taskObjects[18],
+                originalIndex = 18,
+                condition     = () => cmdManager != null && cmdManager.CurrentStep >= 4
+            },
+            // Task 20 — type "create partition primary".
+            new TaskEntry
+            {
+                taskObject    = taskObjects[19],
+                originalIndex = 19,
+                condition     = () => cmdManager != null && cmdManager.CurrentStep >= 5
+            },
+            // Task 21 — type "select partition 1".
+            new TaskEntry
+            {
+                taskObject    = taskObjects[20],
+                originalIndex = 20,
+                condition     = () => cmdManager != null && cmdManager.CurrentStep >= 6
+            },
+            // Task 22 — type "active" to mark the partition as bootable.
+            new TaskEntry
+            {
+                taskObject    = taskObjects[21],
+                originalIndex = 21,
+                condition     = () => cmdManager != null && cmdManager.CurrentStep >= 7
+            },
+            // Task 23 — type "format fs=ntfs quick".
+            new TaskEntry
+            {
+                taskObject    = taskObjects[22],
+                originalIndex = 22,
+                condition     = () => cmdManager != null && cmdManager.CurrentStep >= 8
+            },
+            // Task 24 — type "assign" to assign a drive letter.
+            new TaskEntry
+            {
+                taskObject    = taskObjects[23],
+                originalIndex = 23,
+                condition     = () => cmdManager != null && cmdManager.CurrentStep >= 9
+            },
+            // Task 25 — type "exit" to leave DiskPart.
+            new TaskEntry
+            {
+                taskObject    = taskObjects[24],
+                originalIndex = 24,
+                condition     = () => cmdManager != null && cmdManager.CurrentStep >= 10
+            },
+            // Task 26 — type the xcopy command to copy Windows files to the USB.
+            new TaskEntry
+            {
+                taskObject    = taskObjects[25],
+                originalIndex = 25,
+                condition     = () => cmdManager != null && cmdManager.IsCmdSequenceComplete
             }
         };
 

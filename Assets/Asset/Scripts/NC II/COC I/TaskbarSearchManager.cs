@@ -70,6 +70,14 @@ public class TaskbarSearchManager : MonoBehaviour
     [Tooltip("The CommandPromptApp panel opened by RunAsAdministratorBtn. Starts INACTIVE.")]
     [SerializeField] private GameObject commandPromptApp;
 
+    // ----------------------------------------------------------------
+    //  Public task conditions (read by T2TaskListManager)
+    // ----------------------------------------------------------------
+
+    public bool WindowIconContentOpened { get; private set; }
+    public bool SearchedPanelOpened     { get; private set; }
+    public bool CommandPromptOpened     { get; private set; }
+
     private void Awake()
     {
         // Enforce correct initial state regardless of scene authoring.
@@ -91,6 +99,8 @@ public class TaskbarSearchManager : MonoBehaviour
 
         if (opening)
         {
+            WindowIconContentOpened = true;
+
             // Clear search and hide results so each open starts fresh.
             if (taskbarSearch != null)
             {
@@ -99,6 +109,8 @@ public class TaskbarSearchManager : MonoBehaviour
             }
             if (searchedPanel != null)
                 searchedPanel.SetActive(false);
+
+            T2TaskListManager.CheckConditions();
         }
     }
 
@@ -120,7 +132,14 @@ public class TaskbarSearchManager : MonoBehaviour
                     || normalized == "command prompt";
 
         if (searchedPanel.activeSelf != matches)
+        {
             searchedPanel.SetActive(matches);
+            if (matches)
+            {
+                SearchedPanelOpened = true;
+                T2TaskListManager.CheckConditions();
+            }
+        }
     }
 
     // ----------------------------------------------------------------
@@ -136,6 +155,8 @@ public class TaskbarSearchManager : MonoBehaviour
         if (windowIconContent != null)
             windowIconContent.SetActive(false);
 
+        CommandPromptOpened = true;
+        T2TaskListManager.CheckConditions();
         Debug.Log("[TaskbarSearchManager] Command Prompt opened as Administrator.");
     }
 }
