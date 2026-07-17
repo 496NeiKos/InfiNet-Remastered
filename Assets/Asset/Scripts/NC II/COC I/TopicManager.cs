@@ -8,6 +8,8 @@ public class TopicManager : MonoBehaviour
 {
     public static TopicManager Instance { get; private set; }
 
+    public static event System.Action OnDropdownClosed;
+
     [System.Serializable]
     public class TopicEntry
     {
@@ -245,6 +247,7 @@ public class TopicManager : MonoBehaviour
         _isDropdownOpen = false;
         if (tabDropdown != null)
             tabDropdown.SetActive(false);
+        OnDropdownClosed?.Invoke();
     }
 
     private void RefreshTabUI()
