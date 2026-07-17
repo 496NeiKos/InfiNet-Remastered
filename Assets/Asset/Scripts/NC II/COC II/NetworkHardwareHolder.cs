@@ -15,6 +15,8 @@ public class NetworkHardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHand
 
     [Header("Slot Install Proximity (world units)")]
     public float slotInstallRadius = 1.5f;
+    [Tooltip("When true, dropping this item snaps it into the nearest eligible cable end slot instead of deploying to the workspace. Use for RJ45 connectors.")]
+    [SerializeField] private bool snapToSlotOnly = false;
 
     [Header("Info Panel")]
     [SerializeField] private Sprite infoImage;
@@ -82,6 +84,12 @@ public class NetworkHardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHand
     {
         if (!IsAvailable()) return;
 
+        if (!snapToSlotOnly && GameManager.Instance != null && GameManager.Instance.IsEditorOpen)
+        {
+            Debug.Log($"[NetworkHardwareHolder:{name}] BLOCKED — editor open.");
+            return;
+        }
+
         CancelHover();
         HardwareInfoPanel.Instance?.Hide();
 
@@ -115,22 +123,50 @@ public class NetworkHardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHand
         if (!_isDragging) return;
         _isDragging = false;
 
+        Vector3 dropWorldPos = Camera.main.ScreenToWorldPoint(
+            new Vector3(eventData.position.x, eventData.position.y, 10f));
+        dropWorldPos.z = 0f;
+
+        if (snapToSlotOnly)
+        {
+            SnapToSlot(dropWorldPos);
+            return;
+        }
+
         bool onWorkspace = RectTransformUtility.RectangleContainsScreenPoint(
             GameManager.Instance.workspaceArea, eventData.position, eventData.pressEventCamera);
         if (!onWorkspace) return;
 
-        Vector3 worldPos = Camera.main.ScreenToWorldPoint(
-            new Vector3(eventData.position.x, eventData.position.y, 10f));
-        worldPos.z = 0f;
-
         hardwarePrefab.transform.SetParent(GameManager.Instance.ActiveWorldContainer, false);
-        hardwarePrefab.transform.position = worldPos;
+        hardwarePrefab.transform.position = dropWorldPos;
         ApplyWorldScale(hardwarePrefab.transform, _worldScale);
         hardwarePrefab.SetActive(true);
 
         NetworkDragPrefab dp = hardwarePrefab.GetComponent<NetworkDragPrefab>();
         if (dp != null) dp.enabled = true;
 
+        gameObject.SetActive(false);
+    }
+
+    private void SnapToSlot(Vector3 dropWorldPos)
+    {
+        NetworkCableEndController[] ends =
+            FindObjectsByType<NetworkCableEndController>(FindObjectsSortMode.None);
+
+        NetworkCableEndController closest = null;
+        float bestDist = slotInstallRadius;
+
+        foreach (var end in ends)
+        {
+            if (!end.gameObject.activeInHierarchy) continue;
+            if (!end.IsStripped || end.IsRJ45Installed) continue;
+            float dist = Vector3.Distance(dropWorldPos, end.transform.position);
+            if (dist < bestDist) { bestDist = dist; closest = end; }
+        }
+
+        if (closest == null) return;
+
+        closest.InstallRJ45(this);
         gameObject.SetActive(false);
     }
 

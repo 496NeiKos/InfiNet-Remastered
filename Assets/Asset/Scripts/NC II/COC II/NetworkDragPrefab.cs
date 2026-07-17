@@ -11,6 +11,12 @@ public class NetworkDragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler,
     [Tooltip("When false the object always snaps back and can never be placed in the workspace.")]
     [SerializeField] public bool canPlaceInWorkspace = true;
 
+    /// <summary>
+    /// Invoked when the object snaps back to its original position (dropped outside workspace/hardware area
+    /// and canPlaceInWorkspace is false). Used by RJ45HoldUninstall to re-install into the slot.
+    /// </summary>
+    public System.Action onSnappedBack;
+
     public string LogDisplayName =>
         !string.IsNullOrEmpty(displayName) ? displayName : SplitCamelCase(name);
 
@@ -117,7 +123,10 @@ public class NetworkDragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler,
             workspaceArea, eventData.position, eventData.pressEventCamera);
 
         if (!onWorkspace || !canPlaceInWorkspace)
+        {
             transform.position = _originalPos;
+            onSnappedBack?.Invoke();
+        }
     }
 
     private void SendToHolder()

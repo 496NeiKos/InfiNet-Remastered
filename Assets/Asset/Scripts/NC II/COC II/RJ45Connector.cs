@@ -27,6 +27,7 @@ public class RJ45Connector : MonoBehaviour
 
     private void OnMouseDown()
     {
+        if (GameManager.Instance != null && GameManager.Instance.IsEditorOpen) return;
         _isDragging = true;
         _dragOffset = transform.position - GetMouseWorld();
     }
