@@ -593,25 +593,33 @@ public class NCIITaskListManager : MonoBehaviour
         {
             if (task.isFlashing) continue;
 
-            bool met = task.condition();
+            if (!task.isCompleted)
+            {
+                // Only check completion for tasks currently visible in the active 3-task window.
+                if (!task.taskObject.activeSelf) continue;
 
-            if (!task.isCompleted && met)
-            {
-                task.isCompleted = true;
-                StartCoroutine(FlashAndComplete(phase, task));
+                if (task.condition())
+                {
+                    task.isCompleted = true;
+                    StartCoroutine(FlashAndComplete(phase, task));
+                }
             }
-            else if (task.isCompleted && !met)
+            else
             {
-                task.isCompleted = false;
-                task.taskObject.transform.SetParent(phase.taskParent, false);
-                task.taskObject.transform.SetSiblingIndex(task.originalIndex);
-                // Reset color immediately so the task doesn't reappear with its green flash color.
-                var revertTmp = task.taskObject.GetComponent<TextMeshProUGUI>();
-                if (revertTmp != null) revertTmp.color = GoldColor;
-                task.taskObject.SetActive(false);
-                RefreshWindow(phase);
-                if (task.taskObject.activeSelf)
-                    StartCoroutine(FlashRevert(task));
+                // Always check completed tasks for reversion.
+                if (!task.condition())
+                {
+                    task.isCompleted = false;
+                    task.taskObject.transform.SetParent(phase.taskParent, false);
+                    task.taskObject.transform.SetSiblingIndex(task.originalIndex);
+                    // Reset color immediately so the task doesn't reappear with its green flash color.
+                    var revertTmp = task.taskObject.GetComponent<TextMeshProUGUI>();
+                    if (revertTmp != null) revertTmp.color = GoldColor;
+                    task.taskObject.SetActive(false);
+                    RefreshWindow(phase);
+                    if (task.taskObject.activeSelf)
+                        StartCoroutine(FlashRevert(task));
+                }
             }
         }
     }
