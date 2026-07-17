@@ -9,6 +9,7 @@ public class TopicManager : MonoBehaviour
     public static TopicManager Instance { get; private set; }
 
     public static event System.Action OnDropdownClosed;
+    public static event System.Action OnAllTopicsComplete;
 
     [System.Serializable]
     public class TopicEntry
@@ -190,6 +191,12 @@ public class TopicManager : MonoBehaviour
         _topicComplete[index] = true;
         RefreshTabUI();
         Debug.Log($"[TopicManager] Topic {index} ({topics[index].topicName}) marked complete.");
+
+        if (System.Array.TrueForAll(_topicComplete, c => c))
+        {
+            Debug.Log("[TopicManager] All topics complete.");
+            OnAllTopicsComplete?.Invoke();
+        }
     }
 
     public bool IsTopicComplete(int index)
