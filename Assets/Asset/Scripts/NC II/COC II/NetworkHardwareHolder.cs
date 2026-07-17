@@ -17,6 +17,9 @@ public class NetworkHardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHand
     public float slotInstallRadius = 1.5f;
     [Tooltip("When true, dropping this item snaps it into the nearest eligible cable end slot instead of deploying to the workspace. Use for RJ45 connectors.")]
     [SerializeField] private bool snapToSlotOnly = false;
+    [Tooltip("When true, dropping near a LanTesterPort installs it there. Can still deploy to workspace when no port is close.")]
+    [SerializeField] private bool canSnapToPort = false;
+    [SerializeField] private float portSnapRadius = 2f;
 
     [Header("Info Panel")]
     [SerializeField] private Sprite infoImage;
@@ -84,7 +87,7 @@ public class NetworkHardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHand
     {
         if (!IsAvailable()) return;
 
-        if (!snapToSlotOnly && GameManager.Instance != null && GameManager.Instance.IsEditorOpen)
+        if (!snapToSlotOnly && !canSnapToPort && GameManager.Instance != null && GameManager.Instance.IsEditorOpen)
         {
             Debug.Log($"[NetworkHardwareHolder:{name}] BLOCKED — editor open.");
             return;
@@ -133,6 +136,14 @@ public class NetworkHardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHand
             return;
         }
 
+        if (canSnapToPort && TrySnapToPort(dropWorldPos))
+            return;
+
+        // While a detail view is open, workspace deployment is not allowed.
+        // The drag silently cancels and the icon proxy stays in the hardware area.
+        if (GameManager.Instance != null && GameManager.Instance.IsEditorOpen)
+            return;
+
         bool onWorkspace = RectTransformUtility.RectangleContainsScreenPoint(
             GameManager.Instance.workspaceArea, eventData.position, eventData.pressEventCamera);
         if (!onWorkspace) return;
@@ -146,6 +157,31 @@ public class NetworkHardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHand
         if (dp != null) dp.enabled = true;
 
         gameObject.SetActive(false);
+    }
+
+    private bool TrySnapToPort(Vector3 dropWorldPos)
+    {
+        LanTesterPortController[] ports =
+            FindObjectsByType<LanTesterPortController>(FindObjectsSortMode.None);
+
+        LanTesterPortController closest = null;
+        float bestDist = portSnapRadius;
+
+        foreach (var port in ports)
+        {
+            if (!port.gameObject.activeInHierarchy) continue;
+            if (port.IsCableInstalled) continue;
+            float dist = Vector3.Distance(dropWorldPos, port.transform.position);
+            if (dist < bestDist) { bestDist = dist; closest = port; }
+        }
+
+        if (closest == null) return false;
+
+        bool installed = closest.InstallCable(this);
+        if (!installed) return false;
+
+        gameObject.SetActive(false);
+        return true;
     }
 
     private void SnapToSlot(Vector3 dropWorldPos)

@@ -33,8 +33,8 @@ public class HardwareViewController : MonoBehaviour
     private void BuildViewList()
     {
         _views.Clear();
-        if (topView   != null) _views.Add(("Top",   topView));
         if (frontView != null) _views.Add(("Front", frontView));
+        if (topView   != null) _views.Add(("Top",   topView));
         if (sideView  != null) _views.Add(("Side",  sideView));
         if (backView  != null) _views.Add(("Back",  backView));
     }

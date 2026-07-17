@@ -77,11 +77,14 @@ public class NetworkPrefabInteraction : MonoBehaviour
 
         if (_detailView != null)
             _detailView.SetActive(true);
+
+        GetComponent<HardwareViewController>()?.ShowLastActive();
     }
 
     // Called by GameManager.CloseEditor — hides the detail child.
     public void OnEditorClosed()
     {
+        GetComponent<HardwareViewController>()?.HideIndicator();
         if (_detailView != null)
             _detailView.SetActive(false);
     }

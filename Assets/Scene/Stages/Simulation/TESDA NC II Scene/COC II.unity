@@ -631,6 +631,8 @@ MonoBehaviour:
   startInWorkspace: 0
   slotInstallRadius: 1.5
   snapToSlotOnly: 0
+  canSnapToPort: 0
+  portSnapRadius: 2
   infoImage: {fileID: 0}
   infoName: 
   infoDescription: 
@@ -644,6 +646,8 @@ GameObject:
   m_Component:
   - component: {fileID: 74146360}
   - component: {fileID: 74146361}
+  - component: {fileID: 74146362}
+  - component: {fileID: 74146363}
   m_Layer: 0
   m_Name: LanTesterPort
   m_TagString: Untagged
@@ -725,6 +729,66 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!114 &74146362
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 74146359}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b2d4f6a8c0e2f4b6d8e0f2b4d6f8a0c2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LanTesterPortController
+  cableInstalledIndicator: {fileID: 549537365}
+  holdDuration: 2
+--- !u!61 &74146363
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 74146359}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0.5, y: 0.5}
+    oldSize: {x: 4.14, y: 4.28}
+    newSize: {x: 4.14, y: 4.28}
+    adaptiveTilingThreshold: 0.5
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  m_Size: {x: 4.14, y: 4.28}
+  m_EdgeRadius: 0
 --- !u!1 &76018183
 GameObject:
   m_ObjectHideFlags: 0
@@ -1079,6 +1143,7 @@ RectTransform:
   m_LocalScale: {x: 0.009259259, y: 0.009259259, z: 0.009259259}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 790378252}
   - {fileID: 1031324928}
   - {fileID: 849191441}
   - {fileID: 1512941429}
@@ -1629,7 +1694,6 @@ RectTransform:
   - {fileID: 819875752}
   - {fileID: 1296076609}
   - {fileID: 73716415}
-  - {fileID: 790378252}
   m_Father: {fileID: 440705952}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
@@ -1690,7 +1754,7 @@ Transform:
   m_GameObject: {fileID: 255793593}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -7.01, y: 1.65, z: 0}
+  m_LocalPosition: {x: -5.83, y: 2.31, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1746,7 +1810,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
+  m_Sprite: {fileID: 7402454744121049697, guid: fb390cd67f5e0bf4b8ef6905b3c6df70, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -1822,13 +1886,13 @@ BoxCollider2D:
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 1, y: 1}
+    oldSize: {x: 0.38, y: 2.61}
     newSize: {x: 1, y: 1}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 1, y: 1}
+  m_Size: {x: 0.38, y: 2.61}
   m_EdgeRadius: 0
 --- !u!1 &272896105
 GameObject:
@@ -2747,7 +2811,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &435235940
 Transform:
   m_ObjectHideFlags: 0
@@ -3158,13 +3222,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 549537365}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 1.429, y: 2.256, z: 0}
-  m_LocalScale: {x: 0.2, y: 0.2, z: 0.2}
+  m_LocalRotation: {x: 0, y: 0, z: 1, w: 0}
+  m_LocalPosition: {x: 0.122, y: 1.452, z: 0}
+  m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 435235940}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 180}
 --- !u!212 &549537367
 SpriteRenderer:
   serializedVersion: 2
@@ -3214,7 +3278,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 2
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -8081927844269452214, guid: 2a8a4dea2f8962b438826ca208cfc92b, type: 3}
+  m_Sprite: {fileID: 7402454744121049697, guid: fb390cd67f5e0bf4b8ef6905b3c6df70, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -4247,12 +4311,12 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1446149507}
-  m_Father: {fileID: 244969972}
+  m_Father: {fileID: 111293841}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 239.85196, y: -249.53873}
+  m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &790378254
 MonoBehaviour:
@@ -4364,6 +4428,8 @@ MonoBehaviour:
   startInWorkspace: 0
   slotInstallRadius: 1.5
   snapToSlotOnly: 1
+  canSnapToPort: 0
+  portSnapRadius: 2
   infoImage: {fileID: 0}
   infoName: 
   infoDescription: 
@@ -4610,6 +4676,8 @@ MonoBehaviour:
   startInWorkspace: 0
   slotInstallRadius: 1.5
   snapToSlotOnly: 0
+  canSnapToPort: 0
+  portSnapRadius: 2
   infoImage: {fileID: 0}
   infoName: 
   infoDescription: 
@@ -5597,7 +5665,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &983374466
 Transform:
   m_ObjectHideFlags: 0
@@ -6606,6 +6674,8 @@ MonoBehaviour:
   startInWorkspace: 0
   slotInstallRadius: 1.5
   snapToSlotOnly: 0
+  canSnapToPort: 0
+  portSnapRadius: 2
   infoImage: {fileID: 0}
   infoName: 
   infoDescription: 
@@ -7452,6 +7522,8 @@ GameObject:
   m_Component:
   - component: {fileID: 1179944005}
   - component: {fileID: 1179944006}
+  - component: {fileID: 1179944007}
+  - component: {fileID: 1179944008}
   m_Layer: 0
   m_Name: LanTesterSwitch
   m_TagString: Untagged
@@ -7533,6 +7605,67 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!114 &1179944007
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1179944004}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a1c3e5f7b9d2e4a6c8f0b2d4e6a8c0f2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LanTesterSwitchController
+  offSprite: {fileID: -5883172773260258095, guid: b3a75353397b69f40a266c51f3e0c9a3, type: 3}
+  onSprite: {fileID: -4326731696167619147, guid: 74e4bc9cf4d3b3045a7bbf2ae4cbd536, type: 3}
+  doubleClickWindow: 0.35
+--- !u!61 &1179944008
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1179944004}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0.5, y: 0.5}
+    oldSize: {x: 1.9, y: 1.93}
+    newSize: {x: 4.14, y: 4.28}
+    adaptiveTilingThreshold: 0.5
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  m_Size: {x: 1.9, y: 1.93}
+  m_EdgeRadius: 0
 --- !u!1 &1241052399
 GameObject:
   m_ObjectHideFlags: 0
@@ -8406,6 +8539,8 @@ MonoBehaviour:
   startInWorkspace: 0
   slotInstallRadius: 1.5
   snapToSlotOnly: 0
+  canSnapToPort: 0
+  portSnapRadius: 2
   infoImage: {fileID: 0}
   infoName: 
   infoDescription: 
@@ -8855,7 +8990,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1456373171
 Transform:
   m_ObjectHideFlags: 0
@@ -9010,6 +9145,8 @@ MonoBehaviour:
   startInWorkspace: 0
   slotInstallRadius: 1.5
   snapToSlotOnly: 0
+  canSnapToPort: 0
+  portSnapRadius: 2
   infoImage: {fileID: 0}
   infoName: 
   infoDescription: 
@@ -9494,6 +9631,8 @@ MonoBehaviour:
   startInWorkspace: 0
   slotInstallRadius: 1.5
   snapToSlotOnly: 0
+  canSnapToPort: 1
+  portSnapRadius: 2
   infoImage: {fileID: 0}
   infoName: 
   infoDescription: 
@@ -12277,13 +12416,15 @@ GameObject:
   - component: {fileID: 2062300749}
   - component: {fileID: 2062300748}
   - component: {fileID: 2062300751}
+  - component: {fileID: 2062300752}
+  - component: {fileID: 2062300753}
   m_Layer: 0
   m_Name: LanTester
   m_TagString: ThermalPaste
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &2062300747
 Transform:
   m_ObjectHideFlags: 0
@@ -12293,7 +12434,7 @@ Transform:
   m_GameObject: {fileID: 2062300746}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -12.22, y: -7.39, z: 0}
+  m_LocalPosition: {x: -11.45, y: -7.58, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children:
@@ -12444,10 +12585,38 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1b59f51df5530184badd0b3163b7de0b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NetworkDragPrefab
-  hardwareHolder: {fileID: 0}
+  hardwareHolder: {fileID: 1512941435}
   workspaceProxy: {fileID: 0}
   displayName: 
   canPlaceInWorkspace: 1
+--- !u!114 &2062300752
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2062300746}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 88e4d0d88a4244d4584072f72b7535c9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NetworkPrefabInteraction
+--- !u!114 &2062300753
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2062300746}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa8f61fb2b9cf164ea83331b846de129, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HardwareViewController
+  topView: {fileID: 1973082806}
+  frontView: {fileID: 435235939}
+  sideView: {fileID: 0}
+  backView: {fileID: 0}
 --- !u!1 &2077767781
 GameObject:
   m_ObjectHideFlags: 0
