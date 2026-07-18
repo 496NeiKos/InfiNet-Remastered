@@ -471,15 +471,19 @@ public class NCIITaskListManager : MonoBehaviour
                 },
 
                 // A-Task 10: Install all four phase-1 motherboard screws AND all three phase-2 cables.
-                // IsPhase1CablesAndScrewsInstalled() only checks the phase-1 root; use the new
-                // combined method so that phase-2 cables are also required.
+                // Requires A-Task 9 (GPU) to be complete first — both tasks are visible in the
+                // same 3-task window and the GPU's own CablePort must not be mistaken for a
+                // phase-2 MB cable when the condition is evaluated right after GPU install.
                 new TaskEntry
                 {
                     taskObject    = assemblyTaskObjects[9],
                     originalIndex = 9,
                     condition = () =>
-                        motherboardController != null &&
-                        motherboardController.IsPhase1ScrewsAndPhase2CablesInstalled()
+                    {
+                        if (!_assembly.tasks[8].isCompleted) return false;
+                        return motherboardController != null &&
+                               motherboardController.IsPhase1ScrewsAndPhase2CablesInstalled();
+                    }
                 },
 
                 // A-Task 11: Install HDD screws and cables

@@ -174,12 +174,19 @@ public class MotherboardController : MonoBehaviour
         Transform p2 = pm != null ? pm.GetPhase2Root() : null;
         if (p1 == null) p1 = transform;
 
-        foreach (var s in p1.GetComponentsInChildren<ScrewController>(true))
+        var screws = p1.GetComponentsInChildren<ScrewController>(true);
+        if (screws.Length == 0) return false;
+        foreach (var s in screws)
             if (!s.IsScrewed()) return false;
 
         Transform cableRoot = p2 ?? p1;
-        foreach (var c in cableRoot.GetComponentsInChildren<CablePort>(true))
+        var cables = cableRoot.GetComponentsInChildren<CablePort>(true);
+        if (cables.Length == 0) return false;
+        foreach (var c in cables)
+        {
+            if (c.GetComponentInParent<GPUController>(true) != null) continue;
             if (!c.IsInstalled) return false;
+        }
 
         return true;
     }
