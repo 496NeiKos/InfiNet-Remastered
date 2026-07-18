@@ -121,7 +121,7 @@ public class NetworkCrimpingToolIconDrag : MonoBehaviour, IBeginDragHandler, IDr
         {
             if (!end.gameObject.activeInHierarchy) continue;
             if (!end.IsStripped || !end.IsRJ45Installed || end.IsCrimped) continue;
-            float dist = Vector3.Distance(worldPos, end.transform.position);
+            float dist = Vector3.Distance(worldPos, end.SlotWorldPosition);
             if (dist < bestDist) { bestDist = dist; closest = end; }
         }
 

@@ -196,7 +196,7 @@ public class NetworkHardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHand
         {
             if (!end.gameObject.activeInHierarchy) continue;
             if (!end.IsStripped || end.IsRJ45Installed) continue;
-            float dist = Vector3.Distance(dropWorldPos, end.transform.position);
+            float dist = Vector3.Distance(dropWorldPos, end.SlotWorldPosition);
             if (dist < bestDist) { bestDist = dist; closest = end; }
         }
 

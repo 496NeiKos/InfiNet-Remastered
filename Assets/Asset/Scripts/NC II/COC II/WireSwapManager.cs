@@ -74,6 +74,15 @@ public class WireSwapManager : MonoBehaviour
             return;
         }
 
+        // Wires from different cable ends (different wiresContainer parents) cannot be swapped —
+        // each end's wires are only repositioned within their own container.
+        if (_selected.transform.parent != wire.transform.parent)
+        {
+            Deselect();
+            Select(wire);
+            return;
+        }
+
         string nameA = ResolveName(_selected.wireName);
         string nameB = ResolveName(wire.wireName);
         Swap(_selected, wire);

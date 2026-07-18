@@ -124,6 +124,8 @@ public class T2TaskListManager : MonoBehaviour
         public bool isCompleted;
         public bool isFlashing;
         public Func<bool> condition;
+        // When false, a completed task is never reverted even if its condition becomes false.
+        public bool canRevert = true;
     }
 
     private List<TaskEntry> _tasks;
@@ -183,10 +185,12 @@ public class T2TaskListManager : MonoBehaviour
                 condition     = () => monitorNavigator != null && monitorNavigator.RufusOpened
             },
             // Task 5 — select the ISO file in the Boot Selection dropdown inside Rufus.
+            // canRevert=false: CloseAndReset() wipes the dropdown, but the task should stay done.
             new TaskEntry
             {
                 taskObject    = taskObjects[4],
                 originalIndex = 4,
+                canRevert     = false,
                 condition     = () => rufusSetupManager != null && rufusSetupManager.IsIsoInBootSelection
             },
             // Task 6 — set Image Option to "Standard Windows Installation".
@@ -194,6 +198,7 @@ public class T2TaskListManager : MonoBehaviour
             {
                 taskObject    = taskObjects[5],
                 originalIndex = 5,
+                canRevert     = false,
                 condition     = () => rufusSetupManager != null && rufusSetupManager.IsImageOptionSet
             },
             // Task 7 — set Partition Scheme to "MBR".
@@ -201,6 +206,7 @@ public class T2TaskListManager : MonoBehaviour
             {
                 taskObject    = taskObjects[6],
                 originalIndex = 6,
+                canRevert     = false,
                 condition     = () => rufusSetupManager != null && rufusSetupManager.IsPartitionSet
             },
             // Task 8 — set Target System to "UEFI (non CSM)".
@@ -208,6 +214,7 @@ public class T2TaskListManager : MonoBehaviour
             {
                 taskObject    = taskObjects[7],
                 originalIndex = 7,
+                canRevert     = false,
                 condition     = () => rufusSetupManager != null && rufusSetupManager.IsTargetSystemSet
             },
             // Task 9 — set File System to "NTFS".
@@ -215,6 +222,7 @@ public class T2TaskListManager : MonoBehaviour
             {
                 taskObject    = taskObjects[8],
                 originalIndex = 8,
+                canRevert     = false,
                 condition     = () => rufusSetupManager != null && rufusSetupManager.IsFileSystemSet
             },
             // Task 10 — set Cluster Size to "4096 bytes (Default)".
@@ -222,6 +230,7 @@ public class T2TaskListManager : MonoBehaviour
             {
                 taskObject    = taskObjects[9],
                 originalIndex = 9,
+                canRevert     = false,
                 condition     = () => rufusSetupManager != null && rufusSetupManager.IsClusterSizeSet
             },
             // Task 11 — click Start to begin formatting.
@@ -229,6 +238,7 @@ public class T2TaskListManager : MonoBehaviour
             {
                 taskObject    = taskObjects[10],
                 originalIndex = 10,
+                canRevert     = false,
                 condition     = () => rufusSetupManager != null && rufusSetupManager.FormattingStarted
             },
             // Task 12 — formatting completes successfully.
@@ -399,8 +409,8 @@ public class T2TaskListManager : MonoBehaviour
             }
             else
             {
-                // Always check completed tasks for reversion.
-                if (!task.condition())
+                // Check completed tasks for reversion only if the task allows it.
+                if (task.canRevert && !task.condition())
                 {
                     task.isCompleted = false;
                     task.taskObject.transform.SetParent(taskParent, false);

@@ -41,6 +41,10 @@ public class NetworkCableEndController : MonoBehaviour
     public bool IsRJ45Installed { get; private set; }
     public bool IsCrimped { get; private set; }
 
+    /// <summary>World position of the RJ45 slot object — used for proximity snap detection.</summary>
+    public Vector3 SlotWorldPosition =>
+        rj45SlotObject != null ? rj45SlotObject.transform.position : transform.position;
+
     private WireController[] _wires;
     private GameObject _installedRJ45;
     private Coroutine _slideRoutine;
@@ -128,7 +132,7 @@ public class NetworkCableEndController : MonoBehaviour
 
     /// <summary>
     /// Uninstalls the RJ45 from the slot and returns it to hardware storage,
-    /// restoring the icon proxy. Called by both the hold path and the wire-stripper reset path.
+    /// restoring the icon proxy. Called by the wire-stripper reset path.
     /// </summary>
     public void UninstallRJ45(bool notify = true)
     {
@@ -146,6 +150,54 @@ public class NetworkCableEndController : MonoBehaviour
         rj45SlotObject.SetActive(false);
         SetWiresInteractable(true);
         if (notify) NetworkCableTaskManager.CheckConditions();
+    }
+
+    /// <summary>
+    /// Marks the slot as uninstalled and disables the slot object WITHOUT touching the RJ45
+    /// GameObject — the caller (RJ45HoldUninstall) has already reparented it to the world root
+    /// so disabling rj45SlotObject will not hide it.
+    /// Returns false if the slot is crimped (uninstall blocked).
+    /// </summary>
+    public bool DetachRJ45ForDrag()
+    {
+        if (IsCrimped || !IsRJ45Installed) return false;
+
+        IsRJ45Installed = false;
+        if (_slideRoutine != null) { StopCoroutine(_slideRoutine); _slideRoutine = null; }
+
+        _installedRJ45 = null;
+        rj45SlotObject.SetActive(false);
+        SetWiresInteractable(true);
+        NetworkCableTaskManager.CheckConditions();
+        return true;
+    }
+
+    /// <summary>
+    /// Installs an already-active RJ45 GameObject into this slot.
+    /// Used by the drag-uninstall path when the player drops the RJ45 onto a valid slot
+    /// or snaps it back to its home slot — no NetworkHardwareHolder needed.
+    /// </summary>
+    public void InstallRJ45(GameObject rj45)
+    {
+        if (!IsStripped || IsRJ45Installed || rj45 == null) return;
+
+        IsRJ45Installed = true;
+        _installedRJ45  = rj45;
+
+        rj45SlotObject.SetActive(true);
+
+        Vector3 worldScale = rj45.transform.lossyScale;
+        rj45.SetActive(true);
+        rj45.transform.SetParent(rj45SlotObject.transform, false);
+        RestoreWorldScale(rj45.transform, worldScale);
+
+        rj45.transform.localPosition = new Vector3(0f, slideStartYOffset, 0f);
+        if (_slideRoutine != null) StopCoroutine(_slideRoutine);
+        _slideRoutine = StartCoroutine(SlideRJ45(rj45, Vector3.zero));
+
+        rj45.GetComponent<RJ45HoldUninstall>()?.OnInstalled(this);
+        SetWiresInteractable(false);
+        NetworkCableTaskManager.CheckConditions();
     }
 
 private IEnumerator SlideRJ45(GameObject rj45, Vector3 restLocalPos)
