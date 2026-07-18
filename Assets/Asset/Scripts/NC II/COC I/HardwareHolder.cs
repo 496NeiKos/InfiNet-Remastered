@@ -17,7 +17,7 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
     public float slotInstallRadius = 1.5f;
 
     [Header("Info Panel")]
-    [SerializeField] private Sprite infoImage;
+    [SerializeField] private Sprite[] infoImages;
     [SerializeField] private string infoName;
     [TextArea(3, 6)]
     [SerializeField] private string infoDescription;
@@ -65,7 +65,7 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
     private IEnumerator ShowInfoAfterDelay()
     {
         yield return new WaitForSeconds(3f);
-        HardwareInfoPanel.Instance?.Show(infoImage, infoName, infoDescription);
+        HardwareInfoPanel.Instance?.Show(infoImages, infoName, infoDescription);
         _hoverCoroutine = null;
     }
 

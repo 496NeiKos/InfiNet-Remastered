@@ -42,7 +42,7 @@ public class ScrewDrag : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
     private IEnumerator ShowInfoAfterDelay()
     {
         yield return new WaitForSeconds(3f);
-        HardwareInfoPanel.Instance?.Show(infoImage, infoName, infoDescription);
+        HardwareInfoPanel.Instance?.Show(new[] { infoImage }, infoName, infoDescription);
         _hoverCoroutine = null;
     }
 
