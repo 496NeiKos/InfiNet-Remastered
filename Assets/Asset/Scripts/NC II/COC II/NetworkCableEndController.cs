@@ -45,6 +45,19 @@ public class NetworkCableEndController : MonoBehaviour
     public Vector3 SlotWorldPosition =>
         rj45SlotObject != null ? rj45SlotObject.transform.position : transform.position;
 
+    /// <summary>
+    /// Returns the wireColorIndex of whichever wire currently occupies the given slot (0–7),
+    /// or -1 if no wire is assigned there. Used by LanTesterLEDDisplay for per-pin LED checking.
+    /// </summary>
+    public int GetWireColorAtSlot(int slotIndex)
+    {
+        if (_wires == null) return -1;
+        foreach (var wire in _wires)
+            if (wire != null && wire.CurrentSlotIndex == slotIndex)
+                return wire.wireColorIndex;
+        return -1;
+    }
+
     private WireController[] _wires;
     private GameObject _installedRJ45;
     private Coroutine _slideRoutine;
