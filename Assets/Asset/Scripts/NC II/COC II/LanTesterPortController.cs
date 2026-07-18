@@ -4,8 +4,12 @@ using UnityEngine.InputSystem;
 /// <summary>
 /// Attach to LanTesterPort (inside TopDetail view of the LanTester).
 /// Drag the NetworkCable icon proxy onto this port to install the cable.
-/// Click-and-hold for holdDuration seconds on the installed cable to uninstall —
-/// the cable is returned to hardware storage and the icon proxy reappears.
+///
+/// Uninstall — mirrors RJ45HoldUninstall / CableBehavior pattern:
+///   1. Click-and-hold for holdDuration seconds on the installed cable.
+///   2. Cable detaches and becomes draggable (Update-driven, same as BackCable).
+///   3. Drop on hardware area  → stored; icon proxy reappears.
+///      Drop anywhere else     → snaps back and reinstalls into the port.
 ///
 /// Requires a BoxCollider2D on LanTesterPort for reliable click detection;
 /// falls back to SpriteRenderer bounds if absent.
@@ -16,17 +20,25 @@ public class LanTesterPortController : MonoBehaviour
     [Tooltip("The CableInstalledIndicator GameObject in FrontDetail — enabled when cable is installed.")]
     [SerializeField] private GameObject cableInstalledIndicator;
 
-    [Header("Hold to Uninstall")]
-    [SerializeField] private float holdDuration = 2f;
+    [Header("Hold to Detach")]
+    [SerializeField] private float holdDuration = 1f;
 
     public bool IsCableInstalled { get; private set; }
 
     private NetworkHardwareHolder _hardwareHolder;
-    private GameObject _installedCable;
-    private Collider2D _col;
-    private SpriteRenderer _sr;
-    private bool _holding;
+    private GameObject            _installedCable;
+    private Collider2D            _col;
+    private SpriteRenderer        _sr;
+
+    // Hold state
+    private bool  _holding;
     private float _holdTimer;
+
+    // Drag state
+    private bool       _detached;
+    private bool       _isDragging;
+    private GameObject _dragIndicator;
+    private Vector3    _cachedWorldScale;
 
     private void Awake()
     {
@@ -40,16 +52,19 @@ public class LanTesterPortController : MonoBehaviour
             cableInstalledIndicator.SetActive(false);
     }
 
+    // ----------------------------------------------------------------
+    //  Install
+    // ----------------------------------------------------------------
+
     /// <summary>
     /// Called by NetworkHardwareHolder when the cable icon proxy is dropped onto this port.
-    /// Activates the cable hardware object and reparents it into the port.
+    /// Both cable ends must be crimped before the port accepts the cable.
     /// </summary>
     public bool InstallCable(NetworkHardwareHolder source)
     {
         if (IsCableInstalled) return false;
         if (source == null || source.hardwarePrefab == null) return false;
 
-        // Both cable ends must have a crimped RJ45 before the port accepts the cable.
         var ends = source.hardwarePrefab.GetComponentsInChildren<NetworkCableEndController>(true);
         foreach (var end in ends)
             if (!end.IsCrimped) return false;
@@ -57,18 +72,14 @@ public class LanTesterPortController : MonoBehaviour
         IsCableInstalled  = true;
         _hardwareHolder   = source;
         _installedCable   = source.hardwarePrefab;
+        _cachedWorldScale = _installedCable.transform.lossyScale;
 
-        Vector3 worldScale = _installedCable.transform.lossyScale;
         _installedCable.SetActive(true);
         _installedCable.transform.SetParent(transform, false);
-        RestoreWorldScale(_installedCable.transform, worldScale);
+        RestoreWorldScale(_installedCable.transform, _cachedWorldScale);
         _installedCable.transform.localPosition = Vector3.zero;
 
-        // Suspend cable's own drag and detail-view interaction while installed
-        var drag     = _installedCable.GetComponent<NetworkDragPrefab>();
-        var interact = _installedCable.GetComponent<NetworkPrefabInteraction>();
-        if (drag     != null) drag.enabled     = false;
-        if (interact != null) interact.enabled = false;
+        SetCableInteractable(false);
 
         if (cableInstalledIndicator != null)
             cableInstalledIndicator.SetActive(true);
@@ -78,38 +89,21 @@ public class LanTesterPortController : MonoBehaviour
         return true;
     }
 
-    /// <summary>
-    /// Returns the cable to hardware storage (proxy icon reappears in the hardware area).
-    /// Called after the hold-uninstall timer completes.
-    /// </summary>
-    public void UninstallCable()
-    {
-        if (!IsCableInstalled) return;
-
-        IsCableInstalled = false;
-        _holding         = false;
-        _holdTimer       = 0f;
-
-        if (_installedCable != null)
-        {
-            // Re-enable components before StoreHardware deactivates the object
-            var drag     = _installedCable.GetComponent<NetworkDragPrefab>();
-            var interact = _installedCable.GetComponent<NetworkPrefabInteraction>();
-            if (drag     != null) drag.enabled     = true;
-            if (interact != null) interact.enabled = true;
-        }
-
-        _hardwareHolder?.StoreHardware(); // reparents cable to storage, shows proxy icon
-        _installedCable = null;
-        _hardwareHolder = null;
-
-        if (cableInstalledIndicator != null)
-            cableInstalledIndicator.SetActive(false);
-    }
+    // ----------------------------------------------------------------
+    //  Update — hold detection then drag driving
+    // ----------------------------------------------------------------
 
     private void Update()
     {
-        if (!IsCableInstalled || Mouse.current == null) return;
+        if (Mouse.current == null) return;
+
+        if (_detached)
+        {
+            DragUpdate();
+            return;
+        }
+
+        if (!IsCableInstalled) return;
 
         if (Mouse.current.leftButton.wasPressedThisFrame)
         {
@@ -134,18 +128,139 @@ public class LanTesterPortController : MonoBehaviour
             {
                 _holding   = false;
                 _holdTimer = 0f;
-                UninstallCable();
+                Detach();
             }
         }
     }
 
+    // ----------------------------------------------------------------
+    //  Detach — reparent to world root, spawn drag indicator
+    // ----------------------------------------------------------------
+
+    private void Detach()
+    {
+        IsCableInstalled = false;
+        _detached        = true;
+        _isDragging      = false;
+
+        if (cableInstalledIndicator != null)
+            cableInstalledIndicator.SetActive(false);
+
+        // Reparent to world root before touching anything else so the cable
+        // stays visible at its current world position.
+        _cachedWorldScale = _installedCable.transform.lossyScale;
+        _installedCable.transform.SetParent(GameManager.Instance.ActiveWorldContainer, true);
+
+        // Spawn a drag indicator sprite that follows the cursor.
+        SpriteRenderer sourceSR = _installedCable.GetComponentInChildren<SpriteRenderer>(true);
+        _dragIndicator = new GameObject("CableDragIndicator");
+        SpriteRenderer sr = _dragIndicator.AddComponent<SpriteRenderer>();
+        sr.sprite       = sourceSR != null ? sourceSR.sprite : null;
+        sr.sortingOrder = 999;
+        _dragIndicator.transform.position   = _installedCable.transform.position;
+        _dragIndicator.transform.localScale = _cachedWorldScale;
+
+        ActivityLogManager.Log("Network cable removed from LAN tester", ActivityLogManager.EntryType.Remove);
+    }
+
+    // ----------------------------------------------------------------
+    //  Drag — Update-driven mouse follow (same pattern as CableBehavior)
+    // ----------------------------------------------------------------
+
+    private void DragUpdate()
+    {
+        Mouse mouse = Mouse.current;
+        if (mouse == null) return;
+
+        if (!_isDragging)
+        {
+            if (mouse.leftButton.isPressed)
+                _isDragging = true;
+            return;
+        }
+
+        if (mouse.leftButton.isPressed)
+        {
+            Vector3 worldPos = Camera.main.ScreenToWorldPoint(
+                new Vector3(mouse.position.ReadValue().x, mouse.position.ReadValue().y, 10f));
+            worldPos.z = 0f;
+            _installedCable.transform.position = worldPos;
+            if (_dragIndicator != null)
+                _dragIndicator.transform.position = worldPos;
+        }
+        else
+        {
+            OnDragReleased();
+        }
+    }
+
+    // ----------------------------------------------------------------
+    //  Drop resolution
+    // ----------------------------------------------------------------
+
+    private void OnDragReleased()
+    {
+        if (_dragIndicator != null) { Object.Destroy(_dragIndicator); _dragIndicator = null; }
+        _isDragging = false;
+        _detached   = false;
+
+        Vector2 screenPos   = Mouse.current.position.ReadValue();
+        bool onHardwareArea = RectTransformUtility.RectangleContainsScreenPoint(
+            GameManager.Instance.hardwareArea, screenPos, Camera.main);
+
+        if (onHardwareArea)
+        {
+            SendToHolder();
+        }
+        else
+        {
+            SnapBack();
+        }
+    }
+
+    // Drop on hardware area — store cable, show icon proxy
+    private void SendToHolder()
+    {
+        SetCableInteractable(true);
+        _hardwareHolder?.StoreHardware();
+        _installedCable = null;
+        _hardwareHolder = null;
+        NetworkCableTaskManager.CheckConditions();
+    }
+
+    // Drop anywhere else — reinstall back into the port
+    private void SnapBack()
+    {
+        IsCableInstalled = true;
+
+        _installedCable.transform.SetParent(transform, false);
+        RestoreWorldScale(_installedCable.transform, _cachedWorldScale);
+        _installedCable.transform.localPosition = Vector3.zero;
+
+        SetCableInteractable(false);
+
+        if (cableInstalledIndicator != null)
+            cableInstalledIndicator.SetActive(true);
+    }
+
+    // ----------------------------------------------------------------
+    //  Helpers
+    // ----------------------------------------------------------------
+
+    private void SetCableInteractable(bool on)
+    {
+        if (_installedCable == null) return;
+        var drag     = _installedCable.GetComponent<NetworkDragPrefab>();
+        var interact = _installedCable.GetComponent<NetworkPrefabInteraction>();
+        if (drag     != null) drag.enabled     = on;
+        if (interact != null) interact.enabled = on;
+    }
+
     private bool IsClickOnPortOrCable(Vector2 worldPt)
     {
-        // Port's own collider / bounds
         if (_col != null && _col.OverlapPoint(worldPt)) return true;
         if (_col == null && _sr != null && _sr.bounds.Contains(worldPt)) return true;
 
-        // Installed cable's collider
         if (_installedCable != null)
         {
             Collider2D cableCol = _installedCable.GetComponent<Collider2D>();
