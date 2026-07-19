@@ -5,9 +5,9 @@ using UnityEngine.UI;
 
 /// <summary>
 /// Attach to WireStripperIcon in the HardwareArea.
-/// Drag from the hardware area onto Cable1Body / Cable2Body to strip the cable end.
-/// - Fresh end  → Expose()  (swap to stripped sprite, reveal wires)
-/// - Already stripped → ResetEnd() (reshuffle wires, keep stripped)
+/// Drag from the hardware area onto a cable end to strip the jacket and reveal wires.
+/// Does nothing if the cable end is already stripped — use the crimping tool on the
+/// cable body to cut and reset an end before stripping again.
 /// Returns to hardware area after every use.
 /// </summary>
 public class NetworkWireStripperIconDrag : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler,
@@ -109,8 +109,6 @@ public class NetworkWireStripperIconDrag : MonoBehaviour, IBeginDragHandler, IDr
 
         if (!hit.IsStripped)
             hit.Expose();
-        else
-            hit.ResetEnd();
     }
 
     private NetworkCableEndController FindNearestCableEnd(Vector3 worldPos)

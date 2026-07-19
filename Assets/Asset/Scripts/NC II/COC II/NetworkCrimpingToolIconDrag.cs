@@ -5,8 +5,17 @@ using UnityEngine.UI;
 
 /// <summary>
 /// Attach to CrimpingToolIcon in the HardwareArea.
-/// Drag onto a cable end that has an installed (uncrimped) RJ45 to crimp it.
-/// Crimping locks the RJ45 permanently — only a wire stripper reset can undo it.
+/// The crimping tool has two distinct actions depending on where it is dropped:
+///
+///   1. Aimed at the RJ45 slot area — crimps the installed (uncrimped) RJ45, locking it in place.
+///      Detection uses SlotWorldPosition within rj45CrimpRadius.
+///      This check has priority and fires first.
+///
+///   2. Aimed at the cable body — cuts and fully resets the cable end back to its unstripped state.
+///      Works even if the RJ45 is already crimped; the connector is returned to hardware storage.
+///      Detection uses BodyWorldPosition within bodyResetRadius.
+///      Only fires when the first check finds no crimpable RJ45.
+///
 /// Returns to hardware area after every use.
 /// </summary>
 public class NetworkCrimpingToolIconDrag : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler,
@@ -17,7 +26,10 @@ public class NetworkCrimpingToolIconDrag : MonoBehaviour, IBeginDragHandler, IDr
     [SerializeField] private float colliderRadius = 0.3f;
 
     [Header("Detection")]
-    [SerializeField] private float dropRadius = 1.5f;
+    [Tooltip("Proximity radius around the RJ45 slot position for the crimp action.")]
+    [SerializeField] private float rj45CrimpRadius = 1.5f;
+    [Tooltip("Proximity radius around the cable body position for the cut/reset action.")]
+    [SerializeField] private float bodyResetRadius = 1.5f;
 
     [Header("Info Panel")]
     [SerializeField] private Sprite infoImage;
@@ -103,10 +115,18 @@ public class NetworkCrimpingToolIconDrag : MonoBehaviour, IBeginDragHandler, IDr
         Destroy(_dragObject);
         _dragObject = null;
 
-        NetworkCableEndController hit = FindNearestCrimpableEnd(dropPos);
-        if (hit == null) return;
+        // Priority 1: crimp an installed (uncrimped) RJ45.
+        NetworkCableEndController crimpTarget = FindNearestCrimpableEnd(dropPos);
+        if (crimpTarget != null)
+        {
+            crimpTarget.Crimp();
+            return;
+        }
 
-        hit.Crimp();
+        // Priority 2: cut and fully reset a stripped cable end via the cable body area.
+        NetworkCableEndController resetTarget = FindNearestResettableEnd(dropPos);
+        if (resetTarget != null)
+            resetTarget.ResetEnd();
     }
 
     private NetworkCableEndController FindNearestCrimpableEnd(Vector3 worldPos)
@@ -115,13 +135,32 @@ public class NetworkCrimpingToolIconDrag : MonoBehaviour, IBeginDragHandler, IDr
             FindObjectsByType<NetworkCableEndController>(FindObjectsSortMode.None);
 
         NetworkCableEndController closest = null;
-        float bestDist = dropRadius;
+        float bestDist = rj45CrimpRadius;
 
         foreach (var end in ends)
         {
             if (!end.gameObject.activeInHierarchy) continue;
             if (!end.IsStripped || !end.IsRJ45Installed || end.IsCrimped) continue;
             float dist = Vector3.Distance(worldPos, end.SlotWorldPosition);
+            if (dist < bestDist) { bestDist = dist; closest = end; }
+        }
+
+        return closest;
+    }
+
+    private NetworkCableEndController FindNearestResettableEnd(Vector3 worldPos)
+    {
+        NetworkCableEndController[] ends =
+            FindObjectsByType<NetworkCableEndController>(FindObjectsSortMode.None);
+
+        NetworkCableEndController closest = null;
+        float bestDist = bodyResetRadius;
+
+        foreach (var end in ends)
+        {
+            if (!end.gameObject.activeInHierarchy) continue;
+            if (!end.IsStripped) continue; // Only stripped ends have something to cut back.
+            float dist = Vector3.Distance(worldPos, end.BodyWorldPosition);
             if (dist < bestDist) { bestDist = dist; closest = end; }
         }
 

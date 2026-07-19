@@ -37,13 +37,24 @@ public class NetworkCableEndController : MonoBehaviour
     [Tooltip("Local X positions for wire slots 0-7 relative to wiresContainer. Match the editor wire spacing.")]
     [SerializeField] private float[] slotLocalXPositions = new float[] { -0.4f, -0.3f, -0.2f, -0.1f, 0f, 0.1f, 0.2f, 0.3f };
 
-    public bool IsStripped { get; private set; }
+    public bool IsStripped      { get; private set; }
     public bool IsRJ45Installed { get; private set; }
-    public bool IsCrimped { get; private set; }
+    public bool IsCrimped       { get; private set; }
+
+    /// <summary>
+    /// Increments each time Expose() is called.
+    /// 0 = never stripped, 1 = Phase-1 strip, 2 = Phase-2 re-strip, etc.
+    /// Used by NetworkCableTaskManager to distinguish Phase-1 from Phase-2 wire state.
+    /// </summary>
+    public int StripCycleCount { get; private set; }
 
     /// <summary>World position of the RJ45 slot object — used for proximity snap detection.</summary>
     public Vector3 SlotWorldPosition =>
         rj45SlotObject != null ? rj45SlotObject.transform.position : transform.position;
+
+    /// <summary>World position of the cable body — used by the crimping tool's cut/reset detection.</summary>
+    public Vector3 BodyWorldPosition =>
+        cableBody != null ? cableBody.transform.position : transform.position;
 
     /// <summary>
     /// Returns the wireColorIndex of whichever wire currently occupies the given slot (0–7),
@@ -55,6 +66,20 @@ public class NetworkCableEndController : MonoBehaviour
         foreach (var wire in _wires)
             if (wire != null && wire.CurrentSlotIndex == slotIndex)
                 return wire.wireColorIndex;
+        return -1;
+    }
+
+    /// <summary>
+    /// Reverse lookup — returns the slot index currently occupied by the wire with the given color,
+    /// or -1 if no wire with that color exists. Used by LanTesterLEDDisplay remote panel to trace
+    /// which pin on this end receives the signal the master is sending on a given pin.
+    /// </summary>
+    public int GetSlotForWireColor(int colorIndex)
+    {
+        if (_wires == null || colorIndex < 0) return -1;
+        foreach (var wire in _wires)
+            if (wire != null && wire.wireColorIndex == colorIndex)
+                return wire.CurrentSlotIndex;
         return -1;
     }
 
@@ -83,6 +108,7 @@ public class NetworkCableEndController : MonoBehaviour
     {
         if (IsStripped) return;
         IsStripped = true;
+        StripCycleCount++;
 
         if (cableBody      != null) cableBody.sprite = strippedSprite;
         if (wiresContainer != null) wiresContainer.gameObject.SetActive(true);
@@ -91,14 +117,22 @@ public class NetworkCableEndController : MonoBehaviour
         NetworkCableTaskManager.CheckConditions();
     }
 
-    /// <summary>Called by wire stripper on an already-stripped cable end. Uninstalls RJ45 and re-shuffles wires.</summary>
+    /// <summary>
+    /// Cuts the cable end back to its original unstripped state.
+    /// Called by the crimping tool when aimed at the cable body (not the RJ45 slot).
+    /// Works even if the RJ45 is already crimped — the connector is returned to hardware storage.
+    /// The wire stripper must be used again to re-strip and get new randomized wires.
+    /// </summary>
     public void ResetEnd()
     {
-        // Wire stripper overrides crimp — clear before uninstall so the guard doesn't block it.
-        IsCrimped = false;
+        IsCrimped = false; // Clear before UninstallRJ45 so its guard doesn't block.
         if (IsRJ45Installed) UninstallRJ45(notify: false);
 
-        ShuffleWires();
+        IsStripped = false;
+        if (cableBody      != null) cableBody.sprite = defaultSprite;
+        if (wiresContainer != null) wiresContainer.gameObject.SetActive(false);
+        if (rj45SlotObject != null) rj45SlotObject.SetActive(false);
+
         NetworkCableTaskManager.CheckConditions();
     }
 

@@ -1,56 +1,63 @@
+using System;
 using System.Collections;
 using UnityEngine;
 
 /// <summary>
-/// Drives the 9-LED sequence panel on one port face of the LAN tester.
+/// Drives the 9-LED sequence panel on one port face of the LAN tester,
+/// accurately simulating the master/remote behaviour of a real cable tester.
 ///
-/// Place one instance on Port1LEDPanel (wire to CableEnd1) and another on
-/// Port2LEDPanel (wire to CableEnd2). Both share the same port and switch references.
+/// MASTER panel (isMasterPanel = true  — wire to CableEnd1):
+///   Pulses LEDs 1–8 in order, always green.
+///   Represents the master unit transmitting a signal sequentially on each pin.
 ///
-/// Behaviour mirrors a real LAN tester:
-///   • LEDs 1-8 pulse one at a time in order while active.
-///   • Green  = wire at that slot matches T568A or T568B standard.
-///   • Red    = wrong wire color at that slot (miswired).
-///   • LED G  = always off — UTP cable carries no shield/ground.
-///   • All LEDs off when cable is not installed or switch is off.
+/// REMOTE panel (isMasterPanel = false — wire cableEnd → CableEnd2, masterCableEnd → CableEnd1):
+///   For each master step N the script traces the physical wire:
+///     1. Reads which wire color occupies slot N on the master end (CableEnd1).
+///     2. Finds which slot that same wire color occupies on this end (CableEnd2).
+///     3. Lights THAT slot's LED green.
 ///
-/// Activation condition: cable installed in LAN tester port AND switch on.
-/// (LanTesterPortController already requires both ends crimped before
-///  accepting the cable, so IsCrimped is implicitly guaranteed.)
+///   The resulting pattern reveals the cable type without any explicit label:
+///     Straight-through  →  remote LEDs pulse 1, 2, 3, 4, 5, 6, 7, 8  (same order as master)
+///     Crossover         →  remote LEDs pulse in crossed order, e.g. 3, 6, 1, 4, 5, 2, 7, 8
+///     Bad crimp         →  remote LEDs pulse in a random / incomplete order
+///
+/// LED G (index 8) is always off — UTP cable carries no shield/ground.
+/// All LEDs turn off when the cable is removed or the switch is off.
 /// </summary>
 public class LanTesterLEDDisplay : MonoBehaviour
 {
-    [Header("Cable End to Inspect")]
-    [Tooltip("NetworkCableEndController this panel reads wire data from.\nPort1LEDPanel → CableEnd1, Port2LEDPanel → CableEnd2.")]
+    /// <summary>
+    /// Fired by the master panel after each complete 8-pin + G-gap cycle.
+    /// NetworkCableTaskManager subscribes to this to evaluate Tasks 12 and 26.
+    /// </summary>
+    public static event Action OnSequenceComplete;
+    [Header("Panel Mode")]
+    [Tooltip("True = Master panel (pulses 1–8 in order).\nFalse = Remote panel (traces wire continuity from master end to this end).")]
+    [SerializeField] private bool isMasterPanel = true;
+
+    [Header("Cable Ends")]
+    [Tooltip("The cable end this panel reads from.\nMaster panel → CableEnd1.  Remote panel → CableEnd2.")]
     [SerializeField] private NetworkCableEndController cableEnd;
+    [Tooltip("Remote panel only — the master-side cable end (CableEnd1).\nLeave null on the master panel.")]
+    [SerializeField] private NetworkCableEndController masterCableEnd;
 
     [Header("Tester State")]
-    [Tooltip("LanTesterPortController in the TopDetail view — provides IsCableInstalled.")]
+    [Tooltip("LanTesterPortController — provides IsCableInstalled.")]
     [SerializeField] private LanTesterPortController port;
     [Tooltip("LanTesterSwitchController — provides IsOn.")]
     [SerializeField] private LanTesterSwitchController lanSwitch;
 
     [Header("LED SpriteRenderers")]
-    [Tooltip("Exactly 9 SpriteRenderers: index 0=LED1, 1=LED2, ..., 7=LED8, 8=LED_G.\nAll should start inactive in the scene — Start() enforces this.")]
+    [Tooltip("Exactly 9 SpriteRenderers: index 0=LED1 … 7=LED8, 8=LED_G.\nAll should start inactive — Start() enforces this.")]
     [SerializeField] private SpriteRenderer[] ledRenderers;
 
-    [Header("LED Sprites")]
-    [Tooltip("Sprite shown when a wire is in the correct slot.")]
+    [Header("LED Sprite")]
+    [Tooltip("Sprite shown when a LED is lit (wire continuity confirmed on that pin).")]
     [SerializeField] private Sprite ledGreen;
-    [Tooltip("Sprite shown when a wire is in the wrong slot.")]
-    [SerializeField] private Sprite ledRed;
 
     [Header("Timing")]
-    [Tooltip("Seconds each LED stays lit before advancing to the next one.")]
+    [Tooltip("Seconds each LED stays lit before advancing to the next pin.")]
     [SerializeField] private float stepDelay = 0.5f;
-
-    // ----------------------------------------------------------------
-    //  T568 wire standards — slot index (0-7) → expected wireColorIndex
-    //  wireColorIndex key:  0=W/Green  1=Green  2=W/Orange  3=Blue
-    //                       4=W/Blue   5=Orange  6=W/Brown   7=Brown
-    // ----------------------------------------------------------------
-    private static readonly int[] T568A = { 0, 1, 2, 3, 4, 5, 6, 7 };
-    private static readonly int[] T568B = { 2, 5, 0, 3, 4, 1, 6, 7 };
 
     private Coroutine _sequence;
     private bool _running;
@@ -79,30 +86,47 @@ public class LanTesterLEDDisplay : MonoBehaviour
     {
         while (true)
         {
-            // Pulse LEDs 1–8 (slot indices 0–7) one at a time
-            for (int slot = 0; slot < 8; slot++)
+            for (int masterSlot = 0; masterSlot < 8; masterSlot++)
             {
                 SetAllOff();
 
-                if (ledRenderers != null && slot < ledRenderers.Length
-                    && ledRenderers[slot] != null)
+                if (ledRenderers != null)
                 {
-                    int  colorAtSlot = cableEnd.GetWireColorAtSlot(slot);
-                    bool correct     = colorAtSlot >= 0
-                                    && (colorAtSlot == T568A[slot]
-                                     || colorAtSlot == T568B[slot]);
-
-                    ledRenderers[slot].sprite = correct ? ledGreen : ledRed;
-                    ledRenderers[slot].gameObject.SetActive(true);
+                    if (isMasterPanel)
+                    {
+                        // Master always transmits on slots 1–8 in order.
+                        LightSlot(masterSlot);
+                    }
+                    else
+                    {
+                        // Remote: trace which physical wire the master is sending through,
+                        // then find where that wire lands on this end and light that LED.
+                        NetworkCableEndController source = masterCableEnd != null ? masterCableEnd : cableEnd;
+                        int wireColor  = source.GetWireColorAtSlot(masterSlot);
+                        int remoteSlot = cableEnd != null ? cableEnd.GetSlotForWireColor(wireColor) : -1;
+                        if (remoteSlot >= 0) LightSlot(remoteSlot);
+                    }
                 }
 
                 yield return new WaitForSeconds(stepDelay);
             }
 
-            // LED G (index 8) — UTP has no shield ground; gap pause only, stays off
+            // LED G gap — UTP has no shield; just a pause, stays off.
             SetAllOff();
             yield return new WaitForSeconds(stepDelay);
+
+            // Notify task manager that one full pin sequence has completed (master panel only).
+            if (isMasterPanel)
+                OnSequenceComplete?.Invoke();
         }
+    }
+
+    private void LightSlot(int slot)
+    {
+        if (slot < 0 || ledRenderers == null || slot >= ledRenderers.Length) return;
+        if (ledRenderers[slot] == null) return;
+        ledRenderers[slot].sprite = ledGreen;
+        ledRenderers[slot].gameObject.SetActive(true);
     }
 
     private void SetAllOff()

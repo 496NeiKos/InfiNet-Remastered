@@ -2,7 +2,9 @@ using UnityEngine;
 
 /// <summary>
 /// Wire stripper drag behavior for COC II network cable simulation.
-/// Drag from storage to a cable end to expose wires (fresh) or reset wires (stripped).
+/// Drag to a cable end to strip the jacket and expose the 8 inner wires (randomized).
+/// Does nothing if the cable end is already stripped — use the crimping tool on the
+/// cable body to cut and reset an end before stripping again.
 /// Returns to storage after each use — player must re-fetch.
 ///
 /// Attach to: WireStripper (world-space SpriteRenderer with Collider2D in HardwareStorage).
@@ -42,13 +44,8 @@ public class NetworkWireStripperDrag : MonoBehaviour
         _isDragging = false;
 
         NetworkCableEndController hit = FindCableEndAtPosition(transform.position);
-        if (hit != null)
-        {
-            if (!hit.IsStripped)
-                hit.Expose();
-            else
-                hit.ResetEnd();
-        }
+        if (hit != null && !hit.IsStripped)
+            hit.Expose();
 
         ReturnToStorage();
     }
