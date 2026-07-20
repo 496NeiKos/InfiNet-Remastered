@@ -63,6 +63,10 @@ public class UEFINavigator : MonoBehaviour
     [Tooltip("Child popup shown when the player presses F10. Assign UEFISaveConfirmationPopup child of UEFIPanel.")]
     [SerializeField] private UEFISaveConfirmationPopup saveConfirmPopup;
 
+    [Header("References")]
+    [Tooltip("T3MonitorController on the UEFI Monitor root — used to close the canvas from the Exit tab.")]
+    [SerializeField] private T3MonitorController monitorController;
+
     // Milestone flags — latch true once reached (tasks don't revert).
     public bool UEFIOpened          { get; private set; }
     public bool BootTabVisited      { get; private set; }
@@ -173,5 +177,8 @@ public class UEFINavigator : MonoBehaviour
         SavedAndExited = true;
         T3TaskListManager.CheckConditions();
         Debug.Log("[UEFINavigator] Saved and exited UEFI.");
+
+        // Close the canvas so the player isn't left hanging in the UEFI after clicking this.
+        monitorController?.OnBootStateSaved();
     }
 }

@@ -158,9 +158,12 @@ public class UserGuideManager : MonoBehaviour
     private void Update()
     {
         var kb = Keyboard.current;
-        if (kb != null && kb.f1Key.wasPressedThisFrame)
+        if (kb != null && kb.f1Key.wasPressedThisFrame && !IsEditorOpen())
             ToggleGuide();
     }
+
+    private static bool IsEditorOpen() =>
+        GameManager.Instance != null && GameManager.Instance.IsEditorOpen;
 
     // ----------------------------------------------------------------
     //  Toggle
@@ -168,6 +171,7 @@ public class UserGuideManager : MonoBehaviour
 
     public void ToggleGuide()
     {
+        if (IsEditorOpen()) return;
         if (_isOpen) CloseGuide();
         else         OpenGuide();
     }

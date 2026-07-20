@@ -49,6 +49,7 @@
  * ================================================================
  */
 
+using System.Collections.Generic;
 using UnityEngine;
 
 [System.Serializable]
@@ -96,6 +97,21 @@ public class UEFIBootStateValidator : MonoBehaviour
         }
 
         return null;
+    }
+
+    // Returns messages for every failing entry (used to build the full guidance popup).
+    public List<string> GetAllFailMessages()
+    {
+        var result = new List<string>();
+        if (requiredSettings == null) return result;
+
+        foreach (var entry in requiredSettings)
+        {
+            if (entry.button == null) continue;
+            if (!Passes(entry)) result.Add(entry.message);
+        }
+
+        return result;
     }
 
     private static bool Passes(UEFIRequiredSetting entry)

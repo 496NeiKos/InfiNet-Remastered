@@ -70,6 +70,9 @@ public class T3SystemUnitController : MonoBehaviour, IHardwareController
     [SerializeField] private GameObject frontView;
     [SerializeField] private Collider2D powerButtonCollider;
 
+    [Header("References")]
+    [SerializeField] private T3MonitorController monitorController;
+
     [Header("Root Sprites (power state)")]
     [SerializeField] private SpriteRenderer rootSpriteRenderer;
     [SerializeField] private Sprite poweredOffSprite;
@@ -98,6 +101,9 @@ public class T3SystemUnitController : MonoBehaviour, IHardwareController
         ApplySprites();
     }
 
+    private float _lastClickTime = -1f;
+    private const float DoubleClickThreshold = 0.3f;
+
     private void Update()
     {
         if (!Mouse.current.leftButton.wasPressedThisFrame) return;
@@ -107,13 +113,47 @@ public class T3SystemUnitController : MonoBehaviour, IHardwareController
         Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
         RaycastHit2D hit = Physics2D.Raycast(ray.origin, ray.direction);
 
-        if (hit.collider == powerButtonCollider)
+        if (hit.collider != powerButtonCollider) return;
+
+        float now = Time.unscaledTime;
+        if (now - _lastClickTime <= DoubleClickThreshold)
+        {
             TogglePower();
+            _lastClickTime = -1f;
+        }
+        else
+        {
+            _lastClickTime = now;
+        }
     }
 
-    public void ShowDetailAtCenter() => frontView?.SetActive(true);
+    public void ShowDetailAtCenter()
+    {
+        var layer = GameManager.Instance?.firstLayer;
+        if (layer != null)
+        {
+            RectTransform rect = layer.GetComponent<RectTransform>();
+            if (rect != null)
+            {
+                Vector3 panelCenter = rect.TransformPoint(
+                    new Vector3(rect.rect.center.x, rect.rect.center.y, 0f));
+                panelCenter.z = 0f;
+                transform.position = panelCenter;
 
-    public void HideDetail() => frontView?.SetActive(false);
+                if (frontView != null)
+                    frontView.transform.position = panelCenter;
+            }
+        }
+
+        frontView?.SetActive(true);
+        monitorController?.PushBehind();
+    }
+
+    public void HideDetail()
+    {
+        frontView?.SetActive(false);
+        monitorController?.RestoreLayer();
+    }
 
     public void TogglePower()
     {

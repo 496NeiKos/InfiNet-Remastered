@@ -66,6 +66,7 @@
  * ================================================================
  */
 
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -99,11 +100,15 @@ public class UEFILoadingPanel : MonoBehaviour
 
     private LoadingState _state = LoadingState.Fresh;
     private float _timer;
+    private Color _defaultTextColor;
 
     private void Start()
     {
         if (systemUnit != null)
             systemUnit.OnPoweredOn += ResetState;
+
+        if (bootMessageText != null)
+            _defaultTextColor = bootMessageText.color;
 
         hintText?.SetActive(false);
         bootPopup?.SetActive(false);
@@ -187,13 +192,28 @@ public class UEFILoadingPanel : MonoBehaviour
             return;
         }
 
-        // Determine the most relevant error message.
+        // Determine the most relevant error message and text colour.
         string msg = null;
+        Color msgColor = _defaultTextColor;
 
         if (navigator == null || !navigator.BootStateSaved)
-            msg = "UEFI settings not saved. Enter UEFI Setup and press F10 to save.";
-        else
-            msg = bootStateValidator?.GetFirstFailMessage();
+        {
+            msg = "Warning: Operating System is not yet installed. Configure the UEFI Boot setup and save. Please restart the Computer.";
+            msgColor = Color.red;
+        }
+        else if (bootStateValidator != null)
+        {
+            List<string> failedFields = bootStateValidator.GetAllFailMessages();
+            if (failedFields.Count > 0)
+            {
+                var sb = new System.Text.StringBuilder();
+                sb.AppendLine("Incorrect Configuration. Please double check if:");
+                foreach (string field in failedFields)
+                    sb.AppendLine($"• {field}");
+                sb.Append("is configured correctly.");
+                msg = sb.ToString();
+            }
+        }
 
         if (string.IsNullOrEmpty(msg))
             msg = EvaluateBootMessage();
@@ -201,7 +221,10 @@ public class UEFILoadingPanel : MonoBehaviour
             msg = fallbackBootMessage;
 
         if (bootMessageText != null)
+        {
+            bootMessageText.color = msgColor;
             bootMessageText.text = msg;
+        }
 
         bootPopup?.SetActive(true);
         Debug.Log($"[UEFILoadingPanel] Boot timeout — showing: \"{msg}\"");

@@ -102,6 +102,9 @@ public class T3MonitorController : MonoBehaviour
 
     [Header("References")]
     [SerializeField] private GameObject uefiCanvasRoot;
+
+    private SpriteRenderer[] _renderers;
+    private int[] _originalOrders;
     [SerializeField] private GameObject loadingPanel;
     [SerializeField] private UEFILoadingPanel uefiLoadingPanel;
     [SerializeField] private GameObject uefiPanel;
@@ -115,6 +118,14 @@ public class T3MonitorController : MonoBehaviour
 
     private PanelState _panelState = PanelState.Loading;
     private WindowsSetupNavigator _windowsSetupNavigator;
+
+    private void Awake()
+    {
+        _renderers = GetComponentsInChildren<SpriteRenderer>(true);
+        _originalOrders = new int[_renderers.Length];
+        for (int i = 0; i < _renderers.Length; i++)
+            _originalOrders[i] = _renderers[i].sortingOrder;
+    }
 
     private void Start()
     {
@@ -250,6 +261,18 @@ public class T3MonitorController : MonoBehaviour
         windows10Manager?.gameObject.SetActive(true); // ensure Windows10Panel itself is visible
         windows10Manager?.InitWindows10Panel();
         Debug.Log("[T3MonitorController] Windows10Panel — password login.");
+    }
+
+    public void PushBehind()
+    {
+        foreach (var sr in _renderers)
+            sr.sortingOrder = -10;
+    }
+
+    public void RestoreLayer()
+    {
+        for (int i = 0; i < _renderers.Length; i++)
+            _renderers[i].sortingOrder = _originalOrders[i];
     }
 
     // Called by Windows10Manager.OnShutdown() to reset the boot cycle.
