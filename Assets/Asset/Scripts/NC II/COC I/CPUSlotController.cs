@@ -83,6 +83,7 @@ public class CPUSlotController : MonoBehaviour
         ApplyState();
         GetComponentInParent<MotherboardController>()?.RefreshCableSprite();
         Debug.Log($"[CPUSlotController] State → {_state}");
+        NCIITaskListManager.CheckConditions();
     }
 
     private void ApplyState()

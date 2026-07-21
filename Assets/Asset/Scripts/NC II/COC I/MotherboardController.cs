@@ -83,6 +83,14 @@ public class MotherboardController : MonoBehaviour
         if (_started) RefreshIndicators();
     }
 
+    private void OnDisable()
+    {
+        // Notify the task manager when the MB is stored in the hardware holder so A-Task 7
+        // ("Return motherboard to storage") is re-evaluated immediately.
+        if (IsUninstalledFromSystemUnit)
+            NCIITaskListManager.CheckConditions();
+    }
+
     public void RefreshCableSprite() => RefreshIndicators();
 
     private void RefreshIndicators()

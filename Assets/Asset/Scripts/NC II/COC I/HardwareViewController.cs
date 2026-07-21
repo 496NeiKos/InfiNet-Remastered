@@ -47,7 +47,7 @@ public class HardwareViewController : MonoBehaviour
 
         Keyboard kb = Keyboard.current;
         if (kb == null) return;
-        if (kb.shiftKey.isPressed) return; // Shift+number is reserved for content group shortcuts
+        if (kb.shiftKey.isPressed || kb.ctrlKey.isPressed) return; // reserved for content group / tool shortcuts
 
         for (int i = 0; i < _views.Count && i < NumberKeys.Length; i++)
         {

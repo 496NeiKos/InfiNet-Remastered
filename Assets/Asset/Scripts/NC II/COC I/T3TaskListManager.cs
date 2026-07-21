@@ -121,6 +121,8 @@ public class T3TaskListManager : MonoBehaviour
         public bool isCompleted;
         public bool isFlashing;
         public Func<bool> condition;
+        // When false, a completed task is never reverted even if its condition becomes false.
+        public bool canRevert = true;
     }
 
     private List<TaskEntry> _tasks;
@@ -371,8 +373,8 @@ public class T3TaskListManager : MonoBehaviour
             }
             else
             {
-                // Always check completed tasks for reversion.
-                if (!task.condition())
+                // Check completed tasks for reversion only if the task allows it.
+                if (task.canRevert && !task.condition())
                 {
                     task.isCompleted = false;
                     task.taskObject.transform.SetParent(taskParent, false);

@@ -48,6 +48,7 @@ public class CPUController : MonoBehaviour
         ApplySprites();
         ActivityLogManager.Log("Thermal paste applied to CPU", ActivityLogManager.EntryType.Install);
         Debug.Log("[CPUController] Thermal paste applied.");
+        NCIITaskListManager.CheckConditions();
     }
 
     public void RemoveThermalPaste()

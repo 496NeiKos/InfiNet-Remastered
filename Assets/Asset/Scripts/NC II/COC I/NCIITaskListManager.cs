@@ -62,6 +62,7 @@ public class NCIITaskListManager : MonoBehaviour
         public bool isCompleted;
         public bool isFlashing;
         public Func<bool> condition;
+        public bool canRevert = true;
     }
 
     private class TaskPhase
@@ -82,6 +83,7 @@ public class NCIITaskListManager : MonoBehaviour
     private bool _mbOpenedFromWorkspace = false;
     private bool _mbAssemblyReturnedToWorkspace = false;
     private bool _task8Latched = false;   // MB + HDD + PSU all installed — never reverts
+    private bool _task10Latched = false;  // MB phase-1 screws + phase-2 cables all installed — never reverts
     private bool _task12Latched = false;  // cover closed and all screws in — never reverts
 
     // Override text fed to SingleTaskDisplay (transition message or completion banner).
@@ -420,6 +422,8 @@ public class NCIITaskListManager : MonoBehaviour
 
                 // A-Task 7: Drop motherboard to the hardware area to store it (persistent flag)
                 // Gate: A-Tasks 1–6 (indices 0–5) must all be complete first.
+                // Guard: only latch when the editor is closed — the scene MB goes inactive during
+                // detail-view editing, which would fire this prematurely while tasks 1–6 complete.
                 new TaskEntry
                 {
                     taskObject    = assemblyTaskObjects[6],
@@ -432,7 +436,8 @@ public class NCIITaskListManager : MonoBehaviour
                         if (!_mbAssemblyReturnedToWorkspace &&
                             motherboardController != null &&
                             motherboardController.IsUninstalledFromSystemUnit &&
-                            !motherboardController.gameObject.activeSelf)
+                            !motherboardController.gameObject.activeSelf &&
+                            GameManager.Instance?.IsEditorOpen != true)
                         {
                             _mbAssemblyReturnedToWorkspace = true;
                         }
@@ -471,19 +476,16 @@ public class NCIITaskListManager : MonoBehaviour
                 },
 
                 // A-Task 10: Install all four phase-1 motherboard screws AND all three phase-2 cables.
-                // Requires A-Task 9 (GPU) to be complete first — both tasks are visible in the
-                // same 3-task window and the GPU's own CablePort must not be mistaken for a
-                // phase-2 MB cable when the condition is evaluated right after GPU install.
+                // Uses _task10Latched (set eagerly by UpdateAssemblyLatches on every EvaluatePhase
+                // call, even while the task is outside the window) so pre-completing the screws/cables
+                // before this task enters the 3-task window is still recognised immediately.
+                // Still requires A-Task 9 (GPU) to be formally done first so the GPU's own CablePort
+                // is not mistaken for a phase-2 MB cable at evaluation time.
                 new TaskEntry
                 {
                     taskObject    = assemblyTaskObjects[9],
                     originalIndex = 9,
-                    condition = () =>
-                    {
-                        if (!_assembly.tasks[8].isCompleted) return false;
-                        return motherboardController != null &&
-                               motherboardController.IsPhase1ScrewsAndPhase2CablesInstalled();
-                    }
+                    condition = () => _assembly != null && _assembly.tasks[8].isCompleted && _task10Latched
                 },
 
                 // A-Task 11: Install HDD screws and cables
@@ -589,9 +591,27 @@ public class NCIITaskListManager : MonoBehaviour
         EvaluatePhase(_showingAssembly ? _assembly : _disassembly);
     }
 
+    // Captures assembly latches that must be set regardless of whether the owning task is
+    // currently visible in the 3-task window.  Called at the top of every EvaluatePhase so
+    // that pre-completing actions (e.g. installing MB cables before task 10 enters the window)
+    // are recorded and the task completes the moment it becomes active.
+    private void UpdateAssemblyLatches()
+    {
+        if (_assembly == null) return;
+
+        if (!_task10Latched &&
+            motherboardController != null &&
+            motherboardController.IsPhase1ScrewsAndPhase2CablesInstalled())
+        {
+            _task10Latched = true;
+        }
+    }
+
     private void EvaluatePhase(TaskPhase phase)
     {
         if (phase == null || phase.tasks == null) return;
+
+        if (phase == _assembly) UpdateAssemblyLatches();
 
         foreach (var task in phase.tasks)
         {
@@ -610,8 +630,8 @@ public class NCIITaskListManager : MonoBehaviour
             }
             else
             {
-                // Always check completed tasks for reversion.
-                if (!task.condition())
+                // Check completed tasks for reversion only if the task allows it.
+                if (task.canRevert && !task.condition())
                 {
                     task.isCompleted = false;
                     task.taskObject.transform.SetParent(phase.taskParent, false);

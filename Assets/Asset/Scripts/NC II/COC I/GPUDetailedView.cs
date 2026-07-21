@@ -38,6 +38,7 @@ public class GPUDetailedView : MonoBehaviour
 
         Keyboard kb = Keyboard.current;
         if (kb == null) return;
+        if (kb.shiftKey.isPressed || kb.ctrlKey.isPressed) return; // reserved for tool/container shortcuts
 
         if (kb.digit1Key.wasPressedThisFrame) ShowViewAt(0);
         else if (kb.digit2Key.wasPressedThisFrame) ShowViewAt(1);
