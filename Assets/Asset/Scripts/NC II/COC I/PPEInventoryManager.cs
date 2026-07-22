@@ -12,20 +12,24 @@ public class PPEInventoryManager : MonoBehaviour
     [Header("PPE Item Buttons (7)")]
     [Tooltip("Order: ESD Strap, ESD Mat, Safety Glasses, Protective Gloves, Safety Shoes, Dust Mask, Protective Clothing")]
     [SerializeField] private Button[] ppeButtons;
-    [Tooltip("Border overlay Image child on each button — enabled when equipped.")]
-    [SerializeField] private Image[] ppeBorderImages;
+    [Tooltip("PPE_Slot_BG Image on each button's parent — sprite swaps when equipped.")]
+    [SerializeField] private Image[] ppeSlotBGImages;
     [Tooltip("Status text overlay child on each button — shows 'Equipped' or 'Placed'.")]
     [SerializeField] private TextMeshProUGUI[] ppeStatusTexts;
 
     [Header("Avatar Equipment Slot Images (6)")]
     [Tooltip("Order: ESD Strap, Safety Glasses, Protective Gloves, Safety Shoes, Dust Mask, Protective Clothing")]
     [SerializeField] private Image[] avatarSlotImages;
+    [Tooltip("PPE_EquipmentSlot_BG Image in each avatar slot — sprite swaps when equipped.")]
+    [SerializeField] private Image[] avatarEquipmentSlotBGImages;
+
+    [Header("Slot BG Sprites")]
+    [SerializeField] private Sprite slotBGEquippedSprite;
+    [SerializeField] private Sprite equipSlotBGEquippedSprite;
 
     [Header("Visual Settings")]
-    [SerializeField] private Color equippedBorderColor   = new Color(0.2f, 0.85f, 0.2f, 1f);
-    [SerializeField] private Color unequippedButtonColor = new Color(1f, 1f, 1f, 0.6f);
-    [SerializeField] private Color slotEquippedTint      = Color.white;
-    [SerializeField] private Color slotUnequippedTint    = new Color(0.35f, 0.35f, 0.35f, 1f);
+    [SerializeField] private Color slotEquippedTint   = Color.white;
+    [SerializeField] private Color slotUnequippedTint = new Color(0.35f, 0.35f, 0.35f, 1f);
 
     // ESD Mat (index 1) has no avatar slot and uses "Placed" instead of "Equipped".
     private const int EsdMatIndex = 1;
@@ -36,6 +40,8 @@ public class PPEInventoryManager : MonoBehaviour
     private static readonly int[] SlotMapping = { 0, -1, 1, 2, 3, 4, 5 };
 
     private bool[] _equipped;
+    private Sprite[] _defaultSlotBGSprites;
+    private Sprite[] _defaultEquipSlotBGSprites;
 
     private void Awake()
     {
@@ -46,6 +52,14 @@ public class PPEInventoryManager : MonoBehaviour
 
     private void Start()
     {
+        _defaultSlotBGSprites = new Sprite[ppeSlotBGImages.Length];
+        for (int i = 0; i < ppeSlotBGImages.Length; i++)
+            _defaultSlotBGSprites[i] = ppeSlotBGImages[i].sprite;
+
+        _defaultEquipSlotBGSprites = new Sprite[avatarEquipmentSlotBGImages.Length];
+        for (int i = 0; i < avatarEquipmentSlotBGImages.Length; i++)
+            _defaultEquipSlotBGSprites[i] = avatarEquipmentSlotBGImages[i].sprite;
+
         for (int i = 0; i < ppeButtons.Length; i++)
         {
             int captured = i;
@@ -73,7 +87,12 @@ public class PPEInventoryManager : MonoBehaviour
 
         int slot = SlotMapping[index];
         if (slot >= 0)
+        {
             avatarSlotImages[slot].color = _equipped[index] ? slotEquippedTint : slotUnequippedTint;
+            avatarEquipmentSlotBGImages[slot].sprite = _equipped[index]
+                ? equipSlotBGEquippedSprite
+                : _defaultEquipSlotBGSprites[slot];
+        }
 
         NCIITaskListManager.CheckConditions();
     }
@@ -82,9 +101,7 @@ public class PPEInventoryManager : MonoBehaviour
     {
         bool on = _equipped[index];
 
-        // Color-swap instead of enabled toggle — keeps the button background always visible.
-        // If ppeBorderImages points to a dedicated child border overlay, swap to enabled/disabled instead.
-        ppeBorderImages[index].color = on ? equippedBorderColor : unequippedButtonColor;
+        ppeSlotBGImages[index].sprite = on ? slotBGEquippedSprite : _defaultSlotBGSprites[index];
 
         ppeStatusTexts[index].text = (index == EsdMatIndex) ? "Placed" : "Equipped";
         ppeStatusTexts[index].gameObject.SetActive(on);
@@ -96,6 +113,9 @@ public class PPEInventoryManager : MonoBehaviour
             RefreshButton(i);
 
         for (int i = 0; i < avatarSlotImages.Length; i++)
+        {
             avatarSlotImages[i].color = slotUnequippedTint;
+            avatarEquipmentSlotBGImages[i].sprite = _defaultEquipSlotBGSprites[i];
+        }
     }
 }

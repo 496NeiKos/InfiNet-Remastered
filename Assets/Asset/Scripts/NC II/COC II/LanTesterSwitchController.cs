@@ -3,28 +3,38 @@ using UnityEngine.InputSystem;
 
 /// <summary>
 /// Attach to LanTesterSwitch. Double-click to toggle on/off.
-/// Swaps sprite between on and off states.
-/// Requires a BoxCollider2D on the same GameObject for reliable click detection;
-/// falls back to SpriteRenderer bounds if no collider is present.
+/// Changes sprites on the LanTester parent and FrontDetail parent,
+/// not on this switch button itself.
 /// </summary>
 public class LanTesterSwitchController : MonoBehaviour
 {
-    [SerializeField] private Sprite offSprite;
-    [SerializeField] private Sprite onSprite;
+    [Header("Target renderers")]
+    [SerializeField] private SpriteRenderer lanTesterRenderer;
+    [SerializeField] private SpriteRenderer frontDetailRenderer;
+
+    [Header("On-state sprites (off-state uses each object's default sprite)")]
+    [SerializeField] private Sprite lanTesterOnSprite;
+    [SerializeField] private Sprite frontDetailOnSprite;
+
     [Tooltip("Maximum seconds between two clicks to count as a double-click.")]
     [SerializeField] private float doubleClickWindow = 0.35f;
 
     public bool IsOn { get; private set; }
 
-    private SpriteRenderer _sr;
     private Collider2D _col;
+    private SpriteRenderer _switchSr; // used only for hit-testing
     private float _lastClickTime = -99f;
+
+    private Sprite _lanTesterOffSprite;
+    private Sprite _frontDetailOffSprite;
 
     private void Awake()
     {
-        _sr  = GetComponent<SpriteRenderer>();
-        _col = GetComponent<Collider2D>();
-        ApplySprite();
+        _switchSr = GetComponent<SpriteRenderer>();
+        _col      = GetComponent<Collider2D>();
+
+        if (lanTesterRenderer  != null) _lanTesterOffSprite  = lanTesterRenderer.sprite;
+        if (frontDetailRenderer != null) _frontDetailOffSprite = frontDetailRenderer.sprite;
     }
 
     private void Update()
@@ -39,8 +49,8 @@ public class LanTesterSwitchController : MonoBehaviour
         if (now - _lastClickTime <= doubleClickWindow)
         {
             IsOn = !IsOn;
-            ApplySprite();
-            _lastClickTime = -99f; // reset so triple-click needs a fresh double
+            ApplySprites();
+            _lastClickTime = -99f;
         }
         else
         {
@@ -50,15 +60,17 @@ public class LanTesterSwitchController : MonoBehaviour
 
     private bool IsHit(Vector2 worldPt)
     {
-        if (_col != null) return _col.OverlapPoint(worldPt);
-        if (_sr  != null) return _sr.bounds.Contains(worldPt);
+        if (_col      != null) return _col.OverlapPoint(worldPt);
+        if (_switchSr != null) return _switchSr.bounds.Contains(worldPt);
         return false;
     }
 
-    private void ApplySprite()
+    private void ApplySprites()
     {
-        if (_sr == null) return;
-        Sprite target = IsOn ? onSprite : offSprite;
-        if (target != null) _sr.sprite = target;
+        if (lanTesterRenderer != null)
+            lanTesterRenderer.sprite = IsOn ? lanTesterOnSprite : _lanTesterOffSprite;
+
+        if (frontDetailRenderer != null)
+            frontDetailRenderer.sprite = IsOn ? frontDetailOnSprite : _frontDetailOffSprite;
     }
 }

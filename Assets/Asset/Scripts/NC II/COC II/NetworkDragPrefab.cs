@@ -114,6 +114,24 @@ public class NetworkDragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler,
 
         if (onHardwareArea)
         {
+            // Block storage while logical cables are still connected to this device.
+            var port = GetComponent<NetworkDevicePort>();
+            if (port != null && port.ConnectedCables.Count > 0)
+            {
+                var connectedNames = new System.Collections.Generic.List<string>();
+                foreach (var cable in port.ConnectedCables)
+                {
+                    NetworkDevicePort other = cable.GetOtherPort(port);
+                    if (other != null) connectedNames.Add(other.name);
+                }
+                string devices = connectedNames.Count > 0 ? string.Join(", ", connectedNames) : "another device";
+                ActivityLogManager.Log(
+                    $"Cannot store {LogDisplayName} — uninstall cable(s) connected to {devices} first.",
+                    ActivityLogManager.EntryType.Warning);
+                transform.position = _originalPos;
+                return;
+            }
+
             ActivityLogManager.Log($"{LogDisplayName} returned to storage", ActivityLogManager.EntryType.Remove);
             SendToHolder();
             return;
