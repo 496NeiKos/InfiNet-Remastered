@@ -102,7 +102,8 @@ public class NetworkLogicalCablePhase2 : MonoBehaviour
         NetworkDeviceSocket socket = FindClosestSocket(transform.position);
         if (socket != null && socket.TryInstall(this))
         {
-            _isInstalled       = true;
+            _isInstalled = true;
+            transform.SetParent(socket.transform, true);
             transform.position = socket.transform.position;
             _manager.OnPhase2Installed(this);
         }
@@ -119,6 +120,7 @@ public class NetworkLogicalCablePhase2 : MonoBehaviour
     public void OnUninstalledFromSocket()
     {
         _isInstalled = false;
+        transform.SetParent(_detailViewParent, true);
         _manager.OnPhase2Uninstalled(this);
     }
 
