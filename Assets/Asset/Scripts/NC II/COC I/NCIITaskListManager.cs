@@ -49,6 +49,10 @@ public class NCIITaskListManager : MonoBehaviour
     [SerializeField] private HardwareHolder cmosHolder;
     [SerializeField] private HardwareHolder ssdHolder;
 
+    [Header("Required PPE (D-Task 1)")]
+    [Tooltip("Wire the PPEItemSlot components that must all be active for D-Task 1 to complete.")]
+    [SerializeField] private PPEItemSlot[] requiredPPEItems;
+
     [Header("Power Switches")]
     [SerializeField] private PowerButton suPowerButton;
     [SerializeField] private AVRPowerButton avrPowerButton;
@@ -145,12 +149,13 @@ public class NCIITaskListManager : MonoBehaviour
             finishedParent = disassemblyFinishedParent,
             tasks = new List<TaskEntry>
             {
-                // D-Task 1: Equip all 7 PPE items before starting work
+                // D-Task 1: Equip the required PPE items before starting work
                 new TaskEntry
                 {
                     taskObject    = disassemblyTaskObjects[0],
                     originalIndex = 0,
-                    condition = () => PPEInventoryManager.Instance != null && PPEInventoryManager.Instance.AreAllPPEEquipped()
+                    condition = () => requiredPPEItems != null && requiredPPEItems.Length > 0
+                                     && requiredPPEItems.All(p => p != null && p.IsActive)
                 },
 
                 // D-Task 2: Turn off all power switches (SU front, monitor back, AVR, PSU switch)

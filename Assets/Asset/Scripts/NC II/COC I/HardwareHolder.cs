@@ -1,17 +1,39 @@
-using System.Collections;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler,
-                              IPointerEnterHandler, IPointerExitHandler
+                              IPointerDownHandler
 {
+    public enum DropTargetMode { Slot, RaycastScrew }
+
     [Header("Hardware Reference")]
     public GameObject hardwarePrefab;
 
     [Header("Spawn in Workspace")]
     [Tooltip("When true the prefab starts active in the workspace and the holder stays hidden.")]
     [SerializeField] private bool startInWorkspace = false;
+
+    [Header("Drag Mode")]
+    [Tooltip("When enabled: the drag object is spawned with a tag + collider immediately on drag start "
+           + "(screwdriver / thermal paste style). On drop the object is destroyed — tool always returns to storage.")]
+    [SerializeField] private bool immediateSpawnOnDrag = false;
+
+    [Header("Immediate Spawn Settings")]
+    [Tooltip("Tag assigned to the live drag object so world colliders can react (e.g. 'Screwdriver', 'ThermalPaste', 'TowelCloth').")]
+    [SerializeField] private string spawnTag = "";
+    [SerializeField] private float colliderRadius = 0.3f;
+    [Tooltip("Offset of the trigger collider relative to the drag object centre (world units). "
+           + "Use a negative X/Y to shift towards the tip of the tool sprite.")]
+    [SerializeField] private Vector2 colliderOffset = Vector2.zero;
+
+    [Header("Drop Target")]
+    [Tooltip("Slot = standard proximity install. RaycastScrew = raycasts on drop to find a ScrewController hole.")]
+    [SerializeField] private DropTargetMode dropTargetMode = DropTargetMode.Slot;
+
+    [Header("Tool / Screw Visual")]
+    [Tooltip("Sprite shown while dragging. Used when hardwarePrefab is null (screw, screwdriver, thermal paste, towel).")]
+    [SerializeField] private Sprite dragSprite;
 
     [Header("Slot Install Proximity (world units)")]
     public float slotInstallRadius = 1.5f;
@@ -22,14 +44,26 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
     [TextArea(3, 6)]
     [SerializeField] private string infoDescription;
 
-    private Coroutine _hoverCoroutine;
+    private const float ClickWindow = 0.5f;
+    private int _clickCount;
+    private float _lastClickTime;
+
     private GameObject _dragIndicator;
     private bool _isDragging = false;
     private Vector3 _worldScale;
     private Vector3 _originalLocalScale;
 
+    private bool IsToolMode => immediateSpawnOnDrag || dropTargetMode == DropTargetMode.RaycastScrew;
+
     private void Start()
     {
+        // Tool modes (immediate-spawn and screw) have no prefab lifecycle — always visible.
+        if (IsToolMode)
+        {
+            gameObject.SetActive(true);
+            return;
+        }
+
         if (hardwarePrefab != null)
         {
             _worldScale = hardwarePrefab.transform.lossyScale;
@@ -51,62 +85,103 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         gameObject.SetActive(prefabInactive);
     }
 
-    public void OnPointerEnter(PointerEventData eventData)
+    // ── Info Panel (double right-click) ───────────────────────────────────
+
+    public void OnPointerDown(PointerEventData eventData)
     {
         if (string.IsNullOrEmpty(infoName)) return;
-        _hoverCoroutine = StartCoroutine(ShowInfoAfterDelay());
-    }
+        if (eventData.button != PointerEventData.InputButton.Right) return;
 
-    public void OnPointerExit(PointerEventData eventData)
-    {
-        CancelHover();
-    }
+        if (Time.unscaledTime - _lastClickTime > ClickWindow)
+            _clickCount = 0;
 
-    private IEnumerator ShowInfoAfterDelay()
-    {
-        yield return new WaitForSeconds(3f);
-        HardwareInfoPanel.Instance?.Show(infoImages, infoName, infoDescription);
-        _hoverCoroutine = null;
-    }
+        _lastClickTime = Time.unscaledTime;
+        _clickCount++;
 
-    private void CancelHover()
-    {
-        if (_hoverCoroutine != null)
+        if (_clickCount >= 2)
         {
-            StopCoroutine(_hoverCoroutine);
-            _hoverCoroutine = null;
+            _clickCount = 0;
+            HardwareInfoPanel.Instance?.Show(infoImages, infoName, infoDescription);
         }
     }
 
-    public bool IsAvailable() => hardwarePrefab != null && !hardwarePrefab.activeSelf;
+    // ── Public API ────────────────────────────────────────────────────────
+
+    public bool IsAvailable()
+    {
+        if (IsToolMode) return true;
+        return hardwarePrefab != null && !hardwarePrefab.activeSelf;
+    }
 
     public void StoreHardware()
     {
+        if (IsToolMode) return;
         if (hardwarePrefab == null) return;
         hardwarePrefab.transform.SetParent(GameManager.Instance.ActiveHardwareStorageContainer, true);
         hardwarePrefab.SetActive(false);
         gameObject.SetActive(true);
     }
 
+    // ── Drag ──────────────────────────────────────────────────────────────
+
     public void OnBeginDrag(PointerEventData eventData)
     {
         if (!IsAvailable()) return;
 
-        CancelHover();
-        HardwareInfoPanel.Instance?.Hide();
-
+        _clickCount = 0;
         _isDragging = true;
-
-        _dragIndicator = new GameObject("DragIndicator");
-        SpriteRenderer sr = _dragIndicator.AddComponent<SpriteRenderer>();
-        sr.sprite = hardwarePrefab.GetComponent<SpriteRenderer>()?.sprite;
-        sr.sortingOrder = 999;
 
         Vector3 worldPos = Camera.main.ScreenToWorldPoint(
             new Vector3(eventData.position.x, eventData.position.y, 10f));
         worldPos.z = 0f;
-        _dragIndicator.transform.position = worldPos;
-        _dragIndicator.transform.localScale = _worldScale;
+
+        if (immediateSpawnOnDrag)
+        {
+            Sprite sprite = dragSprite != null ? dragSprite : GetComponent<Image>()?.sprite;
+
+            _dragIndicator = new GameObject("ImmediateDrag_" + spawnTag);
+            if (!string.IsNullOrEmpty(spawnTag))
+                _dragIndicator.tag = spawnTag;
+
+            SpriteRenderer sr = _dragIndicator.AddComponent<SpriteRenderer>();
+            sr.sprite = sprite;
+            sr.sortingOrder = 999;
+
+            CircleCollider2D col = _dragIndicator.AddComponent<CircleCollider2D>();
+            col.isTrigger = true;
+            col.radius = colliderRadius;
+            col.offset = colliderOffset;
+
+            Rigidbody2D rb = _dragIndicator.AddComponent<Rigidbody2D>();
+            rb.bodyType = RigidbodyType2D.Kinematic;
+
+            _dragIndicator.transform.position = worldPos;
+            _dragIndicator.transform.localScale = Vector3.one * ComputeWorldScale(sprite);
+        }
+        else if (dropTargetMode == DropTargetMode.RaycastScrew)
+        {
+            Sprite sprite = dragSprite != null ? dragSprite : GetComponent<Image>()?.sprite;
+
+            _dragIndicator = new GameObject("ScrewDragIndicator");
+
+            SpriteRenderer sr = _dragIndicator.AddComponent<SpriteRenderer>();
+            sr.sprite = sprite;
+            sr.sortingOrder = 999;
+
+            _dragIndicator.transform.position = worldPos;
+            _dragIndicator.transform.localScale = Vector3.one * ComputeWorldScale(sprite);
+        }
+        else
+        {
+            _dragIndicator = new GameObject("DragIndicator");
+
+            SpriteRenderer sr = _dragIndicator.AddComponent<SpriteRenderer>();
+            sr.sprite = hardwarePrefab?.GetComponent<SpriteRenderer>()?.sprite;
+            sr.sortingOrder = 999;
+
+            _dragIndicator.transform.position = worldPos;
+            _dragIndicator.transform.localScale = _worldScale;
+        }
     }
 
     public void OnDrag(PointerEventData eventData)
@@ -125,14 +200,37 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         if (!_isDragging) return;
         _isDragging = false;
 
+        // Immediate-spawn tools: drag object already destroyed above, always return to storage.
+        if (immediateSpawnOnDrag) return;
+
+        // Screw: raycast on drop to find an empty ScrewController hole.
+        if (dropTargetMode == DropTargetMode.RaycastScrew)
+        {
+            Ray ray = Camera.main.ScreenPointToRay(eventData.position);
+            RaycastHit2D[] hits = Physics2D.RaycastAll(ray.origin, ray.direction);
+
+            foreach (RaycastHit2D hit in hits)
+            {
+                if (hit.collider == null) continue;
+                ScrewController screw = hit.collider.GetComponent<ScrewController>();
+                if (screw != null && screw.TryPlaceScrew())
+                {
+                    Debug.Log($"[HardwareHolder] Screw placed in {screw.name}");
+                    return;
+                }
+            }
+
+            Debug.Log("[HardwareHolder] Screw returned to hardware area (no valid hole found)");
+            return;
+        }
+
+        // Standard hardware path.
         if (GameManager.Instance.IsEditorOpen)
         {
             TryInstallInSlot(eventData);
             return;
         }
 
-        // Cables must only install to a port via TryInstallInSlot (editor open).
-        // Never place them loose in worldRoot — snap back to hardware area instead.
         bool isCable = hardwarePrefab != null &&
             hardwarePrefab.GetComponent<CableBehavior>() != null;
         if (isCable) return;
@@ -141,23 +239,22 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
             GameManager.Instance.workspaceArea, eventData.position, eventData.pressEventCamera);
         if (!onWorkspace) return;
 
-        Vector3 worldPos = Camera.main.ScreenToWorldPoint(
+        Vector3 dropPos = Camera.main.ScreenToWorldPoint(
             new Vector3(eventData.position.x, eventData.position.y, 10f));
-        worldPos.z = 0f;
+        dropPos.z = 0f;
 
         hardwarePrefab.transform.SetParent(GameManager.Instance.ActiveWorldContainer, false);
-        hardwarePrefab.transform.position = worldPos;
+        hardwarePrefab.transform.position = dropPos;
         ApplyWorldScale(hardwarePrefab.transform, _worldScale);
         hardwarePrefab.SetActive(true);
 
-        // Re-enable DragPrefab — CPUSlotController may have disabled it while the
-        // component was seated in its slot (BothUninstalled state disables both).
-        // Collider state is managed by DragPrefab.Update() via the workspaceProxy.
         DragPrefab dp = hardwarePrefab.GetComponent<DragPrefab>();
         if (dp != null) dp.enabled = true;
 
         gameObject.SetActive(false);
     }
+
+    // ── Slot Install ──────────────────────────────────────────────────────
 
     private void TryInstallInSlot(PointerEventData eventData)
     {
@@ -171,7 +268,6 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
             new Vector3(eventData.position.x, eventData.position.y, 10f));
         dropWorldPos.z = 0f;
 
-        // Unified cable path — works for all CableBehavior cables (formerly BackCable and MBCable)
         CableBehavior cable = hardwarePrefab.GetComponent<CableBehavior>();
         if (cable != null)
         {
@@ -215,7 +311,6 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
             return;
         }
 
-        // Heatsink path � installs back to CPUSlot (finds CPUSlotController by proximity)
         HeatsinkController heatsink = hardwarePrefab.GetComponent<HeatsinkController>();
         if (heatsink != null)
         {
@@ -256,7 +351,6 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
             return;
         }
 
-        // CPU path � installs back to CPUSlot
         CPUController cpuCtrl = hardwarePrefab.GetComponent<CPUController>();
         if (cpuCtrl != null)
         {
@@ -264,7 +358,7 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
             CPUSlotController bestSlot = null;
             float bestDist = float.MaxValue;
 
-            Debug.Log($"[HardwareHolder] CPU install � found {allSlots.Length} CPUSlotController(s)");
+            Debug.Log($"[HardwareHolder] CPU install — found {allSlots.Length} CPUSlotController(s)");
 
             foreach (CPUSlotController slot in allSlots)
             {
@@ -301,7 +395,6 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
             return;
         }
 
-        // Standard SlotContainer path (GPU, RAM, CMOS, Motherboard, HDD, PSU)
         SlotContainer[] allSlotContainers = FindObjectsOfType<SlotContainer>();
         SlotContainer bestSlotContainer = null;
         float bestSlotDist = float.MaxValue;
@@ -321,7 +414,6 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
 
         if (bestSlotContainer == null) return;
 
-        // Block GPU installation when the motherboard it belongs to is in Phase 2
         if (hardwarePrefab.GetComponent<GPUController>() != null)
         {
             MotherboardPhaseManager phase = bestSlotContainer.GetComponentInParent<MotherboardPhaseManager>();
@@ -347,6 +439,20 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
 
         gameObject.SetActive(false);
         NCIITaskListManager.CheckConditions();
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────
+
+    private float ComputeWorldScale(Sprite s)
+    {
+        if (s == null || Camera.main == null) return 1f;
+        RectTransform rt = GetComponent<RectTransform>();
+        if (rt == null) return 1f;
+        Vector3[] corners = new Vector3[4];
+        rt.GetWorldCorners(corners);
+        float iconWorldHeight = Vector3.Distance(corners[0], corners[1]);
+        float spriteWorldHeight = s.rect.height / s.pixelsPerUnit;
+        return spriteWorldHeight > 0f ? iconWorldHeight / spriteWorldHeight : 1f;
     }
 
     private void ApplyWorldScale(Transform t, Vector3 targetWorldScale)

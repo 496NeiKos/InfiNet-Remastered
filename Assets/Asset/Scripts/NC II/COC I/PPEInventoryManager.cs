@@ -1,6 +1,6 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
 
 public class PPEInventoryManager : MonoBehaviour
 {
@@ -9,113 +9,103 @@ public class PPEInventoryManager : MonoBehaviour
     [Header("Inventory Window")]
     [SerializeField] private GameObject inventoryPanel;
 
-    [Header("PPE Item Buttons (7)")]
-    [Tooltip("Order: ESD Strap, ESD Mat, Safety Glasses, Protective Gloves, Safety Shoes, Dust Mask, Protective Clothing")]
-    [SerializeField] private Button[] ppeButtons;
-    [Tooltip("PPE_Slot_BG Image on each button's parent — sprite swaps when equipped.")]
-    [SerializeField] private Image[] ppeSlotBGImages;
-    [Tooltip("Status text overlay child on each button — shows 'Equipped' or 'Placed'.")]
-    [SerializeField] private TextMeshProUGUI[] ppeStatusTexts;
+    [Header("PPE Items")]
+    [Tooltip("All PPEItemSlot components in the inventory panel, in display order.")]
+    [SerializeField] private PPEItemSlot[] ppeItems;
 
-    [Header("Avatar Equipment Slot Images (6)")]
-    [Tooltip("Order: ESD Strap, Safety Glasses, Protective Gloves, Safety Shoes, Dust Mask, Protective Clothing")]
-    [SerializeField] private Image[] avatarSlotImages;
-    [Tooltip("PPE_EquipmentSlot_BG Image in each avatar slot — sprite swaps when equipped.")]
-    [SerializeField] private Image[] avatarEquipmentSlotBGImages;
+    [Header("Equipment Slots")]
+    [Tooltip("All PPEEquipmentSlot components on the avatar panel.")]
+    [SerializeField] private PPEEquipmentSlot[] equipmentSlots;
 
-    [Header("Slot BG Sprites")]
-    [SerializeField] private Sprite slotBGEquippedSprite;
-    [SerializeField] private Sprite equipSlotBGEquippedSprite;
-
-    [Header("Visual Settings")]
-    [SerializeField] private Color slotEquippedTint   = Color.white;
-    [SerializeField] private Color slotUnequippedTint = new Color(0.35f, 0.35f, 0.35f, 1f);
-
-    // ESD Mat (index 1) has no avatar slot and uses "Placed" instead of "Equipped".
-    private const int EsdMatIndex = 1;
-
-    // PPE index → avatar slot index; -1 means no slot (ESD Mat).
-    // 0=ESD Strap→0, 1=ESD Mat→-1, 2=Safety Glasses→1, 3=Gloves→2,
-    // 4=Safety Shoes→3, 5=Dust Mask→4, 6=Protective Clothing→5
-    private static readonly int[] SlotMapping = { 0, -1, 1, 2, 3, 4, 5 };
-
-    private bool[] _equipped;
-    private Sprite[] _defaultSlotBGSprites;
-    private Sprite[] _defaultEquipSlotBGSprites;
+    [Header("Overview Panel")]
+    [SerializeField] private Image overviewImage;
+    [SerializeField] private TextMeshProUGUI overviewName;
+    [SerializeField] private TextMeshProUGUI overviewDescription;
 
     private void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
-        _equipped = new bool[7];
     }
 
     private void Start()
     {
-        _defaultSlotBGSprites = new Sprite[ppeSlotBGImages.Length];
-        for (int i = 0; i < ppeSlotBGImages.Length; i++)
-            _defaultSlotBGSprites[i] = ppeSlotBGImages[i].sprite;
-
-        _defaultEquipSlotBGSprites = new Sprite[avatarEquipmentSlotBGImages.Length];
-        for (int i = 0; i < avatarEquipmentSlotBGImages.Length; i++)
-            _defaultEquipSlotBGSprites[i] = avatarEquipmentSlotBGImages[i].sprite;
-
-        for (int i = 0; i < ppeButtons.Length; i++)
-        {
-            int captured = i;
-            ppeButtons[i].onClick.AddListener(() => OnPPEButtonClicked(captured));
-        }
-
-        RefreshAll();
         inventoryPanel.SetActive(false);
+
+        if (ppeItems != null && ppeItems.Length > 0)
+            UpdateOverviewPanel(ppeItems[0]);
     }
+
+    public bool IsOpen => inventoryPanel != null && inventoryPanel.activeSelf;
 
     public void OpenInventory()  => inventoryPanel.SetActive(true);
     public void CloseInventory() => inventoryPanel.SetActive(false);
 
-    public bool AreAllPPEEquipped()
+    // ── Called by PPEItemSlot ─────────────────────────────────────────────
+
+    public void OnItemClicked(PPEItemSlot item)
     {
-        for (int i = 0; i < _equipped.Length; i++)
-            if (!_equipped[i]) return false;
-        return true;
+        UpdateOverviewPanel(item);
     }
 
-    private void OnPPEButtonClicked(int index)
+    public void OnItemDoubleClicked(PPEItemSlot item)
     {
-        _equipped[index] = !_equipped[index];
-        RefreshButton(index);
-
-        int slot = SlotMapping[index];
-        if (slot >= 0)
+        // Unequippable items: simple placed/unplaced toggle, no slot involved.
+        if (item.IsUnequippable)
         {
-            avatarSlotImages[slot].color = _equipped[index] ? slotEquippedTint : slotUnequippedTint;
-            avatarEquipmentSlotBGImages[slot].sprite = _equipped[index]
-                ? equipSlotBGEquippedSprite
-                : _defaultEquipSlotBGSprites[slot];
+            item.SetActive(!item.IsActive);
+            NCIITaskListManager.CheckConditions();
+            return;
         }
 
-        NCIITaskListManager.CheckConditions();
-    }
-
-    private void RefreshButton(int index)
-    {
-        bool on = _equipped[index];
-
-        ppeSlotBGImages[index].sprite = on ? slotBGEquippedSprite : _defaultSlotBGSprites[index];
-
-        ppeStatusTexts[index].text = (index == EsdMatIndex) ? "Placed" : "Equipped";
-        ppeStatusTexts[index].gameObject.SetActive(on);
-    }
-
-    private void RefreshAll()
-    {
-        for (int i = 0; i < 7; i++)
-            RefreshButton(i);
-
-        for (int i = 0; i < avatarSlotImages.Length; i++)
+        if (item.IsActive)
         {
-            avatarSlotImages[i].color = slotUnequippedTint;
-            avatarEquipmentSlotBGImages[i].sprite = _defaultEquipSlotBGSprites[i];
+            // Find and release the slot holding this item.
+            foreach (PPEEquipmentSlot slot in equipmentSlots)
+            {
+                if (slot.Occupant == item)
+                {
+                    slot.Release();
+                    item.SetActive(false);
+                    NCIITaskListManager.CheckConditions();
+                    return;
+                }
+            }
+            // Fallback: state mismatch — just unequip.
+            item.SetActive(false);
+            NCIITaskListManager.CheckConditions();
         }
+        else
+        {
+            // Find the first available slot that accepts this item's tag.
+            foreach (PPEEquipmentSlot slot in equipmentSlots)
+            {
+                if (!slot.IsOccupied && slot.CanAccept(item.SlotTag))
+                {
+                    slot.TryOccupy(item);
+                    item.SetActive(true);
+                    NCIITaskListManager.CheckConditions();
+                    return;
+                }
+            }
+
+            // All matching slots are full — shake the item and every matching slot.
+            item.Shake();
+            foreach (PPEEquipmentSlot slot in equipmentSlots)
+            {
+                if (slot.CanAccept(item.SlotTag))
+                    slot.Shake();
+            }
+        }
+    }
+
+    // ── Overview Panel ────────────────────────────────────────────────────
+
+    private void UpdateOverviewPanel(PPEItemSlot item)
+    {
+        if (item == null) return;
+        if (overviewImage != null)       overviewImage.sprite   = item.ItemSprite;
+        if (overviewName != null)        overviewName.text       = item.ItemName;
+        if (overviewDescription != null) overviewDescription.text = item.ItemDescription;
     }
 }
