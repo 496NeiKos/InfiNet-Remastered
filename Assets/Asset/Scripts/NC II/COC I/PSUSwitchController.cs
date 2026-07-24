@@ -94,6 +94,7 @@ public class PSUSwitchController : MonoBehaviour
         Debug.Log($"[PSUSwitchController] PSU switch → {(_isOn ? "On" : "Off")}");
 
         NCIITaskListManager.CheckConditions();
+        WalkthroughGuideManager.Instance?.NotifyPowerStateChanged();
     }
 
     private void ApplySprite()

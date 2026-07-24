@@ -53,9 +53,14 @@ public class PrefabInteraction : MonoBehaviour
         }
 
         if (GameManager.Instance != null)
+        {
             GameManager.Instance.OpenEditor(this);
+            WalkthroughGuideManager.Instance?.TryTrigger(WalkthroughGuideManager.WalkthroughTrigger.FirstDetailView);
+        }
         else
+        {
             ShowDetailCentered();
+        }
     }
 
     // Reactively set root alpha to 0 whenever this component is being shown in a

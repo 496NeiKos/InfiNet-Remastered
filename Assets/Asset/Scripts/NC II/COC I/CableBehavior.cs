@@ -280,6 +280,7 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
             SendToHolder();
             NCIITaskListManager.CheckConditions();
             T2TaskListManager.CheckConditions();
+            WalkthroughGuideManager.Instance?.NotifyBackCableUnplugged();
             Debug.Log($"[CableBehavior] {cableType} stored.");
             return;
         }

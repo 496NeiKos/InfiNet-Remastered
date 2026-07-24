@@ -390,6 +390,8 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
                 workspaceArea, eventData.position, eventData.pressEventCamera);
             if (!onWorkspace || !canPlaceInWorkspace)
                 transform.position = _originalPos;
+            else
+                WalkthroughGuideManager.Instance?.TryTrigger(WalkthroughGuideManager.WalkthroughTrigger.FirstComponentDrop);
         }
     }
 

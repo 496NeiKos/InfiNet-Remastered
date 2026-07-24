@@ -131,6 +131,7 @@ public class AVRPowerButton : MonoBehaviour, IPowerButton
         Debug.Log($"[AVRPowerButton] State → {_state}");
 
         NCIITaskListManager.CheckConditions();
+        WalkthroughGuideManager.Instance?.NotifyPowerStateChanged();
     }
 
     private void ApplySprites()

@@ -156,6 +156,7 @@ public class MonitorPowerButton : MonoBehaviour, IPowerButton
         Debug.Log($"[MonitorPowerButton] State → {_state}");
 
         NCIITaskListManager.CheckConditions();
+        WalkthroughGuideManager.Instance?.NotifyPowerStateChanged();
     }
 
     private void ApplySprites()

@@ -248,6 +248,8 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         ApplyWorldScale(hardwarePrefab.transform, _worldScale);
         hardwarePrefab.SetActive(true);
 
+        WalkthroughGuideManager.Instance?.TryTrigger(WalkthroughGuideManager.WalkthroughTrigger.FirstComponentDrop);
+
         DragPrefab dp = hardwarePrefab.GetComponent<DragPrefab>();
         if (dp != null) dp.enabled = true;
 
