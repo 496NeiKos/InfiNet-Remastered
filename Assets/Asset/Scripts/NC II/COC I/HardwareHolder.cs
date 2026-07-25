@@ -52,6 +52,7 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
     private bool _isDragging = false;
     private Vector3 _worldScale;
     private Vector3 _originalLocalScale;
+    private Vector3 _grabOffset;
 
     private bool IsToolMode => immediateSpawnOnDrag || dropTargetMode == DropTargetMode.RaycastScrew;
 
@@ -71,12 +72,11 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
 
             if (!startInWorkspace)
             {
-                bool isBackCable = hardwarePrefab.GetComponent<BackCable>() != null;
-                bool isMBCable = hardwarePrefab.GetComponent<MBCable>() != null;
+                bool isCable = hardwarePrefab.GetComponent<CableBehavior>() != null;
                 bool isSlotSibling = hardwarePrefab.GetComponent<HeatsinkController>() != null
                                   || hardwarePrefab.GetComponent<CPUController>() != null;
 
-                if (!isBackCable && !isMBCable && !isSlotSibling)
+                if (!isCable && !isSlotSibling)
                     hardwarePrefab.SetActive(false);
             }
         }
@@ -91,6 +91,7 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
     {
         if (string.IsNullOrEmpty(infoName)) return;
         if (eventData.button != PointerEventData.InputButton.Right) return;
+        if (WalkthroughGuideManager.Instance != null && WalkthroughGuideManager.Instance.IsShowing) return;
 
         if (Time.unscaledTime - _lastClickTime > ClickWindow)
             _clickCount = 0;
@@ -127,6 +128,7 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
     public void OnBeginDrag(PointerEventData eventData)
     {
         if (!IsAvailable()) return;
+        if (WalkthroughGuideManager.Instance != null && WalkthroughGuideManager.Instance.IsShowing) return;
 
         _clickCount = 0;
         _isDragging = true;
@@ -137,6 +139,9 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
 
         if (immediateSpawnOnDrag)
         {
+            // Tools (screwdriver, thermal paste, etc.) track the cursor tip directly — no offset.
+            _grabOffset = Vector3.zero;
+
             Sprite sprite = dragSprite != null ? dragSprite : GetComponent<Image>()?.sprite;
 
             _dragIndicator = new GameObject("ImmediateDrag_" + spawnTag);
@@ -160,6 +165,8 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         }
         else if (dropTargetMode == DropTargetMode.RaycastScrew)
         {
+            _grabOffset = GetIconWorldCenter() - worldPos;
+
             Sprite sprite = dragSprite != null ? dragSprite : GetComponent<Image>()?.sprite;
 
             _dragIndicator = new GameObject("ScrewDragIndicator");
@@ -168,18 +175,20 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
             sr.sprite = sprite;
             sr.sortingOrder = 999;
 
-            _dragIndicator.transform.position = worldPos;
+            _dragIndicator.transform.position = worldPos + _grabOffset;
             _dragIndicator.transform.localScale = Vector3.one * ComputeWorldScale(sprite);
         }
         else
         {
+            _grabOffset = GetIconWorldCenter() - worldPos;
+
             _dragIndicator = new GameObject("DragIndicator");
 
             SpriteRenderer sr = _dragIndicator.AddComponent<SpriteRenderer>();
             sr.sprite = hardwarePrefab?.GetComponent<SpriteRenderer>()?.sprite;
             sr.sortingOrder = 999;
 
-            _dragIndicator.transform.position = worldPos;
+            _dragIndicator.transform.position = worldPos + _grabOffset;
             _dragIndicator.transform.localScale = _worldScale;
         }
     }
@@ -191,7 +200,7 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         Vector3 worldPos = Camera.main.ScreenToWorldPoint(
             new Vector3(eventData.position.x, eventData.position.y, 10f));
         worldPos.z = 0f;
-        _dragIndicator.transform.position = worldPos;
+        _dragIndicator.transform.position = worldPos + _grabOffset;
     }
 
     public void OnEndDrag(PointerEventData eventData)
@@ -249,6 +258,13 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         hardwarePrefab.SetActive(true);
 
         WalkthroughGuideManager.Instance?.TryTrigger(WalkthroughGuideManager.WalkthroughTrigger.FirstComponentDrop);
+
+        bool isMajorHardware = hardwarePrefab.GetComponent<SystemUnitController>() != null
+                            || hardwarePrefab.GetComponent<MonitorController>()    != null
+                            || hardwarePrefab.GetComponent<AVRController>()        != null;
+        if (isMajorHardware)
+            WalkthroughGuideManager.Instance?.TryTrigger(
+                WalkthroughGuideManager.WalkthroughTrigger.MajorHardwareDeployed);
 
         DragPrefab dp = hardwarePrefab.GetComponent<DragPrefab>();
         if (dp != null) dp.enabled = true;
@@ -441,6 +457,26 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
 
         gameObject.SetActive(false);
         NCIITaskListManager.CheckConditions();
+    }
+
+    // Returns this holder icon's center converted from UI space to main-camera world space.
+    private Vector3 GetIconWorldCenter()
+    {
+        RectTransform rt = GetComponent<RectTransform>();
+        if (rt == null || Camera.main == null) return Vector3.zero;
+
+        Canvas rootCanvas = rt.GetComponentInParent<Canvas>();
+        if (rootCanvas != null) rootCanvas = rootCanvas.rootCanvas;
+        Camera uiCam = (rootCanvas != null && rootCanvas.renderMode == RenderMode.ScreenSpaceCamera)
+            ? rootCanvas.worldCamera : null;
+
+        Vector3[] corners = new Vector3[4];
+        rt.GetWorldCorners(corners);
+        Vector2 screenCenter = RectTransformUtility.WorldToScreenPoint(uiCam, (corners[0] + corners[2]) * 0.5f);
+
+        Vector3 worldCenter = Camera.main.ScreenToWorldPoint(new Vector3(screenCenter.x, screenCenter.y, 10f));
+        worldCenter.z = 0f;
+        return worldCenter;
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────

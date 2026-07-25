@@ -6,7 +6,7 @@
  *    taskObjects[0]  "Install Flashdrive to the System Unit then Turn on the power switch"
  *    taskObjects[1]  "Enter Virtual OS via Monitor (Right-click)"
  *    taskObjects[2]  "Wait for the loading then press F2/DEL to enter and configure UEFI Boot Settings"
- *    taskObjects[3]  "Go to Advance then configure Boot Option to the installed Bootable flashdrive"
+ *    taskObjects[3]  "Go to Advance then configure Boot Option, OS Type and Legacy USB Support"
  *    taskObjects[4]  "Save UEFI Boot Configuration: F10"
  *    taskObjects[5]  "Restart the Computer and enter Virtual OS again"
  *    taskObjects[6]  "Wait for the loading to enter Windows Setup wizard"
@@ -36,6 +36,8 @@
  *      monitorInteraction      → T3MonitorInteraction on the UEFI Monitor root
  *      uefiNavigator           → UEFINavigator on the UEFI Monitor root
  *      bootOptionButton        → UEFISettingButton on the Boot Option field inside Panel_Boot
+ *      osTypeButton            → UEFISettingButton on the OS Type field inside Panel_SecureBoot (or wherever OS Type lives)
+ *      legacyUSBButton         → UEFISettingButton on the Legacy USB Support field inside Panel_USB
  *      windowsSetupNavigator   → WindowsSetupNavigator on WindowsSetupPanel
  *      windows10Manager        → Windows10Manager on Windows10Panel
  *      settingController       → SettingPanelController on Windows10Desktop > WindowsContent > SettingPanel
@@ -49,6 +51,8 @@
  *    Task  2 — monitorInteraction.CanvasOpenCount >= 1
  *    Task  3 — uefiNavigator.UEFIOpened
  *    Task  4 — bootOptionButton.CurrentValue != "None"  (Kingston USB selected)
+ *              AND osTypeButton.CurrentValue == "Windows UEFI Mode"
+ *              AND legacyUSBButton.CurrentValue == "Enabled"
  *    Task  5 — uefiNavigator.BootStateSaved AND Task 4 complete
  *    Task  6 — systemUnit.HasPowerCycled AND monitorInteraction.CanvasOpenCount >= 2
  *    Task  7 — windowsSetupNavigator.SetupInitializeAccessed
@@ -101,6 +105,10 @@ public class T3TaskListManager : MonoBehaviour
     [SerializeField] private UEFINavigator uefiNavigator;
     [Tooltip("The Boot Option UEFISettingButton in Panel_Boot — Task 4 reads its CurrentValue.")]
     [SerializeField] private UEFISettingButton bootOptionButton;
+    [Tooltip("The OS Type UEFISettingButton (Secure Boot panel) — Task 4 requires 'Windows UEFI Mode'.")]
+    [SerializeField] private UEFISettingButton osTypeButton;
+    [Tooltip("The Legacy USB Support UEFISettingButton (USB panel) — Task 4 requires 'Enabled'.")]
+    [SerializeField] private UEFISettingButton legacyUSBButton;
     [SerializeField] private WindowsSetupNavigator windowsSetupNavigator;
     [SerializeField] private Windows10Manager windows10Manager;
     [SerializeField] private SettingPanelController settingController;
@@ -179,12 +187,14 @@ public class T3TaskListManager : MonoBehaviour
                 originalIndex = 2,
                 condition     = () => uefiNavigator != null && uefiNavigator.UEFIOpened
             },
-            // Task 4 — Boot Option field changed from "None" to the Kingston USB device
+            // Task 4 — Boot Option set (not "None"), OS Type = "Windows UEFI Mode", Legacy USB Support = "Enabled"
             new TaskEntry
             {
                 taskObject    = taskObjects[3],
                 originalIndex = 3,
                 condition     = () => bootOptionButton != null && bootOptionButton.CurrentValue != "None"
+                                   && osTypeButton     != null && osTypeButton.CurrentValue == "Windows UEFI Mode"
+                                   && legacyUSBButton  != null && legacyUSBButton.CurrentValue == "Enabled"
             },
             // Task 5 — press F10 and confirm save (Task 4 must be done first)
             new TaskEntry

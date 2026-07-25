@@ -298,7 +298,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -8.6853075, y: -154.75064}
+  m_AnchoredPosition: {x: 0, y: -154.75}
   m_SizeDelta: {x: 1744.2126, y: 309.5013}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &91761462
@@ -356,8 +356,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 54
-  m_fontSizeBase: 54
+  m_fontSize: 48
+  m_fontSizeBase: 48
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -437,7 +437,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 363.88873, y: -413.9006}
+  m_AnchoredPosition: {x: 363.88873, y: -425}
   m_SizeDelta: {x: 142.7659, y: 40.6004}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &124034886
@@ -1900,8 +1900,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 128
-  m_fontSizeBase: 128
+  m_fontSize: 100
+  m_fontSizeBase: 100
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -2298,14 +2298,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SoundManager
   startSFX: {fileID: 8300000, guid: dc9a6dbb65dc72f4dbb11149f3f6c2de, type: 3}
   quitSFX: {fileID: 8300000, guid: 5e2f6180ded253843a7e2ab5dfc40b8e, type: 3}
+  errorSFX: {fileID: 0}
   clickSFX: {fileID: 8300000, guid: dc9a6dbb65dc72f4dbb11149f3f6c2de, type: 3}
   backSFX: {fileID: 8300000, guid: d07584b8490bcc747ac870079b433560, type: 3}
   confirmSFX: {fileID: 8300000, guid: 425f16109015cb444b3399dd5415b1c6, type: 3}
-  errorSFX: {fileID: 0}
+  menuVolume: 1
   avrSFX: {fileID: 0}
   vgaSFX: {fileID: 0}
   dropSFX: {fileID: 0}
   mbSFX: {fileID: 0}
+  ingameVolume: 1
 --- !u!1 &1582013110
 GameObject:
   m_ObjectHideFlags: 0
@@ -2645,7 +2647,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 717.23425, y: -413.9006}
+  m_AnchoredPosition: {x: 717.23425, y: -425}
   m_SizeDelta: {x: 142.7659, y: 40.6004}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1732302306

@@ -76,9 +76,12 @@ public class NCIITaskListManager : MonoBehaviour
         public Transform finishedParent;
     }
 
+    [Header("Back Cable Ports (D-Task 3 / A-Task 13)")]
+    [Tooltip("Assign all back-panel CablePort components here (PSU, monitor, AVR cables).")]
+    [SerializeField] private CablePort[] _allBackPortSlots;
+
     private TaskPhase _disassembly;
     private TaskPhase _assembly;
-    private BackPortSlot[] _allBackPortSlots;
     private bool _showingAssembly = false;
     private const int WindowSize = 3;
 
@@ -108,8 +111,6 @@ public class NCIITaskListManager : MonoBehaviour
 
     private void Start()
     {
-        _allBackPortSlots = FindObjectsOfType<BackPortSlot>(true);
-
         _cpuController     = cpuHolder?.hardwarePrefab?.GetComponent<CPUController>();
         _hddController     = hddHolder?.hardwarePrefab?.GetComponent<HDDController>();
         _heatsinkController = heatsinkHolder?.hardwarePrefab?.GetComponent<HeatsinkController>();

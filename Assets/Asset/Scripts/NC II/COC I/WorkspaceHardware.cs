@@ -18,6 +18,7 @@ public class WorkspaceHardware : MonoBehaviour,
     {
         if (string.IsNullOrEmpty(infoName)) return;
         if (eventData.button != PointerEventData.InputButton.Right) return;
+        if (WalkthroughGuideManager.Instance != null && WalkthroughGuideManager.Instance.IsShowing) return;
 
         if (Time.unscaledTime - _lastClickTime > ClickWindow)
             _clickCount = 0;

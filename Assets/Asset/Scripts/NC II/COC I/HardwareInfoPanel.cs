@@ -4,7 +4,17 @@ using UnityEngine.UI;
 
 public class HardwareInfoPanel : MonoBehaviour
 {
-    public static HardwareInfoPanel Instance { get; private set; }
+    private static HardwareInfoPanel _instance;
+    public static HardwareInfoPanel Instance
+    {
+        get
+        {
+            if (_instance == null)
+                _instance = FindAnyObjectByType<HardwareInfoPanel>(FindObjectsInactive.Include);
+            return _instance;
+        }
+        private set => _instance = value;
+    }
 
     [SerializeField] private Image            itemImage;
     [SerializeField] private TextMeshProUGUI  itemNameText;
@@ -18,20 +28,31 @@ public class HardwareInfoPanel : MonoBehaviour
 
     private Sprite[] _images;
     private int      _currentImageIdx;
+    private bool     _listenersSetup;
 
     private void Awake()
     {
         Instance = this;
-        backButton.onClick.AddListener(Hide);
+        // If Show() already called SetupListeners before triggering this Awake
+        // (disabled-at-start path), skip the SetActive(false) so we don't hide
+        // a panel that's currently being shown.
+        bool firstInit = !_listenersSetup;
+        SetupListeners();
+        if (firstInit) gameObject.SetActive(false);
+    }
 
+    private void SetupListeners()
+    {
+        if (_listenersSetup) return;
+        _listenersSetup = true;
+        backButton.onClick.AddListener(Hide);
         if (prevImageButton != null) prevImageButton.onClick.AddListener(PrevImage);
         if (nextImageButton != null) nextImageButton.onClick.AddListener(NextImage);
-
-        gameObject.SetActive(false);
     }
 
     public void Show(Sprite[] images, string itemName, string description)
     {
+        SetupListeners(); // no-op if Awake already ran; ensures listeners exist on disabled-at-start path
         _images          = images;
         _currentImageIdx = 0;
 

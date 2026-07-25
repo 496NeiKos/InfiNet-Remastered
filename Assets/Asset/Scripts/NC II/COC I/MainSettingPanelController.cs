@@ -3,6 +3,8 @@ using UnityEngine.UI;
 
 public class MainSettingPanelController : MonoBehaviour
 {
+    public static MainSettingPanelController Instance { get; private set; }
+
     [SerializeField] private GameObject mainSettingPanel;
 
     [Header("Buttons that close the panel when clicked")]
@@ -11,6 +13,11 @@ public class MainSettingPanelController : MonoBehaviour
 
     [Tooltip("Inventory toggle button")]
     [SerializeField] private Button inventoryToggleButton;
+
+    private void Awake()
+    {
+        Instance = this;
+    }
 
     private void OnEnable()
     {
@@ -26,6 +33,10 @@ public class MainSettingPanelController : MonoBehaviour
     {
         RegisterClose(guideToggleButton);
         RegisterClose(inventoryToggleButton);
+
+        if (inventoryToggleButton != null)
+            inventoryToggleButton.onClick.AddListener(() =>
+                WalkthroughGuideManager.Instance?.TryTrigger(WalkthroughGuideManager.WalkthroughTrigger.InventoryToggle));
     }
 
     private void RegisterClose(Button btn)
@@ -33,6 +44,8 @@ public class MainSettingPanelController : MonoBehaviour
         if (btn == null) return;
         btn.onClick.AddListener(ClosePanel);
     }
+
+    public bool IsOpen => mainSettingPanel != null && mainSettingPanel.activeSelf;
 
     public void OpenPanel()
     {

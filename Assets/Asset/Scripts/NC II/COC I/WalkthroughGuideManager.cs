@@ -71,7 +71,11 @@ public class WalkthroughGuideManager : MonoBehaviour
         FirstComponentDrop,
         FirstDetailView,
         AllPowerSourcesOff,
-        AllBackCablesUnplugged
+        AllBackCablesUnplugged,
+        DetailViewAngleChange,
+        InventoryToggle,
+        InventoryBackButton,
+        MajorHardwareDeployed
     }
 
     // ----------------------------------------------------------------
@@ -145,6 +149,8 @@ public class WalkthroughGuideManager : MonoBehaviour
     private int  _currentFrameIndex;
     private bool _hasReachedEnd;
     private bool _isShowing;
+
+    private int _angleChangeCount;
 
     public bool IsShowing => _isShowing;
 
@@ -223,6 +229,17 @@ public class WalkthroughGuideManager : MonoBehaviour
 
         if (allOff)
             TryTrigger(WalkthroughTrigger.AllPowerSourcesOff);
+    }
+
+    /// <summary>
+    /// Call from HardwareViewController when the user presses a number key to change angle.
+    /// Fires DetailViewAngleChange after the second distinct angle switch.
+    /// </summary>
+    public void NotifyViewAngleChanged()
+    {
+        _angleChangeCount++;
+        if (_angleChangeCount >= 2)
+            TryTrigger(WalkthroughTrigger.DetailViewAngleChange);
     }
 
     /// <summary>

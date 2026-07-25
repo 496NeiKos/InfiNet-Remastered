@@ -23,7 +23,7 @@ public class MonitorPowerButton : MonoBehaviour, IPowerButton
     [Tooltip("AVR must be powered on before the monitor can turn on.")]
     [SerializeField] private AVRPowerButton avrPowerButton;
     [Tooltip("Monitor back VGA cable port must be installed.")]
-    [SerializeField] private BackPortSlot monitorVGAPort;
+    [SerializeField] private CablePort monitorVGAPort;
     [Tooltip("Monitor back power cable port must be installed.")]
     [SerializeField] private CablePort monitorPowerCablePort;
 

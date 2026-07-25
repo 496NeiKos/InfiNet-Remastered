@@ -29,6 +29,8 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
     private SlotContainer _originalSlot;
 
     private SpriteRenderer _dragIndicator;
+    private DragPrefab _redirectTarget;
+    private Vector3 _grabOffset;
 
     private void Start()
     {
@@ -64,13 +66,36 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
 
     public void OnBeginDrag(PointerEventData eventData)
     {
+        _redirectTarget = null;
+
         if (eventData.button != PointerEventData.InputButton.Left) return;
+        if (WalkthroughGuideManager.Instance != null && WalkthroughGuideManager.Instance.IsShowing) return;
 
         SlotContainer slot = GetComponentInParent<SlotContainer>();
         bool isInSlot = slot != null || GetComponentInParent<CPUSlotController>() != null;
 
         if (GameManager.Instance.IsEditorOpen && !isInSlot)
         {
+            // This DragPrefab is a panel-level object (e.g. Motherboard in firstLayer).
+            // A child GO without its own DragPrefab (e.g. an indicator overlay) was clicked,
+            // and the EventSystem bubbled up here instead of reaching the correct child DragPrefab.
+            // Find which child DragPrefab the cursor is actually over and forward the whole drag to it.
+            Vector2 mouseWorld = Camera.main.ScreenToWorldPoint(
+                new Vector3(eventData.position.x, eventData.position.y, 0f));
+
+            foreach (DragPrefab child in GetComponentsInChildren<DragPrefab>(true))
+            {
+                if (child == this || !child.enabled) continue;
+                Collider2D col = child.GetComponent<Collider2D>()
+                              ?? child.GetComponentInChildren<Collider2D>(true);
+                if (col != null && col.enabled && col.OverlapPoint(mouseWorld))
+                {
+                    _redirectTarget = child;
+                    child.OnBeginDrag(eventData);
+                    return;
+                }
+            }
+
             Debug.Log($"[DragPrefab:{name}] BLOCKED — editor open but not in slot.");
             _isDragging = false;
             return;
@@ -224,6 +249,11 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
             GetComponent<MotherboardController>()?.OnRemovedFromSlot();
         }
 
+        Vector3 grabMouseWorld = Camera.main.ScreenToWorldPoint(
+            new Vector3(eventData.position.x, eventData.position.y, 10f));
+        grabMouseWorld.z = 0f;
+        _grabOffset = transform.position - grabMouseWorld;
+
         GameObject indicatorGO = new GameObject("DragIndicator");
         _dragIndicator = indicatorGO.AddComponent<SpriteRenderer>();
         _dragIndicator.sprite = GetComponent<SpriteRenderer>()?.sprite;
@@ -233,10 +263,12 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
 
     public void OnDrag(PointerEventData eventData)
     {
+        if (_redirectTarget != null) { _redirectTarget.OnDrag(eventData); return; }
         if (!_isDragging) return;
         Vector3 worldPos = Camera.main.ScreenToWorldPoint(
             new Vector3(eventData.position.x, eventData.position.y, 10f));
         worldPos.z = 0f;
+        worldPos += _grabOffset;
         worldPos = ClampToWorkspace(worldPos, eventData.position, eventData.pressEventCamera);
         transform.position = worldPos;
 
@@ -330,6 +362,13 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
 
     public void OnEndDrag(PointerEventData eventData)
     {
+        if (_redirectTarget != null)
+        {
+            _redirectTarget.OnEndDrag(eventData);
+            _redirectTarget = null;
+            return;
+        }
+
         if (_dragIndicator != null)
         {
             Destroy(_dragIndicator.gameObject);
@@ -346,8 +385,11 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
         {
             ActivityLogManager.Log($"{LogDisplayName} returned to storage", ActivityLogManager.EntryType.Remove);
 
-            // Cache slot ref before reparenting removes it from the hierarchy
-            CPUSlotController cpuSlot = _originalParent?.GetComponent<CPUSlotController>();
+            // Cache slot ref before reparenting removes it from the hierarchy.
+            // Use GetComponentInParent so an intermediate GO between CPUSlotController
+            // and the Heatsink/CPU (e.g. after a prefab restructure) doesn't break the lookup.
+            CPUSlotController cpuSlot = _originalParent?.GetComponent<CPUSlotController>()
+                                     ?? _originalParent?.GetComponentInParent<CPUSlotController>();
 
             _originalSlot?.RemoveChild();
             GetComponent<MotherboardController>()?.MarkUninstalled();
@@ -364,7 +406,8 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
         else if (_wasInSlot)
         {
             // Snap back — notify slot that component is reinstalled
-            CPUSlotController cpuSlot = _originalParent?.GetComponent<CPUSlotController>();
+            CPUSlotController cpuSlot = _originalParent?.GetComponent<CPUSlotController>()
+                                     ?? _originalParent?.GetComponentInParent<CPUSlotController>();
             if (GetComponent<HeatsinkController>() != null)
                 GetComponent<HeatsinkController>().OnInstalledToSlot(cpuSlot);
             else if (GetComponent<CPUController>() != null)

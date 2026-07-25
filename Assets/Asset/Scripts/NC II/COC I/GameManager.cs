@@ -58,7 +58,36 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {
-        if (IsEditorOpen && Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
+        if (Keyboard.current == null || !Keyboard.current.escapeKey.wasPressedThisFrame) return;
+
+        if (WalkthroughGuideManager.Instance != null && WalkthroughGuideManager.Instance.IsShowing) return;
+
+        // Close overlay panels from topmost to bottommost before touching the editor.
+        if (HardwareInfoPanel.Instance != null && HardwareInfoPanel.Instance.gameObject.activeSelf)
+        {
+            HardwareInfoPanel.Instance.Hide();
+            return;
+        }
+
+        if (UserGuideManager.Instance != null && UserGuideManager.Instance.IsOpen)
+        {
+            UserGuideManager.Instance.CloseGuide();
+            return;
+        }
+
+        if (PPEInventoryManager.Instance != null && PPEInventoryManager.Instance.IsOpen)
+        {
+            PPEInventoryManager.Instance.CloseInventory();
+            return;
+        }
+
+        if (MainSettingPanelController.Instance != null && MainSettingPanelController.Instance.IsOpen)
+        {
+            MainSettingPanelController.Instance.ClosePanel();
+            return;
+        }
+
+        if (IsEditorOpen)
             CloseEditor();
     }
 

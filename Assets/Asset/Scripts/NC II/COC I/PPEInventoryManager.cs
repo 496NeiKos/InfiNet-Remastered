@@ -22,6 +22,9 @@ public class PPEInventoryManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI overviewName;
     [SerializeField] private TextMeshProUGUI overviewDescription;
 
+    [Header("Navigation")]
+    [SerializeField] private Button backButton;
+
     private void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
@@ -34,6 +37,11 @@ public class PPEInventoryManager : MonoBehaviour
 
         if (ppeItems != null && ppeItems.Length > 0)
             UpdateOverviewPanel(ppeItems[0]);
+
+        if (backButton != null)
+            backButton.onClick.AddListener(() =>
+                WalkthroughGuideManager.Instance?.TryTrigger(
+                    WalkthroughGuideManager.WalkthroughTrigger.InventoryBackButton));
     }
 
     public bool IsOpen => inventoryPanel != null && inventoryPanel.activeSelf;

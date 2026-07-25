@@ -76,6 +76,7 @@ public class WorkspaceZoomController : MonoBehaviour
 
     private void HandleScroll()
     {
+        if (WalkthroughGuideManager.Instance != null && WalkthroughGuideManager.Instance.IsShowing) return;
         if (GameManager.Instance != null && GameManager.Instance.IsEditorOpen) return;
 
         float scroll = Mouse.current.scroll.ReadValue().y;
@@ -94,6 +95,7 @@ public class WorkspaceZoomController : MonoBehaviour
 
     private void HandlePan()
     {
+        if (WalkthroughGuideManager.Instance != null && WalkthroughGuideManager.Instance.IsShowing) return;
         if (GameManager.Instance != null && GameManager.Instance.IsEditorOpen) return;
 
         Vector2 mousePos = Mouse.current.position.ReadValue();

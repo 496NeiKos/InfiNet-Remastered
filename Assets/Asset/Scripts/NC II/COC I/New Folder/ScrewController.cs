@@ -57,6 +57,7 @@ public class ScrewController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
     private GameObject _dragVisual;
     private RectTransform _hardwareArea;
     private GameObject _ownDragVisual;
+    private Vector3 _grabOffset;
 
     public System.Action<ScrewController> OnStateChanged;
 
@@ -232,7 +233,8 @@ public class ScrewController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
             new Vector3(eventData.position.x, eventData.position.y, 10f)
         );
         worldPos.z = 0f;
-        _dragVisual.transform.position = worldPos;
+        _grabOffset = transform.position - worldPos;
+        _dragVisual.transform.position = worldPos + _grabOffset;
     }
 
     public void OnDrag(PointerEventData eventData)
@@ -243,7 +245,7 @@ public class ScrewController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
             new Vector3(eventData.position.x, eventData.position.y, 10f)
         );
         worldPos.z = 0f;
-        _dragVisual.transform.position = worldPos;
+        _dragVisual.transform.position = worldPos + _grabOffset;
     }
 
     public void OnEndDrag(PointerEventData eventData)

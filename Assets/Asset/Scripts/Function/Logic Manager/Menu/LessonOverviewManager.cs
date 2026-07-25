@@ -40,24 +40,24 @@ public class LessonOverviewManager : MonoBehaviour
     public void ShowLesson1()
     {
         ShowOverview(lesson1Sprite,
-            "Hardware",
-            "This module focuses on hands-on tasks such as assembling and disassembling computer components. It helps students understand the proper handling, identification, and installation of hardware parts in a safe virtual environment.\r\n",
+            "Certificate of Competency I",
+            "Objective goal: Develop the learner's ability to safely assemble, disassemble, install, configure, and test computer systems. It focuses on identifying hardware components, selecting and using the proper tools and PPE, installing operating systems and drivers, configuring system settings, and verifying that the computer functions according to manufacturer specifications and workplace standards.\r\n",
             "COC I"); // replace with your actual scene name
     }
 
     public void ShowLesson2()
     {
         ShowOverview(lesson2Sprite,
-            "Software",
-            "This module covers operating system installation and software setup, including the use of tools like Rufus for bootable media creation. It allows students to practice installing OS, configuring drivers, and performing basic system setup.\r\n",
-            "Software"); // replace with your actual scene name
+            "Certificate of Competency II",
+            "Objective goal: Equip learners with the skills to install, configure, and test basic computer networks. It emphasizes network planning, cable termination, device installation, IP addressing, network connectivity, and troubleshooting to ensure reliable communication between computers while following industry standards and occupational safety procedures.\r\n",
+            "COC II"); // replace with your actual scene name
     }
 
     public void ShowLesson3()
     {
         ShowOverview(lesson3Sprite,
-            "Networking",
-            "This module introduces basic networking concepts and tasks such as cable management and patch panel configuration. It enables students to simulate network setup and troubleshooting in a structured and practical way",
+            "Certificate of Competency III",
+            "Objective Goal: To prepare learners to install, configure, secure, and manage computer servers that provide network services. It includes creating user accounts, assigning access permissions, configuring server roles and services, implementing security measures, testing server functionality, and ensuring that the server operates efficiently based on organizational requirements.",
             "Networking"); // replace with your actual scene name
     }
 

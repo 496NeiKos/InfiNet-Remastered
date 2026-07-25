@@ -24,6 +24,22 @@ public class CPUSlotController : MonoBehaviour
 
     private void Awake()
     {
+        // Auto-discover children if Inspector references were lost (e.g. after a prefab resize/replace)
+        if (cpu == null)
+        {
+            CPUController found = GetComponentInChildren<CPUController>(true);
+            if (found != null) cpu = found.gameObject;
+            else Debug.LogError("[CPUSlotController] Could not find CPUController in children — assign 'cpu' in Inspector.");
+        }
+        if (heatsink == null)
+        {
+            HeatsinkController found = GetComponentInChildren<HeatsinkController>(true);
+            if (found != null) heatsink = found.gameObject;
+            else Debug.LogError("[CPUSlotController] Could not find HeatsinkController in children — assign 'heatsink' in Inspector.");
+        }
+        if (cpuLock == null)
+            cpuLock = GetComponentInChildren<CPULockController>(true);
+
         ApplyState();
     }
 
@@ -90,30 +106,30 @@ public class CPUSlotController : MonoBehaviour
     {
         if (cpu == null || heatsink == null) return;
 
-        Collider2D cpuCol = cpu.GetComponent<Collider2D>();
+        // Check root first; fall back to first child collider (handles resized/restructured prefabs)
+        Collider2D cpuCol = cpu.GetComponent<Collider2D>()
+                         ?? cpu.GetComponentInChildren<Collider2D>(true);
 
         switch (_state)
         {
             case SlotState.BothInstalled:
                 if (cpuCol != null) cpuCol.enabled = false;
-                SetInteractable(cpu, false);
                 SetInteractable(heatsink, true);
                 break;
 
             case SlotState.HeatsinkUninstalled:
+                // Only the collider gates CPU interactability. DragPrefab.OnBeginDrag already
+                // blocks the drag when the lock is closed — no need to toggle DragPrefab.enabled.
                 if (cpuCol != null) cpuCol.enabled = true;
-                SetInteractable(cpu, true);
                 break;
 
             case SlotState.CPUUninstalled:
                 if (cpuCol != null) cpuCol.enabled = false;
-                SetInteractable(cpu, false);
                 SetInteractable(heatsink, true);
                 break;
 
             case SlotState.BothUninstalled:
                 if (cpuCol != null) cpuCol.enabled = false;
-                SetInteractable(cpu, false);
                 SetInteractable(heatsink, false);
                 break;
         }
@@ -122,7 +138,8 @@ public class CPUSlotController : MonoBehaviour
     private void SetInteractable(GameObject obj, bool interactable)
     {
         if (obj == null) return;
-        DragPrefab dp = obj.GetComponent<DragPrefab>();
+        DragPrefab dp = obj.GetComponent<DragPrefab>()
+                     ?? obj.GetComponentInChildren<DragPrefab>(true);
         if (dp != null) dp.enabled = interactable;
     }
 

@@ -9,13 +9,13 @@ using UnityEngine;
 public class PSUController : MonoBehaviour
 {
     [Header("System Unit Back — PSU cable port")]
-    [SerializeField] private BackPortSlot psuBackPort;
+    [SerializeField] private CablePort psuBackPort;
 
     [Header("Motherboard Phase 1 — ATX cable slot (CablePSU-MOBO)")]
-    [SerializeField] private CableSlot psuMoboCableSlot;
+    [SerializeField] private CablePort psuMoboCableSlot;
 
     [Header("Motherboard Phase 1 — GPU power cable slot")]
-    [SerializeField] private CableSlot psuGpuCableSlot;
+    [SerializeField] private CablePort psuGpuCableSlot;
 
     [Header("Motherboard — PSU power cables (must be unplugged before removal)")]
     [SerializeField] private CablePort cableSlotPsuCpu;

@@ -32,6 +32,8 @@ public class PrefabInteraction : MonoBehaviour
     {
         if (!Mouse.current.rightButton.wasPressedThisFrame) return;
 
+        if (WalkthroughGuideManager.Instance != null && WalkthroughGuideManager.Instance.IsShowing) return;
+
         if (IsInstalledInSlot()) return;
 
         // Motherboard-level components (CPU, GPU, RAM, PSU, HDD, SSD, Heatsink) must

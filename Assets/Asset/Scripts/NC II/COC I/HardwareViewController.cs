@@ -44,6 +44,7 @@ public class HardwareViewController : MonoBehaviour
         if (GameManager.Instance == null || !GameManager.Instance.IsEditorOpen) return;
         if (GameManager.Instance.firstLayer == null ||
             !transform.IsChildOf(GameManager.Instance.firstLayer.transform)) return;
+        if (WalkthroughGuideManager.Instance != null && WalkthroughGuideManager.Instance.IsShowing) return;
 
         Keyboard kb = Keyboard.current;
         if (kb == null) return;
@@ -54,6 +55,7 @@ public class HardwareViewController : MonoBehaviour
             if (kb[NumberKeys[i]].wasPressedThisFrame)
             {
                 ShowViewAt(i);
+                WalkthroughGuideManager.Instance?.NotifyViewAngleChanged();
                 break;
             }
         }

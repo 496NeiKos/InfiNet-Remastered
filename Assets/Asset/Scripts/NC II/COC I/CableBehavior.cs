@@ -67,6 +67,7 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
     private bool _detached;
     private bool _isDragging;
     private GameObject _dragIndicator;
+    private Vector3 _grabOffset;
 
     private static CableBehavior _holdTarget;
 
@@ -225,6 +226,19 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         // Do NOT reassign localScale here — it would corrupt the transform.
         transform.SetParent(GameManager.Instance.worldRoot, true);
 
+        Mouse grabMouse = Mouse.current;
+        if (grabMouse != null && Camera.main != null)
+        {
+            Vector2 mp = grabMouse.position.ReadValue();
+            Vector3 mw = Camera.main.ScreenToWorldPoint(new Vector3(mp.x, mp.y, 10f));
+            mw.z = 0f;
+            _grabOffset = transform.position - mw;
+        }
+        else
+        {
+            _grabOffset = Vector3.zero;
+        }
+
         _dragIndicator = new GameObject("CableDragIndicator");
         SpriteRenderer sr = _dragIndicator.AddComponent<SpriteRenderer>();
         sr.sprite = GetComponent<SpriteRenderer>()?.sprite;
@@ -251,9 +265,10 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
 
         if (mouse.leftButton.isPressed)
         {
-            Vector3 worldPos = Camera.main.ScreenToWorldPoint(
-                new Vector3(mouse.position.ReadValue().x, mouse.position.ReadValue().y, 10f));
+            Vector2 mp = mouse.position.ReadValue();
+            Vector3 worldPos = Camera.main.ScreenToWorldPoint(new Vector3(mp.x, mp.y, 10f));
             worldPos.z = 0f;
+            worldPos += _grabOffset;
             transform.position = worldPos;
             if (_dragIndicator != null)
                 _dragIndicator.transform.position = worldPos;

@@ -14,8 +14,8 @@ public class PSUSwitchController : MonoBehaviour
     [SerializeField] private Sprite onSprite;
 
     [Header("PSU Port")]
-    [Tooltip("The BackPortSlot the PSU cable plugs into — cable must be installed to allow toggling.")]
-    [SerializeField] private BackPortSlot psuPort;
+    [Tooltip("The CablePort the PSU cable plugs into — cable must be installed to allow toggling.")]
+    [SerializeField] private CablePort psuPort;
 
     [Header("Initial State")]
     [SerializeField] private bool startOn = false;

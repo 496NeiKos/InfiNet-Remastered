@@ -125,6 +125,11 @@ public class DetailViewManager : MonoBehaviour
 
         gameObject.SetActive(true);
 
+        // Re-setup the angle indicator — sub-panels (e.g. GPUDetailedView) call
+        // Indicator.Hide() in their OnDisable, which leaves it invisible when we
+        // return to this SU context. ShowLastActive restores the correct view and label.
+        GetComponent<HardwareViewController>()?.ShowLastActive();
+
         _activeChildPrefab.transform.SetParent(_childOriginalParent, true);
         _activeChildPrefab.transform.localPosition = _childOriginalLocalPos;
 

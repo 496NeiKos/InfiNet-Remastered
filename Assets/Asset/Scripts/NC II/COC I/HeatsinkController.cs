@@ -17,6 +17,8 @@ public class HeatsinkController : MonoBehaviour
     private void Awake()
     {
         _sr = GetComponent<SpriteRenderer>();
+        if (cpuSlot == null)
+            cpuSlot = GetComponentInParent<CPUSlotController>();
     }
 
     private void Start()

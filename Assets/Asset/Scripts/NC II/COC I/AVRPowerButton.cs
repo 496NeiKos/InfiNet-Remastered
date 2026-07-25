@@ -20,8 +20,8 @@ public class AVRPowerButton : MonoBehaviour, IPowerButton
     [SerializeField] private Sprite avrDetailedSpriteOff;
 
     [Header("Condition References (AVR back ports only)")]
-    [SerializeField] private BackPortSlot aPSUPort;
-    [SerializeField] private BackPortSlot aMPort;
+    [SerializeField] private CablePort aPSUPort;
+    [SerializeField] private CablePort aMPort;
 
     [Header("Power Off Gate")]
     [Tooltip("SU front power button AND monitor power button must both be off before AVR can be turned off.")]

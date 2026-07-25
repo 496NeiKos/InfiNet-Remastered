@@ -67,6 +67,7 @@ using UnityEngine.UI;
 
 public class UserGuideManager : MonoBehaviour
 {
+    public static UserGuideManager Instance { get; private set; }
     // ----------------------------------------------------------------
     //  Data model
     // ----------------------------------------------------------------
@@ -128,9 +129,16 @@ public class UserGuideManager : MonoBehaviour
     private int  _currentImageIdx  = 0;
     private bool _isOpen           = false;
 
+    public bool IsOpen => _isOpen;
+
     // ----------------------------------------------------------------
     //  Unity lifecycle
     // ----------------------------------------------------------------
+
+    private void Awake()
+    {
+        Instance = this;
+    }
 
     private void Start()
     {
@@ -158,7 +166,8 @@ public class UserGuideManager : MonoBehaviour
     private void Update()
     {
         var kb = Keyboard.current;
-        if (kb != null && kb.f1Key.wasPressedThisFrame && !IsEditorOpen())
+        if (kb != null && kb.f1Key.wasPressedThisFrame && !IsEditorOpen() &&
+            (WalkthroughGuideManager.Instance == null || !WalkthroughGuideManager.Instance.IsShowing))
             ToggleGuide();
     }
 
@@ -171,7 +180,6 @@ public class UserGuideManager : MonoBehaviour
 
     public void ToggleGuide()
     {
-        if (IsEditorOpen()) return;
         if (_isOpen) CloseGuide();
         else         OpenGuide();
     }
