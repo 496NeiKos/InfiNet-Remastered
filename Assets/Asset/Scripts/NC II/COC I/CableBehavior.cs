@@ -69,10 +69,20 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
     private GameObject _dragIndicator;
     private Vector3 _grabOffset;
 
+    // The port this cable started in at scene load. Never changes — used by HardwareHolder
+    // to pick the cable end whose original port is closest to the install target, so
+    // each cable end's intended sprite and scale are preserved regardless of install order.
+    private CablePort _originalHomePort;
+
     private static CableBehavior _holdTarget;
 
     public bool IsDetached => _detached;
     public string GetCableType() => cableType;
+
+    // World position of this cable's original home port. Used by HardwareHolder's
+    // multi-cable install picker to preserve correct sprite assignment per port.
+    public Vector3 OriginalHomePortPosition =>
+        _originalHomePort != null ? _originalHomePort.transform.position : Vector3.zero;
 
     // Consume EventSystem drag events so they don't bubble up to parent DragPrefab components.
     public void OnBeginDrag(PointerEventData eventData) { }
@@ -83,6 +93,9 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
     {
         if (homePort == null)
             homePort = GetComponentInParent<CablePort>();
+
+        // Lock in the original port once at startup — homePort is updated at runtime on installs.
+        _originalHomePort = homePort;
 
         // Auto-resolve hardwareHolder by direct object reference if not wired in the inspector.
         // Name-based matching is fragile; this check is always reliable.
@@ -104,15 +117,21 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
             monitorPowerGate = FindObjectOfType<MonitorPowerButton>(true);
     }
 
-    // Finds the HardwareHolder whose hardwarePrefab IS this GameObject.
-    // Pass 1 favours a holder whose parent container is currently active — this handles
-    // the edge case where two holders in different topic containers reference the same
-    // prefab name. Pass 2 and 3 are fallbacks for when only one holder exists.
+    // Finds the HardwareHolder that owns this cable.
+    //
+    // Pass 0: multi-cable holder whose managedCables list contains this cable.
+    //         This covers the shared-proxy case where hardwarePrefab is not set on the holder.
+    // Pass 1: direct hardwarePrefab reference + parent container active (multi-topic containers).
+    // Pass 2: direct hardwarePrefab reference, any hierarchy (single-container fallback).
+    // Pass 3: name match (legacy cables without a direct scene-object reference).
     private HardwareHolder FindHardwareHolderForThis()
     {
+        // Pass 0: multi-cable proxy that explicitly lists this cable.
+        foreach (HardwareHolder h in FindObjectsOfType<HardwareHolder>(true))
+        {
+            if (h.ContainsManagedCable(this)) return h;
+        }
         // Pass 1: direct reference + parent container is active.
-        // We check the PARENT's activeInHierarchy (not the holder itself) because the holder
-        // object may legitimately be inactive while its topic container is active.
         foreach (HardwareHolder h in FindObjectsOfType<HardwareHolder>(true))
         {
             if (h.hardwarePrefab != gameObject) continue;
@@ -120,7 +139,7 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
             bool parentActive = p == null || p.gameObject.activeInHierarchy;
             if (parentActive) return h;
         }
-        // Pass 2: direct reference, any hierarchy (fallback — e.g. only one holder exists).
+        // Pass 2: direct reference, any hierarchy.
         foreach (HardwareHolder h in FindObjectsOfType<HardwareHolder>(true))
         {
             if (h.hardwarePrefab == gameObject) return h;
@@ -218,12 +237,11 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         homePort?.SetUninstalled();
         ActivityLogManager.Log($"{LogName} unplugged", ActivityLogManager.EntryType.Remove);
 
-        // Refresh the cached holder ref but do NOT show the icon yet —
-        // the icon only appears once the player explicitly drops the cable onto the hardware area.
+        // Always refresh the cached holder ref in case scene context changed (multi-topic containers).
+        // Pass 0 in FindHardwareHolderForThis handles multi-cable holders correctly.
         hardwareHolder = FindHardwareHolderForThis();
 
         // SetParent with worldPositionStays=true already preserves world scale.
-        // Do NOT reassign localScale here — it would corrupt the transform.
         transform.SetParent(GameManager.Instance.worldRoot, true);
 
         Mouse grabMouse = Mouse.current;
@@ -247,6 +265,11 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         _dragIndicator.transform.localScale = transform.lossyScale;
 
         CableDragManager.Instance.Register(this);
+
+        // Show the proxy immediately on detach so the player sees the cable is available.
+        // For multi-cable holders this enables the shared proxy; for single holders this is a no-op.
+        hardwareHolder?.UpdateProxyVisibility();
+
         Debug.Log($"[CableBehavior] {cableType} detached.");
     }
 
@@ -348,7 +371,6 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         transform.localPosition = Vector3.zero;
 
         // Force the physics engine to sync with the new transform position.
-        // Without this, a Rigidbody2D's collider can lag behind and break click detection.
         Physics2D.SyncTransforms();
 
         // Update cache so SnapBack always uses the correct port-relative values.
@@ -358,10 +380,10 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         gameObject.SetActive(true);
         port.SetInstalled();
 
-        // Cable landed in a port — hide the holder (HardwareHolder.TryInstallInSlot already
-        // does this when called from the holder, but direct-drag installs skip that path).
-        if (hardwareHolder != null)
-            hardwareHolder.gameObject.SetActive(false);
+        // Notify the holder so it can recalculate proxy visibility.
+        // For multi-cable holders: proxy hides only when all cable ends are installed.
+        // For single holders: proxy hides immediately (same as old SetActive(false)).
+        hardwareHolder?.OnCableInstalled(this);
 
         ActivityLogManager.Log($"{LogName} plugged in", ActivityLogManager.EntryType.Install);
         Debug.Log($"[CableBehavior] {cableType} installed to {port.name}.");
@@ -376,14 +398,15 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
             transform.localPosition = _installedLocalPos;
             transform.localScale = _installedLocalScale;
             homePort.SetInstalled();
-            // Cable returned to its port — re-hide the holder that Detach() re-activated.
-            if (hardwareHolder != null)
-                hardwareHolder.gameObject.SetActive(false);
+            // Re-evaluate proxy visibility — another managed cable may still be uninstalled,
+            // in which case the proxy should stay visible even though this cable returned.
+            hardwareHolder?.UpdateProxyVisibility();
             Debug.Log($"[CableBehavior] {cableType} snapped back to {homePort.name}.");
         }
         else
         {
             gameObject.SetActive(false);
+            hardwareHolder?.UpdateProxyVisibility();
             Debug.LogWarning($"[CableBehavior] {cableType} snap back failed — no homePort.");
         }
     }
@@ -396,7 +419,9 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
 
         if (hardwareHolder != null)
         {
-            hardwareHolder.StoreHardware();
+            // OnCableStored deactivates this specific cable end and updates proxy visibility.
+            // For single holders it mirrors the old StoreHardware() behaviour exactly.
+            hardwareHolder.OnCableStored(this);
             return;
         }
 

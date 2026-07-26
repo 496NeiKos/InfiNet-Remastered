@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -9,6 +11,15 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
 
     [Header("Hardware Reference")]
     public GameObject hardwarePrefab;
+
+    [Header("Multi-Cable Group (optional)")]
+    [Tooltip("All cable ends this proxy represents. When populated the holder manages a group instead of a single hardwarePrefab. "
+           + "Proxy hides only when every cable is installed; shows when any cable is in storage or detached.")]
+    [SerializeField] private List<CableBehavior> managedCables = new List<CableBehavior>();
+
+    [Tooltip("Cable type string matched against CablePort.acceptedCableTypes when installing from this proxy. "
+           + "Required when managedCables is populated.")]
+    [SerializeField] private string proxyCableType;
 
     [Header("Spawn in Workspace")]
     [Tooltip("When true the prefab starts active in the workspace and the holder stays hidden.")]
@@ -32,7 +43,7 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
     [SerializeField] private DropTargetMode dropTargetMode = DropTargetMode.Slot;
 
     [Header("Tool / Screw Visual")]
-    [Tooltip("Sprite shown while dragging. Used when hardwarePrefab is null (screw, screwdriver, thermal paste, towel).")]
+    [Tooltip("Sprite shown while dragging. For multi-cable holders set this to the cable's icon sprite.")]
     [SerializeField] private Sprite dragSprite;
 
     [Header("Slot Install Proximity (world units)")]
@@ -56,12 +67,28 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
 
     private bool IsToolMode => immediateSpawnOnDrag || dropTargetMode == DropTargetMode.RaycastScrew;
 
+    // True when this holder manages a group of cable ends instead of a single hardwarePrefab.
+    public bool IsMultiCableMode => managedCables != null && managedCables.Count > 0;
+
+    // Returns true if the given cable is in this holder's managed list.
+    public bool ContainsManagedCable(CableBehavior cable) =>
+        managedCables != null && managedCables.Contains(cable);
+
     private void Start()
     {
-        // Tool modes (immediate-spawn and screw) have no prefab lifecycle — always visible.
         if (IsToolMode)
         {
             gameObject.SetActive(true);
+            return;
+        }
+
+        if (IsMultiCableMode)
+        {
+            // Derive drag-indicator world scale from the first active (installed) cable.
+            var firstActive = managedCables.FirstOrDefault(c => c != null && c.gameObject.activeSelf);
+            _worldScale = firstActive != null ? firstActive.transform.lossyScale : Vector3.one;
+
+            UpdateProxyVisibility();
             return;
         }
 
@@ -83,6 +110,38 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
 
         bool prefabInactive = hardwarePrefab == null || !hardwarePrefab.activeSelf;
         gameObject.SetActive(prefabInactive);
+    }
+
+    // ── Multi-Cable Proxy Visibility ──────────────────────────────────────
+
+    // Show proxy when at least one managed cable is not installed at a port
+    // (either stored/inactive, or mid-drag/detached). Hide only when all are installed.
+    public void UpdateProxyVisibility()
+    {
+        if (!IsMultiCableMode) return;
+        bool anyUnavailable = managedCables.Any(c => c == null || !c.gameObject.activeSelf || c.IsDetached);
+        gameObject.SetActive(anyUnavailable);
+    }
+
+    // Called by CableBehavior.InstallToPort — re-evaluates whether all cables are now installed.
+    public void OnCableInstalled(CableBehavior cable)
+    {
+        if (IsMultiCableMode)
+            UpdateProxyVisibility();
+        else
+            gameObject.SetActive(false);
+    }
+
+    // Called by CableBehavior.SendToHolder — deactivates the specific cable end and updates visibility.
+    public void OnCableStored(CableBehavior cable)
+    {
+        if (cable == null) return;
+        cable.transform.SetParent(GameManager.Instance.ActiveHardwareStorageContainer, true);
+        cable.gameObject.SetActive(false);
+        if (IsMultiCableMode)
+            UpdateProxyVisibility();
+        else
+            gameObject.SetActive(true);
     }
 
     // ── Info Panel (double right-click) ───────────────────────────────────
@@ -111,6 +170,8 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
     public bool IsAvailable()
     {
         if (IsToolMode) return true;
+        if (IsMultiCableMode)
+            return managedCables.Any(c => c != null && (!c.gameObject.activeSelf || c.IsDetached));
         return hardwarePrefab != null && !hardwarePrefab.activeSelf;
     }
 
@@ -139,7 +200,6 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
 
         if (immediateSpawnOnDrag)
         {
-            // Tools (screwdriver, thermal paste, etc.) track the cursor tip directly — no offset.
             _grabOffset = Vector3.zero;
 
             Sprite sprite = dragSprite != null ? dragSprite : GetComponent<Image>()?.sprite;
@@ -185,7 +245,13 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
             _dragIndicator = new GameObject("DragIndicator");
 
             SpriteRenderer sr = _dragIndicator.AddComponent<SpriteRenderer>();
-            sr.sprite = hardwarePrefab?.GetComponent<SpriteRenderer>()?.sprite;
+            // Unity fake-null won't survive ?. — use explicit != null guard.
+            // For multi-cable holders hardwarePrefab is unassigned; fall back to dragSprite.
+            Sprite indicatorSprite = (hardwarePrefab != null)
+                ? hardwarePrefab.GetComponent<SpriteRenderer>()?.sprite
+                : null;
+            if (indicatorSprite == null) indicatorSprite = dragSprite;
+            sr.sprite = indicatorSprite;
             sr.sortingOrder = 999;
 
             _dragIndicator.transform.position = worldPos + _grabOffset;
@@ -209,10 +275,8 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         if (!_isDragging) return;
         _isDragging = false;
 
-        // Immediate-spawn tools: drag object already destroyed above, always return to storage.
         if (immediateSpawnOnDrag) return;
 
-        // Screw: raycast on drop to find an empty ScrewController hole.
         if (dropTargetMode == DropTargetMode.RaycastScrew)
         {
             Ray ray = Camera.main.ScreenPointToRay(eventData.position);
@@ -233,16 +297,21 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
             return;
         }
 
-        // Standard hardware path.
+        // Cables (both single and multi-cable) only install when the editor is open.
+        bool isCable = IsMultiCableMode ||
+                       (hardwarePrefab != null && hardwarePrefab.GetComponent<CableBehavior>() != null);
+        if (isCable)
+        {
+            if (GameManager.Instance.IsEditorOpen)
+                TryInstallInSlot(eventData);
+            return;
+        }
+
         if (GameManager.Instance.IsEditorOpen)
         {
             TryInstallInSlot(eventData);
             return;
         }
-
-        bool isCable = hardwarePrefab != null &&
-            hardwarePrefab.GetComponent<CableBehavior>() != null;
-        if (isCable) return;
 
         bool onWorkspace = RectTransformUtility.RectangleContainsScreenPoint(
             GameManager.Instance.workspaceArea, eventData.position, eventData.pressEventCamera);
@@ -276,15 +345,70 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
 
     private void TryInstallInSlot(PointerEventData eventData)
     {
+        Vector3 dropWorldPos = Camera.main.ScreenToWorldPoint(
+            new Vector3(eventData.position.x, eventData.position.y, 10f));
+        dropWorldPos.z = 0f;
+
+        // ── Multi-cable path ──────────────────────────────────────────────
+        if (IsMultiCableMode)
+        {
+            CablePort[] allPorts = FindObjectsOfType<CablePort>(true);
+
+            CablePort bestPort = null;
+            float bestDist = float.MaxValue;
+
+            foreach (CablePort port in allPorts)
+            {
+                if (!port.gameObject.activeInHierarchy) continue;
+                if (!port.IsUninstalled) continue;
+                if (!port.CanAcceptCable(proxyCableType)) continue;
+                float dist = Vector3.Distance(port.transform.position, dropWorldPos);
+                if (dist < slotInstallRadius && dist < bestDist) { bestDist = dist; bestPort = port; }
+            }
+
+            if (bestPort == null)
+            {
+                Debug.Log($"[HardwareHolder] Multi-cable proxy '{name}' (type='{proxyCableType}') — no valid port in range.");
+                return;
+            }
+
+            // Pick the stored cable whose original home port is closest to the target port.
+            // This preserves each cable end's intended sprite and scale at its matching port.
+            CableBehavior bestCable = null;
+            float bestCableDist = float.MaxValue;
+
+            foreach (CableBehavior candidate in managedCables)
+            {
+                if (candidate == null) continue;
+                // Skip cables that are already installed at a port or currently mid-drag.
+                if (candidate.gameObject.activeSelf && !candidate.IsDetached) continue;
+                // Skip cables that are mid-drag (floating in world — not available from storage).
+                if (candidate.IsDetached) continue;
+
+                float dist = Vector3.Distance(candidate.OriginalHomePortPosition, bestPort.transform.position);
+                if (dist < bestCableDist) { bestCableDist = dist; bestCable = candidate; }
+            }
+
+            if (bestCable == null)
+            {
+                Debug.Log($"[HardwareHolder] Multi-cable proxy '{name}' — no stored cable available to install.");
+                return;
+            }
+
+            bestCable.gameObject.SetActive(true);
+            bestCable.InstallToPort(bestPort);
+            NCIITaskListManager.CheckConditions();
+            T2TaskListManager.CheckConditions();
+            Debug.Log($"[HardwareHolder] Multi-cable proxy '{name}': installed '{bestCable.name}' to '{bestPort.name}' (dist={bestDist:F2}).");
+            return;
+        }
+
+        // ── Legacy single-prefab path ─────────────────────────────────────
         if (hardwarePrefab == null) return;
 
         string prefabName = hardwarePrefab.name;
         DragPrefab dp = hardwarePrefab.GetComponent<DragPrefab>();
         string prefabDisplay = dp != null ? dp.LogDisplayName : prefabName;
-
-        Vector3 dropWorldPos = Camera.main.ScreenToWorldPoint(
-            new Vector3(eventData.position.x, eventData.position.y, 10f));
-        dropWorldPos.z = 0f;
 
         CableBehavior cable = hardwarePrefab.GetComponent<CableBehavior>();
         if (cable != null)
@@ -294,10 +418,10 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
 
             CablePort bestPort = null;
             float bestDist = float.MaxValue;
-            var rejectedActive = new System.Collections.Generic.List<string>();
+            var rejectedActive    = new System.Collections.Generic.List<string>();
             var rejectedInstalled = new System.Collections.Generic.List<string>();
-            var rejectedType = new System.Collections.Generic.List<string>();
-            var rejectedDist = new System.Collections.Generic.List<string>();
+            var rejectedType      = new System.Collections.Generic.List<string>();
+            var rejectedDist      = new System.Collections.Generic.List<string>();
 
             foreach (CablePort port in allPorts)
             {

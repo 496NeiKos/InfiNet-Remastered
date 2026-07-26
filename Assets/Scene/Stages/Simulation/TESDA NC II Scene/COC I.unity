@@ -4423,153 +4423,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 64428967}
   m_CullTransparentMesh: 1
---- !u!1 &64933560
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 64933565}
-  - component: {fileID: 64933564}
-  - component: {fileID: 64933563}
-  - component: {fileID: 64933562}
-  - component: {fileID: 64933561}
-  m_Layer: 11
-  m_Name: CableHDD-MOBO
-  m_TagString: Screwdriver
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &64933561
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 64933560}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bf17dafdb00f41549b6e7de207f29387, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
-  hardwarePrefab: {fileID: 1844451779}
-  startInWorkspace: 0
-  immediateSpawnOnDrag: 0
-  spawnTag: 
-  colliderRadius: 0.3
-  colliderOffset: {x: 0, y: 0}
-  dropTargetMode: 0
-  dragSprite: {fileID: 0}
-  slotInstallRadius: 1.5
-  infoImages: []
-  infoName: 'SATA Data Cable '
-  infoDescription: A SATA Data Cable transfers data between the motherboard and storage
-    devices such as HDDs or SSDs. It enables communication between these components.
---- !u!114 &64933562
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 64933560}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
-  m_Navigation:
-    m_Mode: 3
-    m_WrapAround: 0
-    m_SelectOnUp: {fileID: 0}
-    m_SelectOnDown: {fileID: 0}
-    m_SelectOnLeft: {fileID: 0}
-    m_SelectOnRight: {fileID: 0}
-  m_Transition: 1
-  m_Colors:
-    m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
-    m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
-    m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
-    m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
-    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
-    m_ColorMultiplier: 1
-    m_FadeDuration: 0.1
-  m_SpriteState:
-    m_HighlightedSprite: {fileID: 0}
-    m_PressedSprite: {fileID: 0}
-    m_SelectedSprite: {fileID: 0}
-    m_DisabledSprite: {fileID: 0}
-  m_AnimationTriggers:
-    m_NormalTrigger: Normal
-    m_HighlightedTrigger: Highlighted
-    m_PressedTrigger: Pressed
-    m_SelectedTrigger: Selected
-    m_DisabledTrigger: Disabled
-  m_Interactable: 1
-  m_TargetGraphic: {fileID: 64933563}
-  m_OnClick:
-    m_PersistentCalls:
-      m_Calls: []
---- !u!114 &64933563
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 64933560}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_Sprite: {fileID: -3595637386477730193, guid: 30b77a28a9390744a9997227141bab5b, type: 3}
-  m_Type: 0
-  m_PreserveAspect: 1
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
-  m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1
---- !u!222 &64933564
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 64933560}
-  m_CullTransparentMesh: 1
---- !u!224 &64933565
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 64933560}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 2128425696}
-  m_Father: {fileID: 2077927671}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 240, y: -230}
-  m_SizeDelta: {x: 100, y: 100}
-  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &65027732
 GameObject:
   m_ObjectHideFlags: 0
@@ -5665,7 +5518,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CablePort
   acceptedCableTypes:
-  - AMCable
+  - monitor-power
   cableType: AMCable
   startEmpty: 0
   prerequisitePort: {fileID: 0}
@@ -8176,10 +8029,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bef0cc58f73cdc249aa83600f08aeaf7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CableBehavior
-  cableType: MPCablePort
+  cableType: monitor-power
   displayName: 
   homePort: {fileID: 1985633128}
-  hardwareHolder: {fileID: 2043043440}
+  hardwareHolder: {fileID: 361067702}
   holdDuration: 1
   powerButtonSource: {fileID: 1299985818}
   secondaryPowerGate: {fileID: 1338173049}
@@ -16214,6 +16067,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 0}
+  managedCables: []
+  proxyCableType: 
   startInWorkspace: 0
   immediateSpawnOnDrag: 0
   spawnTag: 
@@ -17203,7 +17058,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CablePort
   acceptedCableTypes:
-  - CableMOBO-HDD
+  - sata
   cableType: CableMOBO-HDD
   startEmpty: 0
   prerequisitePort: {fileID: 0}
@@ -17663,6 +17518,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 624839213}
+  managedCables: []
+  proxyCableType: 
   startInWorkspace: 0
   immediateSpawnOnDrag: 0
   spawnTag: 
@@ -18293,7 +18150,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bef0cc58f73cdc249aa83600f08aeaf7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CableBehavior
-  cableType: AMPort
+  cableType: monitor-power
   displayName: 
   homePort: {fileID: 73471826}
   hardwareHolder: {fileID: 361067702}
@@ -21289,6 +21146,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 2390677771505005363}
+  managedCables: []
+  proxyCableType: 
   startInWorkspace: 0
   immediateSpawnOnDrag: 0
   spawnTag: 
@@ -23105,7 +22964,7 @@ GameObject:
   - component: {fileID: 308800481}
   - component: {fileID: 308800484}
   m_Layer: 11
-  m_Name: CablePSU-MOBO
+  m_Name: CableMOBO-PSU
   m_TagString: Screwdriver
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -23226,6 +23085,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 4699670503633810579}
+  managedCables: []
+  proxyCableType: 
   startInWorkspace: 0
   immediateSpawnOnDrag: 0
   spawnTag: 
@@ -25448,7 +25309,7 @@ GameObject:
   - component: {fileID: 338655185}
   - component: {fileID: 338655188}
   m_Layer: 11
-  m_Name: CablePSU-CPU
+  m_Name: Cable_CPU-PSU
   m_TagString: Screwdriver
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -25569,6 +25430,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 7816693105033411294}
+  managedCables: []
+  proxyCableType: 
   startInWorkspace: 0
   immediateSpawnOnDrag: 0
   spawnTag: 
@@ -27045,7 +26908,7 @@ GameObject:
   - component: {fileID: 361067699}
   - component: {fileID: 361067702}
   m_Layer: 11
-  m_Name: AMCableIcon
+  m_Name: Power_M-AVRCableIcon
   m_TagString: Screwdriver
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -27165,14 +27028,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bf17dafdb00f41549b6e7de207f29387, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
-  hardwarePrefab: {fileID: 260820737}
+  hardwarePrefab: {fileID: 0}
+  managedCables:
+  - {fileID: 108009068}
+  - {fileID: 260820742}
+  proxyCableType: monitor-power
   startInWorkspace: 0
   immediateSpawnOnDrag: 0
   spawnTag: 
   colliderRadius: 0.3
   colliderOffset: {x: 0, y: 0}
   dropTargetMode: 0
-  dragSprite: {fileID: 0}
+  dragSprite: {fileID: 9143444802865596260, guid: b76ad67fe5c4aea4292f139f93c2b58a, type: 3}
   slotInstallRadius: 1.5
   infoImages: []
   infoName: Monitor Power Cable
@@ -29663,6 +29530,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 1503496109}
+  managedCables: []
+  proxyCableType: 
   startInWorkspace: 0
   immediateSpawnOnDrag: 0
   spawnTag: 
@@ -30771,6 +30640,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 1820356062324776105}
+  managedCables: []
+  proxyCableType: 
   startInWorkspace: 1
   immediateSpawnOnDrag: 0
   spawnTag: 
@@ -31482,6 +31353,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 6294746388856104340}
+  managedCables: []
+  proxyCableType: 
   startInWorkspace: 0
   immediateSpawnOnDrag: 0
   spawnTag: 
@@ -31645,6 +31518,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 5322194216335052605}
+  managedCables: []
+  proxyCableType: 
   startInWorkspace: 0
   immediateSpawnOnDrag: 0
   spawnTag: 
@@ -32490,7 +32365,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CablePort
   acceptedCableTypes:
-  - APSUCable
+  - psu-power
   cableType: APSUCable
   startEmpty: 0
   prerequisitePort: {fileID: 0}
@@ -34597,10 +34472,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bef0cc58f73cdc249aa83600f08aeaf7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CableBehavior
-  cableType: MVGAPort
+  cableType: vga
   displayName: 
   homePort: {fileID: 524374831}
-  hardwareHolder: {fileID: 686178430}
+  hardwareHolder: {fileID: 477266320}
   holdDuration: 1
   powerButtonSource: {fileID: 1299985818}
   secondaryPowerGate: {fileID: 1338173049}
@@ -38665,7 +38540,7 @@ GameObject:
   - component: {fileID: 477266322}
   - component: {fileID: 477266320}
   m_Layer: 11
-  m_Name: SUVGACableIcon
+  m_Name: VGA_SU-MCableIcon
   m_TagString: Screwdriver
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -38683,14 +38558,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bf17dafdb00f41549b6e7de207f29387, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
-  hardwarePrefab: {fileID: 1281493947}
+  hardwarePrefab: {fileID: 0}
+  managedCables:
+  - {fileID: 1281493950}
+  - {fileID: 437242114}
+  proxyCableType: vga
   startInWorkspace: 0
   immediateSpawnOnDrag: 0
   spawnTag: 
   colliderRadius: 0.3
   colliderOffset: {x: 0, y: 0}
   dropTargetMode: 0
-  dragSprite: {fileID: 0}
+  dragSprite: {fileID: 7265464940010772186, guid: c4b8f7aa4d56d164eaf8121997b9d831, type: 3}
   slotInstallRadius: 1.5
   infoImages: []
   infoName: VGA Cable
@@ -41046,6 +40925,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 8301058766642013003}
+  managedCables: []
+  proxyCableType: 
   startInWorkspace: 0
   immediateSpawnOnDrag: 0
   spawnTag: 
@@ -42803,7 +42684,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CablePort
   acceptedCableTypes:
-  - SUVGACable
+  - vga
   cableType: SUVGACable
   startEmpty: 0
   prerequisitePort: {fileID: 0}
@@ -43421,7 +43302,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CablePort
   acceptedCableTypes:
   - MVGACable
-  cableType: MVGACable
+  cableType: vga
   startEmpty: 0
   prerequisitePort: {fileID: 0}
   prerequisiteSlot: {fileID: 0}
@@ -51748,6 +51629,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 173113639}
+  managedCables: []
+  proxyCableType: 
   startInWorkspace: 0
   immediateSpawnOnDrag: 0
   spawnTag: 
@@ -54066,85 +53949,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 676787728}
   m_CullTransparentMesh: 1
---- !u!1 &677353352
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 677353353}
-  - component: {fileID: 677353355}
-  - component: {fileID: 677353354}
-  m_Layer: 11
-  m_Name: Text (Legacy)
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &677353353
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 677353352}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 686178435}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &677353354
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 677353352}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
-  m_Material: {fileID: 0}
-  m_Color: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 1}
-  m_RaycastTarget: 1
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_FontData:
-    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
-    m_FontSize: 14
-    m_FontStyle: 0
-    m_BestFit: 0
-    m_MinSize: 10
-    m_MaxSize: 40
-    m_Alignment: 4
-    m_AlignByGeometry: 0
-    m_RichText: 1
-    m_HorizontalOverflow: 0
-    m_VerticalOverflow: 0
-    m_LineSpacing: 1
-  m_Text: 
---- !u!222 &677353355
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 677353352}
-  m_CullTransparentMesh: 1
 --- !u!1 &678100906
 GameObject:
   m_ObjectHideFlags: 0
@@ -54965,153 +54769,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 682196492}
   m_CullTransparentMesh: 1
---- !u!1 &686178429
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 686178435}
-  - component: {fileID: 686178434}
-  - component: {fileID: 686178433}
-  - component: {fileID: 686178432}
-  - component: {fileID: 686178430}
-  m_Layer: 11
-  m_Name: MVGACableIcon
-  m_TagString: Screwdriver
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &686178430
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 686178429}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bf17dafdb00f41549b6e7de207f29387, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
-  hardwarePrefab: {fileID: 437242111}
-  startInWorkspace: 0
-  immediateSpawnOnDrag: 0
-  spawnTag: 
-  colliderRadius: 0.3
-  colliderOffset: {x: 0, y: 0}
-  dropTargetMode: 0
-  dragSprite: {fileID: 0}
-  slotInstallRadius: 1.5
-  infoImages: []
-  infoName: 'VGA Cable '
-  infoDescription: The VGA Cable is a video cable that transmits analog display signals
-    from the computer to the monitor. It is commonly used on older display devices.
---- !u!114 &686178432
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 686178429}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
-  m_Navigation:
-    m_Mode: 3
-    m_WrapAround: 0
-    m_SelectOnUp: {fileID: 0}
-    m_SelectOnDown: {fileID: 0}
-    m_SelectOnLeft: {fileID: 0}
-    m_SelectOnRight: {fileID: 0}
-  m_Transition: 1
-  m_Colors:
-    m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
-    m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
-    m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
-    m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
-    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
-    m_ColorMultiplier: 1
-    m_FadeDuration: 0.1
-  m_SpriteState:
-    m_HighlightedSprite: {fileID: 0}
-    m_PressedSprite: {fileID: 0}
-    m_SelectedSprite: {fileID: 0}
-    m_DisabledSprite: {fileID: 0}
-  m_AnimationTriggers:
-    m_NormalTrigger: Normal
-    m_HighlightedTrigger: Highlighted
-    m_PressedTrigger: Pressed
-    m_SelectedTrigger: Selected
-    m_DisabledTrigger: Disabled
-  m_Interactable: 1
-  m_TargetGraphic: {fileID: 686178433}
-  m_OnClick:
-    m_PersistentCalls:
-      m_Calls: []
---- !u!114 &686178433
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 686178429}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_Sprite: {fileID: -8300023652192697167, guid: f175ca9b60beab240b601f74986e568d, type: 3}
-  m_Type: 0
-  m_PreserveAspect: 1
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
-  m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1
---- !u!222 &686178434
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 686178429}
-  m_CullTransparentMesh: 1
---- !u!224 &686178435
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 686178429}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 677353353}
-  m_Father: {fileID: 2077927671}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 240, y: -590}
-  m_SizeDelta: {x: 100, y: 100}
-  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &687802554
 GameObject:
   m_ObjectHideFlags: 0
@@ -57179,155 +56836,6 @@ CanvasRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 699569684}
-  m_CullTransparentMesh: 1
---- !u!1 &700654897
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 700654898}
-  - component: {fileID: 700654903}
-  - component: {fileID: 700654902}
-  - component: {fileID: 700654901}
-  - component: {fileID: 700654899}
-  m_Layer: 11
-  m_Name: APSUCableIcon
-  m_TagString: Screwdriver
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &700654898
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 700654897}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1247852376}
-  m_Father: {fileID: 2077927671}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 430, y: -410}
-  m_SizeDelta: {x: 100, y: 100}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &700654899
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 700654897}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bf17dafdb00f41549b6e7de207f29387, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
-  hardwarePrefab: {fileID: 1299142854}
-  startInWorkspace: 0
-  immediateSpawnOnDrag: 0
-  spawnTag: 
-  colliderRadius: 0.3
-  colliderOffset: {x: 0, y: 0}
-  dropTargetMode: 0
-  dragSprite: {fileID: 0}
-  slotInstallRadius: 1.5
-  infoImages: []
-  infoName: AC Power Cord
-  infoDescription: 'The AC Power Cord connects a computer or peripheral device to
-    an electrical outlet or AVR. It supplies AC power to the device.
-
-'
---- !u!114 &700654901
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 700654897}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
-  m_Navigation:
-    m_Mode: 3
-    m_WrapAround: 0
-    m_SelectOnUp: {fileID: 0}
-    m_SelectOnDown: {fileID: 0}
-    m_SelectOnLeft: {fileID: 0}
-    m_SelectOnRight: {fileID: 0}
-  m_Transition: 1
-  m_Colors:
-    m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
-    m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
-    m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
-    m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
-    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
-    m_ColorMultiplier: 1
-    m_FadeDuration: 0.1
-  m_SpriteState:
-    m_HighlightedSprite: {fileID: 0}
-    m_PressedSprite: {fileID: 0}
-    m_SelectedSprite: {fileID: 0}
-    m_DisabledSprite: {fileID: 0}
-  m_AnimationTriggers:
-    m_NormalTrigger: Normal
-    m_HighlightedTrigger: Highlighted
-    m_PressedTrigger: Pressed
-    m_SelectedTrigger: Selected
-    m_DisabledTrigger: Disabled
-  m_Interactable: 1
-  m_TargetGraphic: {fileID: 700654902}
-  m_OnClick:
-    m_PersistentCalls:
-      m_Calls: []
---- !u!114 &700654902
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 700654897}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_Sprite: {fileID: 3785698321296817868, guid: 9d5655049f59bd94ebe52d43e6e58cad, type: 3}
-  m_Type: 0
-  m_PreserveAspect: 1
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
-  m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1
---- !u!222 &700654903
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 700654897}
   m_CullTransparentMesh: 1
 --- !u!1 &704633127
 GameObject:
@@ -74755,6 +74263,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 679522239}
+  managedCables: []
+  proxyCableType: 
   startInWorkspace: 0
   immediateSpawnOnDrag: 0
   spawnTag: 
@@ -76018,6 +75528,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 265908535}
+  managedCables: []
+  proxyCableType: 
   startInWorkspace: 0
   immediateSpawnOnDrag: 0
   spawnTag: 
@@ -76181,6 +75693,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 6871304167088779069}
+  managedCables: []
+  proxyCableType: 
   startInWorkspace: 0
   immediateSpawnOnDrag: 0
   spawnTag: 
@@ -81130,6 +80644,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 0}
+  managedCables: []
+  proxyCableType: 
   startInWorkspace: 0
   immediateSpawnOnDrag: 1
   spawnTag: ThermalPaste
@@ -85965,6 +85481,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 721360362}
+  managedCables: []
+  proxyCableType: 
   startInWorkspace: 1
   immediateSpawnOnDrag: 0
   spawnTag: 
@@ -90501,7 +90019,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CablePort
   acceptedCableTypes:
-  - SUPSUCable
+  - psu-power
   cableType: SUPSUCable
   startEmpty: 0
   prerequisitePort: {fileID: 0}
@@ -94998,7 +94516,7 @@ GameObject:
   - component: {fileID: 1197448055}
   - component: {fileID: 1197448058}
   m_Layer: 11
-  m_Name: MHDMICableIcon
+  m_Name: M_HDMICableIcon
   m_TagString: Screwdriver
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -95119,6 +94637,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 465003130}
+  managedCables: []
+  proxyCableType: 
   startInWorkspace: 0
   immediateSpawnOnDrag: 0
   spawnTag: 
@@ -98847,85 +98367,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1247418479}
   m_CullTransparentMesh: 1
---- !u!1 &1247852375
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1247852376}
-  - component: {fileID: 1247852378}
-  - component: {fileID: 1247852377}
-  m_Layer: 11
-  m_Name: Text (Legacy)
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &1247852376
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1247852375}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 700654898}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1247852377
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1247852375}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
-  m_Material: {fileID: 0}
-  m_Color: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 1}
-  m_RaycastTarget: 1
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_FontData:
-    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
-    m_FontSize: 14
-    m_FontStyle: 0
-    m_BestFit: 0
-    m_MinSize: 10
-    m_MaxSize: 40
-    m_Alignment: 4
-    m_AlignByGeometry: 0
-    m_RichText: 1
-    m_HorizontalOverflow: 0
-    m_VerticalOverflow: 0
-    m_LineSpacing: 1
-  m_Text: 
---- !u!222 &1247852378
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1247852375}
-  m_CullTransparentMesh: 1
 --- !u!1 &1249931610
 GameObject:
   m_ObjectHideFlags: 0
@@ -101995,7 +101436,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bef0cc58f73cdc249aa83600f08aeaf7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CableBehavior
-  cableType: SUVGAPort
+  cableType: vga
   displayName: 
   homePort: {fileID: 514138396}
   hardwareHolder: {fileID: 477266320}
@@ -102236,6 +101677,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 695772721}
+  managedCables: []
+  proxyCableType: 
   startInWorkspace: 0
   immediateSpawnOnDrag: 0
   spawnTag: 
@@ -103090,10 +102533,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bef0cc58f73cdc249aa83600f08aeaf7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CableBehavior
-  cableType: APSUPort
+  cableType: psu-power
   displayName: 
   homePort: {fileID: 411423494}
-  hardwareHolder: {fileID: 700654899}
+  hardwareHolder: {fileID: 1487959379}
   holdDuration: 1
   powerButtonSource: {fileID: 409216139}
   secondaryPowerGate: {fileID: 1338173049}
@@ -114332,7 +113775,7 @@ GameObject:
   - component: {fileID: 1437814296}
   - component: {fileID: 1437814295}
   m_Layer: 11
-  m_Name: GPUCable
+  m_Name: Cable_GPU
   m_TagString: Screwdriver
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -114371,6 +113814,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 1392355154}
+  managedCables: []
+  proxyCableType: 
   startInWorkspace: 0
   immediateSpawnOnDrag: 0
   spawnTag: 
@@ -116118,6 +115563,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 80567646}
+  managedCables: []
+  proxyCableType: 
   startInWorkspace: 1
   immediateSpawnOnDrag: 0
   spawnTag: 
@@ -117661,6 +117108,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 4909219956909887904}
+  managedCables: []
+  proxyCableType: 
   startInWorkspace: 0
   immediateSpawnOnDrag: 0
   spawnTag: 
@@ -117793,7 +117242,7 @@ GameObject:
   - component: {fileID: 1487959381}
   - component: {fileID: 1487959379}
   m_Layer: 11
-  m_Name: SUPSUCableIcon
+  m_Name: Power_PSU-AVRCableIcon
   m_TagString: Screwdriver
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -117831,14 +117280,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bf17dafdb00f41549b6e7de207f29387, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
-  hardwarePrefab: {fileID: 1598114956}
+  hardwarePrefab: {fileID: 0}
+  managedCables:
+  - {fileID: 1598114959}
+  - {fileID: 1299142856}
+  proxyCableType: psu-power
   startInWorkspace: 0
   immediateSpawnOnDrag: 0
   spawnTag: 
   colliderRadius: 0.3
   colliderOffset: {x: 0, y: 0}
   dropTargetMode: 0
-  dragSprite: {fileID: 0}
+  dragSprite: {fileID: 154869555242935836, guid: ed55454717ce8514fac2e18d8b6d151d, type: 3}
   slotInstallRadius: 1.5
   infoImages: []
   infoName: AC Power Cord
@@ -118519,85 +117972,6 @@ CanvasRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1504711957}
-  m_CullTransparentMesh: 1
---- !u!1 &1505907614
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1505907615}
-  - component: {fileID: 1505907617}
-  - component: {fileID: 1505907616}
-  m_Layer: 11
-  m_Name: Text (Legacy)
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &1505907615
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1505907614}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 2043043439}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1505907616
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1505907614}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
-  m_Material: {fileID: 0}
-  m_Color: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 1}
-  m_RaycastTarget: 1
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_FontData:
-    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
-    m_FontSize: 14
-    m_FontStyle: 0
-    m_BestFit: 0
-    m_MinSize: 10
-    m_MaxSize: 40
-    m_Alignment: 4
-    m_AlignByGeometry: 0
-    m_RichText: 1
-    m_HorizontalOverflow: 0
-    m_VerticalOverflow: 0
-    m_LineSpacing: 1
-  m_Text: 
---- !u!222 &1505907617
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1505907614}
   m_CullTransparentMesh: 1
 --- !u!1 &1505925134
 GameObject:
@@ -122209,6 +121583,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 0}
+  managedCables: []
+  proxyCableType: 
   startInWorkspace: 0
   immediateSpawnOnDrag: 1
   spawnTag: Screwdriver
@@ -124692,7 +124068,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bef0cc58f73cdc249aa83600f08aeaf7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CableBehavior
-  cableType: SUPSUPort
+  cableType: psu-power
   displayName: 
   homePort: {fileID: 1133075496}
   hardwareHolder: {fileID: 1487959379}
@@ -129955,14 +129331,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bf17dafdb00f41549b6e7de207f29387, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
-  hardwarePrefab: {fileID: 904372419361912784}
+  hardwarePrefab: {fileID: 0}
+  managedCables:
+  - {fileID: 7159949065759022734}
+  - {fileID: 1844451784}
+  proxyCableType: sata
   startInWorkspace: 0
   immediateSpawnOnDrag: 0
   spawnTag: 
   colliderRadius: 0.3
   colliderOffset: {x: 0, y: 0}
   dropTargetMode: 0
-  dragSprite: {fileID: 0}
+  dragSprite: {fileID: -380107874108939751, guid: 07a3d8af4d97a174fb5972ecfe604b0f, type: 3}
   slotInstallRadius: 1.5
   infoImages: []
   infoName: SATA Data Cable
@@ -141932,10 +141312,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bef0cc58f73cdc249aa83600f08aeaf7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CableBehavior
-  cableType: CableHDD-MOBO
+  cableType: sata
   displayName: 
   homePort: {fileID: 2041602153}
-  hardwareHolder: {fileID: 64933561}
+  hardwareHolder: {fileID: 1684089679}
   holdDuration: 1
   powerButtonSource: {fileID: 0}
   secondaryPowerGate: {fileID: 0}
@@ -146683,7 +146063,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1922951119
 Transform:
   m_ObjectHideFlags: 0
@@ -150440,7 +149820,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CablePort
   acceptedCableTypes:
   - MPCable
-  cableType: MPCable
+  cableType: monitor-power
   startEmpty: 0
   prerequisitePort: {fileID: 0}
   prerequisiteSlot: {fileID: 0}
@@ -154527,7 +153907,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CablePort
   acceptedCableTypes:
-  - CableHDD-MOBO
+  - sata
   cableType: CableHDD-MOBO
   startEmpty: 0
   prerequisitePort: {fileID: 0}
@@ -154535,155 +153915,6 @@ MonoBehaviour:
   gpuController: {fileID: 0}
   hddController: {fileID: 0}
   motherboardController: {fileID: 0}
---- !u!1 &2043043438
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2043043439}
-  - component: {fileID: 2043043443}
-  - component: {fileID: 2043043442}
-  - component: {fileID: 2043043441}
-  - component: {fileID: 2043043440}
-  m_Layer: 11
-  m_Name: MPCableIcon
-  m_TagString: Screwdriver
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &2043043439
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2043043438}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1505907615}
-  m_Father: {fileID: 2077927671}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 430, y: -590}
-  m_SizeDelta: {x: 100, y: 100}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &2043043440
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2043043438}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bf17dafdb00f41549b6e7de207f29387, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
-  hardwarePrefab: {fileID: 108009065}
-  startInWorkspace: 0
-  immediateSpawnOnDrag: 0
-  spawnTag: 
-  colliderRadius: 0.3
-  colliderOffset: {x: 0, y: 0}
-  dropTargetMode: 0
-  dragSprite: {fileID: 0}
-  slotInstallRadius: 1.5
-  infoImages: []
-  infoName: 'Monitor Power Cable '
-  infoDescription: 'The Monitor Power Cable supplies electrical power from the outlet
-    or AVR to the monitor. It allows the monitor to operate properly.
-
-'
---- !u!114 &2043043441
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2043043438}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
-  m_Navigation:
-    m_Mode: 3
-    m_WrapAround: 0
-    m_SelectOnUp: {fileID: 0}
-    m_SelectOnDown: {fileID: 0}
-    m_SelectOnLeft: {fileID: 0}
-    m_SelectOnRight: {fileID: 0}
-  m_Transition: 1
-  m_Colors:
-    m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
-    m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
-    m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
-    m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
-    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
-    m_ColorMultiplier: 1
-    m_FadeDuration: 0.1
-  m_SpriteState:
-    m_HighlightedSprite: {fileID: 0}
-    m_PressedSprite: {fileID: 0}
-    m_SelectedSprite: {fileID: 0}
-    m_DisabledSprite: {fileID: 0}
-  m_AnimationTriggers:
-    m_NormalTrigger: Normal
-    m_HighlightedTrigger: Highlighted
-    m_PressedTrigger: Pressed
-    m_SelectedTrigger: Selected
-    m_DisabledTrigger: Disabled
-  m_Interactable: 1
-  m_TargetGraphic: {fileID: 2043043442}
-  m_OnClick:
-    m_PersistentCalls:
-      m_Calls: []
---- !u!114 &2043043442
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2043043438}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_Sprite: {fileID: -1173886787443703957, guid: 4bd495a33281d724eb61666e2fbe0bd5, type: 3}
-  m_Type: 0
-  m_PreserveAspect: 1
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
-  m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1
---- !u!222 &2043043443
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2043043438}
-  m_CullTransparentMesh: 1
 --- !u!1 &2044715232
 GameObject:
   m_ObjectHideFlags: 0
@@ -156217,17 +155448,13 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1684089674}
-  - {fileID: 338655183}
   - {fileID: 308800479}
-  - {fileID: 1437814294}
-  - {fileID: 64933565}
+  - {fileID: 338655183}
   - {fileID: 1283400878}
-  - {fileID: 1487959378}
+  - {fileID: 1437814294}
   - {fileID: 477266325}
-  - {fileID: 700654898}
+  - {fileID: 1487959378}
   - {fileID: 361067698}
-  - {fileID: 686178435}
-  - {fileID: 2043043439}
   - {fileID: 1197448054}
   m_Father: {fileID: 478818894}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -159939,85 +159166,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2127701821}
   m_CullTransparentMesh: 1
---- !u!1 &2128425695
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2128425696}
-  - component: {fileID: 2128425698}
-  - component: {fileID: 2128425697}
-  m_Layer: 11
-  m_Name: Text (Legacy)
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &2128425696
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2128425695}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 64933565}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &2128425697
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2128425695}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
-  m_Material: {fileID: 0}
-  m_Color: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 1}
-  m_RaycastTarget: 1
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_FontData:
-    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
-    m_FontSize: 14
-    m_FontStyle: 0
-    m_BestFit: 0
-    m_MinSize: 10
-    m_MaxSize: 40
-    m_Alignment: 4
-    m_AlignByGeometry: 0
-    m_RichText: 1
-    m_HorizontalOverflow: 0
-    m_VerticalOverflow: 0
-    m_LineSpacing: 1
-  m_Text: 
---- !u!222 &2128425698
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2128425695}
-  m_CullTransparentMesh: 1
 --- !u!1 &2129247363
 GameObject:
   m_ObjectHideFlags: 0
@@ -160597,6 +159745,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 0}
+  managedCables: []
+  proxyCableType: 
   startInWorkspace: 0
   immediateSpawnOnDrag: 1
   spawnTag: TowelCloth
@@ -160882,6 +160032,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HardwareHolder
   hardwarePrefab: {fileID: 9014568342930170925}
+  managedCables: []
+  proxyCableType: 
   startInWorkspace: 0
   immediateSpawnOnDrag: 0
   spawnTag: 
@@ -165393,7 +164545,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bef0cc58f73cdc249aa83600f08aeaf7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CableBehavior
-  cableType: CableMOBO-HDD
+  cableType: sata
   displayName: 
   homePort: {fileID: 249089024}
   hardwareHolder: {fileID: 1684089679}
