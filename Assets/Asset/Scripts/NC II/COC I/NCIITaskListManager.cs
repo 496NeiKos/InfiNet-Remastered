@@ -563,6 +563,17 @@ public class NCIITaskListManager : MonoBehaviour
     public Color GetDisplayColor(Color fallback) =>
         (_isCompletionOverride && _displayOverride != null) ? Color.green : fallback;
 
+    // Total tasks completed across both phases (0–30). Used by ObjectiveTaskDisplay.
+    public int GetCompletedTaskCount()
+    {
+        int count = 0;
+        if (_disassembly?.tasks != null)
+            count += _disassembly.tasks.Count(t => t.isCompleted);
+        if (_assembly?.tasks != null)
+            count += _assembly.tasks.Count(t => t.isCompleted);
+        return count;
+    }
+
     public static void CheckConditions()
     {
         if (Instance == null) return;
@@ -709,8 +720,13 @@ public class NCIITaskListManager : MonoBehaviour
     private bool IsAssemblyComplete() =>
         _assembly != null && _assembly.tasks.All(t => t.isCompleted);
 
+    // True only during the disassembly→assembly transition window. ObjectiveTaskDisplay reads this.
+    public bool IsTransitioningToAssembly { get; private set; }
+
     private IEnumerator TransitionToAssembly()
     {
+        IsTransitioningToAssembly = true;
+
         // Show on the task panel TMP and mirror to SingleTaskDisplay.
         if (transitionText != null)
         {
@@ -722,6 +738,8 @@ public class NCIITaskListManager : MonoBehaviour
         OnTasksUpdated?.Invoke();
 
         yield return new WaitForSeconds(transitionDuration);
+
+        IsTransitioningToAssembly = false;
 
         if (transitionText != null)
             transitionText.gameObject.SetActive(false);

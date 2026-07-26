@@ -355,6 +355,8 @@ public class T3TaskListManager : MonoBehaviour
     public Color GetDisplayColor(Color fallback) =>
         (_isCompletionOverride && _displayOverride != null) ? Color.green : fallback;
 
+    public int GetCompletedTaskCount() => _tasks?.Count(t => t.isCompleted) ?? 0;
+
     public static void CheckConditions()
     {
         if (Instance == null) return;

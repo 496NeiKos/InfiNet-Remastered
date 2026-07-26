@@ -378,6 +378,8 @@ public class T2TaskListManager : MonoBehaviour
     public Color GetDisplayColor(Color fallback) =>
         (_isCompletionOverride && _displayOverride != null) ? Color.green : fallback;
 
+    public int GetCompletedTaskCount() => _tasks?.Count(t => t.isCompleted) ?? 0;
+
     // Only re-evaluate on re-enable (tab switch back to Topic 2).
     private void OnEnable() { if (_tasks != null) EvaluateConditions(); }
 
