@@ -68,6 +68,7 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
     private bool _isDragging;
     private GameObject _dragIndicator;
     private Vector3 _grabOffset;
+    private Vector3 _holdStartMouseWorld;
 
     // The port this cable started in at scene load. Never changes — used by HardwareHolder
     // to pick the cable end whose original port is closest to the install target, so
@@ -168,7 +169,15 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         }
 
         if (mouse.leftButton.wasPressedThisFrame && IsMouseOver())
+        {
             _holdTarget = this;
+            if (Camera.main != null)
+            {
+                Vector2 sp = mouse.position.ReadValue();
+                _holdStartMouseWorld = Camera.main.ScreenToWorldPoint(new Vector3(sp.x, sp.y, 10f));
+                _holdStartMouseWorld.z = 0f;
+            }
+        }
 
         if (_holdTarget == this)
         {
@@ -208,21 +217,25 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         if (!monitorExplicitlyOff && _powerButton != null && _powerButton.IsPoweredOn)
         {
             ActivityLogManager.Log($"Cannot unplug {LogName} — turn off its power source first.", ActivityLogManager.EntryType.Warning);
+            UnableAnimation.Shake(transform);
             return false;
         }
         if (secondaryPowerGate != null && secondaryPowerGate.IsPoweredOn)
         {
             ActivityLogManager.Log($"Cannot unplug {LogName} — turn off the System Unit first.", ActivityLogManager.EntryType.Warning);
+            UnableAnimation.Shake(transform);
             return false;
         }
         if (monitorPowerGate != null && monitorPowerGate.IsPoweredOn)
         {
             ActivityLogManager.Log($"Cannot unplug {LogName} — turn off the Monitor first.", ActivityLogManager.EntryType.Warning);
+            UnableAnimation.Shake(transform);
             return false;
         }
         if (psuSwitchGate != null && psuSwitchGate.IsOn)
         {
             ActivityLogManager.Log($"Cannot unplug {LogName} — turn off the PSU switch first.", ActivityLogManager.EntryType.Warning);
+            UnableAnimation.Shake(transform);
             return false;
         }
         return true;
@@ -244,24 +257,28 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         // SetParent with worldPositionStays=true already preserves world scale.
         transform.SetParent(GameManager.Instance.worldRoot, true);
 
+        // Grab offset based on where the hold *started*, not where the cursor is now.
+        // This carries mouse movement during the hold into the cable's initial position,
+        // so the cable appears at the cursor the instant it detaches.
+        _grabOffset = transform.position - _holdStartMouseWorld;
+
         Mouse grabMouse = Mouse.current;
+        Vector3 initPos = transform.position;
         if (grabMouse != null && Camera.main != null)
         {
             Vector2 mp = grabMouse.position.ReadValue();
-            Vector3 mw = Camera.main.ScreenToWorldPoint(new Vector3(mp.x, mp.y, 10f));
-            mw.z = 0f;
-            _grabOffset = transform.position - mw;
+            Vector3 cursorNow = Camera.main.ScreenToWorldPoint(new Vector3(mp.x, mp.y, 10f));
+            cursorNow.z = 0f;
+            initPos = cursorNow + _grabOffset;
+            initPos.z = 0f;
         }
-        else
-        {
-            _grabOffset = Vector3.zero;
-        }
+        transform.position = initPos;
 
         _dragIndicator = new GameObject("CableDragIndicator");
         SpriteRenderer sr = _dragIndicator.AddComponent<SpriteRenderer>();
         sr.sprite = GetComponent<SpriteRenderer>()?.sprite;
         sr.sortingOrder = 999;
-        _dragIndicator.transform.position = transform.position;
+        _dragIndicator.transform.position = initPos;
         _dragIndicator.transform.localScale = transform.lossyScale;
 
         CableDragManager.Instance.Register(this);
@@ -271,6 +288,13 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         hardwareHolder?.UpdateProxyVisibility();
 
         Debug.Log($"[CableBehavior] {cableType} detached.");
+
+        // CableDragManager already ran its Update() this frame (execution order 0 < 1),
+        // so DragUpdate() won't be called until next frame — causing a one-frame lag where
+        // the cable sits at the port while the cursor has already moved. Drive the first
+        // position update right now so the cable is at the cursor the instant it detaches.
+        _isDragging = true;
+        DragUpdate();
     }
 
     // Called every frame by CableDragManager while detached.
@@ -283,7 +307,10 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         {
             if (mouse.leftButton.isPressed)
                 _isDragging = true;
-            return;
+            else
+                return;
+            // fall through — update position on this same frame so the cable
+            // instantly follows the cursor the moment it detaches
         }
 
         if (mouse.leftButton.isPressed)

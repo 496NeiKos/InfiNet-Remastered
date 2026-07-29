@@ -104,7 +104,9 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
         var dvm = FindObjectOfType<DetailViewManager>();
         if (dvm != null && dvm.IsInnerPanelOpen)
         {
+            ActivityLogManager.Log($"Cannot drag {LogDisplayName} — close the detail panel first.", ActivityLogManager.EntryType.Warning);
             Debug.Log($"[DragPrefab:{name}] BLOCKED — inner panel is open.");
+            UnableAnimation.Shake(transform);
             _isDragging = false;
             return;
         }
@@ -112,7 +114,9 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
         var mbdvm = FindObjectOfType<MotherboardDetailViewManager>();
         if (mbdvm != null && mbdvm.IsInnerPanelOpen)
         {
+            ActivityLogManager.Log($"Cannot drag {LogDisplayName} — close the component panel first.", ActivityLogManager.EntryType.Warning);
             Debug.Log($"[DragPrefab:{name}] BLOCKED — component detail panel is open.");
+            UnableAnimation.Shake(transform);
             _isDragging = false;
             return;
         }
@@ -120,21 +124,27 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
         var cover = GetComponentInParent<CoverController>();
         if (cover != null && cover.IsSliding)
         {
+            ActivityLogManager.Log($"Cannot drag {LogDisplayName} — wait for the cover to finish sliding.", ActivityLogManager.EntryType.Warning);
             Debug.Log($"[DragPrefab:{name}] BLOCKED — cover is sliding.");
+            UnableAnimation.Shake(transform);
             _isDragging = false;
             return;
         }
 
         if (isInSlot && !AreAllScrewsEmpty())
         {
+            ActivityLogManager.Log($"Cannot remove {LogDisplayName} — unscrew all screws first.", ActivityLogManager.EntryType.Warning);
             Debug.Log($"[DragPrefab:{name}] BLOCKED — screws not empty.");
+            UnableAnimation.Shake(transform);
             _isDragging = false;
             return;
         }
 
         if (isInSlot && !AreAllCablesDetached())
         {
+            ActivityLogManager.Log($"Cannot remove {LogDisplayName} — disconnect all cables first.", ActivityLogManager.EntryType.Warning);
             Debug.Log($"[DragPrefab:{name}] BLOCKED — cables not detached.");
+            UnableAnimation.Shake(transform);
             _isDragging = false;
             return;
         }
@@ -143,7 +153,9 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
         CPUSlotController cpuSlot = GetComponentInParent<CPUSlotController>();
         if (cpuSlot != null && isInSlot && GetComponent<CPUController>() != null && cpuSlot.IsLockClosed)
         {
+            ActivityLogManager.Log("Cannot remove CPU — open the lock lever first.", ActivityLogManager.EntryType.Warning);
             Debug.Log($"[DragPrefab:{name}] BLOCKED — CPU lock is closed.");
+            UnableAnimation.Shake(transform);
             _isDragging = false;
             return;
         }
@@ -151,7 +163,9 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
         // Block CPU drag if heatsink is installed
         if (cpuSlot != null && isInSlot && cpuSlot.IsHeatsinkInstalled && GetComponent<CPUController>() != null)
         {
+            ActivityLogManager.Log("Cannot remove CPU — remove the heatsink first.", ActivityLogManager.EntryType.Warning);
             Debug.Log($"[DragPrefab:{name}] BLOCKED — heatsink is still installed.");
+            UnableAnimation.Shake(transform);
             _isDragging = false;
             return;
         }
@@ -160,7 +174,9 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
         HeatsinkController heatsink = GetComponent<HeatsinkController>();
         if (heatsink != null && isInSlot && !heatsink.CanBeRemoved)
         {
+            ActivityLogManager.Log("Cannot remove Heatsink — disconnect the fan cable first.", ActivityLogManager.EntryType.Warning);
             Debug.Log($"[DragPrefab:{name}] BLOCKED — heatsink cable still connected.");
+            UnableAnimation.Shake(transform);
             _isDragging = false;
             return;
         }
@@ -169,7 +185,11 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
         RAMController ram = GetComponent<RAMController>();
         if (ram != null && isInSlot && ram.IsInstalled)
         {
+            ActivityLogManager.Log(
+                "Cannot remove RAM — open the latch first: right-click the RAM in the Motherboard view, then slide UP.",
+                ActivityLogManager.EntryType.Warning);
             Debug.Log($"[DragPrefab:{name}] BLOCKED — RAM latch is still engaged.");
+            UnableAnimation.Shake(transform);
             _isDragging = false;
             return;
         }
@@ -178,7 +198,9 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
         GPUController gpu = GetComponent<GPUController>();
         if (gpu != null && isInSlot && gpu.IsLatched)
         {
+            ActivityLogManager.Log("Cannot remove GPU — release the PCIe latch first.", ActivityLogManager.EntryType.Warning);
             Debug.Log($"[DragPrefab:{name}] BLOCKED — GPU is still latched.");
+            UnableAnimation.Shake(transform);
             _isDragging = false;
             return;
         }
@@ -187,7 +209,9 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
         PSUController psu = GetComponent<PSUController>();
         if (psu != null && isInSlot && !psu.CanBeRemoved)
         {
+            ActivityLogManager.Log("Cannot remove PSU — disconnect all PSU cables and unscrew the mounting screws first.", ActivityLogManager.EntryType.Warning);
             Debug.Log($"[DragPrefab:{name}] BLOCKED — PSU cables still connected.");
+            UnableAnimation.Shake(transform);
             _isDragging = false;
             return;
         }
@@ -196,7 +220,9 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
         HDDController hdd = GetComponent<HDDController>();
         if (hdd != null && isInSlot && !hdd.CanBeRemoved)
         {
+            ActivityLogManager.Log("Cannot remove HDD — disconnect all HDD cables first.", ActivityLogManager.EntryType.Warning);
             Debug.Log($"[DragPrefab:{name}] BLOCKED — HDD cables still connected.");
+            UnableAnimation.Shake(transform);
             _isDragging = false;
             return;
         }
@@ -209,7 +235,9 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
             GPUPhase1CableInteraction gpuPhase1 = phase?.GetGPUPhase1CableInteraction();
             if (gpuPhase1 != null && gpuPhase1.GetComponentInParent<SlotContainer>() != null)
             {
+                ActivityLogManager.Log("Cannot remove Motherboard — remove the GPU from its slot first.", ActivityLogManager.EntryType.Warning);
                 Debug.Log($"[DragPrefab:{name}] BLOCKED — GPU must be removed before dragging the motherboard.");
+                UnableAnimation.Shake(transform);
                 _isDragging = false;
                 return;
             }
@@ -222,7 +250,9 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
             SystemUnitConditionChecker checker = GetComponentInParent<SystemUnitConditionChecker>();
             if (checker != null && !checker.IsHardwareInteractable())
             {
+                ActivityLogManager.Log($"Cannot remove {LogDisplayName} — unplug the back panel cables first.", ActivityLogManager.EntryType.Warning);
                 Debug.Log($"[DragPrefab:{name}] BLOCKED — SU back cables still connected.");
+                UnableAnimation.Shake(transform);
                 _isDragging = false;
                 return;
             }
@@ -258,6 +288,7 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
         _dragIndicator = indicatorGO.AddComponent<SpriteRenderer>();
         _dragIndicator.sprite = GetComponent<SpriteRenderer>()?.sprite;
         _dragIndicator.sortingOrder = 999;
+        indicatorGO.transform.position = transform.position;
         indicatorGO.transform.localScale = transform.lossyScale;
     }
 

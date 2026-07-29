@@ -25,13 +25,14 @@ public class ActivityLogManager : MonoBehaviour
 
     private void Append(string message, EntryType type)
     {
+        // Original colors: Install=#1B5E20 (dark green), Remove=#E65100 (deep orange), Action=#263238 (dark blue-grey)
         string color = type switch
         {
-            EntryType.Install  => "#00E676",
-            EntryType.Remove   => "#FFB300",
-            EntryType.Action   => "#E0E0E0",
-            EntryType.Warning  => "#FF5252",
-            _                  => "#E0E0E0",
+            EntryType.Install  => "#000000",
+            EntryType.Remove   => "#000000",
+            EntryType.Action   => "#000000",
+            EntryType.Warning  => "#C62828",
+            _                  => "#000000",
         };
 
         // Prepend so the newest entry is always at line 1.

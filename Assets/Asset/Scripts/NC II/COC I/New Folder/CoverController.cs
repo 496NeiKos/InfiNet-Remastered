@@ -13,11 +13,9 @@ public class CoverController : MonoBehaviour
     [Header("References")]
     [SerializeField] private SystemUnitController systemUnitController;
 
-    [Header("Screws (assign all 4 — now located under SystemUnitBack)")]
+    [Header("Screws (assign 2 — located under SystemUnitBack)")]
     [SerializeField] private ScrewController screw1;
     [SerializeField] private ScrewController screw2;
-    [SerializeField] private ScrewController screw3;
-    [SerializeField] private ScrewController screw4;
 
     [Header("Slide Settings")]
     [SerializeField] private float slideDistance = 3f;
@@ -107,7 +105,9 @@ public class CoverController : MonoBehaviour
 
         if (!AllScrewsUnscrewed())
         {
+            ActivityLogManager.Log("Cannot slide cover — remove the screws first.", ActivityLogManager.EntryType.Warning);
             Debug.Log("[CoverController] Cannot open: not all screws are unscrewed.");
+            UnableAnimation.Shake(transform);
             return;
         }
 
@@ -136,16 +136,13 @@ public class CoverController : MonoBehaviour
 
     private bool AllScrewsUnscrewed()
     {
-        if (screw1 == null || screw2 == null || screw3 == null || screw4 == null)
+        if (screw1 == null || screw2 == null)
         {
             Debug.LogError("[CoverController] Not all screws are assigned!");
             return false;
         }
 
-        return screw1.IsUnscrewed()
-            && screw2.IsUnscrewed()
-            && screw3.IsUnscrewed()
-            && screw4.IsUnscrewed();
+        return screw1.IsUnscrewed() && screw2.IsUnscrewed();
     }
 
     private bool IsMouseOver()
@@ -162,7 +159,7 @@ public class CoverController : MonoBehaviour
 
     public bool AreAllScrewsScrewed()
     {
-        if (screw1 == null || screw2 == null || screw3 == null || screw4 == null) return false;
-        return screw1.IsScrewed() && screw2.IsScrewed() && screw3.IsScrewed() && screw4.IsScrewed();
+        if (screw1 == null || screw2 == null) return false;
+        return screw1.IsScrewed() && screw2.IsScrewed();
     }
 }
