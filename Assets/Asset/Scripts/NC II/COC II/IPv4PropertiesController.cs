@@ -341,9 +341,14 @@ public class IPv4PropertiesController : MonoBehaviour
         if (obtainDNSAutoBtn != null)
         {
             obtainDNSAutoBtn.interactable = on;
-            // Gray out the button when locked
             var img = obtainDNSAutoBtn.GetComponent<Image>();
-            if (img != null) img.color = on ? Color.white : lockedButtonColor;
+            if (img != null)
+            {
+                // Locked (static IP active) → gray.
+                // Unlocked → reflect DNS selection: blue if auto DNS is active, white if static DNS.
+                img.color = !on ? lockedButtonColor
+                                : (!_useStaticDNS ? selectedColor : unselectedColor);
+            }
         }
     }
 
@@ -359,8 +364,8 @@ public class IPv4PropertiesController : MonoBehaviour
     {
         SetImageActive(obtainDNSRadioImg, !staticSelected);
         SetImageActive(staticDNSRadioImg,  staticSelected);
-        SetButtonColor(useStaticDNSBtn,    staticSelected ? selectedColor : unselectedColor);
-        // Note: obtainDNSAutoBtn color is managed by SetObtainDNSInteractable
+        SetButtonColor(useStaticDNSBtn, staticSelected ? selectedColor : unselectedColor);
+        // obtainDNSAutoBtn: skip when locked (gray); otherwise apply selection color.
         if (obtainDNSAutoBtn != null && obtainDNSAutoBtn.interactable)
             SetButtonColor(obtainDNSAutoBtn, !staticSelected ? selectedColor : unselectedColor);
     }

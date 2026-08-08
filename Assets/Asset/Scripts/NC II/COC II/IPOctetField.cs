@@ -41,9 +41,14 @@ public class IPOctetField : MonoBehaviour
     [SerializeField] private bool isReadOnly;
 
     private TMP_InputField _field;
+    private bool _initialized;
 
-    private void Awake()
+    // Called from Awake AND defensively from public API, so the field is
+    // always ready even when a parent's OnEnable fires before our Awake does.
+    private void EnsureInit()
     {
+        if (_initialized) return;
+        _initialized = true;
         _field = GetComponent<TMP_InputField>();
         _field.characterLimit  = 3;
         // ContentType.Custom lets us own all character filtering via onValidateInput.
@@ -52,13 +57,15 @@ public class IPOctetField : MonoBehaviour
         _field.contentType     = TMP_InputField.ContentType.Custom;
         _field.onValidateInput = ValidateChar;
         _field.readOnly        = isReadOnly;
-
         _field.onValueChanged.AddListener(OnValueChanged);
         _field.onEndEdit.AddListener(OnEndEdit);
     }
 
+    private void Awake() => EnsureInit();
+
     private void OnDestroy()
     {
+        if (_field == null) return;
         _field.onValidateInput = null;
         _field.onValueChanged.RemoveListener(OnValueChanged);
         _field.onEndEdit.RemoveListener(OnEndEdit);
@@ -115,14 +122,19 @@ public class IPOctetField : MonoBehaviour
         }
     }
 
-    // External read helper
-    public string Value => _field != null ? _field.text : "";
+    // External read helpers — EnsureInit() so these are safe before Awake fires.
+    public string Value
+    {
+        get { EnsureInit(); return _field.text; }
+    }
     public void SetValue(string v)
     {
-        if (_field != null) _field.text = v;
+        EnsureInit();
+        _field.text = v;
     }
     public void SetInteractable(bool value)
     {
-        if (_field != null) _field.interactable = value && !isReadOnly;
+        EnsureInit();
+        _field.interactable = value && !isReadOnly;
     }
 }

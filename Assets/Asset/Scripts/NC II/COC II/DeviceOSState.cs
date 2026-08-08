@@ -24,13 +24,13 @@ public class DeviceOSState
     public bool IPv6Unchecked;
 
     // Advanced sharing (Option 2 — Guest/Public)
-    public bool NetworkDiscoveryOn;
-    public bool FilePrinterSharingOn;
+    public bool NetworkDiscoveryOn   = true;
+    public bool FilePrinterSharingOn = true;
 
     // Advanced sharing (Option 3 — All Networks)
-    public bool PublicFolderSharingOn;
-    public bool MediaStreamingOn;
-    public bool PasswordProtectedSharingOff;
+    public bool PublicFolderSharingOn = true;
+    public bool MediaStreamingOn      = true;
+    public bool PasswordProtectedSharingOff;   // false = PPS is ON (default); student must set to true (Off)
 
     // Firewall
     public bool FirewallPrivateOff;

@@ -52,7 +52,7 @@
  *    On_PPS   → AdvancedSharingController.SetPasswordSharing(true)
  *    Off_PPS  → AdvancedSharingController.SetPasswordSharing(false)
  *    Save Changes → AdvancedSharingController.SaveChanges()
- *    Cancel       → AdvancedSharingController.Cancel()
+ *    Back         → AdvancedSharingController.Cancel()  (closes panel, no revert)
  *
  *  INSPECTOR ASSIGNMENTS
  *    Assign all button references and container GameObjects as listed above.
@@ -92,9 +92,6 @@ public class AdvancedSharingController : MonoBehaviour
     // Working copies (committed on Save Changes)
     private bool _ndOn, _fpsOn, _pfsOn, _msOn, _ppsOff;
 
-    // Snapshot for Cancel
-    private bool _snapND, _snapFPS, _snapPFS, _snapMS, _snapPPS;
-
     // ----------------------------------------------------------------
     //  Lifecycle
     // ----------------------------------------------------------------
@@ -108,7 +105,6 @@ public class AdvancedSharingController : MonoBehaviour
     private void OnEnable()
     {
         LoadFromState();
-        TakeSnapshot();
     }
 
     // ----------------------------------------------------------------
@@ -191,8 +187,8 @@ public class AdvancedSharingController : MonoBehaviour
 
     public void Cancel()
     {
-        RestoreSnapshot();
-        Debug.Log("[AdvancedSharingController] Cancelled — reverted to snapshot.");
+        gameObject.SetActive(false);
+        Debug.Log("[AdvancedSharingController] Back — panel closed, changes kept.");
     }
 
     // ----------------------------------------------------------------
@@ -217,21 +213,6 @@ public class AdvancedSharingController : MonoBehaviour
         SetButtonHighlight(onPFSBtn, offPFSBtn, _pfsOn);
         SetButtonHighlight(onMSBtn,  offMSBtn,  _msOn);
         SetButtonHighlight(onPPSBtn, offPPSBtn, !_ppsOff);
-    }
-
-    private void TakeSnapshot()
-    {
-        _snapND  = _ndOn;  _snapFPS = _fpsOn;
-        _snapPFS = _pfsOn; _snapMS  = _msOn;
-        _snapPPS = _ppsOff;
-    }
-
-    private void RestoreSnapshot()
-    {
-        _ndOn = _snapND; _fpsOn = _snapFPS;
-        _pfsOn = _snapPFS; _msOn = _snapMS;
-        _ppsOff = _snapPPS;
-        LoadFromState();
     }
 
     // ----------------------------------------------------------------

@@ -93,16 +93,19 @@ public class InternetPanelController : MonoBehaviour
         int count = optionPanels != null ? optionPanels.Length : 0;
         _autoConnect = new bool[count];
 
-        // Hide all option panels and password panel at start
-        foreach (var p in optionPanels) p?.SetActive(false);
-        passwordPanel?.SetActive(false);
+        // Hide all option panels and password panel at start.
+        // Use explicit Unity-safe null checks (not ?.) — Unity's fake-null wrappers for
+        // "None" Inspector slots pass C# ReferenceEquals but throw on native access.
+        HideOptionPanels();
+        if (passwordPanel != null) passwordPanel.SetActive(false);
 
         // Auto-wire SSID buttons
         if (ssidButtons != null)
             for (int i = 0; i < ssidButtons.Length; i++)
             {
                 int idx = i;
-                ssidButtons[i]?.onClick.AddListener(() => SelectSSID(idx));
+                if (ssidButtons[i] != null)
+                    ssidButtons[i].onClick.AddListener(() => SelectSSID(idx));
             }
 
         // Auto-wire AutoConnect toggles
@@ -110,7 +113,8 @@ public class InternetPanelController : MonoBehaviour
             for (int i = 0; i < autoConnectBtns.Length; i++)
             {
                 int idx = i;
-                autoConnectBtns[i]?.onClick.AddListener(() => ToggleAutoConnect(idx));
+                if (autoConnectBtns[i] != null)
+                    autoConnectBtns[i].onClick.AddListener(() => ToggleAutoConnect(idx));
             }
 
         // Auto-wire NetworkConnect buttons
@@ -118,12 +122,13 @@ public class InternetPanelController : MonoBehaviour
             for (int i = 0; i < networkConnectBtns.Length; i++)
             {
                 int idx = i;
-                networkConnectBtns[i]?.onClick.AddListener(() => OpenPasswordPanel(idx));
+                if (networkConnectBtns[i] != null)
+                    networkConnectBtns[i].onClick.AddListener(() => OpenPasswordPanel(idx));
             }
 
         // Auto-wire Password panel buttons
-        confirmBtn?.onClick.AddListener(ConfirmPassword);
-        cancelBtn?.onClick.AddListener(CancelPassword);
+        if (confirmBtn != null) confirmBtn.onClick.AddListener(ConfirmPassword);
+        if (cancelBtn != null)  cancelBtn.onClick.AddListener(CancelPassword);
 
         // Refresh all AutoConnect button colors
         for (int i = 0; i < count; i++) RefreshAutoConnectColor(i);
@@ -138,6 +143,7 @@ public class InternetPanelController : MonoBehaviour
         bool willOpen = !gameObject.activeSelf;
         gameObject.SetActive(willOpen);
         if (willOpen) ResetToSSIDList();
+        Debug.Log($"[InternetPanelController] Panel {(willOpen ? "opened" : "closed")}.");
     }
 
     // ----------------------------------------------------------------
@@ -159,8 +165,8 @@ public class InternetPanelController : MonoBehaviour
         _activeOptionIndex = index;
 
         // Hide all option panels, show only the selected one
-        foreach (var p in optionPanels) p?.SetActive(false);
-        optionPanels[index]?.SetActive(true);
+        HideOptionPanels();
+        if (optionPanels[index] != null) optionPanels[index].SetActive(true);
 
         // NOTE: Default panel stays active — option panel overlays inside it
         Debug.Log($"[InternetPanelController] SSID {index} selected → Option Panel {index} shown.");
@@ -187,10 +193,10 @@ public class InternetPanelController : MonoBehaviour
         _activeOptionIndex = index;
 
         // Hide current option panel
-        foreach (var p in optionPanels) p?.SetActive(false);
+        HideOptionPanels();
 
         if (passwordField != null) passwordField.text = "";
-        passwordPanel?.SetActive(true);
+        if (passwordPanel != null) passwordPanel.SetActive(true);
 
         Debug.Log($"[InternetPanelController] Password panel opened for option {index}.");
     }
@@ -222,10 +228,10 @@ public class InternetPanelController : MonoBehaviour
             _wrongKeyRoutine = null;
         }
 
-        passwordPanel?.SetActive(false);
+        if (passwordPanel != null) passwordPanel.SetActive(false);
         // Return to option panel if there was one active
-        if (IsValidIndex(_activeOptionIndex))
-            optionPanels[_activeOptionIndex]?.SetActive(true);
+        if (IsValidIndex(_activeOptionIndex) && optionPanels[_activeOptionIndex] != null)
+            optionPanels[_activeOptionIndex].SetActive(true);
 
         Debug.Log("[InternetPanelController] Password cancelled.");
     }
@@ -241,8 +247,8 @@ public class InternetPanelController : MonoBehaviour
         state.WifiSSID      = $"Network_Option_{_activeOptionIndex}";
         state.WifiPassword  = correctPassword;
 
-        passwordPanel?.SetActive(false);
-        foreach (var p in optionPanels) p?.SetActive(false);
+        if (passwordPanel != null) passwordPanel.SetActive(false);
+        HideOptionPanels();
 
         // Close Internet Panel after connecting
         gameObject.SetActive(false);
@@ -264,9 +270,16 @@ public class InternetPanelController : MonoBehaviour
 
     private void ResetToSSIDList()
     {
-        foreach (var p in optionPanels) p?.SetActive(false);
-        passwordPanel?.SetActive(false);
+        HideOptionPanels();
+        if (passwordPanel != null) passwordPanel.SetActive(false);
         _activeOptionIndex = -1;
+    }
+
+    private void HideOptionPanels()
+    {
+        if (optionPanels == null) return;
+        foreach (var p in optionPanels)
+            if (p != null) p.SetActive(false);
     }
 
     private void RefreshAutoConnectColor(int index)
