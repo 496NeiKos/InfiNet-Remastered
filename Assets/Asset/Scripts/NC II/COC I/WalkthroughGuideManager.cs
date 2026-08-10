@@ -75,7 +75,9 @@ public class WalkthroughGuideManager : MonoBehaviour
         DetailViewAngleChange,
         InventoryToggle,
         InventoryBackButton,
-        MajorHardwareDeployed
+        MajorHardwareDeployed,
+        SideCoverScrewsUnscrewed,
+        SideCoverOpened
     }
 
     // ----------------------------------------------------------------
@@ -137,6 +139,9 @@ public class WalkthroughGuideManager : MonoBehaviour
     [Header("Back Cable Ports (AllBackCablesUnplugged trigger)")]
     [Tooltip("Assign only SU-back, Monitor-back, and AVR-back CablePort components. Excludes MB/GPU/HDD ports.")]
     [SerializeField] private CablePort[] backCablePorts = new CablePort[0];
+
+    // SideCoverScrewsUnscrewed — fired by CoverController when both cover screws transition off Screwed state.
+    // SideCoverOpened          — fired by CoverController after the slide animation finishes (cover fully open).
 
     // ----------------------------------------------------------------
     //  Private state

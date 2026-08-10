@@ -87,6 +87,7 @@ public class RAMDetailedView : MonoBehaviour
         ApplySprite();
         ActivityLogManager.Log($"{transform.parent.name} latch opened — RAM released.", ActivityLogManager.EntryType.Remove);
         Debug.Log($"[RAMDetailedView:{name}] Slide-up → Uninstalled");
+        NCIITaskListManager.CheckConditions();
     }
 
     private void ApplySprite()

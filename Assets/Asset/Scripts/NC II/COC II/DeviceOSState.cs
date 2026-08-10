@@ -1,12 +1,12 @@
 using System.Collections.Generic;
 
-public enum DeviceType { Server, Desktop, Laptop }
+public enum DeviceID { Computer1, Computer2, Laptop }
 
 public class DeviceOSState
 {
-    public DeviceType Device;
+    public DeviceID Device;
 
-    // WiFi (Laptop only)
+    // WiFi
     public bool WifiConnected;
     public string WifiSSID = "";
     public string WifiPassword = "";
@@ -40,13 +40,10 @@ public class DeviceOSState
     public readonly List<int> PanelHistory = new List<int>();
     public int HistoryIndex = -1;
 
-    public bool IPConfigured    => UseStaticIP && IsValidIP(IPOctets);
+    public bool IPConfigured      => UseStaticIP && IsValidIP(IPOctets);
     public bool SharingConfigured => NetworkDiscoveryOn && FilePrinterSharingOn && PasswordProtectedSharingOff;
     public bool FirewallConfigured => FirewallPrivateOff && FirewallPublicOff;
-    public bool FullyConfigured =>
-        (Device != DeviceType.Laptop || WifiConnected) &&
-        IPConfigured && IPv6Unchecked &&
-        SharingConfigured && FirewallConfigured;
+    public bool FullyConfigured   => IPConfigured && IPv6Unchecked && SharingConfigured && FirewallConfigured;
 
     private static bool IsValidIP(string[] octets)
     {

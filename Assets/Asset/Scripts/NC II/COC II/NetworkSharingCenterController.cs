@@ -89,9 +89,16 @@ public class NetworkSharingCenterController : MonoBehaviour
     public void LoadState(DeviceOSState state)
     {
         HideAllPanels();
-        _currentPanel = state.HistoryIndex; // reuse HistoryIndex as last open panel index
+        _currentPanel = state.HistoryIndex;
         if (_currentPanel >= 0 && _currentPanel < panels.Length)
+        {
+            gameObject.SetActive(true);
             panels[_currentPanel]?.SetActive(true);
+        }
+        else
+        {
+            gameObject.SetActive(false);
+        }
     }
 
     public void SaveState(DeviceOSState state)

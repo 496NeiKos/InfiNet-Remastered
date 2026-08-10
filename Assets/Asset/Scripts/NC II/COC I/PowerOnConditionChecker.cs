@@ -8,8 +8,6 @@ public class PowerOnConditionChecker : MonoBehaviour
     [Header("Cover Screws")]
     [SerializeField] private ScrewController screw1;
     [SerializeField] private ScrewController screw2;
-    [SerializeField] private ScrewController screw3;
-    [SerializeField] private ScrewController screw4;
 
     [Header("PSU Switch (System Unit Back)")]
     [SerializeField] private PSUSwitchController psuSwitch;
@@ -47,6 +45,9 @@ public class PowerOnConditionChecker : MonoBehaviour
     [SerializeField] private CablePort cableSlot2;
     [SerializeField] private CablePort cableSlot3;
 
+    [Header("Motherboard Front Panel Cables")]
+    [SerializeField] private CablePort frontPanelConnectorPort;
+
     public bool CanTurnOn()
     {
         bool pass = true;
@@ -56,8 +57,6 @@ public class PowerOnConditionChecker : MonoBehaviour
 
         if (!IsScrewed(screw1)) { Warn("Cannot power on — tighten cover screw 1 first."); pass = false; }
         if (!IsScrewed(screw2)) { Warn("Cannot power on — tighten cover screw 2 first."); pass = false; }
-        if (!IsScrewed(screw3)) { Warn("Cannot power on — tighten cover screw 3 first."); pass = false; }
-        if (!IsScrewed(screw4)) { Warn("Cannot power on — tighten cover screw 4 first."); pass = false; }
 
         if (psuSwitch == null || !psuSwitch.IsOn)
         { Warn("Cannot power on — turn on the PSU switch on the System Unit back first."); pass = false; }
@@ -107,6 +106,8 @@ public class PowerOnConditionChecker : MonoBehaviour
 
         if (!IsPortInstalled(cableSlot2)) { Warn("Cannot power on — connect motherboard cable 2 first."); pass = false; }
         if (!IsPortInstalled(cableSlot3)) { Warn("Cannot power on — connect motherboard cable 3 first."); pass = false; }
+
+        if (!IsPortInstalled(frontPanelConnectorPort)) { Warn("Cannot power on — connect the front panel connector cable first."); pass = false; }
 
         if (pass) Debug.Log("[PowerOn] All conditions met — power on allowed.");
         return pass;

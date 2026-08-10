@@ -39,6 +39,22 @@ public class CoverController : MonoBehaviour
         _closedPosition = transform.localPosition;
         _openPosition = _closedPosition + new Vector3(slideDistance, 0f, 0f);
         _targetPosition = _closedPosition;
+
+        if (screw1 != null) screw1.OnStateChanged += OnScrewStateChanged;
+        if (screw2 != null) screw2.OnStateChanged += OnScrewStateChanged;
+    }
+
+    private void OnDestroy()
+    {
+        if (screw1 != null) screw1.OnStateChanged -= OnScrewStateChanged;
+        if (screw2 != null) screw2.OnStateChanged -= OnScrewStateChanged;
+    }
+
+    private void OnScrewStateChanged(ScrewController _)
+    {
+        if (AreAllScrewsUnscrewed())
+            WalkthroughGuideManager.Instance?.TryTrigger(
+                WalkthroughGuideManager.WalkthroughTrigger.SideCoverScrewsUnscrewed);
     }
 
     private void Update()
@@ -61,6 +77,8 @@ public class CoverController : MonoBehaviour
                     Debug.Log("[CoverController] Cover fully open.");
                     ActivityLogManager.Log("Side cover removed", ActivityLogManager.EntryType.Remove);
                     NCIITaskListManager.CheckConditions();
+                    WalkthroughGuideManager.Instance?.TryTrigger(
+                        WalkthroughGuideManager.WalkthroughTrigger.SideCoverOpened);
                 }
                 else
                 {

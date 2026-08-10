@@ -66,7 +66,11 @@ public class MotherboardDetailViewManager : MonoBehaviour
             if (gpu != null)
             {
                 GPUPhase1CableInteraction phase1Cable = gpu.GetComponent<GPUPhase1CableInteraction>();
-                if (phase1Cable != null && phase1Cable.enabled) return;
+                if (phase1Cable != null && phase1Cable.enabled)
+                {
+                    ActivityLogManager.Log("Cannot open GPU detail — connect or disconnect the GPU power cable directly in this view.", ActivityLogManager.EntryType.Warning);
+                    return;
+                }
                 OpenInnerPanel(gpu.gameObject);
                 return;
             }

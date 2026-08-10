@@ -184,6 +184,7 @@ public class ScrewController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
 
         if (coverController != null && coverController.IsOpen())
         {
+            ActivityLogManager.Log("Cannot place screw — close the cover first.", ActivityLogManager.EntryType.Warning);
             Debug.Log($"[ScrewController] {name}: cannot place screw, cover is open");
             return false;
         }
@@ -204,6 +205,7 @@ public class ScrewController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
 
         if (coverController != null && coverController.IsOpen())
         {
+            ActivityLogManager.Log("Cannot move screw — close the cover first.", ActivityLogManager.EntryType.Warning);
             _isDragging = false;
             return;
         }
@@ -347,6 +349,8 @@ public class ScrewController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         string category;
         if (GetComponentInParent<CoverController>(true) != null)
             category = "System Unit Cover Screw";
+        else if (GetComponentInParent<PSUController>(true) != null)
+            category = "PSU Back Screw";
         else if (GetComponentInParent<GPUController>(true) != null)
             category = "GPU Screw";
         else if (GetComponentInParent<HeatsinkController>(true) != null)

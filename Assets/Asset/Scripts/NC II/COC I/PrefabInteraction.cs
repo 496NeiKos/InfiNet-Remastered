@@ -38,7 +38,12 @@ public class PrefabInteraction : MonoBehaviour
 
         // Motherboard-level components (CPU, GPU, RAM, PSU, HDD, SSD, Heatsink) must
         // not open a detail view when loose in the workspace — only in the editing panel.
-        if (IsMotherboardComponent() && IsInWorldRoot()) return;
+        if (IsMotherboardComponent() && IsInWorldRoot())
+        {
+            if (IsMouseOver())
+                ActivityLogManager.Log($"Cannot open {name} detail — install it on the Motherboard first, then right-click it in the Motherboard editing view.", ActivityLogManager.EntryType.Warning);
+            return;
+        }
 
         if (GameManager.Instance != null && GameManager.Instance.IsEditorOpen) return;
 
@@ -48,6 +53,7 @@ public class PrefabInteraction : MonoBehaviour
         {
             if (!_mbController.IsPhase1Complete())
             {
+                ActivityLogManager.Log("Cannot open Motherboard detail — complete Phase 1 first: unscrew, detach cables, and drag the Motherboard to the workspace.", ActivityLogManager.EntryType.Warning);
                 Debug.Log($"{name} -> Phase 1 incomplete: unscrew, detach cables, and drag motherboard out first.");
                 return;
             }

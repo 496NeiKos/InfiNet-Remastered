@@ -3,8 +3,10 @@
  *  UNITY SETUP GUIDE — VirtualOSManager
  * ================================================================
  *  COMPONENT PLACEMENT
- *    Add this script to the "Virtual Operating System" Canvas
- *    GameObject.
+ *    Add this script to a SEPARATE always-active GameObject
+ *    (e.g. an empty "Managers" object in the scene root).
+ *    Do NOT place it on the canvas — a disabled canvas never
+ *    runs Awake, so the singleton would never initialize.
  *
  *  HIERARCHY
  *    Virtual Operating System  (this script here)
@@ -22,11 +24,9 @@
  *                              "Local Area Connection" or "Wireless Network Connection")
  *
  *  HOW IT WORKS
- *    Call OpenForDevice(DeviceType) from any hardware object's right-click
- *    interaction to open the Virtual OS canvas for that device. The canvas
- *    loads that device's saved DeviceOSState (or creates a fresh one).
- *    ESC closes the canvas and saves the current state back to the dictionary.
- *    WiFiBtn is only interactable when the current device is Laptop.
+ *    Call OpenForDevice(DeviceID) from DeviceOSAccessPoint on each device's
+ *    front detail view. The canvas loads that device's saved DeviceOSState
+ *    (or creates a fresh one). ESC closes the canvas and saves state back.
  * ================================================================
  */
 
@@ -46,18 +46,19 @@ public class VirtualOSManager : MonoBehaviour
     [Header("References")]
     [SerializeField] private NetworkSharingCenterController networkSharingCenter;
     [SerializeField] private InternetPanelController internetPanel;
-    [Tooltip("WiFiBtn GameObject — interactable only for Laptop.")]
+    [Tooltip("WiFiBtn GameObject under Taskbar.")]
     [SerializeField] private GameObject wifiBtnObject;
     [Tooltip("TMP_Text inside EthernetNamePanel that shows the adapter name.")]
     [SerializeField] private TMP_Text adapterNameTMP;
 
-    // Per-device state dictionary
-    private readonly Dictionary<DeviceType, DeviceOSState> _states =
-        new Dictionary<DeviceType, DeviceOSState>();
+    private readonly Dictionary<DeviceID, DeviceOSState> _states =
+        new Dictionary<DeviceID, DeviceOSState>();
 
-    private DeviceType   _currentDevice;
+    private DeviceID      _currentDevice;
     private DeviceOSState _currentState;
     private bool          _isOpen;
+
+    private GameObject _activeDetailView;
 
     // ----------------------------------------------------------------
     //  Lifecycle
@@ -68,9 +69,7 @@ public class VirtualOSManager : MonoBehaviour
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
 
-        // Always seed a default state so CurrentState is never null during editor testing
-        // (even before OpenForDevice is called).
-        _currentDevice = DeviceType.Server;
+        _currentDevice = DeviceID.Computer1;
         _states[_currentDevice] = new DeviceOSState { Device = _currentDevice };
         _currentState = _states[_currentDevice];
 
@@ -79,7 +78,6 @@ public class VirtualOSManager : MonoBehaviour
 
     private void Start()
     {
-        // Wire WiFiBtn → InternetPanel.Toggle (left-click, no manual Inspector wiring needed)
         if (wifiBtnObject != null && internetPanel != null)
         {
             var btn = wifiBtnObject.GetComponent<Button>();
@@ -95,10 +93,10 @@ public class VirtualOSManager : MonoBehaviour
     }
 
     // ----------------------------------------------------------------
-    //  Public API — call from hardware right-click interaction
+    //  Public API
     // ----------------------------------------------------------------
 
-    public void OpenForDevice(DeviceType device)
+    public void OpenForDevice(DeviceID device, GameObject detailView = null)
     {
         _currentDevice = device;
 
@@ -107,6 +105,10 @@ public class VirtualOSManager : MonoBehaviour
 
         _currentState = _states[device];
         _isOpen       = true;
+
+        _activeDetailView = detailView;
+        if (_activeDetailView != null)
+            _activeDetailView.SetActive(false);
 
         virtualOSCanvas?.SetActive(true);
         ApplyDeviceContext();
@@ -118,8 +120,13 @@ public class VirtualOSManager : MonoBehaviour
     public void Close()
     {
         networkSharingCenter?.SaveState(_currentState);
+        networkSharingCenter?.ClosePanel(); // reset UI to clean Desktop before disabling
         virtualOSCanvas?.SetActive(false);
         _isOpen = false;
+
+        if (_activeDetailView != null)
+            _activeDetailView.SetActive(true);
+
         Debug.Log($"[VirtualOSManager] Closed. State saved for {_currentDevice}.");
     }
 
@@ -128,17 +135,15 @@ public class VirtualOSManager : MonoBehaviour
     // ----------------------------------------------------------------
 
     public DeviceOSState CurrentState  => _currentState;
-    public DeviceType    CurrentDevice => _currentDevice;
+    public DeviceID      CurrentDevice => _currentDevice;
 
-    public DeviceOSState GetState(DeviceType device)
+    public DeviceOSState GetState(DeviceID device)
     {
         if (!_states.ContainsKey(device))
             _states[device] = new DeviceOSState { Device = device };
         return _states[device];
     }
 
-    // Returns the network prefix (first 3 octets) set by whichever device
-    // was configured first, or empty string if none configured yet.
     public string GetNetworkPrefix()
     {
         foreach (DeviceOSState s in _states.Values)
@@ -150,7 +155,6 @@ public class VirtualOSManager : MonoBehaviour
         return "";
     }
 
-    // Returns all host octets (4th) already committed by other devices.
     public List<string> GetUsedHostOctets()
     {
         var used = new List<string>();
@@ -169,16 +173,8 @@ public class VirtualOSManager : MonoBehaviour
 
     private void ApplyDeviceContext()
     {
-        bool isLaptop = _currentDevice == DeviceType.Laptop;
+        bool isLaptop = _currentDevice == DeviceID.Laptop;
 
-        // WiFiBtn — interactable only for Laptop
-        if (wifiBtnObject != null)
-        {
-            var btn = wifiBtnObject.GetComponent<Button>();
-            if (btn != null) btn.interactable = isLaptop;
-        }
-
-        // Adapter name label
         if (adapterNameTMP != null)
             adapterNameTMP.text = isLaptop ? "Wireless Network Connection" : "Local Area Connection";
     }

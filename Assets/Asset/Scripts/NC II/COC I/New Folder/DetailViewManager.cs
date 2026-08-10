@@ -26,13 +26,12 @@ public class DetailViewManager : MonoBehaviour
         if (Mouse.current.rightButton.wasPressedThisFrame)
         {
             if (_isInnerPanelOpen)
+            {
+                ActivityLogManager.Log("Cannot open another panel — close the current detail view first.", ActivityLogManager.EntryType.Warning);
                 return;
+            }
 
-            if (coverController != null && coverController.IsSliding)
-                return;
-
-            if (coverController != null && coverController.IsOpen())
-                CheckChildRightClick();
+            CheckChildRightClick();
         }
     }
 
@@ -68,8 +67,21 @@ public class DetailViewManager : MonoBehaviour
 
             if (clicked.GetComponentInParent<PSUController>() != null) return;
 
+            if (coverController != null && coverController.IsSliding)
+            {
+                ActivityLogManager.Log("Cannot open component — wait for the cover to finish sliding.", ActivityLogManager.EntryType.Warning);
+                return;
+            }
+
+            if (coverController != null && !coverController.IsOpen())
+            {
+                ActivityLogManager.Log("Cannot open component — slide the cover open first.", ActivityLogManager.EntryType.Warning);
+                return;
+            }
+
             if (checker != null && !checker.IsHardwareInteractable())
             {
+                ActivityLogManager.Log("Cannot open component — unplug the back panel cables first.", ActivityLogManager.EntryType.Warning);
                 Debug.Log("[DetailViewManager] BLOCKED — SU back cables still connected. Unplug VGA and PSU cables first.");
                 return;
             }

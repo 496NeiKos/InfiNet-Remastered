@@ -24,6 +24,12 @@ public class PSUController : MonoBehaviour
     [Header("HDD — PSU cable (must be unplugged before removal)")]
     [SerializeField] private CablePort cableSlotHddPsu;
 
+    [Header("System Unit Back — PSU mounting screws (must be unscrewed before removal)")]
+    [SerializeField] private ScrewController psuScrew1;
+    [SerializeField] private ScrewController psuScrew2;
+    [SerializeField] private ScrewController psuScrew3;
+    [SerializeField] private ScrewController psuScrew4;
+
     public bool CanBeRemoved
     {
         get
@@ -34,6 +40,10 @@ public class PSUController : MonoBehaviour
             if (cableSlotPsuCpu != null && cableSlotPsuCpu.IsInstalled) return false;
             if (cableSlotPsuMobo != null && cableSlotPsuMobo.IsInstalled) return false;
             if (cableSlotHddPsu != null && cableSlotHddPsu.IsInstalled) return false;
+            if (psuScrew1 != null && !psuScrew1.IsEmpty()) return false;
+            if (psuScrew2 != null && !psuScrew2.IsEmpty()) return false;
+            if (psuScrew3 != null && !psuScrew3.IsEmpty()) return false;
+            if (psuScrew4 != null && !psuScrew4.IsEmpty()) return false;
             return true;
         }
     }
