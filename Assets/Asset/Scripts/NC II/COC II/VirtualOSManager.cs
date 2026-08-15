@@ -25,8 +25,11 @@
  *
  *  HOW IT WORKS
  *    Call OpenForDevice(DeviceID) from DeviceOSAccessPoint on each device's
- *    front detail view. The canvas loads that device's saved DeviceOSState
- *    (or creates a fresh one). ESC closes the canvas and saves state back.
+ *    front detail view. Switching to a different device saves the outgoing
+ *    state and loads the incoming one. ESC just hides the canvas — all panel
+ *    and nav state is preserved so the player can resume by reopening the
+ *    same device. chromePanelManager and tpLinkTabManager also need Inspector
+ *    assignment (Chrome GameObject and Page 2 - Main respectively).
  * ================================================================
  */
 
@@ -45,7 +48,12 @@ public class VirtualOSManager : MonoBehaviour
 
     [Header("References")]
     [SerializeField] private NetworkSharingCenterController networkSharingCenter;
-    [SerializeField] private InternetPanelController internetPanel;
+    [SerializeField] private InternetPanelController        internetPanel;
+    [SerializeField] private ChromePanelManager             chromePanelManager;
+    [SerializeField] private TPLinkTabManager               tpLinkTabManager;
+    [SerializeField] private TopologyConditionManager       topologyManager;
+    [Tooltip("Used to check AP.IsConfigured for the Laptop IP config gate.")]
+    [SerializeField] private AccessPointResetController     apResetController;
     [Tooltip("WiFiBtn GameObject under Taskbar.")]
     [SerializeField] private GameObject wifiBtnObject;
     [Tooltip("TMP_Text inside EthernetNamePanel that shows the adapter name.")]
@@ -57,6 +65,8 @@ public class VirtualOSManager : MonoBehaviour
     private DeviceID      _currentDevice;
     private DeviceOSState _currentState;
     private bool          _isOpen;
+    // True after Close() (ESC) — lets OpenForDevice know to resume instead of reload
+    private bool          _wasJustHidden;
 
     private GameObject _activeDetailView;
 
@@ -98,36 +108,53 @@ public class VirtualOSManager : MonoBehaviour
 
     public void OpenForDevice(DeviceID device, GameObject detailView = null)
     {
-        _currentDevice = device;
+        bool resumingSameDevice = _wasJustHidden && device == _currentDevice;
+        _wasJustHidden = false;
 
-        if (!_states.ContainsKey(device))
-            _states[device] = new DeviceOSState { Device = device };
+        if (!resumingSameDevice)
+        {
+            // Save outgoing device state before switching
+            networkSharingCenter?.SaveState(_currentState);
+            chromePanelManager?.SaveState(_currentState);
+            tpLinkTabManager?.SaveState(_currentState);
+            chromePanelManager?.CloseForSwitch();
 
-        _currentState = _states[device];
-        _isOpen       = true;
+            // Restore the outgoing device's front panel
+            if (_activeDetailView != null)
+                _activeDetailView.SetActive(true);
+
+            // Set up the incoming device
+            _currentDevice = device;
+
+            if (!_states.ContainsKey(device))
+                _states[device] = new DeviceOSState { Device = device };
+
+            _currentState = _states[device];
+
+            ApplyDeviceContext();
+            networkSharingCenter?.LoadState(_currentState);
+            chromePanelManager?.LoadState(_currentState);
+            tpLinkTabManager?.LoadState(_currentState);
+        }
 
         _activeDetailView = detailView;
         if (_activeDetailView != null)
             _activeDetailView.SetActive(false);
 
         virtualOSCanvas?.SetActive(true);
-        ApplyDeviceContext();
-        networkSharingCenter?.LoadState(_currentState);
+        _isOpen = true;
 
-        Debug.Log($"[VirtualOSManager] Opened for {device}.");
+        Debug.Log($"[VirtualOSManager] Opened for {device}{(resumingSameDevice ? " (resumed)" : "")}.");
     }
 
+    // ESC — hides the canvas only. All panel and nav state is preserved so the
+    // player can return to exactly where they left off by reopening the same device.
     public void Close()
     {
-        networkSharingCenter?.SaveState(_currentState);
-        networkSharingCenter?.ClosePanel(); // reset UI to clean Desktop before disabling
+        _wasJustHidden = true;
         virtualOSCanvas?.SetActive(false);
         _isOpen = false;
-
-        if (_activeDetailView != null)
-            _activeDetailView.SetActive(true);
-
-        Debug.Log($"[VirtualOSManager] Closed. State saved for {_currentDevice}.");
+        Debug.Log($"[VirtualOSManager] Canvas hidden. State preserved for {_currentDevice}.");
     }
 
     // ----------------------------------------------------------------
@@ -136,6 +163,35 @@ public class VirtualOSManager : MonoBehaviour
 
     public DeviceOSState CurrentState  => _currentState;
     public DeviceID      CurrentDevice => _currentDevice;
+
+    public bool IsWifiRouterTopologySatisfied() => topologyManager?.IsWifiRouterSatisfied(_currentDevice) ?? false;
+    public bool IsWifiAPTopologySatisfied()     => topologyManager?.IsWifiAPSatisfied(_currentDevice)     ?? false;
+
+    public bool IsIPTopologySatisfied()
+    {
+        if (!(topologyManager?.IsIPSatisfied(_currentDevice) ?? false)) return false;
+        // Laptop connects wirelessly — the Access Point must also be configured (WiFi phase complete).
+        if (_currentDevice == DeviceID.Laptop)
+            return apResetController != null && apResetController.IsConfigured;
+        return true;
+    }
+
+    /// <summary>Returns a human-readable reason why IP topology is blocked, or empty string if satisfied.</summary>
+    public string GetIPBlockReason()
+    {
+        if (topologyManager == null)
+            return "Topology manager is not assigned.";
+        if (!topologyManager.IsIPSatisfied(_currentDevice))
+            return "Network topology is not complete. Make sure all cable connections also have port cables installed in each device's detail view.";
+        if (_currentDevice == DeviceID.Laptop)
+        {
+            if (apResetController == null)
+                return "Access Point controller is not assigned.";
+            if (!apResetController.IsConfigured)
+                return "The Access Point must be configured first. Complete the WiFi setup for the Access Point (TP-Link configuration) before configuring the Laptop.";
+        }
+        return "";
+    }
 
     public DeviceOSState GetState(DeviceID device)
     {

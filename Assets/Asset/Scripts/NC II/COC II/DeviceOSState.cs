@@ -40,6 +40,16 @@ public class DeviceOSState
     public readonly List<int> PanelHistory = new List<int>();
     public int HistoryIndex = -1;
 
+    // Chrome navigation blueprint (per-device, independent of router values)
+    public int        ChromeCurrentPage  = 0;     // 0=Default 1=TPLinkLogin 2=TPLinkMain
+    public List<int>  ChromeHistory      = new List<int>(); // history stack, bottom→top
+    public bool       ChromeIsLoggedIn   = false;
+    public int        ChromeWifiTarget   = 0;     // 0=None 1=Router 2=AccessPoint
+
+    // TPLink navigation blueprint (per-device; router config values stay on TPLinkTabManager)
+    public int TPLinkActiveMainTab = 0;  // 0=InterfaceSetup 1=Status
+    public int TPLinkActiveSubTab  = 0;  // 0=Wireless 1=LAN
+
     public bool IPConfigured      => UseStaticIP && IsValidIP(IPOctets);
     public bool SharingConfigured => NetworkDiscoveryOn && FilePrinterSharingOn && PasswordProtectedSharingOff;
     public bool FirewallConfigured => FirewallPrivateOff && FirewallPublicOff;

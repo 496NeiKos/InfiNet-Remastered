@@ -49,6 +49,7 @@
  * ================================================================
  */
 
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -66,11 +67,19 @@ public class NetworkSharingCenterController : MonoBehaviour
     [Tooltip("Back/close button inside Nav — deactivates the current panel.")]
     [SerializeField] private Button closeBtn;
 
+    [Header("IP Topology Gate")]
+    [Tooltip("Full-rect Image child (Raycast Target ON) that blocks NSC interaction. Start INACTIVE.")]
+    [SerializeField] private GameObject nscBlocker;
+    [Tooltip("TMP_Text child above the panel showing the topology hint. Start INACTIVE.")]
+    [SerializeField] private TMP_Text   nscHintTMP;
+
     private int _currentPanel = -1; // -1 = no panel open (Main Content visible)
 
     // ----------------------------------------------------------------
     //  Lifecycle
     // ----------------------------------------------------------------
+
+    private void Update() => UpdateBlocker();
 
     private void Awake()
     {
@@ -94,6 +103,7 @@ public class NetworkSharingCenterController : MonoBehaviour
         {
             gameObject.SetActive(true);
             panels[_currentPanel]?.SetActive(true);
+            UpdateBlocker(); // Set correct blocker state immediately — no one-frame flash.
         }
         else
         {
@@ -146,5 +156,20 @@ public class NetworkSharingCenterController : MonoBehaviour
     {
         foreach (var p in panels) p?.SetActive(false);
         _currentPanel = -1;
+    }
+
+    private void UpdateBlocker()
+    {
+        if (nscBlocker == null) return;
+        bool satisfied = VirtualOSManager.Instance != null
+                      && VirtualOSManager.Instance.IsIPTopologySatisfied();
+        bool shouldBlock = !satisfied;
+        nscBlocker.SetActive(shouldBlock);
+        if (nscHintTMP != null)
+        {
+            nscHintTMP.gameObject.SetActive(shouldBlock);
+            if (shouldBlock && VirtualOSManager.Instance != null)
+                nscHintTMP.text = VirtualOSManager.Instance.GetIPBlockReason();
+        }
     }
 }

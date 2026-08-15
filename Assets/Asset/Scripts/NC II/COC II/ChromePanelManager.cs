@@ -72,6 +72,8 @@ public class ChromePanelManager : MonoBehaviour
 {
     private enum ChromePage { Default, TPLinkLogin, TPLinkMain }
 
+    public enum WifiTarget { None, Router, AccessPoint }
+
     [Header("Nav")]
     [SerializeField] private Button backBtn;
     [SerializeField] private TMP_InputField searchField;
@@ -94,12 +96,64 @@ public class ChromePanelManager : MonoBehaviour
     [SerializeField] [TextArea(2, 4)] private string defaultWelcomeText =
         "Welcome!\nType an IP address in the address bar to navigate to a device.";
 
-    private const string RouterIP  = "192.168.1.1";
+    [Header("Device IPs (set in Inspector)")]
+    [Tooltip("IP address that routes to the Router admin page (typed after router reset).")]
+    [SerializeField] private string routerDefaultIP = "";
+    [Tooltip("IP address that routes to the Access Point admin page (typed after AP reset).")]
+    [SerializeField] private string apDefaultIP     = "";
+
+    [Header("Reset Controllers")]
+    [SerializeField] private RouterResetController      routerReset;
+    [SerializeField] private AccessPointResetController apReset;
+    [SerializeField] private TPLinkTabManager           tpLinkTabManager;
+
     private const string AdminCred = "admin";
 
     private readonly Stack<ChromePage> _history = new Stack<ChromePage>();
-    private ChromePage _currentPage = ChromePage.Default;
+    private ChromePage _currentPage    = ChromePage.Default;
     private bool       _isLoggedIn;
+    private WifiTarget _currentTarget  = WifiTarget.None;
+
+    public WifiTarget CurrentTarget => _currentTarget;
+
+    // ----------------------------------------------------------------
+    //  State load/save (called by VirtualOSManager on device switch)
+    // ----------------------------------------------------------------
+
+    public void LoadState(DeviceOSState state)
+    {
+        _isLoggedIn    = state.ChromeIsLoggedIn;
+        _currentTarget = (WifiTarget)state.ChromeWifiTarget;
+
+        _history.Clear();
+        // List is stored bottom→top; push in order so last element ends up on top
+        foreach (int entry in state.ChromeHistory)
+            _history.Push((ChromePage)entry);
+
+        // Clear stale text fields so no input from another device bleeds in
+        if (searchField   != null) searchField.text   = "";
+        if (usernameField != null) usernameField.text = "";
+        if (passwordField != null) passwordField.text = "";
+        HideError();
+
+        ShowPage((ChromePage)state.ChromeCurrentPage);
+    }
+
+    public void SaveState(DeviceOSState state)
+    {
+        state.ChromeCurrentPage = (int)_currentPage;
+        state.ChromeIsLoggedIn  = _isLoggedIn;
+        state.ChromeWifiTarget  = (int)_currentTarget;
+
+        state.ChromeHistory.Clear();
+        // Stack.ToArray() returns top-first; reverse to store bottom→top
+        ChromePage[] arr = _history.ToArray();
+        for (int i = arr.Length - 1; i >= 0; i--)
+            state.ChromeHistory.Add((int)arr[i]);
+    }
+
+    // Closes Chrome without resetting nav state — called by VirtualOSManager when switching devices.
+    public void CloseForSwitch() => gameObject.SetActive(false);
 
     // ----------------------------------------------------------------
     //  Lifecycle
@@ -119,6 +173,11 @@ public class ChromePanelManager : MonoBehaviour
         if (passwordField != null) passwordField.onValueChanged.AddListener(_ => HideError());
 
         ResetFlow();
+    }
+
+    private void OnEnable()
+    {
+        if (searchField != null) searchField.text = "";
     }
 
     // ----------------------------------------------------------------
@@ -142,24 +201,80 @@ public class ChromePanelManager : MonoBehaviour
     {
         string trimmed = input.Trim();
 
-        if (trimmed == RouterIP)
+        if (!string.IsNullOrEmpty(routerDefaultIP) && trimmed == routerDefaultIP)
         {
-            NavigateTo(_isLoggedIn ? ChromePage.TPLinkMain : ChromePage.TPLinkLogin);
-        }
-        else
-        {
-            // Update Default Page text to reflect the failed search
-            if (defaultPageTMP != null)
+            if (_currentTarget != WifiTarget.Router)
             {
-                defaultPageTMP.text = string.IsNullOrEmpty(trimmed)
-                    ? defaultWelcomeText
-                    : $"No result found, you searched: '{trimmed}'\nTry typing your IP address.";
+                _isLoggedIn    = false;
+                _currentTarget = WifiTarget.Router;
+                if (usernameField != null) usernameField.text = "";
+                if (passwordField != null) passwordField.text = "";
+                HideError();
             }
-
-            // Only push history and switch if we're not already on Default
-            if (_currentPage != ChromePage.Default)
-                NavigateTo(ChromePage.Default);
+            HandleWifiNavigation(
+                VirtualOSManager.Instance?.IsWifiRouterTopologySatisfied() ?? false,
+                routerReset != null && routerReset.IsDefaultIPReady,
+                "Router");
+            return;
         }
+
+        if (!string.IsNullOrEmpty(apDefaultIP) && trimmed == apDefaultIP)
+        {
+            if (_currentTarget != WifiTarget.AccessPoint)
+            {
+                _isLoggedIn    = false;
+                _currentTarget = WifiTarget.AccessPoint;
+                if (usernameField != null) usernameField.text = "";
+                if (passwordField != null) passwordField.text = "";
+                HideError();
+            }
+            HandleWifiNavigation(
+                VirtualOSManager.Instance?.IsWifiAPTopologySatisfied() ?? false,
+                apReset != null && apReset.IsDefaultIPReady,
+                "Access Point");
+            return;
+        }
+
+        // Non-device IP — update Default Page text and navigate there if needed
+        _currentTarget = WifiTarget.None;
+        if (defaultPageTMP != null)
+        {
+            defaultPageTMP.text = string.IsNullOrEmpty(trimmed)
+                ? defaultWelcomeText
+                : $"No result found, you searched: '{trimmed}'\nTry typing your IP address.";
+        }
+        if (_currentPage != ChromePage.Default)
+            NavigateTo(ChromePage.Default);
+    }
+
+    private void HandleWifiNavigation(bool topologySatisfied, bool defaultIPReady, string deviceName)
+    {
+        if (!topologySatisfied)
+        {
+            _history.Clear();
+            if (_currentPage != ChromePage.Default) ShowPage(ChromePage.Default);
+            if (defaultPageTMP != null)
+                defaultPageTMP.text =
+                    $"You are trying to access '{deviceName} Configuration' without completing " +
+                    $"the topology setup. Return after setting it up. Press 'Esc' to return.";
+            Debug.Log($"[ChromePanelManager] Topology not satisfied for {deviceName} — blocked.");
+            return;
+        }
+
+        if (!defaultIPReady)
+        {
+            _history.Clear();
+            if (_currentPage != ChromePage.Default) ShowPage(ChromePage.Default);
+            if (defaultPageTMP != null)
+                defaultPageTMP.text =
+                    $"The {deviceName} has not been reset to factory defaults. " +
+                    $"Hold the reset button for 10 seconds first.";
+            Debug.Log($"[ChromePanelManager] Default IP not ready for {deviceName} — blocked.");
+            return;
+        }
+
+        NavigateTo(_isLoggedIn ? ChromePage.TPLinkMain : ChromePage.TPLinkLogin);
+        tpLinkTabManager?.RefreshForCurrentTarget();
     }
 
     // ----------------------------------------------------------------
@@ -247,10 +362,11 @@ public class ChromePanelManager : MonoBehaviour
     private void ResetFlow()
     {
         _history.Clear();
-        _isLoggedIn = false;
+        _isLoggedIn    = false;
+        _currentTarget = WifiTarget.None;
 
-        if (searchField   != null) searchField.text = "";
-        if (errorTMP      != null) errorTMP.SetActive(false);
+        if (searchField != null) searchField.text = "";
+        if (errorTMP    != null) errorTMP.SetActive(false);
 
         ShowPage(ChromePage.Default);
     }

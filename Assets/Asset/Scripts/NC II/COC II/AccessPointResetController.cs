@@ -30,6 +30,20 @@ public class AccessPointResetController : MonoBehaviour
     /// </summary>
     public bool IsDefaultIPReady { get; private set; }
 
+    /// <summary>
+    /// True after the student saves a valid IP configuration for the Access Point
+    /// in the TP-Link Virtual OS. Set by TPLinkTabManager on a valid Save.
+    /// Cleared back to false if the AP is reset again.
+    /// </summary>
+    public bool IsConfigured { get; private set; }
+
+    public void SetConfigured()
+    {
+        IsConfigured = true;
+        Debug.Log("[APReset] Access Point marked as configured.");
+        ActivityLogManager.Log("Access Point configuration saved.", ActivityLogManager.EntryType.Action);
+    }
+
     private Collider2D     _col;
     private SpriteRenderer _sr;
 
@@ -83,9 +97,9 @@ public class AccessPointResetController : MonoBehaviour
     private void ResetAccessPoint()
     {
         IsDefaultIPReady = true;
-        Debug.Log("[APReset] Reset triggered — IsDefaultIPReady = true");
+        IsConfigured     = false;
+        Debug.Log("[APReset] Reset triggered — IsDefaultIPReady = true, IsConfigured = false");
         ActivityLogManager.Log("Access Point reset to factory defaults.", ActivityLogManager.EntryType.Action);
-        // TODO: after-reset behavior (restore default IP, clear config, etc.) goes here.
     }
 
     private bool IsHit(Vector2 worldPt)
