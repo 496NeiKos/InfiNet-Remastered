@@ -28,15 +28,25 @@
  *    and Network Password — Default always stays on.
  *
  *  INSPECTOR ASSIGNMENTS
- *    passwordPanel         → Network Password
- *    passwordField         → TMP_InputField inside Network Password
- *    correctPassword       → the WPA key (set here, changeable any time)
- *    ssidButtons[0..2]     → Network Option 1, 2, 3 buttons
- *    optionPanels[0..2]    → Option 1, 2, 3 Panel (inside Network Options)
- *    autoConnectBtns[0..2] → AutoConnect toggle button inside each Option Panel
+ *    passwordPanel            → Network Password
+ *    passwordField            → TMP_InputField inside Network Password
+ *    dLinkAPManager           → DLinkAPManager (on DLink AP Page)
+ *    apResetController        → AccessPointResetController on the AP reset button
+ *    ssidButtons[0..2]        → Network Option 1, 2, 3 buttons
+ *    optionPanels[0..2]       → Option 1, 2, 3 Panel (inside Network Options)
+ *    autoConnectBtns[0..2]    → AutoConnect toggle button inside each Option Panel
  *    networkConnectBtns[0..2] → NetworkConnect button inside each Option Panel
- *    confirmBtn            → OKBtn inside Network Password
- *    cancelBtn             → CancelBtn inside Network Password
+ *    confirmBtn               → OKBtn inside Network Password
+ *    cancelBtn                → CancelBtn inside Network Password
+ *
+ *  DYNAMIC SSID / PASSWORD
+ *    Network Option 1 and 3 are always non-interactable.
+ *    Network Option 2 (index 1) is enabled only when the AP IsConfigured.
+ *    Its TMP_Text label is set at runtime from DLinkAPManager.GetApSsid().
+ *    If AP security = None (open network), clicking Connect skips the password
+ *    panel entirely and connects directly.
+ *    If AP security = WPA/WPA2 Personal, password is validated against
+ *    DLinkAPManager.GetApPreSharedKey().
  *
  *  BUTTON OnClick — DO NOT wire manually. Script auto-wires in Awake.
  *
@@ -73,16 +83,19 @@ public class InternetPanelController : MonoBehaviour
     [SerializeField] private TMP_InputField passwordField;
     [SerializeField] private Button confirmBtn;
     [SerializeField] private Button cancelBtn;
-    [Tooltip("Correct WPA key — changeable in Inspector at any time.")]
-    [SerializeField] private string correctPassword = "password";
+
+    [Header("WiFi Config (dynamic SSID + password)")]
+    [SerializeField] private DLinkAPManager            dLinkAPManager;
+    [SerializeField] private AccessPointResetController apResetController;
 
     [Header("Colors")]
     [SerializeField] private Color autoConnectOnColor  = new Color(0.35f, 0.65f, 0.35f);
     [SerializeField] private Color autoConnectOffColor = new Color(0.55f, 0.55f, 0.55f);
 
-    private int    _activeOptionIndex = -1;
-    private bool[] _autoConnect;
+    private int      _activeOptionIndex = -1;
+    private bool[]   _autoConnect;
     private Coroutine _wrongKeyRoutine;
+    private TMP_Text _apSsidLabelTMP;
 
     // ----------------------------------------------------------------
     //  Lifecycle
@@ -99,13 +112,20 @@ public class InternetPanelController : MonoBehaviour
         HideOptionPanels();
         if (passwordPanel != null) passwordPanel.SetActive(false);
 
-        // Auto-wire SSID buttons
+        // Cache Network Option 2's SSID label (grandchild of SSID Network Options).
+        if (ssidButtons != null && ssidButtons.Length > 1 && ssidButtons[1] != null)
+            _apSsidLabelTMP = ssidButtons[1].GetComponentInChildren<TMP_Text>();
+
+        // Auto-wire SSID buttons; all start non-interactable — RefreshNetworkOptions enables as needed.
         if (ssidButtons != null)
             for (int i = 0; i < ssidButtons.Length; i++)
             {
                 int idx = i;
                 if (ssidButtons[i] != null)
+                {
                     ssidButtons[i].onClick.AddListener(() => SelectSSID(idx));
+                    ssidButtons[i].interactable = false;
+                }
             }
 
         // Auto-wire AutoConnect toggles
@@ -142,8 +162,30 @@ public class InternetPanelController : MonoBehaviour
     {
         bool willOpen = !gameObject.activeSelf;
         gameObject.SetActive(willOpen);
-        if (willOpen) ResetToSSIDList();
+        if (willOpen)
+        {
+            ResetToSSIDList();
+            RefreshNetworkOptions();
+        }
         Debug.Log($"[InternetPanelController] Panel {(willOpen ? "opened" : "closed")}.");
+    }
+
+    // ----------------------------------------------------------------
+    //  Network options refresh (called on panel open)
+    // ----------------------------------------------------------------
+
+    private void RefreshNetworkOptions()
+    {
+        bool apConfigured = apResetController != null && apResetController.IsConfigured;
+
+        if (_apSsidLabelTMP != null)
+            _apSsidLabelTMP.text = dLinkAPManager != null ? dLinkAPManager.GetApSsid() : "";
+
+        // Only Network Option 2 (index 1) is AP-linked. Options 0 and 2 stay non-interactable.
+        if (ssidButtons != null && ssidButtons.Length > 1 && ssidButtons[1] != null)
+            ssidButtons[1].interactable = apConfigured;
+
+        Debug.Log($"[InternetPanelController] Network options refreshed — AP configured: {apConfigured}.");
     }
 
     // ----------------------------------------------------------------
@@ -191,13 +233,17 @@ public class InternetPanelController : MonoBehaviour
     public void OpenPasswordPanel(int index)
     {
         _activeOptionIndex = index;
-
-        // Hide current option panel
         HideOptionPanels();
+
+        // Open network — skip password dialog and connect directly.
+        if (dLinkAPManager != null && dLinkAPManager.GetApSecurityMode() == 0)
+        {
+            ConnectSuccessfully();
+            return;
+        }
 
         if (passwordField != null) passwordField.text = "";
         if (passwordPanel != null) passwordPanel.SetActive(true);
-
         Debug.Log($"[InternetPanelController] Password panel opened for option {index}.");
     }
 
@@ -207,9 +253,10 @@ public class InternetPanelController : MonoBehaviour
 
     public void ConfirmPassword()
     {
-        string entered = passwordField != null ? passwordField.text : "";
+        string entered  = passwordField  != null ? passwordField.text                  : "";
+        string expected = dLinkAPManager != null ? dLinkAPManager.GetApPreSharedKey() : "";
 
-        if (entered == correctPassword)
+        if (entered == expected)
         {
             ConnectSuccessfully();
         }
@@ -244,15 +291,14 @@ public class InternetPanelController : MonoBehaviour
     {
         DeviceOSState state = GetState();
         state.WifiConnected = true;
-        state.WifiSSID      = $"Network_Option_{_activeOptionIndex}";
-        state.WifiPassword  = correctPassword;
+        state.WifiSSID     = dLinkAPManager != null ? dLinkAPManager.GetApSsid()         : "";
+        state.WifiPassword = dLinkAPManager != null ? dLinkAPManager.GetApPreSharedKey() : "";
 
         if (passwordPanel != null) passwordPanel.SetActive(false);
         HideOptionPanels();
 
-        // Close Internet Panel after connecting
         gameObject.SetActive(false);
-        Debug.Log($"[InternetPanelController] Connected to option {_activeOptionIndex}.");
+        Debug.Log($"[InternetPanelController] Connected — SSID: {state.WifiSSID}.");
     }
 
     private IEnumerator ShowWrongKeys(string originalText)

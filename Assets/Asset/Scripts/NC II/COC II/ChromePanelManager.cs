@@ -13,14 +13,15 @@
  *      │     └── Exit                       → exitBtn
  *      ├── Default Page                     → defaultPage  (active by default)
  *      │     └── [TMP_Text child]           → defaultPageTMP
- *      └── TP Link Page                     → tpLinkPage  (inactive by default)
- *            ├── Page 1 - Login             → loginPage  (active inside TP Link Page)
- *            │     └── Login Body
- *            │           ├── [Username TMP_InputField] → usernameField
- *            │           ├── [Password TMP_InputField] → passwordField
- *            │           ├── Login Button              → loginBtn
- *            │           └── ErrorTMP                  → errorTMP  (inactive by default)
- *            └── Page 2 - Main              → mainPage  (inactive by default)
+ *      ├── TP Link Page                     → tpLinkPage  (inactive by default)
+ *      │     ├── Page 1 - Login             → loginPage  (active inside TP Link Page)
+ *      │     │     └── Login Body
+ *      │     │           ├── [Username TMP_InputField] → usernameField
+ *      │     │           ├── [Password TMP_InputField] → passwordField
+ *      │     │           ├── Login Button              → loginBtn
+ *      │     │           └── ErrorTMP                  → errorTMP  (inactive by default)
+ *      │     └── Page 2 - Main              → mainPage  (inactive by default)
+ *      └── DLink AP Page                   → dLinkPage  (inactive by default)
  *
  *  INSPECTOR ASSIGNMENTS
  *    backBtn           → Back Button under Nav
@@ -31,29 +32,33 @@
  *    tpLinkPage        → TP Link Page GameObject
  *    loginPage         → Page 1 - Login GameObject
  *    mainPage          → Page 2 - Main GameObject
+ *    dLinkPage         → DLink AP Page GameObject
  *    usernameField     → Username TMP_InputField inside Login Body
  *    passwordField     → Password TMP_InputField inside Login Body
  *    loginBtn          → Login Button inside Login Body
  *    errorTMP          → ErrorTMP GameObject inside Login Body
  *    defaultWelcomeText → text displayed on Default Page when search is empty or on Back
+ *    routerDefaultIP   → IP address that navigates to the Router TP-Link page
+ *    apSearchKeyword   → keyword that navigates to the AP DLink page (default: "dlinkap")
+ *    routerReset       → RouterResetController on the router reset button
+ *    apReset           → AccessPointResetController on the AP reset button
  *
  *  CHROME BUTTON (Windows Desktop)
  *    Wire ChromeBtn's OnClick → ChromePanelManager.OpenChrome() in the Inspector.
- *    No script reference needed on the desktop side.
  *
  *  BUTTON OnClick — auto-wired in Awake. Do NOT wire loginBtn/exitBtn/backBtn manually.
  *
  *  NAVIGATION FLOW
- *    Search submit "192.168.1.1"  → TP Link Page
+ *    Search submit routerDefaultIP → TP Link Page
  *                                     not yet logged in → Page 1 - Login
- *                                     already logged in → Page 2 - Main  (skips login)
- *    Search submit (anything else) → stay on / return to Default Page
- *                                     TMP shows: "No result found, you searched: '...'"
+ *                                     already logged in → Page 2 - Main
+ *    Search submit apSearchKeyword → DLink AP Page (no login — opens directly)
+ *    Search submit (anything else) → Default Page; TMP shows "No result found"
  *    Login (admin / admin)         → Page 2 - Main; login held for this Chrome session
  *    Login (wrong credentials)     → ErrorTMP activates; hides on next keystroke
- *    Back button                   → pops browser history stack; disabled when no history
- *    Exit button                   → closes Chrome; resets navigation flow to Default Page;
- *                                     clears login session; Page 2 config values PRESERVED
+ *    Back button                   → pops browser history stack; disabled when empty
+ *    Exit button                   → closes Chrome; resets navigation to Default Page;
+ *                                     clears login session; TP-Link config PRESERVED
  *
  *  HISTORY STACK LOGIC
  *    Every NavigateTo() call pushes the current page before switching.
@@ -70,9 +75,7 @@ using UnityEngine.UI;
 
 public class ChromePanelManager : MonoBehaviour
 {
-    private enum ChromePage { Default, TPLinkLogin, TPLinkMain }
-
-    public enum WifiTarget { None, Router, AccessPoint }
+    private enum ChromePage { Default, TPLinkLogin, TPLinkMain, DLinkAP }
 
     [Header("Nav")]
     [SerializeField] private Button backBtn;
@@ -85,6 +88,7 @@ public class ChromePanelManager : MonoBehaviour
     [SerializeField] private GameObject tpLinkPage;
     [SerializeField] private GameObject loginPage;
     [SerializeField] private GameObject mainPage;
+    [SerializeField] private GameObject dLinkPage;
 
     [Header("Login")]
     [SerializeField] private TMP_InputField usernameField;
@@ -96,25 +100,21 @@ public class ChromePanelManager : MonoBehaviour
     [SerializeField] [TextArea(2, 4)] private string defaultWelcomeText =
         "Welcome!\nType an IP address in the address bar to navigate to a device.";
 
-    [Header("Device IPs (set in Inspector)")]
-    [Tooltip("IP address that routes to the Router admin page (typed after router reset).")]
+    [Header("Device Search Keywords (set in Inspector)")]
+    [Tooltip("IP address that routes to the Router TP-Link page (typed after router reset).")]
     [SerializeField] private string routerDefaultIP = "";
-    [Tooltip("IP address that routes to the Access Point admin page (typed after AP reset).")]
-    [SerializeField] private string apDefaultIP     = "";
+    [Tooltip("Keyword that routes to the AP DLink page (typed after AP reset).")]
+    [SerializeField] private string apSearchKeyword = "dlinkap";
 
     [Header("Reset Controllers")]
     [SerializeField] private RouterResetController      routerReset;
     [SerializeField] private AccessPointResetController apReset;
-    [SerializeField] private TPLinkTabManager           tpLinkTabManager;
 
     private const string AdminCred = "admin";
 
     private readonly Stack<ChromePage> _history = new Stack<ChromePage>();
-    private ChromePage _currentPage    = ChromePage.Default;
+    private ChromePage _currentPage = ChromePage.Default;
     private bool       _isLoggedIn;
-    private WifiTarget _currentTarget  = WifiTarget.None;
-
-    public WifiTarget CurrentTarget => _currentTarget;
 
     // ----------------------------------------------------------------
     //  State load/save (called by VirtualOSManager on device switch)
@@ -122,15 +122,12 @@ public class ChromePanelManager : MonoBehaviour
 
     public void LoadState(DeviceOSState state)
     {
-        _isLoggedIn    = state.ChromeIsLoggedIn;
-        _currentTarget = (WifiTarget)state.ChromeWifiTarget;
+        _isLoggedIn = state.ChromeIsLoggedIn;
 
         _history.Clear();
-        // List is stored bottom→top; push in order so last element ends up on top
         foreach (int entry in state.ChromeHistory)
             _history.Push((ChromePage)entry);
 
-        // Clear stale text fields so no input from another device bleeds in
         if (searchField   != null) searchField.text   = "";
         if (usernameField != null) usernameField.text = "";
         if (passwordField != null) passwordField.text = "";
@@ -143,16 +140,13 @@ public class ChromePanelManager : MonoBehaviour
     {
         state.ChromeCurrentPage = (int)_currentPage;
         state.ChromeIsLoggedIn  = _isLoggedIn;
-        state.ChromeWifiTarget  = (int)_currentTarget;
 
         state.ChromeHistory.Clear();
-        // Stack.ToArray() returns top-first; reverse to store bottom→top
         ChromePage[] arr = _history.ToArray();
         for (int i = arr.Length - 1; i >= 0; i--)
             state.ChromeHistory.Add((int)arr[i]);
     }
 
-    // Closes Chrome without resetting nav state — called by VirtualOSManager when switching devices.
     public void CloseForSwitch() => gameObject.SetActive(false);
 
     // ----------------------------------------------------------------
@@ -165,10 +159,8 @@ public class ChromePanelManager : MonoBehaviour
         if (exitBtn  != null) exitBtn.onClick.AddListener(ExitChrome);
         if (loginBtn != null) loginBtn.onClick.AddListener(TryLogin);
 
-        // Submit fires on Enter key or submit event — not on every keystroke
         if (searchField != null) searchField.onSubmit.AddListener(OnSearchSubmit);
 
-        // ErrorTMP hides the moment the user starts correcting either field
         if (usernameField != null) usernameField.onValueChanged.AddListener(_ => HideError());
         if (passwordField != null) passwordField.onValueChanged.AddListener(_ => HideError());
 
@@ -190,7 +182,7 @@ public class ChromePanelManager : MonoBehaviour
     {
         ResetFlow();
         gameObject.SetActive(false);
-        Debug.Log("[ChromePanelManager] Exited. Navigation reset; Page 2 config preserved.");
+        Debug.Log("[ChromePanelManager] Exited. Navigation reset; config preserved.");
     }
 
     // ----------------------------------------------------------------
@@ -203,14 +195,6 @@ public class ChromePanelManager : MonoBehaviour
 
         if (!string.IsNullOrEmpty(routerDefaultIP) && trimmed == routerDefaultIP)
         {
-            if (_currentTarget != WifiTarget.Router)
-            {
-                _isLoggedIn    = false;
-                _currentTarget = WifiTarget.Router;
-                if (usernameField != null) usernameField.text = "";
-                if (passwordField != null) passwordField.text = "";
-                HideError();
-            }
             HandleWifiNavigation(
                 VirtualOSManager.Instance?.IsWifiRouterTopologySatisfied() ?? false,
                 routerReset != null && routerReset.IsDefaultIPReady,
@@ -218,25 +202,14 @@ public class ChromePanelManager : MonoBehaviour
             return;
         }
 
-        if (!string.IsNullOrEmpty(apDefaultIP) && trimmed == apDefaultIP)
+        if (!string.IsNullOrEmpty(apSearchKeyword) && trimmed == apSearchKeyword)
         {
-            if (_currentTarget != WifiTarget.AccessPoint)
-            {
-                _isLoggedIn    = false;
-                _currentTarget = WifiTarget.AccessPoint;
-                if (usernameField != null) usernameField.text = "";
-                if (passwordField != null) passwordField.text = "";
-                HideError();
-            }
-            HandleWifiNavigation(
+            HandleDLinkNavigation(
                 VirtualOSManager.Instance?.IsWifiAPTopologySatisfied() ?? false,
-                apReset != null && apReset.IsDefaultIPReady,
-                "Access Point");
+                apReset != null && apReset.IsDefaultIPReady);
             return;
         }
 
-        // Non-device IP — update Default Page text and navigate there if needed
-        _currentTarget = WifiTarget.None;
         if (defaultPageTMP != null)
         {
             defaultPageTMP.text = string.IsNullOrEmpty(trimmed)
@@ -274,7 +247,35 @@ public class ChromePanelManager : MonoBehaviour
         }
 
         NavigateTo(_isLoggedIn ? ChromePage.TPLinkMain : ChromePage.TPLinkLogin);
-        tpLinkTabManager?.RefreshForCurrentTarget();
+    }
+
+    private void HandleDLinkNavigation(bool topologySatisfied, bool defaultIPReady)
+    {
+        if (!topologySatisfied)
+        {
+            _history.Clear();
+            if (_currentPage != ChromePage.Default) ShowPage(ChromePage.Default);
+            if (defaultPageTMP != null)
+                defaultPageTMP.text =
+                    "You are trying to access 'Access Point Configuration' without completing " +
+                    "the topology setup. Return after setting it up. Press 'Esc' to return.";
+            Debug.Log("[ChromePanelManager] AP topology not satisfied — DLink blocked.");
+            return;
+        }
+
+        if (!defaultIPReady)
+        {
+            _history.Clear();
+            if (_currentPage != ChromePage.Default) ShowPage(ChromePage.Default);
+            if (defaultPageTMP != null)
+                defaultPageTMP.text =
+                    "The Access Point has not been reset to factory defaults. " +
+                    "Hold the reset button for 10 seconds first.";
+            Debug.Log("[ChromePanelManager] AP default IP not ready — DLink blocked.");
+            return;
+        }
+
+        NavigateTo(ChromePage.DLinkAP);
     }
 
     // ----------------------------------------------------------------
@@ -337,13 +338,14 @@ public class ChromePanelManager : MonoBehaviour
         bool isTPLink  = page == ChromePage.TPLinkLogin || page == ChromePage.TPLinkMain;
         bool isLogin   = page == ChromePage.TPLinkLogin;
         bool isMain    = page == ChromePage.TPLinkMain;
+        bool isDLink   = page == ChromePage.DLinkAP;
 
         if (defaultPage != null) defaultPage.SetActive(isDefault);
         if (tpLinkPage  != null) tpLinkPage.SetActive(isTPLink);
         if (loginPage   != null) loginPage.SetActive(isLogin);
         if (mainPage    != null) mainPage.SetActive(isMain);
+        if (dLinkPage   != null) dLinkPage.SetActive(isDLink);
 
-        // When landing on Default (Back or initial), always show the welcome text
         if (isDefault && defaultPageTMP != null)
             defaultPageTMP.text = defaultWelcomeText;
 
@@ -362,8 +364,7 @@ public class ChromePanelManager : MonoBehaviour
     private void ResetFlow()
     {
         _history.Clear();
-        _isLoggedIn    = false;
-        _currentTarget = WifiTarget.None;
+        _isLoggedIn = false;
 
         if (searchField != null) searchField.text = "";
         if (errorTMP    != null) errorTMP.SetActive(false);

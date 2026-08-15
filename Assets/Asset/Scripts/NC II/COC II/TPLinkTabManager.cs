@@ -205,14 +205,8 @@ public class TPLinkTabManager : MonoBehaviour
     [SerializeField] private string defaultSsid         = "TP-LINK_WiFi";
     [SerializeField] private string defaultPreSharedKey = "12345678";
 
-    [Header("Configuration Validation")]
-    [Tooltip("LAN IP must start with this prefix and end with a valid octet (1–254) to count as configured.")]
-    [SerializeField] private string validConfiguredIPPrefix = "";
-
-    [Header("WiFi Config — Target Controllers")]
-    [SerializeField] private ChromePanelManager         chromePanelManager;
-    [SerializeField] private RouterResetController      routerReset;
-    [SerializeField] private AccessPointResetController apReset;
+    [Header("Router Reset Controller")]
+    [SerializeField] private RouterResetController routerReset;
 
     // ----------------------------------------------------------------
     //  Runtime state
@@ -227,41 +221,12 @@ public class TPLinkTabManager : MonoBehaviour
     private int  _dhcpMode;       // 0=Disable 1=Enable 2=Relay
     private int  _wpsModeIndex;   // 0=PinCode 1=PBC
 
-    // One config per physical device — independent, never shared between Router and AP.
+    // Router config — physical device state, shared across all student devices.
     private TPLinkConfig _routerConfig;
-    private TPLinkConfig _apConfig;
     private bool         _routerHasSavedOnce;
-    private bool         _apHasSavedOnce;
 
     // True after the first OnEnable (first-ever login activates this panel)
     private bool _initialized;
-
-    // ----------------------------------------------------------------
-    //  Target-aware config helpers
-    // ----------------------------------------------------------------
-
-    private ChromePanelManager.WifiTarget GetCurrentTarget()
-        => chromePanelManager != null ? chromePanelManager.CurrentTarget : ChromePanelManager.WifiTarget.Router;
-
-    private TPLinkConfig GetConfigForTarget(ChromePanelManager.WifiTarget target)
-        => target == ChromePanelManager.WifiTarget.AccessPoint ? _apConfig : _routerConfig;
-
-    private void SetConfigForTarget(ChromePanelManager.WifiTarget target, TPLinkConfig config)
-    {
-        if (target == ChromePanelManager.WifiTarget.AccessPoint) _apConfig    = config;
-        else                                                      _routerConfig = config;
-    }
-
-    private bool HasSavedForTarget(ChromePanelManager.WifiTarget target)
-        => target == ChromePanelManager.WifiTarget.AccessPoint ? _apHasSavedOnce : _routerHasSavedOnce;
-
-    private void SetHasSavedForTarget(ChromePanelManager.WifiTarget target)
-    {
-        if (target == ChromePanelManager.WifiTarget.AccessPoint) _apHasSavedOnce    = true;
-        else                                                      _routerHasSavedOnce = true;
-    }
-
-    private TPLinkConfig GetCurrentTargetConfig() => GetConfigForTarget(GetCurrentTarget());
 
     // ----------------------------------------------------------------
     //  Lifecycle
@@ -318,11 +283,9 @@ public class TPLinkTabManager : MonoBehaviour
     {
         if (!_initialized)
         {
-            _routerConfig        = BuildDefaultConfig();
-            _apConfig            = BuildDefaultConfig();
-            _routerHasSavedOnce  = false;
-            _apHasSavedOnce      = false;
-            _initialized         = true;
+            _routerConfig       = BuildDefaultConfig();
+            _routerHasSavedOnce = false;
+            _initialized        = true;
 
             _activeMainTab = MainTab.InterfaceSetup;
             _activeSubTab  = SubTab.Wireless;
@@ -330,9 +293,8 @@ public class TPLinkTabManager : MonoBehaviour
             if (wpsStateTMP    != null) wpsStateTMP.text    = "Unconfigured";
             if (wpsProgressTMP != null) wpsProgressTMP.text = "Idle";
 
-            TPLinkConfig cfg = GetCurrentTargetConfig();
-            ApplyLanStateToUI(cfg);
-            ApplyWirelessStateToUI(cfg);
+            ApplyLanStateToUI(_routerConfig);
+            ApplyWirelessStateToUI(_routerConfig);
 
             RefreshMainTabVisuals();
             RefreshSubTabPanel();
@@ -341,10 +303,8 @@ public class TPLinkTabManager : MonoBehaviour
             return;
         }
 
-        // Always apply current target's config — handles login-redirect and re-open cases.
-        TPLinkConfig activeCfg = GetCurrentTargetConfig();
-        ApplyLanStateToUI(activeCfg);
-        ApplyWirelessStateToUI(activeCfg);
+        ApplyLanStateToUI(_routerConfig);
+        ApplyWirelessStateToUI(_routerConfig);
 
         RefreshMainTabVisuals();
         RefreshSubTabPanel();
@@ -361,14 +321,10 @@ public class TPLinkTabManager : MonoBehaviour
         _activeMainTab = (MainTab)state.TPLinkActiveMainTab;
         _activeSubTab  = (SubTab)state.TPLinkActiveSubTab;
 
-        // chromePanelManager.LoadState ran first, so CurrentTarget is already correct
-        // for the incoming device. Apply the matching config to the UI.
-        // SetActive on inactive children is valid — renders correctly on next activation.
         if (_initialized)
         {
-            TPLinkConfig cfg = GetCurrentTargetConfig();
-            ApplyLanStateToUI(cfg);
-            ApplyWirelessStateToUI(cfg);
+            ApplyLanStateToUI(_routerConfig);
+            ApplyWirelessStateToUI(_routerConfig);
             RefreshMainTabVisuals();
             RefreshSubTabPanel();
             RefreshSubTabVisuals();
@@ -381,8 +337,7 @@ public class TPLinkTabManager : MonoBehaviour
     {
         state.TPLinkActiveMainTab = (int)_activeMainTab;
         state.TPLinkActiveSubTab  = (int)_activeSubTab;
-        // _savedConfig (router values) is intentionally NOT saved here —
-        // it represents the physical router and is shared across all devices.
+        // Router config is physical device state — not per-device, not saved here.
     }
 
     // ----------------------------------------------------------------
@@ -518,40 +473,28 @@ public class TPLinkTabManager : MonoBehaviour
 
     private void OnSave()
     {
-        ChromePanelManager.WifiTarget target = GetCurrentTarget();
-        string previousLanIP = GetConfigForTarget(target).LanIP;
+        string previousLanIP = _routerConfig.LanIP;
         CommitCurrentState();
-        string savedLanIP  = GetConfigForTarget(target).LanIP;
+        string savedLanIP  = _routerConfig.LanIP;
         bool   lanIPChanged = savedLanIP != previousLanIP;
 
-        if (!string.IsNullOrEmpty(validConfiguredIPPrefix)
-            && savedLanIP.StartsWith(validConfiguredIPPrefix))
-        {
-            string lastOctet = savedLanIP.Substring(validConfiguredIPPrefix.Length);
-            if (int.TryParse(lastOctet, out int octetVal) && octetVal >= 1 && octetVal <= 254)
-            {
-                if (target == ChromePanelManager.WifiTarget.Router)
-                    routerReset?.SetConfigured();
-                else if (target == ChromePanelManager.WifiTarget.AccessPoint)
-                    apReset?.SetConfigured();
-            }
-        }
+        if (IsValidIPAddress(savedLanIP))
+            routerReset?.SetConfigured();
 
         if (lanIPChanged)
         {
             if (savePopUp != null) savePopUp.SetActive(true);
-            Debug.Log($"[TPLinkTabManager] {target} saved — LAN IP changed, popup shown.");
+            Debug.Log("[TPLinkTabManager] Router saved — LAN IP changed, popup shown.");
         }
         else
         {
-            Debug.Log($"[TPLinkTabManager] {target} saved.");
+            Debug.Log("[TPLinkTabManager] Router saved.");
         }
     }
 
     private void CommitCurrentState()
     {
-        ChromePanelManager.WifiTarget target = GetCurrentTarget();
-        TPLinkConfig config = GetConfigForTarget(target);
+        TPLinkConfig config = _routerConfig;
 
         if (lanIPField            != null) config.LanIP         = lanIPField.text;
         if (lanSubnetMaskField    != null) config.LanSubnetMask = lanSubnetMaskField.text;
@@ -568,10 +511,10 @@ public class TPLinkTabManager : MonoBehaviour
         if (encryptionDropdown != null) config.Encryption   = encryptionDropdown.value;
         if (preSharedKeyField  != null) config.PreSharedKey = preSharedKeyField.text;
 
-        SetConfigForTarget(target, config);
-        SetHasSavedForTarget(target);
+        _routerConfig       = config;
+        _routerHasSavedOnce = true;
 
-        Debug.Log($"[TPLinkTabManager] Config committed to {target} state.");
+        Debug.Log("[TPLinkTabManager] Router config committed.");
     }
 
     // ----------------------------------------------------------------
@@ -588,24 +531,12 @@ public class TPLinkTabManager : MonoBehaviour
     // Called by Cancel and by sub tab switches (resets the tab being left).
     private void RestoreActiveSubTabToSavedState()
     {
-        ChromePanelManager.WifiTarget target = GetCurrentTarget();
-        TPLinkConfig source = HasSavedForTarget(target) ? GetConfigForTarget(target) : BuildDefaultConfig();
+        TPLinkConfig source = _routerHasSavedOnce ? _routerConfig : BuildDefaultConfig();
 
         if (_activeSubTab == SubTab.LAN)
             ApplyLanStateToUI(source);
         else
             ApplyWirelessStateToUI(source);
-    }
-
-    // Called by ChromePanelManager after successful navigation — updates the UI to show
-    // the correct config when the user switches between Router and AP while TP-Link is
-    // already open (same-page navigation is a no-op so OnEnable doesn't fire).
-    public void RefreshForCurrentTarget()
-    {
-        if (!_initialized) return;
-        TPLinkConfig cfg = GetCurrentTargetConfig();
-        ApplyLanStateToUI(cfg);
-        ApplyWirelessStateToUI(cfg);
     }
 
     // ----------------------------------------------------------------
@@ -662,4 +593,16 @@ public class TPLinkTabManager : MonoBehaviour
         var img = btn.GetComponent<Image>();
         if (img != null) img.color = color;
     }
+
+    // Returns true if ip is four dot-separated octets each in 0–255.
+    private static bool IsValidIPAddress(string ip)
+    {
+        if (string.IsNullOrEmpty(ip)) return false;
+        string[] parts = ip.Split('.');
+        if (parts.Length != 4) return false;
+        foreach (string part in parts)
+            if (!int.TryParse(part, out int val) || val < 0 || val > 255) return false;
+        return true;
+    }
+
 }
