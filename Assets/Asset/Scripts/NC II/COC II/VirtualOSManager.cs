@@ -56,8 +56,13 @@ public class VirtualOSManager : MonoBehaviour
     [SerializeField] private AccessPointResetController     apResetController;
     [Tooltip("WiFiBtn GameObject under Taskbar.")]
     [SerializeField] private GameObject wifiBtnObject;
+    [Tooltip("CmdBtn GameObject on Windows Desktop (sibling of WiFiBtn area).")]
+    [SerializeField] private GameObject cmdBtnObject;
     [Tooltip("TMP_Text inside EthernetNamePanel that shows the adapter name.")]
     [SerializeField] private TMP_Text adapterNameTMP;
+
+    [Header("CMD")]
+    [SerializeField] private PingCmdManager pingCmdManager;
 
     private readonly Dictionary<DeviceID, DeviceOSState> _states =
         new Dictionary<DeviceID, DeviceOSState>();
@@ -93,6 +98,12 @@ public class VirtualOSManager : MonoBehaviour
             var btn = wifiBtnObject.GetComponent<Button>();
             btn?.onClick.AddListener(internetPanel.Toggle);
         }
+
+        if (cmdBtnObject != null && pingCmdManager != null)
+        {
+            var btn = cmdBtnObject.GetComponent<Button>();
+            btn?.onClick.AddListener(pingCmdManager.Toggle);
+        }
     }
 
     private void Update()
@@ -118,6 +129,7 @@ public class VirtualOSManager : MonoBehaviour
             chromePanelManager?.SaveState(_currentState);
             tpLinkTabManager?.SaveState(_currentState);
             chromePanelManager?.CloseForSwitch();
+            pingCmdManager?.CloseForSwitch();
 
             // Restore the outgoing device's front panel
             if (_activeDetailView != null)

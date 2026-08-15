@@ -333,6 +333,7 @@ public class DLinkAPManager : MonoBehaviour
     public string GetApSsid()         => _config.Ssid;
     public string GetApPreSharedKey() => _config.Password;
     public int    GetApSecurityMode() => _config.SecurityMode;
+    public string GetApIPAddress()    => _config.IPAddress;
 
     // ----------------------------------------------------------------
     //  Helpers

@@ -594,6 +594,9 @@ public class TPLinkTabManager : MonoBehaviour
         if (img != null) img.color = color;
     }
 
+    // Public API used by PingCmdManager
+    public string GetRouterLanIP() => _routerConfig.LanIP;
+
     // Returns true if ip is four dot-separated octets each in 0–255.
     private static bool IsValidIPAddress(string ip)
     {

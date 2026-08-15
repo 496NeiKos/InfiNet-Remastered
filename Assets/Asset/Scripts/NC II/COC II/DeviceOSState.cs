@@ -49,6 +49,10 @@ public class DeviceOSState
     public int TPLinkActiveMainTab = 0;  // 0=InterfaceSetup 1=Status
     public int TPLinkActiveSubTab  = 0;  // 0=Wireless 1=LAN
 
+    // Ping Test — per device, independent progress
+    public bool[]       PingResults    = new bool[5];        // [0]=Router [1]=AP [2]=PC1 [3]=PC2 [4]=Laptop
+    public List<string> CmdOutputLines = new List<string>(); // visual history; cleared on CMD exit, kept on ESC/switch
+
     public bool IPConfigured      => UseStaticIP && IsValidIP(IPOctets);
     public bool SharingConfigured => NetworkDiscoveryOn && FilePrinterSharingOn && PasswordProtectedSharingOff;
     public bool FirewallConfigured => FirewallPrivateOff && FirewallPublicOff;
