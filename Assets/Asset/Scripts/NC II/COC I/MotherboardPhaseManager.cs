@@ -7,6 +7,7 @@ public class MotherboardPhaseManager : MonoBehaviour
     [SerializeField] private GameObject phase1Root;
     [SerializeField] private GameObject phase2Root;
     [SerializeField] private GPUPhase1CableInteraction gpuPhase1CableInteraction;
+    [SerializeField] private FrontPanelConnectorInteraction frontPanelConnectorInteraction;
 
     public Phase CurrentPhase { get; private set; } = Phase.Phase1;
 
@@ -30,6 +31,11 @@ public class MotherboardPhaseManager : MonoBehaviour
             foreach (Collider2D col in gpuPhase1CableInteraction.GetComponents<Collider2D>())
                 col.enabled = true;
         }
+
+        // Re-enable front panel interaction. Its Collider2D is already handled by
+        // SetPhase1Enabled(true) sweeping the CablePort — only the script needs explicit enable.
+        if (frontPanelConnectorInteraction != null)
+            frontPanelConnectorInteraction.enabled = true;
     }
 
     public void SetPhase2Interactive()
@@ -44,6 +50,13 @@ public class MotherboardPhaseManager : MonoBehaviour
                 dp.enabled = false;
             foreach (Collider2D col in gpuPhase1CableInteraction.GetComponents<Collider2D>())
                 col.enabled = false;
+        }
+
+        // Close and disable front panel interaction before Phase 1 is swept off.
+        if (frontPanelConnectorInteraction != null)
+        {
+            frontPanelConnectorInteraction.ClosePanel();
+            frontPanelConnectorInteraction.enabled = false;
         }
 
         SetPhase1Enabled(false);

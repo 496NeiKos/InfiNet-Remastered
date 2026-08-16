@@ -52,6 +52,10 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
     [Header("Hold Settings")]
     [SerializeField] private float holdDuration = 1f;
 
+    [Header("Detach Gate (optional)")]
+    [Tooltip("Assign a MonoBehaviour implementing IDetachGate to block hold-to-detach conditionally.")]
+    [SerializeField] private MonoBehaviour detachGate;
+
     [Header("Power Gates (optional)")]
     [SerializeField] private MonoBehaviour powerButtonSource;
     [SerializeField] private PowerButton secondaryPowerGate;
@@ -207,6 +211,13 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
 
     private bool CanDetach()
     {
+        if (detachGate is IDetachGate gate && !gate.CanDetach())
+        {
+            ActivityLogManager.Log($"Cannot unplug {LogName} — {gate.BlockedReason}.", ActivityLogManager.EntryType.Warning);
+            UnableAnimation.Shake(transform);
+            return false;
+        }
+
         // Monitor cables bypass the generic power gate when the monitor itself is off.
         // This covers the auto-ForceOff path (system unit turns off → monitor turns off)
         // where the upstream source (e.g. AVR) may still be on.
@@ -248,7 +259,8 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         _isDragging = false;
 
         homePort?.SetUninstalled();
-        ActivityLogManager.Log($"{LogName} unplugged", ActivityLogManager.EntryType.Remove);
+        if (homePort == null || !homePort.SuppressActivityLog)
+            ActivityLogManager.Log($"{LogName} unplugged", ActivityLogManager.EntryType.Remove);
 
         // Always refresh the cached holder ref in case scene context changed (multi-topic containers).
         // Pass 0 in FindHardwareHolderForThis handles multi-cable holders correctly.
@@ -412,7 +424,8 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         // For single holders: proxy hides immediately (same as old SetActive(false)).
         hardwareHolder?.OnCableInstalled(this);
 
-        ActivityLogManager.Log($"{LogName} plugged in", ActivityLogManager.EntryType.Install);
+        if (!port.SuppressActivityLog)
+            ActivityLogManager.Log($"{LogName} plugged in", ActivityLogManager.EntryType.Install);
         Debug.Log($"[CableBehavior] {cableType} installed to {port.name}.");
     }
 
@@ -452,8 +465,8 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
             return;
         }
 
-        Debug.LogWarning($"[CableBehavior] No HardwareHolder found for '{gameObject.name}' — hiding cable.");
-        gameObject.SetActive(false);
+        Debug.LogWarning($"[CableBehavior] No HardwareHolder found for '{gameObject.name}' — snapping back.");
+        SnapBack();
     }
 
     private bool IsMouseOver()

@@ -41,10 +41,14 @@ public class GameManager : MonoBehaviour
 
     private MotherboardDetailViewManager _activeMbdvm;
     private GPUPhase1CableInteraction _activeGpuPhase1Panel;
+    private FrontPanelConnectorInteraction _activeFrontPanelInteraction;
     private IInPlaceInteraction _activeInPlaceInteraction;
 
     public void RegisterGPUPhase1Panel(GPUPhase1CableInteraction panel) =>
         _activeGpuPhase1Panel = panel;
+
+    public void RegisterFrontPanelInteraction(FrontPanelConnectorInteraction panel) =>
+        _activeFrontPanelInteraction = panel;
 
     public void OpenEditorInPlace(IInPlaceInteraction interaction)
     {
@@ -191,6 +195,12 @@ public class GameManager : MonoBehaviour
             return;
         }
 
+        if (_activeFrontPanelInteraction != null && _activeFrontPanelInteraction.IsPanelOpen)
+        {
+            _activeFrontPanelInteraction.ClosePanel();
+            return;
+        }
+
         if (_activeInteraction != null)
         {
             DetailViewManager dvm = _activeInteraction.GetComponent<DetailViewManager>();
@@ -224,6 +234,7 @@ public class GameManager : MonoBehaviour
 
         _activeMbdvm = null;
         _activeGpuPhase1Panel = null;
+        _activeFrontPanelInteraction = null;
 
         NCIITaskListManager.CheckConditions();
 

@@ -23,6 +23,10 @@ public class CablePort : MonoBehaviour
     [Header("State")]
     [Tooltip("Tick for ports that start empty (no cable installed by default).")]
     [SerializeField] private bool startEmpty = false;
+    [Tooltip("When ticked, cables installing to or detaching from this port produce no activity log entry. Use on LoosePorts.")]
+    [SerializeField] private bool suppressActivityLog = false;
+
+    public bool SuppressActivityLog => suppressActivityLog;
 
     [Header("Prerequisite (optional)")]
     [Tooltip("This port only accepts a cable when the referenced port is already installed.")]

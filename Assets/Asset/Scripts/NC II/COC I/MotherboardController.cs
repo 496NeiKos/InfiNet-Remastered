@@ -104,6 +104,11 @@ public class MotherboardController : MonoBehaviour
 
     private static bool CheckInstalled(GameObject go)
     {
+        // FrontPanelConnectorController: requires Phase 1 AND all Phase 2 sub-pins installed.
+        // Must be checked before CablePort since the port also has a CablePort component.
+        FrontPanelConnectorController fpc = go.GetComponent<FrontPanelConnectorController>();
+        if (fpc != null) return fpc.IsFullyInstalled;
+
         // CablePort: uses its own tracked state (never hierarchy-dependent)
         CablePort cs = go.GetComponent<CablePort>();
         if (cs != null) return cs.IsInstalled;
