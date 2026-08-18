@@ -5,11 +5,16 @@ using UnityEngine.InputSystem;
 /// Logical network cable connecting two NetworkDevicePorts via a LineRenderer.
 ///
 /// Lifecycle:
-///   1. Instantiated by NetworkLogicalCableHolder when the icon proxy is dropped near a device.
-///   2. PendingSecondEnd — line tracks deviceA→cursor. Left-click near another device to connect.
-///      Left-click on the first device again OR right-click → cancel and destroy.
-///   3. Connected — both ends track their device anchors every frame (follows dragged devices).
-///      Hold either endpoint plug for holdDuration seconds to disconnect and destroy.
+///   1. Instantiated by NetworkLogicalCableHolder when icon is dropped near a device.
+///   2. PendingSecondEnd — line tracks deviceA→cursor. Left-click near another device
+///      to connect. Left-click on deviceA OR right-click → cancel (destroy).
+///      If the cable is re-routing (DetachEnd was called), right-click or clicking
+///      deviceA instead restores the cable to its previous connection.
+///   3. Connected — both ends track their device anchors every frame.
+///      Double-click either device anchor → NetworkCablePopupManager shows a list of
+///      all cables at that device with [Move End] and [Remove Cable] per cable.
+///      [Move End] calls DetachEnd, returning this cable to PendingSecondEnd so the
+///      free end can be re-routed to a different device.
 ///
 /// Prefab setup:
 ///   Root: LineRenderer + this script
@@ -41,13 +46,19 @@ public class NetworkLogicalCable : MonoBehaviour
     private enum CableState { PendingSecondEnd, Connected }
     private CableState _state;
 
-    private LineRenderer _lr;
+    private LineRenderer      _lr;
     private NetworkDevicePort _deviceA;
     private NetworkDevicePort _deviceB;
 
-    // Static so only one cable disconnect can accumulate at a time.
+    /// <summary>
+    /// Stores the port detached by DetachEnd so the cable can be restored to its
+    /// original connection if the user cancels the re-route (right-click / click deviceA).
+    /// Null on freshly deployed cables — cancel in that case destroys the cable.
+    /// </summary>
+    private NetworkDevicePort _restorePort;
+
+    // Static: only one cable hold-to-disconnect at a time.
     private static NetworkLogicalCable _holdTarget;
-    private bool  _holdTargetIsA;
     private float _holdTimer;
 
     // Blocks NetworkLogicalCableHolder from deploying another cable while one is pending.
@@ -68,13 +79,11 @@ public class NetworkLogicalCable : MonoBehaviour
         _lr.endWidth      = lineWidth;
         _lr.useWorldSpace = true;
 
-        // Always create a fresh owned Sprites/Default instance.
-        // Never reference an Inspector material — too easy to assign a wrong shader.
+        // Always create a fresh owned material so shader is always correct.
         Shader shader = Shader.Find("Sprites/Default");
         if (shader == null) shader = Shader.Find("Universal Render Pipeline/Particles/Unlit");
         if (shader != null) _lr.material = new Material(shader);
 
-        // colorGradient is the direct per-vertex color API — works regardless of shader.
         var gradient = new Gradient();
         gradient.SetKeys(
             new[] { new GradientColorKey(lineColor, 0f), new GradientColorKey(lineColor, 1f) },
@@ -83,9 +92,6 @@ public class NetworkLogicalCable : MonoBehaviour
         _lr.colorGradient = gradient;
 
         _lr.enabled = false;
-
-        if (endpointPlugA != null) endpointPlugA.SetActive(false);
-        if (endpointPlugB != null) endpointPlugB.SetActive(false);
     }
 
     private void OnDestroy()
@@ -98,7 +104,7 @@ public class NetworkLogicalCable : MonoBehaviour
     }
 
     // ----------------------------------------------------------------
-    //  Public API
+    //  Public API — connection
     // ----------------------------------------------------------------
 
     public void AttachFirstEnd(NetworkDevicePort port)
@@ -115,13 +121,11 @@ public class NetworkLogicalCable : MonoBehaviour
         if (port == _deviceA)       return;
         if (!port.CanAcceptCable()) return;
 
-        _deviceB = port;
+        _deviceB     = port;
+        _restorePort = null;    // clear any pending restore reference
         port.AcceptCable(this);
         _state = CableState.Connected;
         _pendingCount = Mathf.Max(0, _pendingCount - 1);
-
-        if (endpointPlugA != null) endpointPlugA.SetActive(true);
-        if (endpointPlugB != null) endpointPlugB.SetActive(true);
 
         // Notify both devices to register a Phase2 cable entry.
         _deviceA.GetComponent<NetworkDevicePhase2Manager>()?.RegisterCable(this, _deviceB);
@@ -132,17 +136,49 @@ public class NetworkLogicalCable : MonoBehaviour
             ActivityLogManager.EntryType.Install);
     }
 
-    /// <summary>Returns the port on the opposite end from the given port, or null if unconnected.</summary>
-    public NetworkDevicePort GetOtherPort(NetworkDevicePort from)
+    /// <summary>
+    /// Detaches one end of a Connected cable, returning it to PendingSecondEnd.
+    /// The detached end's port is stored in _restorePort so cancel restores the
+    /// original connection rather than destroying the cable.
+    ///
+    /// Called by NetworkCablePopupManager when the player clicks [Move End].
+    /// Phase2 must NOT be installed on either side (enforced by the popup).
+    /// </summary>
+    public void DetachEnd(NetworkDevicePort port)
     {
-        if (from == _deviceA) return _deviceB;
-        if (from == _deviceB) return _deviceA;
-        return null;
+        if (_state != CableState.Connected)              return;
+        if (port != _deviceA && port != _deviceB)        return;
+
+        // Grab both Phase2 managers before any swap or null — order matters.
+        var mA = _deviceA?.GetComponent<NetworkDevicePhase2Manager>();
+        var mB = _deviceB?.GetComponent<NetworkDevicePhase2Manager>();
+        mA?.UnregisterCable(this);
+        mB?.UnregisterCable(this);
+
+        _restorePort = port;
+        port.DisconnectCable(this);
+
+        if (port == _deviceA)
+        {
+            // Swap so _deviceA is always the remaining connected end.
+            _deviceA = _deviceB;
+            _deviceB = null;
+        }
+        else
+        {
+            _deviceB = null;
+        }
+
+        _state = CableState.PendingSecondEnd;
+        _pendingCount++;
+
+        ActivityLogManager.Log(
+            $"Cable end detached from {port.name} — re-routing in progress.",
+            ActivityLogManager.EntryType.Remove);
     }
 
     public void Disconnect()
     {
-        // Block if Phase2 is still installed on either end.
         if (_state == CableState.Connected)
         {
             var managerA = _deviceA?.GetComponent<NetworkDevicePhase2Manager>();
@@ -162,7 +198,6 @@ public class NetworkLogicalCable : MonoBehaviour
                 return;
             }
 
-            // Clean up any pending (non-installed) Phase2 entries on both devices.
             managerA?.UnregisterCable(this);
             managerB?.UnregisterCable(this);
         }
@@ -179,6 +214,56 @@ public class NetworkLogicalCable : MonoBehaviour
     }
 
     // ----------------------------------------------------------------
+    //  Public API — queries used by NetworkCablePopupManager
+    // ----------------------------------------------------------------
+
+    /// <summary>Returns the port on the opposite end from the given port, or null.</summary>
+    public NetworkDevicePort GetOtherPort(NetworkDevicePort from)
+    {
+        if (from == _deviceA) return _deviceB;
+        if (from == _deviceB) return _deviceA;
+        return null;
+    }
+
+    /// <summary>
+    /// Returns a display-friendly name for the device on the opposite end from <paramref name="from"/>.
+    /// Used by NetworkCablePopupManager to label each cable row.
+    /// </summary>
+    public string GetOtherPortDisplayName(NetworkDevicePort from)
+    {
+        NetworkDevicePort other = GetOtherPort(from);
+        if (other == null) return "Unknown";
+        var drag = other.GetComponentInParent<NetworkDragPrefab>();
+        return drag != null ? drag.LogDisplayName : other.name;
+    }
+
+    /// <summary>
+    /// True if the given port's own Phase2 is installed for this cable.
+    /// Blocks [Move End] — you cannot pull your own end while your port cable is plugged in.
+    /// The other device's Phase2 state is irrelevant for this check; if it is installed it
+    /// will be destroyed as an accepted consequence of re-routing.
+    /// </summary>
+    public bool IsMoveEndBlocked(NetworkDevicePort fromPort)
+    {
+        if (_state != CableState.Connected) return false;
+        var manager = fromPort?.GetComponent<NetworkDevicePhase2Manager>();
+        return manager != null && manager.IsPhase2InstalledFor(this);
+    }
+
+    /// <summary>
+    /// True if Phase2 is installed on EITHER end, blocking [Remove Cable].
+    /// Full removal requires both port cables to be unplugged first.
+    /// </summary>
+    public bool IsRemoveCableBlocked()
+    {
+        if (_state != CableState.Connected) return false;
+        var mA = _deviceA?.GetComponent<NetworkDevicePhase2Manager>();
+        var mB = _deviceB?.GetComponent<NetworkDevicePhase2Manager>();
+        return (mA != null && mA.IsPhase2InstalledFor(this)) ||
+               (mB != null && mB.IsPhase2InstalledFor(this));
+    }
+
+    // ----------------------------------------------------------------
     //  Update
     // ----------------------------------------------------------------
 
@@ -186,13 +271,15 @@ public class NetworkLogicalCable : MonoBehaviour
     {
         if (Mouse.current == null) return;
 
-        // Hide Phase1 cable entirely while any device detail view is open.
-        // The device moves to firstLayer when editing, which would drag the line with it.
+        // Always keep line and plug visibility in sync with editor state.
         bool editorOpen = GameManager.Instance != null && GameManager.Instance.IsEditorOpen;
         _lr.enabled = !editorOpen;
         SetPlugsVisible(!editorOpen);
 
         if (editorOpen || _deviceA == null) return;
+
+        // Suppress input processing while the cable popup is open.
+        if (NetworkCablePopupManager.IsOpen) return;
 
         if (_state == CableState.PendingSecondEnd)
             UpdatePendingSecondEnd();
@@ -200,10 +287,15 @@ public class NetworkLogicalCable : MonoBehaviour
             UpdateConnected();
     }
 
+    /// <summary>
+    /// Plugs are only shown when Connected and the editor is closed.
+    /// Guarding by state prevents re-showing plugs the frame after DetachEnd.
+    /// </summary>
     private void SetPlugsVisible(bool on)
     {
-        if (endpointPlugA != null) endpointPlugA.SetActive(on);
-        if (endpointPlugB != null) endpointPlugB.SetActive(on);
+        bool show = on && _state == CableState.Connected;
+        if (endpointPlugA != null) endpointPlugA.SetActive(show);
+        if (endpointPlugB != null) endpointPlugB.SetActive(show);
     }
 
     private void UpdatePendingSecondEnd()
@@ -217,22 +309,27 @@ public class NetworkLogicalCable : MonoBehaviour
 
         if (Mouse.current.rightButton.wasPressedThisFrame)
         {
-            CancelPending();
+            if (_restorePort != null) RestoreEnd();
+            else                      CancelPending();
             return;
         }
 
         if (Mouse.current.leftButton.wasPressedThisFrame)
         {
-            // Click on first device → cancel.
-            if (Vector3.Distance(_deviceA.GetAnchorWorldPosition(), cursorWorld) < secondEndSnapRadius)
+            // A valid nearby port always takes priority over cancellation.
+            NetworkDevicePort closest = FindClosestPort(cursorWorld, secondEndSnapRadius, exclude: _deviceA);
+            if (closest != null)
             {
-                CancelPending();
+                AttachSecondEnd(closest);
                 return;
             }
 
-            NetworkDevicePort closest = FindClosestPort(cursorWorld, secondEndSnapRadius, exclude: _deviceA);
-            if (closest != null)
-                AttachSecondEnd(closest);
+            // No valid port found — cancel or restore if the click landed near deviceA.
+            if (Vector3.Distance(_deviceA.GetAnchorWorldPosition(), cursorWorld) < secondEndSnapRadius)
+            {
+                if (_restorePort != null) RestoreEnd();
+                else                      CancelPending();
+            }
         }
     }
 
@@ -241,6 +338,28 @@ public class NetworkLogicalCable : MonoBehaviour
         _deviceA?.DisconnectCable(this);
         _deviceA = null;
         Destroy(gameObject);
+    }
+
+    /// <summary>
+    /// Restores the cable to its original connection after a DetachEnd re-route is cancelled.
+    /// Falls back to CancelPending if the restore port is no longer available.
+    /// </summary>
+    private void RestoreEnd()
+    {
+        if (_restorePort == null) { CancelPending(); return; }
+
+        if (!_restorePort.gameObject.activeInHierarchy || !_restorePort.CanAcceptCable())
+        {
+            ActivityLogManager.Log(
+                $"Cannot restore cable — {_restorePort.name} is unavailable. Cable removed.",
+                ActivityLogManager.EntryType.Warning);
+            _restorePort = null;
+            CancelPending();
+            return;
+        }
+
+        // AttachSecondEnd clears _restorePort and re-registers Phase2 managers.
+        AttachSecondEnd(_restorePort);
     }
 
     private void UpdateConnected()
@@ -254,31 +373,24 @@ public class NetworkLogicalCable : MonoBehaviour
         if (endpointPlugA != null) endpointPlugA.transform.position = anchorA;
         if (endpointPlugB != null) endpointPlugB.transform.position = anchorB;
 
-        HandleHoldToDisconnect(anchorA, anchorB);
+        HandleHoldToDisconnect();
     }
 
     // ----------------------------------------------------------------
-    //  Hold-to-disconnect
+    //  Hold-to-disconnect (single-cable shortcut; popup handles multi-cable)
     // ----------------------------------------------------------------
 
-    private void HandleHoldToDisconnect(Vector3 anchorA, Vector3 anchorB)
+    private void HandleHoldToDisconnect()
     {
-        Mouse mouse = Mouse.current;
+        Mouse  mouse      = Mouse.current;
         Vector2 mouseWorld = Camera.main.ScreenToWorldPoint(mouse.position.ReadValue());
 
         if (mouse.leftButton.wasPressedThisFrame && _holdTarget == null)
         {
-            if (IsMouseOverPlug(endpointPlugA, mouseWorld))
+            if (IsMouseOverPlug(endpointPlugA, mouseWorld) || IsMouseOverPlug(endpointPlugB, mouseWorld))
             {
-                _holdTarget    = this;
-                _holdTargetIsA = true;
-                _holdTimer     = 0f;
-            }
-            else if (IsMouseOverPlug(endpointPlugB, mouseWorld))
-            {
-                _holdTarget    = this;
-                _holdTargetIsA = false;
-                _holdTimer     = 0f;
+                _holdTarget = this;
+                _holdTimer  = 0f;
             }
         }
 
@@ -313,7 +425,8 @@ public class NetworkLogicalCable : MonoBehaviour
     //  Port scanning
     // ----------------------------------------------------------------
 
-    private static NetworkDevicePort FindClosestPort(Vector3 worldPos, float radius, NetworkDevicePort exclude = null)
+    private static NetworkDevicePort FindClosestPort(Vector3 worldPos, float radius,
+                                                     NetworkDevicePort exclude = null)
     {
         NetworkDevicePort[] ports = FindObjectsByType<NetworkDevicePort>(FindObjectsSortMode.None);
         NetworkDevicePort closest = null;
@@ -322,8 +435,8 @@ public class NetworkLogicalCable : MonoBehaviour
         foreach (NetworkDevicePort port in ports)
         {
             if (!port.gameObject.activeInHierarchy) continue;
-            if (port == exclude) continue;
-            if (!port.CanAcceptCable()) continue;
+            if (port == exclude)                    continue;
+            if (!port.CanAcceptCable())             continue;
             float dist = Vector3.Distance(port.GetAnchorWorldPosition(), worldPos);
             if (dist < bestDist) { bestDist = dist; closest = port; }
         }

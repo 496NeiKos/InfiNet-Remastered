@@ -76,6 +76,12 @@ public class NetworkLogicalCableHolder : MonoBehaviour,
             return;
         }
 
+        if (NetworkCablePopupManager.IsOpen)
+        {
+            Debug.Log("[NetworkLogicalCableHolder] Blocked — cable popup is open.");
+            return;
+        }
+
         _isDragging = true;
 
         _dragIndicator = new GameObject("LogicalCableDragIndicator");
