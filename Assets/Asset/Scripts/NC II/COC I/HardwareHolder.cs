@@ -230,13 +230,22 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
             Sprite sprite = dragSprite != null ? dragSprite : GetComponent<Image>()?.sprite;
 
             _dragIndicator = new GameObject("ScrewDragIndicator");
+            _dragIndicator.tag = "Screw";
 
             SpriteRenderer sr = _dragIndicator.AddComponent<SpriteRenderer>();
             sr.sprite = sprite;
             sr.sortingOrder = 999;
 
+            float worldScale = ComputeWorldScale(sprite);
             _dragIndicator.transform.position = worldPos + _grabOffset;
-            _dragIndicator.transform.localScale = Vector3.one * ComputeWorldScale(sprite);
+            _dragIndicator.transform.localScale = Vector3.one * worldScale;
+
+            CircleCollider2D col = _dragIndicator.AddComponent<CircleCollider2D>();
+            col.isTrigger = true;
+            col.radius = worldScale > 0f ? 0.3f / worldScale : 0.3f;
+
+            Rigidbody2D rb = _dragIndicator.AddComponent<Rigidbody2D>();
+            rb.bodyType = RigidbodyType2D.Kinematic;
         }
         else
         {
@@ -271,31 +280,23 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
 
     public void OnEndDrag(PointerEventData eventData)
     {
+        // Read before Destroy so trigger-exit timing cannot clear the set first.
+        ScrewController screwOnDrop = (spawnTag == "Screw")
+            ? ScrewController.GetHoveredEmpty()
+            : null;
+
         if (_dragIndicator != null) { Destroy(_dragIndicator); _dragIndicator = null; }
         if (!_isDragging) return;
         _isDragging = false;
 
-        if (immediateSpawnOnDrag) return;
-
-        if (dropTargetMode == DropTargetMode.RaycastScrew)
+        if (immediateSpawnOnDrag)
         {
-            Ray ray = Camera.main.ScreenPointToRay(eventData.position);
-            RaycastHit2D[] hits = Physics2D.RaycastAll(ray.origin, ray.direction);
-
-            foreach (RaycastHit2D hit in hits)
-            {
-                if (hit.collider == null) continue;
-                ScrewController screw = hit.collider.GetComponent<ScrewController>();
-                if (screw != null && screw.TryPlaceScrew())
-                {
-                    Debug.Log($"[HardwareHolder] Screw placed in {screw.name}");
-                    return;
-                }
-            }
-
-            Debug.Log("[HardwareHolder] Screw returned to hardware area (no valid hole found)");
+            if (screwOnDrop != null) screwOnDrop.TryPlaceScrew();
             return;
         }
+
+        if (dropTargetMode == DropTargetMode.RaycastScrew)
+            return;
 
         // Cables (both single and multi-cable) only install when the editor is open.
         bool isCable = IsMultiCableMode ||

@@ -109,6 +109,13 @@ public class MotherboardDetailViewManager : MonoBehaviour
 
         SetDetailedView(childPrefab, true);
 
+        // Re-enable colliders that may have been swept off by a previous Phase1 pass
+        // (SetPhase2Enabled(false)) while the component was still in phase2Root before
+        // being removed. When reinstalled to the slot after Phase2Interactive was already
+        // set, SetPhase2Enabled(true) won't re-sweep it — fix that here.
+        foreach (var col in childPrefab.GetComponentsInChildren<Collider2D>(true))
+            col.enabled = true;
+
         panel.SetActive(true);
         Debug.Log($"[MotherboardDetailViewManager] Opened inner panel for {childPrefab.name}");
     }

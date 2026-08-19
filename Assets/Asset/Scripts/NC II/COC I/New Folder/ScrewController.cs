@@ -38,6 +38,16 @@ public class ScrewController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
     // Only one screw may process a screwdriver at a time across all instances.
     private static ScrewController _activeScrew = null;
 
+    private static readonly System.Collections.Generic.HashSet<ScrewController> _hoveredByScrew
+        = new System.Collections.Generic.HashSet<ScrewController>();
+
+    public static ScrewController GetHoveredEmpty()
+    {
+        foreach (var s in _hoveredByScrew)
+            if (s != null && s._state == ScrewState.Empty) return s;
+        return null;
+    }
+
     // Incremented each time any screw completes an action. Every screw must record
     // the session at the moment the screwdriver ENTERS its zone. If the session has
     // advanced since entry (because another screw finished), re-entry is required.
@@ -112,8 +122,8 @@ public class ScrewController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
             TryBeginScrewdriver();
         }
 
-        // NOTE: "Screw" tag contact NO LONGER installs instantly.
-        // Installation only happens on DROP via ScrewDrag.OnEndDrag().
+        if (other.CompareTag("Screw"))
+            _hoveredByScrew.Add(this);
     }
 
     private void OnTriggerStay2D(Collider2D other)
@@ -134,10 +144,14 @@ public class ScrewController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
             if (_activeScrew == this)
                 _activeScrew = null;
         }
+
+        if (other.CompareTag("Screw"))
+            _hoveredByScrew.Remove(this);
     }
 
     private void OnDisable()
     {
+        _hoveredByScrew.Remove(this);
         if (_activeScrew == this)
         {
             _activeScrew = null;

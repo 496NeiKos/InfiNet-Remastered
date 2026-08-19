@@ -38,6 +38,7 @@ public class NCIITaskListManager : MonoBehaviour
     [SerializeField] private MotherboardController motherboardController;
     [SerializeField] private CPUSlotController cpuSlotController;
     [SerializeField] private GPUController gpuController;
+    [SerializeField] private FrontPanelConnectorController frontPanelConnectorController;
 
     [Header("Hardware Holders")]
     [SerializeField] private HardwareHolder psuHolder;
@@ -116,9 +117,9 @@ public class NCIITaskListManager : MonoBehaviour
         _heatsinkController = heatsinkHolder?.hardwarePrefab?.GetComponent<HeatsinkController>();
         _ssdController     = ssdHolder?.hardwarePrefab?.GetComponent<SSDController>();
 
-        if (disassemblyTaskObjects == null || disassemblyTaskObjects.Length < 16)
+        if (disassemblyTaskObjects == null || disassemblyTaskObjects.Length < 17)
         {
-            Debug.LogError("[NCIITaskListManager] Assign all 16 disassembly task objects in the inspector.");
+            Debug.LogError("[NCIITaskListManager] Assign all 17 disassembly task objects in the inspector.");
             return;
         }
 
@@ -213,11 +214,21 @@ public class NCIITaskListManager : MonoBehaviour
                     }
                 },
 
-                // D-Task 7: Unscrew and unplug motherboard phase-1 cables and screws (GPU excluded — that's D-Task 8)
+                // D-Task 7: Open Front-Panel connector detail view and remove every sub-pin cable
                 new TaskEntry
                 {
                     taskObject    = disassemblyTaskObjects[6],
                     originalIndex = 6,
+                    condition = () =>
+                        frontPanelConnectorController != null &&
+                        frontPanelConnectorController.CanDetach()
+                },
+
+                // D-Task 8: Unscrew and unplug motherboard phase-1 cables and screws (GPU excluded — that's D-Task 9)
+                new TaskEntry
+                {
+                    taskObject    = disassemblyTaskObjects[7],
+                    originalIndex = 7,
                     condition = () =>
                     {
                         if (motherboardController == null) return false;
@@ -232,18 +243,21 @@ public class NCIITaskListManager : MonoBehaviour
                         foreach (var c in p1.GetComponentsInChildren<CablePort>(true))
                         {
                             if (c.GetComponentInParent<GPUController>(true) != null) continue;
+                            // Skip Phase-2 sub-pin ports inside FrontPanelDetailedView — only the
+                            // Phase-1 FrontPanelConnector_Port matters for this disassembly task.
+                            if (c.GetComponentInParent<FrontPanelDetailedView>(true) != null) continue;
                             if (c.IsInstalled) return false;
                         }
                         return true;
                     }
                 },
 
-                // D-Task 8: GPU — unscrew, unplug cable, unlatch (GPU still in slot)
+                // D-Task 9: GPU — unscrew, unplug cable, unlatch (GPU still in slot)
                 // Persistent flag: once the GPU is fully prepped while in slot, removing it must not revert the task.
                 new TaskEntry
                 {
-                    taskObject    = disassemblyTaskObjects[7],
-                    originalIndex = 7,
+                    taskObject    = disassemblyTaskObjects[8],
+                    originalIndex = 8,
                     condition = () =>
                     {
                         if (!_gpuPreparedForRemoval &&
@@ -259,11 +273,11 @@ public class NCIITaskListManager : MonoBehaviour
                     }
                 },
 
-                // D-Task 9: Remove GPU, Motherboard, HDD and PSU from the system unit
+                // D-Task 10: Remove GPU, Motherboard, HDD and PSU from the system unit
                 new TaskEntry
                 {
-                    taskObject    = disassemblyTaskObjects[8],
-                    originalIndex = 8,
+                    taskObject    = disassemblyTaskObjects[9],
+                    originalIndex = 9,
                     condition = () =>
                         (gpuController       == null || !gpuController.IsInSlot) &&
                         (motherboardController == null || motherboardController.IsUninstalledFromSystemUnit) &&
@@ -272,11 +286,11 @@ public class NCIITaskListManager : MonoBehaviour
                          psuHolder.hardwarePrefab.GetComponentInParent<SlotContainer>() == null)
                 },
 
-                // D-Task 10: Open motherboard detail view from the workspace (persistent flag)
+                // D-Task 11: Open motherboard detail view from the workspace (persistent flag)
                 new TaskEntry
                 {
-                    taskObject    = disassemblyTaskObjects[9],
-                    originalIndex = 9,
+                    taskObject    = disassemblyTaskObjects[10],
+                    originalIndex = 10,
                     condition = () =>
                     {
                         if (!_mbOpenedFromWorkspace &&
@@ -292,56 +306,56 @@ public class NCIITaskListManager : MonoBehaviour
                     }
                 },
 
-                // D-Task 11: Uninstall heatsink (unscrew and unplug cable, then remove)
-                new TaskEntry
-                {
-                    taskObject    = disassemblyTaskObjects[10],
-                    originalIndex = 10,
-                    condition = () => _heatsinkController != null && !_heatsinkController.IsInstalledInSlot
-                },
-
-                // D-Task 12: Uninstall SSD (unscrew and remove)
+                // D-Task 12: Uninstall heatsink (unscrew and unplug cable, then remove)
                 new TaskEntry
                 {
                     taskObject    = disassemblyTaskObjects[11],
                     originalIndex = 11,
-                    condition = () => ssdHolder != null && ssdHolder.IsAvailable()
+                    condition = () => _heatsinkController != null && !_heatsinkController.IsInstalledInSlot
                 },
 
-                // D-Task 13: Uninstall both RAM sticks (unlatch and remove) — both holders must be wired and available
+                // D-Task 13: Uninstall SSD (unscrew and remove)
                 new TaskEntry
                 {
                     taskObject    = disassemblyTaskObjects[12],
                     originalIndex = 12,
+                    condition = () => ssdHolder != null && ssdHolder.IsAvailable()
+                },
+
+                // D-Task 14: Uninstall both RAM sticks (unlatch and remove) — both holders must be wired and available
+                new TaskEntry
+                {
+                    taskObject    = disassemblyTaskObjects[13],
+                    originalIndex = 13,
                     condition = () =>
                         ram1Holder != null && ram1Holder.IsAvailable() &&
                         ram2Holder != null && ram2Holder.IsAvailable()
                 },
 
-                // D-Task 14: Open the CPU lock lever (slide right)
-                new TaskEntry
-                {
-                    taskObject    = disassemblyTaskObjects[13],
-                    originalIndex = 13,
-                    condition = () => cpuSlotController != null && !cpuSlotController.IsLockClosed
-                },
-
-                // D-Task 15: Wipe thermal paste with cloth then uninstall CPU
+                // D-Task 15: Open the CPU lock lever (slide right)
                 new TaskEntry
                 {
                     taskObject    = disassemblyTaskObjects[14],
                     originalIndex = 14,
+                    condition = () => cpuSlotController != null && !cpuSlotController.IsLockClosed
+                },
+
+                // D-Task 16: Wipe thermal paste with cloth then uninstall CPU
+                new TaskEntry
+                {
+                    taskObject    = disassemblyTaskObjects[15],
+                    originalIndex = 15,
                     condition = () =>
                         cpuSlotController != null && !cpuSlotController.IsCPUInstalled &&
                         _cpuController != null &&
                         _cpuController.CurrentPasteState == CPUController.PasteState.NoPaste
                 },
 
-                // D-Task 16: Uninstall CMOS battery
+                // D-Task 17: Uninstall CMOS battery
                 new TaskEntry
                 {
-                    taskObject    = disassemblyTaskObjects[15],
-                    originalIndex = 15,
+                    taskObject    = disassemblyTaskObjects[16],
+                    originalIndex = 16,
                     condition = () => cmosHolder != null && cmosHolder.IsAvailable()
                 }
             }
@@ -352,9 +366,9 @@ public class NCIITaskListManager : MonoBehaviour
 
     private void BuildAssemblyPhase()
     {
-        if (assemblyTaskObjects == null || assemblyTaskObjects.Length < 14)
+        if (assemblyTaskObjects == null || assemblyTaskObjects.Length < 15)
         {
-            Debug.LogWarning("[NCIITaskListManager] Assign all 14 assembly task objects in the inspector — assembly tab will be empty.");
+            Debug.LogWarning("[NCIITaskListManager] Assign all 15 assembly task objects in the inspector — assembly tab will be empty.");
             return;
         }
 
@@ -481,35 +495,44 @@ public class NCIITaskListManager : MonoBehaviour
                     condition = () => gpuController != null && gpuController.IsFullyInstalled
                 },
 
-                // A-Task 10: Install all four phase-1 motherboard screws AND all three phase-2 cables.
-                // Uses _task10Latched (set eagerly by UpdateAssemblyLatches on every EvaluatePhase
-                // call, even while the task is outside the window) so pre-completing the screws/cables
-                // before this task enters the 3-task window is still recognised immediately.
-                // Still requires A-Task 9 (GPU) to be formally done first so the GPU's own CablePort
-                // is not mistaken for a phase-2 MB cable at evaluation time.
+                // A-Task 10: Install each Front-Panel sub-pin cable into its corresponding pin
                 new TaskEntry
                 {
                     taskObject    = assemblyTaskObjects[9],
                     originalIndex = 9,
-                    condition = () => _assembly != null && _assembly.tasks[8].isCompleted && _task10Latched
+                    condition = () =>
+                        frontPanelConnectorController != null &&
+                        frontPanelConnectorController.IsFullyInstalled
                 },
 
-                // A-Task 11: Install HDD screws and cables
+                // A-Task 11: Install all four phase-1 motherboard screws AND all phase-2 cables.
+                // Uses _task10Latched (set eagerly by UpdateAssemblyLatches on every EvaluatePhase
+                // call, even while the task is outside the window) so pre-completing the screws/cables
+                // before this task enters the 3-task window is still recognised immediately.
+                // Requires A-Task 10 (Front Panel) to be formally done first.
                 new TaskEntry
                 {
                     taskObject    = assemblyTaskObjects[10],
                     originalIndex = 10,
+                    condition = () => _assembly != null && _assembly.tasks[9].isCompleted && _task10Latched
+                },
+
+                // A-Task 12: Install HDD screws and cables
+                new TaskEntry
+                {
+                    taskObject    = assemblyTaskObjects[11],
+                    originalIndex = 11,
                     condition = () => _hddController != null && _hddController.IsFullyInstalled
                 },
 
-                // A-Task 12: Close system unit cover and screw it in place.
+                // A-Task 13: Close system unit cover and screw it in place.
                 // Requires the cover to actually be closed (not just screws in Screwed state from
                 // a prior assembly) and all four screws tightened. Latched once met so it never
                 // reverts if the player re-opens the cover for any reason afterward.
                 new TaskEntry
                 {
-                    taskObject    = assemblyTaskObjects[11],
-                    originalIndex = 11,
+                    taskObject    = assemblyTaskObjects[12],
+                    originalIndex = 12,
                     condition = () =>
                     {
                         if (!_task12Latched &&
@@ -523,22 +546,22 @@ public class NCIITaskListManager : MonoBehaviour
                     }
                 },
 
-                // A-Task 13: Plug all back cables (SU x2, monitor x3, AVR x2)
+                // A-Task 14: Plug all back cables (SU x2, monitor x3, AVR x2)
                 new TaskEntry
                 {
-                    taskObject    = assemblyTaskObjects[12],
-                    originalIndex = 12,
+                    taskObject    = assemblyTaskObjects[13],
+                    originalIndex = 13,
                     condition = () =>
                         _allBackPortSlots != null &&
                         _allBackPortSlots.Length > 0 &&
                         _allBackPortSlots.All(p => p.IsInstalled)
                 },
 
-                // A-Task 14: Turn on the system unit power button
+                // A-Task 15: Turn on the system unit power button
                 new TaskEntry
                 {
-                    taskObject    = assemblyTaskObjects[13],
-                    originalIndex = 13,
+                    taskObject    = assemblyTaskObjects[14],
+                    originalIndex = 14,
                     condition = () => suPowerButton != null && suPowerButton.IsPoweredOn
                 }
             }
@@ -762,17 +785,36 @@ public class NCIITaskListManager : MonoBehaviour
         Debug.Log("[NCIITaskListManager] Disassembly complete — switching to assembly phase.");
     }
 
+    private const string TopicCompleteMsg = "All task and objective has been completed on this topic. Go to settings and navigate other topic for the COC I.";
+    private const string AllTopicsCompleteMsg = "All topic has been completed, objective for COC I has been met. Proceed to COC II.";
+
+    private void OnDestroy()
+    {
+        TopicManager.OnAllTopicsComplete -= OnAllTopicsComplete;
+    }
+
     private void ShowAllTasksCompleted()
     {
-        // Show on the task panel TMP and mirror to SingleTaskDisplay.
+        TopicManager.OnAllTopicsComplete += OnAllTopicsComplete;
+
         if (allTasksCompletedText != null)
         {
-            allTasksCompletedText.text = "All task Completed!";
+            allTasksCompletedText.text = TopicCompleteMsg;
             allTasksCompletedText.color = Color.green;
             allTasksCompletedText.gameObject.SetActive(true);
         }
-        _displayOverride      = "All task Completed!";
+        _displayOverride      = TopicCompleteMsg;
         _isCompletionOverride = true;
+        OnTasksUpdated?.Invoke();
+    }
+
+    private void OnAllTopicsComplete()
+    {
+        TopicManager.OnAllTopicsComplete -= OnAllTopicsComplete;
+
+        if (allTasksCompletedText != null)
+            allTasksCompletedText.text = AllTopicsCompleteMsg;
+        _displayOverride = AllTopicsCompleteMsg;
         OnTasksUpdated?.Invoke();
     }
 }

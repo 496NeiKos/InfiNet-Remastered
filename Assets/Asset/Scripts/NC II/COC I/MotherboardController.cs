@@ -218,7 +218,10 @@ public class MotherboardController : MonoBehaviour
             if (!s.IsUnscrewed()) return false;
 
         foreach (var c in phase1Root.GetComponentsInChildren<CablePort>(true))
+        {
+            if (c.GetComponentInParent<FrontPanelDetailedView>(true) != null) continue;
             if (c.IsInstalled) return false;
+        }
 
         // GPU must be fully removed from its slot before the motherboard can be removed
         GPUPhase1CableInteraction gpuPhase1 = phase?.GetGPUPhase1CableInteraction();

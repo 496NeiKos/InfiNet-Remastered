@@ -461,17 +461,37 @@ public class T2TaskListManager : MonoBehaviour
         EvaluateConditions();
     }
 
+    private const string TopicCompleteMsg = "All task and objective has been completed on this topic. Go to settings and navigate other topic for the COC I.";
+    private const string AllTopicsCompleteMsg = "All topic has been completed, objective for COC I has been met. Proceed to COC II.";
+
     private void ShowAllTasksCompleted()
     {
+        TopicManager.OnAllTopicsComplete += OnAllTopicsComplete;
+
         if (allTasksCompletedText != null)
         {
-            allTasksCompletedText.text = "All task Completed!";
+            allTasksCompletedText.text = TopicCompleteMsg;
             allTasksCompletedText.color = Color.green;
             allTasksCompletedText.gameObject.SetActive(true);
         }
-        _displayOverride      = "All task Completed!";
+        _displayOverride      = TopicCompleteMsg;
         _isCompletionOverride = true;
         OnTasksUpdated?.Invoke();
+    }
+
+    private void OnAllTopicsComplete()
+    {
+        TopicManager.OnAllTopicsComplete -= OnAllTopicsComplete;
+
+        if (allTasksCompletedText != null)
+            allTasksCompletedText.text = AllTopicsCompleteMsg;
+        _displayOverride = AllTopicsCompleteMsg;
+        OnTasksUpdated?.Invoke();
+    }
+
+    private void OnDestroy()
+    {
+        TopicManager.OnAllTopicsComplete -= OnAllTopicsComplete;
     }
 
     private void RefreshWindow()
