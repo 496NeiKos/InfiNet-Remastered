@@ -35,6 +35,10 @@ public class NetworkDevicePhase2Manager : MonoBehaviour
     [Tooltip("Transform inside the Detail view where idle Phase2 cables appear. Position this yourself in the scene.")]
     [SerializeField] private Transform anchorTransform;
 
+    [Header("Cable Sizing")]
+    [Tooltip("World-space scale applied to every idle Phase2 cable spawned by this manager. Set the same value on all device managers to ensure cables look identical across devices regardless of each detailViewParent's own world scale.")]
+    [SerializeField] private Vector3 idleCableWorldScale = Vector3.one;
+
     [Header("Shared Label (Screen Space - Camera Canvas)")]
     [Tooltip("TextMeshProUGUI on a Screen Space - Camera canvas in the scene. Updated to show which connection the active Phase2 cable represents.")]
     [SerializeField] private TextMeshProUGUI sharedLabel;
@@ -57,22 +61,33 @@ public class NetworkDevicePhase2Manager : MonoBehaviour
     private          bool              _detailWasOpen = false;
 
     // ----------------------------------------------------------------
+    //  Public query — used by IPConfigTaskManager
+    // ----------------------------------------------------------------
+
+    /// <summary>True when at least one Phase2 entry exists and every entry is installed.</summary>
+    public bool AreAllInstalled => _entries.Count > 0 && _entries.TrueForAll(e => e.IsInstalled);
+
+    /// <summary>True when at least one Phase2 entry is currently installed.</summary>
+    public bool HasAnyInstalled => _entries.Exists(e => e.IsInstalled);
+
+    /// <summary>True when an entry for the given far port exists and is currently uninstalled.</summary>
+    public bool HasUninstalledEntryFor(NetworkDevicePort otherPort) =>
+        _entries.Exists(e => e.OtherPort == otherPort && !e.IsInstalled);
+
+    // ----------------------------------------------------------------
     //  Update — track detail view open/close transitions for shared label
     // ----------------------------------------------------------------
 
     private void Update()
     {
-        if (sharedLabel == null) return;
-
         bool detailOpen = detailViewParent != null && detailViewParent.gameObject.activeInHierarchy;
 
         if (detailOpen == _detailWasOpen) return; // no state change
         _detailWasOpen = detailOpen;
 
-        if (detailOpen)
-            UpdateSharedLabel();   // restore label visibility based on queue
-        else
-            sharedLabel.gameObject.SetActive(false); // panel closed — hide unconditionally
+        // RefreshQueue handles both SetActive and sr.enabled for each entry correctly.
+        // The previous manual sr.enabled-only loop left GameObjects SetActive(false) invisible.
+        RefreshQueue();
     }
 
     // ----------------------------------------------------------------
@@ -111,6 +126,13 @@ public class NetworkDevicePhase2Manager : MonoBehaviour
         string otherName = GetDisplayName(otherPort != null ? otherPort.gameObject : null);
         string labelText = $"{ownerName} → {otherName}";
 
+        // Normalize before Initialize so _originalLocalScale caches the correct idle scale.
+        Vector3 p = detailViewParent.lossyScale;
+        go.transform.localScale = new Vector3(
+            idleCableWorldScale.x / p.x,
+            idleCableWorldScale.y / p.y,
+            idleCableWorldScale.z / p.z);
+
         phase2.Initialize(this, cable, anchorTransform, detailViewParent);
 
         var entry = new Phase2Entry
@@ -123,8 +145,14 @@ public class NetworkDevicePhase2Manager : MonoBehaviour
         };
         _entries.Add(entry);
 
-        // Only visible if it is the current queue head.
-        go.SetActive(_entries.Count - 1 == _currentIndex);
+        // Only visible if it is the current queue head AND the detail view is open.
+        bool isQueueHead  = _entries.Count - 1 == _currentIndex;
+        bool detailIsOpen = detailViewParent != null && detailViewParent.gameObject.activeInHierarchy;
+        go.SetActive(isQueueHead && detailIsOpen);
+
+        // Ensure the SpriteRenderer matches; guards against prefab starting with renderer enabled.
+        var sr = go.GetComponent<SpriteRenderer>();
+        if (sr != null) sr.enabled = detailIsOpen;
     }
 
     // ----------------------------------------------------------------
@@ -204,27 +232,34 @@ public class NetworkDevicePhase2Manager : MonoBehaviour
 
     private void RefreshQueue()
     {
+        bool detailOpen = detailViewParent != null && detailViewParent.gameObject.activeInHierarchy;
+
         for (int i = 0; i < _entries.Count; i++)
         {
             Phase2Entry e = _entries[i];
             if (e.Instance == null) continue;
 
+            bool shouldBeActive;
             if (e.IsInstalled)
             {
-                // Installed cables stay visible in their sockets.
-                e.Instance.gameObject.SetActive(true);
+                // Installed cables stay visible in their sockets — but only when detail is open.
+                shouldBeActive = detailOpen;
             }
             else if (i == _currentIndex)
             {
-                // Current pending — show at anchor.
+                // Current pending — show at anchor, but only when detail is open.
                 e.Instance.ReturnToAnchor();
-                e.Instance.gameObject.SetActive(true);
+                shouldBeActive = detailOpen;
             }
             else
             {
-                // Not yet active — hide.
-                e.Instance.gameObject.SetActive(false);
+                // Not yet active — always hidden.
+                shouldBeActive = false;
             }
+
+            e.Instance.gameObject.SetActive(shouldBeActive);
+            var sr = e.Instance.GetComponent<SpriteRenderer>();
+            if (sr != null) sr.enabled = shouldBeActive && detailOpen;
         }
 
         UpdateSharedLabel();

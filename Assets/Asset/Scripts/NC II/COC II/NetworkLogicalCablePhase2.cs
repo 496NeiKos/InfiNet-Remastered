@@ -21,7 +21,8 @@ using UnityEngine.InputSystem;
 /// </summary>
 public class NetworkLogicalCablePhase2 : MonoBehaviour
 {
-    [SerializeField] private float snapRadius = 1.5f;
+    [SerializeField] private float  snapRadius     = 1.5f;
+    [SerializeField] private Sprite installedSprite;
 
     // Set by NetworkDevicePhase2Manager.
     private NetworkDevicePhase2Manager _manager;
@@ -29,8 +30,13 @@ public class NetworkLogicalCablePhase2 : MonoBehaviour
     private Transform                  _anchor;
     private Transform                  _detailViewParent;
 
-    private bool _isDragging;
-    private bool _isInstalled;
+    private bool           _isDragging;
+    private bool           _isInstalled;
+    private SpriteRenderer _sr;
+    private Collider2D     _col;
+    private Sprite         _originalSprite;
+    private Vector3        _originalLocalScale;
+    private Quaternion     _originalLocalRotation;
 
     // Static guard — one Phase2 drag at a time.
     private static NetworkLogicalCablePhase2 _dragTarget;
@@ -38,7 +44,7 @@ public class NetworkLogicalCablePhase2 : MonoBehaviour
     public bool IsInstalled => _isInstalled;
 
     // ----------------------------------------------------------------
-    //  Init (called by manager right after Instantiate)
+    //  Init (called by manager right after normalizing idle scale)
     // ----------------------------------------------------------------
 
     public void Initialize(
@@ -52,9 +58,12 @@ public class NetworkLogicalCablePhase2 : MonoBehaviour
         _anchor           = anchor;
         _detailViewParent = detailViewParent;
 
-        // Position at anchor in world space. Because this object is a child of
-        // detailViewParent, subsequent moves of the device (e.g. into firstLayer)
-        // preserve the relative local position automatically.
+        _sr                 = GetComponent<SpriteRenderer>();
+        _col                = GetComponent<Collider2D>();
+        _originalSprite        = _sr != null ? _sr.sprite : null;
+        _originalLocalScale    = transform.localScale;
+        _originalLocalRotation = transform.localRotation;
+
         transform.position = anchor.position;
     }
 
@@ -72,8 +81,8 @@ public class NetworkLogicalCablePhase2 : MonoBehaviour
                 && _dragTarget == null
                 && IsMouseOver())
             {
-                _dragTarget  = this;
-                _isDragging  = true;
+                _dragTarget = this;
+                _isDragging = true;
             }
             return;
         }
@@ -104,8 +113,12 @@ public class NetworkLogicalCablePhase2 : MonoBehaviour
         {
             _isInstalled = true;
             transform.SetParent(socket.transform, true);
-            transform.position = socket.transform.position;
+            transform.position      = socket.transform.position;
+            transform.localRotation = Quaternion.identity;
+            transform.localScale    = socket.InstalledScale;
+            if (_sr != null && installedSprite != null) _sr.sprite = installedSprite;
             _manager.OnPhase2Installed(this);
+            ActivityLogManager.Log($"Port cable installed: {_representedCable?.name ?? name} → {socket.name}", ActivityLogManager.EntryType.Install);
         }
         else
         {
@@ -120,7 +133,10 @@ public class NetworkLogicalCablePhase2 : MonoBehaviour
     public void OnUninstalledFromSocket()
     {
         _isInstalled = false;
+        if (_sr != null) _sr.sprite = _originalSprite;
         transform.SetParent(_detailViewParent, true);
+        transform.localRotation = _originalLocalRotation;
+        transform.localScale    = _originalLocalScale;  // override Unity's worldPositionStays auto-adjustment
         _manager.OnPhase2Uninstalled(this);
     }
 
@@ -161,11 +177,9 @@ public class NetworkLogicalCablePhase2 : MonoBehaviour
 
     private bool IsMouseOver()
     {
-        Vector2    mouseWorld = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
-        Collider2D col        = GetComponent<Collider2D>();
-        if (col != null && col.enabled) return col.OverlapPoint(mouseWorld);
-        SpriteRenderer sr = GetComponent<SpriteRenderer>();
-        if (sr != null) return sr.bounds.Contains(new Vector3(mouseWorld.x, mouseWorld.y, sr.bounds.center.z));
+        Vector2 mouseWorld = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
+        if (_col != null && _col.enabled) return _col.OverlapPoint(mouseWorld);
+        if (_sr  != null) return _sr.bounds.Contains(new Vector3(mouseWorld.x, mouseWorld.y, _sr.bounds.center.z));
         return false;
     }
 }

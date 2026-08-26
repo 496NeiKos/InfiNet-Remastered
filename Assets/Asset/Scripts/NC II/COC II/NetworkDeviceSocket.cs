@@ -10,12 +10,15 @@ using UnityEngine.InputSystem;
 ///   • Add this component + a Collider2D (BoxCollider2D recommended) to the socket sprite GameObject.
 ///   • Duplicate the socket for as many ports as the device needs.
 ///   • Each socket accepts only one Phase2 cable at a time.
+///   • Set InstalledScale per socket to control how the cable appears when plugged in.
 /// </summary>
 public class NetworkDeviceSocket : MonoBehaviour
 {
-    [SerializeField] private float holdDuration = 1f;
+    [SerializeField] private float   holdDuration   = 1f;
+    [SerializeField] private Vector3 installedScale = Vector3.one;
 
-    public bool IsCableInstalled => _installedCable != null;
+    public bool    IsCableInstalled => _installedCable != null;
+    public Vector3 InstalledScale   => installedScale;
 
     private NetworkLogicalCablePhase2 _installedCable;
     private Collider2D _col;
@@ -61,9 +64,9 @@ public class NetworkDeviceSocket : MonoBehaviour
             Vector2 worldPt = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
             if (IsMouseOver(worldPt))
             {
-                _holdTarget  = this;
-                _holding     = true;
-                _holdTimer   = 0f;
+                _holdTarget = this;
+                _holding    = true;
+                _holdTimer  = 0f;
             }
         }
 
@@ -96,6 +99,7 @@ public class NetworkDeviceSocket : MonoBehaviour
         if (_installedCable == null) return;
         var cable = _installedCable;
         _installedCable = null;        // Clear before notifying to avoid re-entry.
+        ActivityLogManager.Log($"Port cable removed from {gameObject.name}", ActivityLogManager.EntryType.Remove);
         cable.OnUninstalledFromSocket();
     }
 
