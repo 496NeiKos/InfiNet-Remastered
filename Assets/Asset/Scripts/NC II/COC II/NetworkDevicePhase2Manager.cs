@@ -133,7 +133,7 @@ public class NetworkDevicePhase2Manager : MonoBehaviour
             idleCableWorldScale.y / p.y,
             idleCableWorldScale.z / p.z);
 
-        phase2.Initialize(this, cable, anchorTransform, detailViewParent);
+        phase2.Initialize(this, cable, anchorTransform, detailViewParent, labelText);
 
         var entry = new Phase2Entry
         {

@@ -29,6 +29,7 @@ public class NetworkLogicalCablePhase2 : MonoBehaviour
     private NetworkLogicalCable        _representedCable;
     private Transform                  _anchor;
     private Transform                  _detailViewParent;
+    private string                     _tooltipLabel;
 
     private bool           _isDragging;
     private bool           _isInstalled;
@@ -41,6 +42,9 @@ public class NetworkLogicalCablePhase2 : MonoBehaviour
     // Static guard — one Phase2 drag at a time.
     private static NetworkLogicalCablePhase2 _dragTarget;
 
+    // Static hover owner — prevents multiple installed cables fighting over HoverLabelManager.
+    private static NetworkLogicalCablePhase2 _currentHoverOwner;
+
     public bool IsInstalled => _isInstalled;
 
     // ----------------------------------------------------------------
@@ -51,12 +55,14 @@ public class NetworkLogicalCablePhase2 : MonoBehaviour
         NetworkDevicePhase2Manager manager,
         NetworkLogicalCable        cable,
         Transform                  anchor,
-        Transform                  detailViewParent)
+        Transform                  detailViewParent,
+        string                     tooltipLabel)
     {
         _manager          = manager;
         _representedCable = cable;
         _anchor           = anchor;
         _detailViewParent = detailViewParent;
+        _tooltipLabel     = tooltipLabel;
 
         _sr                 = GetComponent<SpriteRenderer>();
         _col                = GetComponent<Collider2D>();
@@ -68,12 +74,18 @@ public class NetworkLogicalCablePhase2 : MonoBehaviour
     }
 
     // ----------------------------------------------------------------
-    //  Update — drag loop
+    //  Update — drag loop / installed hover
     // ----------------------------------------------------------------
 
     private void Update()
     {
-        if (_isInstalled || Mouse.current == null) return;
+        if (Mouse.current == null) return;
+
+        if (_isInstalled)
+        {
+            UpdateInstalledHover();
+            return;
+        }
 
         if (!_isDragging)
         {
@@ -99,6 +111,34 @@ public class NetworkLogicalCablePhase2 : MonoBehaviour
             _dragTarget = null;
             _isDragging = false;
             OnDropped();
+        }
+    }
+
+    private void UpdateInstalledHover()
+    {
+        if (HoverLabelManager.Instance == null) return;
+
+        Vector2 mouseScreen = Mouse.current.position.ReadValue();
+
+        if (IsMouseOver())
+        {
+            _currentHoverOwner = this;
+            HoverLabelManager.Instance.ShowLabel(_tooltipLabel);
+            HoverLabelManager.Instance.FollowMouse(mouseScreen);
+        }
+        else if (_currentHoverOwner == this)
+        {
+            _currentHoverOwner = null;
+            HoverLabelManager.Instance.HideLabel();
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (_currentHoverOwner == this)
+        {
+            _currentHoverOwner = null;
+            HoverLabelManager.Instance?.HideLabel();
         }
     }
 
@@ -132,6 +172,12 @@ public class NetworkLogicalCablePhase2 : MonoBehaviour
 
     public void OnUninstalledFromSocket()
     {
+        if (_currentHoverOwner == this)
+        {
+            _currentHoverOwner = null;
+            HoverLabelManager.Instance?.HideLabel();
+        }
+
         _isInstalled = false;
         if (_sr != null) _sr.sprite = _originalSprite;
         transform.SetParent(_detailViewParent, true);
