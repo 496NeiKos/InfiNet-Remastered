@@ -70,6 +70,10 @@ public class NetworkDevicePhase2Manager : MonoBehaviour
     /// <summary>True when at least one Phase2 entry is currently installed.</summary>
     public bool HasAnyInstalled => _entries.Exists(e => e.IsInstalled);
 
+    /// <summary>True when an entry for the given far port exists and is installed.</summary>
+    public bool HasInstalledEntryFor(NetworkDevicePort otherPort) =>
+        _entries.Exists(e => e.OtherPort == otherPort && e.IsInstalled);
+
     /// <summary>True when an entry for the given far port exists and is currently uninstalled.</summary>
     public bool HasUninstalledEntryFor(NetworkDevicePort otherPort) =>
         _entries.Exists(e => e.OtherPort == otherPort && !e.IsInstalled);

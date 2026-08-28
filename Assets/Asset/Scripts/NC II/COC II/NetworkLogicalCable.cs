@@ -30,9 +30,6 @@ public class NetworkLogicalCable : MonoBehaviour
     [Tooltip("World-unit radius for second-end device detection on click.")]
     [SerializeField] private float secondEndSnapRadius = 2f;
 
-    [Header("Hold to Disconnect")]
-    [SerializeField] private float holdDuration = 1f;
-
     [Header("Endpoint Plugs")]
     [Tooltip("Child GameObject at deviceA end — needs a CircleCollider2D for hold detection.")]
     [SerializeField] private GameObject endpointPlugA;
@@ -57,13 +54,17 @@ public class NetworkLogicalCable : MonoBehaviour
     /// </summary>
     private NetworkDevicePort _restorePort;
 
-    // Static: only one cable hold-to-disconnect at a time.
-    private static NetworkLogicalCable _holdTarget;
-    private float _holdTimer;
+    // True when this cable is in a re-route (DetachEnd was called).
+    // AttachSecondEnd uses this to skip re-registering Phase2 on the remaining end.
+    private bool _isRerouting;
 
     // Blocks NetworkLogicalCableHolder from deploying another cable while one is pending.
     private static int _pendingCount = 0;
     public  static bool AnyPendingSecondEnd => _pendingCount > 0;
+
+    // Used by IPConfigTaskManager to check which devices a cable connects.
+    public NetworkDevicePort PortA => _deviceA;
+    public NetworkDevicePort PortB => _deviceB;
 
     // ----------------------------------------------------------------
     //  Init
@@ -98,9 +99,6 @@ public class NetworkLogicalCable : MonoBehaviour
     {
         if (_state == CableState.PendingSecondEnd)
             _pendingCount = Mathf.Max(0, _pendingCount - 1);
-
-        if (_holdTarget == this)
-            _holdTarget = null;
     }
 
     // ----------------------------------------------------------------
@@ -127,12 +125,21 @@ public class NetworkLogicalCable : MonoBehaviour
         _state = CableState.Connected;
         _pendingCount = Mathf.Max(0, _pendingCount - 1);
 
-        // Notify both devices to register a Phase2 cable entry.
-        _deviceA.GetComponent<NetworkDevicePhase2Manager>()?.RegisterCable(this, _deviceB);
-        _deviceB.GetComponent<NetworkDevicePhase2Manager>()?.RegisterCable(this, _deviceA);
+        // On a fresh connection register Phase2 on both sides.
+        // On a re-route, deviceA's existing Phase2 entry is preserved — only register for the new end.
+        if (_isRerouting)
+        {
+            _deviceB.GetComponent<NetworkDevicePhase2Manager>()?.RegisterCable(this, _deviceA);
+            _isRerouting = false;
+        }
+        else
+        {
+            _deviceA.GetComponent<NetworkDevicePhase2Manager>()?.RegisterCable(this, _deviceB);
+            _deviceB.GetComponent<NetworkDevicePhase2Manager>()?.RegisterCable(this, _deviceA);
+        }
 
         ActivityLogManager.Log(
-            $"Cable connected: {_deviceA.name} ↔ {_deviceB.name}",
+            $"Network Cable connected to {PortDisplayName(_deviceA)} and {PortDisplayName(_deviceB)}",
             ActivityLogManager.EntryType.Install);
     }
 
@@ -142,18 +149,16 @@ public class NetworkLogicalCable : MonoBehaviour
     /// original connection rather than destroying the cable.
     ///
     /// Called by NetworkCablePopupManager when the player clicks [Move End].
-    /// Phase2 must NOT be installed on either side (enforced by the popup).
+    /// Blocked only if the detaching port's own Phase2 is installed (enforced by the popup).
     /// </summary>
     public void DetachEnd(NetworkDevicePort port)
     {
         if (_state != CableState.Connected)              return;
         if (port != _deviceA && port != _deviceB)        return;
 
-        // Grab both Phase2 managers before any swap or null — order matters.
-        var mA = _deviceA?.GetComponent<NetworkDevicePhase2Manager>();
-        var mB = _deviceB?.GetComponent<NetworkDevicePhase2Manager>();
-        mA?.UnregisterCable(this);
-        mB?.UnregisterCable(this);
+        // Only unregister the detached end — the remaining end keeps its Phase2 intact.
+        port.GetComponent<NetworkDevicePhase2Manager>()?.UnregisterCable(this);
+        _isRerouting = true;
 
         _restorePort = port;
         port.DisconnectCable(this);
@@ -171,10 +176,6 @@ public class NetworkLogicalCable : MonoBehaviour
 
         _state = CableState.PendingSecondEnd;
         _pendingCount++;
-
-        ActivityLogManager.Log(
-            $"Cable end detached from {port.name} — re-routing in progress.",
-            ActivityLogManager.EntryType.Remove);
     }
 
     public void Disconnect()
@@ -205,11 +206,6 @@ public class NetworkLogicalCable : MonoBehaviour
         _deviceA?.DisconnectCable(this);
         _deviceB?.DisconnectCable(this);
 
-        if (_deviceA != null && _deviceB != null)
-            ActivityLogManager.Log(
-                $"Cable disconnected: {_deviceA.name} ↔ {_deviceB.name}",
-                ActivityLogManager.EntryType.Remove);
-
         Destroy(gameObject);
     }
 
@@ -238,10 +234,8 @@ public class NetworkLogicalCable : MonoBehaviour
     }
 
     /// <summary>
-    /// True if the given port's own Phase2 is installed for this cable.
-    /// Blocks [Move End] — you cannot pull your own end while your port cable is plugged in.
-    /// The other device's Phase2 state is irrelevant for this check; if it is installed it
-    /// will be destroyed as an accepted consequence of re-routing.
+    /// True if the requesting port's own Phase2 is installed, blocking [Move End].
+    /// The other end's Phase2 is unaffected by re-routing and does not need to be removed first.
     /// </summary>
     public bool IsMoveEndBlocked(NetworkDevicePort fromPort)
     {
@@ -372,58 +366,18 @@ public class NetworkLogicalCable : MonoBehaviour
 
         if (endpointPlugA != null) endpointPlugA.transform.position = anchorA;
         if (endpointPlugB != null) endpointPlugB.transform.position = anchorB;
-
-        HandleHoldToDisconnect();
-    }
-
-    // ----------------------------------------------------------------
-    //  Hold-to-disconnect (single-cable shortcut; popup handles multi-cable)
-    // ----------------------------------------------------------------
-
-    private void HandleHoldToDisconnect()
-    {
-        Mouse  mouse      = Mouse.current;
-        Vector2 mouseWorld = Camera.main.ScreenToWorldPoint(mouse.position.ReadValue());
-
-        if (mouse.leftButton.wasPressedThisFrame && _holdTarget == null)
-        {
-            if (IsMouseOverPlug(endpointPlugA, mouseWorld) || IsMouseOverPlug(endpointPlugB, mouseWorld))
-            {
-                _holdTarget = this;
-                _holdTimer  = 0f;
-            }
-        }
-
-        if (_holdTarget == this)
-        {
-            if (mouse.leftButton.isPressed)
-            {
-                _holdTimer += Time.deltaTime;
-                if (_holdTimer >= holdDuration)
-                {
-                    _holdTarget = null;
-                    Disconnect();
-                }
-            }
-            else
-            {
-                _holdTarget = null;
-                _holdTimer  = 0f;
-            }
-        }
-    }
-
-    private static bool IsMouseOverPlug(GameObject plug, Vector2 mouseWorld)
-    {
-        if (plug == null || !plug.activeSelf) return false;
-        Collider2D col = plug.GetComponent<Collider2D>();
-        if (col != null && col.enabled) return col.OverlapPoint(mouseWorld);
-        return Vector2.Distance(plug.transform.position, mouseWorld) < 0.35f;
     }
 
     // ----------------------------------------------------------------
     //  Port scanning
     // ----------------------------------------------------------------
+
+    private static string PortDisplayName(NetworkDevicePort port)
+    {
+        if (port == null) return "Unknown";
+        var drag = port.GetComponentInParent<NetworkDragPrefab>();
+        return drag != null ? drag.LogDisplayName : port.name;
+    }
 
     private static NetworkDevicePort FindClosestPort(Vector3 worldPos, float radius,
                                                      NetworkDevicePort exclude = null)
