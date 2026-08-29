@@ -17,10 +17,10 @@
  *    [ 0] Deploy the UTP Cable to the Workspace
  *    [ 1] Right-click to enter "Detail View" to start the configuration
  *    [ 2] Use the Wire Stripper tool to cut the cable jacket
- *    [ 3] Arrange the color sequence: create a Straight-through (T568A / T568B)
- *    [ 4] Install RJ45 to the cable
- *    [ 5] Use Crimping tool to crimp the RJ45 to the cable wires
- *    [ 6] Do the same configuration to the other end of the same cable
+ *    [ 3] Click two different wires to swap the color sequence (swap tutorial — counts one swap)
+ *    [ 4] Create a Straight-Through: T-568B / T-568A (both ends, wire order checker)
+ *    [ 5] Install RJ45 to the cable
+ *    [ 6] Use Crimping tool to crimp the RJ45 to the cable wires
  *    [ 7] Exit detail view and store the cable back to the storage area
  *    [ 8] Deploy LAN Tester to the workspace
  *    [ 9] Install the network cable to the LAN tester port
@@ -32,15 +32,14 @@
  *    [14] Right-click to enter "Detail View" to start the configuration
  *    [15] Use the Crimping tool to cut the straight-through
  *    [16] Use Wire Stripper to cut the cable jacket
- *    [17] Arrange the color sequence: create a Cross-over (T568A <--> T568B)
+ *    [17] Create a Cross-Over: T-568B / T-568A (both ends, wire order checker)
  *    [18] Install RJ45 to the cable
  *    [19] Use Crimping tool to crimp the RJ45 to the cable wires
- *    [20] Do the same configuration to the other end of the same cable
- *    [21] Exit detail view and store the cable back to the storage area
- *    [22] Deploy LAN Tester to the workspace
- *    [23] Install the network cable to the LAN tester port
- *    [24] Turn on the power switch of the LAN tester
- *    [25] Observe the LAN tester LED sequence to see if it matches the Cross-over
+ *    [20] Exit detail view and store the cable back to the storage area
+ *    [21] Deploy LAN Tester to the workspace
+ *    [22] Install the network cable to the LAN tester port
+ *    [23] Turn on the power switch of the LAN tester
+ *    [24] Observe the LAN tester LED sequence to see if it matches the Cross-over
  *
  *  INSPECTOR SETUP
  *    Task UI
@@ -68,7 +67,7 @@ using System.Linq;
 using TMPro;
 using UnityEngine;
 
-public class NetworkCableTaskManager : MonoBehaviour
+public class NetworkCableTaskManager : MonoBehaviour, ITaskCategory
 {
     public static NetworkCableTaskManager Instance { get; private set; }
 
@@ -86,7 +85,7 @@ public class NetworkCableTaskManager : MonoBehaviour
     [Header("Task UI")]
     [SerializeField] private Transform  taskParent;
     [SerializeField] private Transform  finishedParent;
-    [Tooltip("Exactly 26 task GameObjects in the order listed in the header comment.")]
+    [Tooltip("Exactly 25 task GameObjects in the order listed in the header comment.")]
     [SerializeField] private GameObject[] taskObjects;
 
     [Header("Network Cable")]
@@ -107,7 +106,7 @@ public class NetworkCableTaskManager : MonoBehaviour
 
     // One latch per task. Once set true the condition permanently returns true,
     // preventing reversion when Phase-2 actions undo Phase-1 hardware state.
-    private readonly bool[] _latched = new bool[26];
+    private readonly bool[] _latched = new bool[25];
 
     // Set true when the cable passes through storage (icon proxy visible) after Task 13
     // completes. Guards Task 14 from firing during the drag-from-port phase, where the
@@ -139,9 +138,9 @@ public class NetworkCableTaskManager : MonoBehaviour
 
     private void Start()
     {
-        if (taskObjects == null || taskObjects.Length < 26)
+        if (taskObjects == null || taskObjects.Length < 25)
         {
-            Debug.LogError("[NetworkCableTaskManager] Assign all 26 task objects in the inspector.");
+            Debug.LogError("[NetworkCableTaskManager] Assign all 25 task objects in the inspector.");
             return;
         }
 
@@ -186,7 +185,9 @@ public class NetworkCableTaskManager : MonoBehaviour
                 {
                     if (!_latched[0] &&
                         networkCableHolder?.hardwarePrefab != null &&
-                        networkCableHolder.hardwarePrefab.activeSelf)
+                        networkCableHolder.hardwarePrefab.activeSelf &&
+                        GameManager.Instance != null &&
+                        networkCableHolder.hardwarePrefab.transform.IsChildOf(GameManager.Instance.ActiveWorldContainer))
                         _latched[0] = true;
                     return _latched[0];
                 }
@@ -221,37 +222,37 @@ public class NetworkCableTaskManager : MonoBehaviour
                 }
             },
 
-            // Task 4: Arrange color sequence — at least one stripped end matches T568A or T568B
+            // Task 4: Click two different wires to swap — tutorial, passes after first successful swap
             new TaskEntry
             {
                 taskObject    = taskObjects[3],
                 originalIndex = 3,
                 condition     = () =>
                 {
-                    if (!_latched[3] &&
-                        ((cableEnd1 != null && cableEnd1.IsStripped && cableEnd1.IsWireOrderCorrect()) ||
-                         (cableEnd2 != null && cableEnd2.IsStripped && cableEnd2.IsWireOrderCorrect())))
+                    if (!_latched[3] && _latched[2] &&
+                        WireSwapManager.Instance != null && WireSwapManager.Instance.TotalSwapCount >= 1)
                         _latched[3] = true;
                     return _latched[3];
                 }
             },
 
-            // Task 5: Install RJ45 to the cable (at least one end)
+            // Task 5: Create a Straight-Through — both ends stripped and arranged to T568A or T568B
             new TaskEntry
             {
                 taskObject    = taskObjects[4],
                 originalIndex = 4,
                 condition     = () =>
                 {
-                    if (!_latched[4] &&
-                        ((cableEnd1 != null && cableEnd1.IsRJ45Installed) ||
-                         (cableEnd2 != null && cableEnd2.IsRJ45Installed)))
+                    if (!_latched[4] && _latched[3] &&
+                        cableEnd1 != null && cableEnd1.IsStripped &&
+                        cableEnd2 != null && cableEnd2.IsStripped &&
+                        IsStraightThrough())
                         _latched[4] = true;
                     return _latched[4];
                 }
             },
 
-            // Task 6: Use Crimping tool to crimp the RJ45 (at least one end)
+            // Task 6: Install RJ45 to the cable (at least one end)
             new TaskEntry
             {
                 taskObject    = taskObjects[5],
@@ -259,14 +260,14 @@ public class NetworkCableTaskManager : MonoBehaviour
                 condition     = () =>
                 {
                     if (!_latched[5] &&
-                        ((cableEnd1 != null && cableEnd1.IsCrimped) ||
-                         (cableEnd2 != null && cableEnd2.IsCrimped)))
+                        ((cableEnd1 != null && cableEnd1.IsRJ45Installed) ||
+                         (cableEnd2 != null && cableEnd2.IsRJ45Installed)))
                         _latched[5] = true;
                     return _latched[5];
                 }
             },
 
-            // Task 7: Both ends fully configured and cable forms a valid Straight-through
+            // Task 7: Use Crimping tool to crimp the RJ45 (at least one end)
             new TaskEntry
             {
                 taskObject    = taskObjects[6],
@@ -274,9 +275,8 @@ public class NetworkCableTaskManager : MonoBehaviour
                 condition     = () =>
                 {
                     if (!_latched[6] &&
-                        cableEnd1 != null && cableEnd1.IsCrimped &&
-                        cableEnd2 != null && cableEnd2.IsCrimped &&
-                        IsStraightThrough())
+                        ((cableEnd1 != null && cableEnd1.IsCrimped) ||
+                         (cableEnd2 != null && cableEnd2.IsCrimped)))
                         _latched[6] = true;
                     return _latched[6];
                 }
@@ -437,7 +437,7 @@ public class NetworkCableTaskManager : MonoBehaviour
                 }
             },
 
-            // Task 18: Arrange color sequence — at least one Phase-2 stripped end has correct order
+            // Task 18: Create a Cross-Over — both Phase-2 stripped ends form a valid crossover
             new TaskEntry
             {
                 taskObject    = taskObjects[17],
@@ -445,8 +445,9 @@ public class NetworkCableTaskManager : MonoBehaviour
                 condition     = () =>
                 {
                     if (!_latched[17] && _latched[16] &&
-                        ((cableEnd1 != null && cableEnd1.StripCycleCount >= 2 && cableEnd1.IsStripped && cableEnd1.IsWireOrderCorrect()) ||
-                         (cableEnd2 != null && cableEnd2.StripCycleCount >= 2 && cableEnd2.IsStripped && cableEnd2.IsWireOrderCorrect())))
+                        cableEnd1 != null && cableEnd1.IsStripped && cableEnd1.StripCycleCount >= 2 &&
+                        cableEnd2 != null && cableEnd2.IsStripped && cableEnd2.StripCycleCount >= 2 &&
+                        IsCrossover())
                         _latched[17] = true;
                     return _latched[17];
                 }
@@ -482,23 +483,22 @@ public class NetworkCableTaskManager : MonoBehaviour
                 }
             },
 
-            // Task 21: Both ends Phase-2 configured and cable forms a valid Crossover
+            // Task 21: Exit detail view and store the cable back to the storage area
             new TaskEntry
             {
                 taskObject    = taskObjects[20],
                 originalIndex = 20,
                 condition     = () =>
                 {
-                    if (!_latched[20] &&
-                        cableEnd1 != null && cableEnd1.StripCycleCount >= 2 && cableEnd1.IsCrimped &&
-                        cableEnd2 != null && cableEnd2.StripCycleCount >= 2 && cableEnd2.IsCrimped &&
-                        IsCrossover())
+                    if (!_latched[20] && _latched[19] &&
+                        networkCableHolder != null && networkCableHolder.IsAvailable())
                         _latched[20] = true;
                     return _latched[20];
                 }
             },
 
-            // Task 22: Exit detail view and store the cable back to the storage area
+            // Task 22: Deploy LAN Tester to the workspace
+            // If the tester was never stored after Phase 1, this auto-completes when it becomes visible.
             new TaskEntry
             {
                 taskObject    = taskObjects[21],
@@ -506,14 +506,14 @@ public class NetworkCableTaskManager : MonoBehaviour
                 condition     = () =>
                 {
                     if (!_latched[21] && _latched[20] &&
-                        networkCableHolder != null && networkCableHolder.IsAvailable())
+                        lanTesterHolder?.hardwarePrefab != null &&
+                        lanTesterHolder.hardwarePrefab.activeSelf)
                         _latched[21] = true;
                     return _latched[21];
                 }
             },
 
-            // Task 23: Deploy LAN Tester to the workspace
-            // If the tester was never stored after Phase 1, this auto-completes when it becomes visible.
+            // Task 23: Install the network cable to the LAN tester port
             new TaskEntry
             {
                 taskObject    = taskObjects[22],
@@ -521,14 +521,13 @@ public class NetworkCableTaskManager : MonoBehaviour
                 condition     = () =>
                 {
                     if (!_latched[22] && _latched[21] &&
-                        lanTesterHolder?.hardwarePrefab != null &&
-                        lanTesterHolder.hardwarePrefab.activeSelf)
+                        lanTesterPort != null && lanTesterPort.IsCableInstalled)
                         _latched[22] = true;
                     return _latched[22];
                 }
             },
 
-            // Task 24: Install the network cable to the LAN tester port
+            // Task 24: Turn on the power switch of the LAN tester
             new TaskEntry
             {
                 taskObject    = taskObjects[23],
@@ -536,33 +535,19 @@ public class NetworkCableTaskManager : MonoBehaviour
                 condition     = () =>
                 {
                     if (!_latched[23] && _latched[22] &&
-                        lanTesterPort != null && lanTesterPort.IsCableInstalled)
+                        lanTesterSwitch != null && lanTesterSwitch.IsOn)
                         _latched[23] = true;
                     return _latched[23];
                 }
             },
 
-            // Task 25: Turn on the power switch of the LAN tester
+            // Task 25: Observe LED sequence — crossover confirmed after a full cycle.
+            // Latch is set externally by OnLEDSequenceComplete when IsCrossover() is true.
             new TaskEntry
             {
                 taskObject    = taskObjects[24],
                 originalIndex = 24,
-                condition     = () =>
-                {
-                    if (!_latched[24] && _latched[23] &&
-                        lanTesterSwitch != null && lanTesterSwitch.IsOn)
-                        _latched[24] = true;
-                    return _latched[24];
-                }
-            },
-
-            // Task 26: Observe LED sequence — crossover confirmed after a full cycle.
-            // Latch is set externally by OnLEDSequenceComplete when IsCrossover() is true.
-            new TaskEntry
-            {
-                taskObject    = taskObjects[25],
-                originalIndex = 25,
-                condition     = () => _latched[25]
+                condition     = () => _latched[24]
             },
         };
     }
@@ -580,12 +565,12 @@ public class NetworkCableTaskManager : MonoBehaviour
             EvaluateConditions();
         }
 
-        // Task 26 — crossover confirmed after Phase-2 test
-        if (!_latched[25] && _latched[24] &&
+        // Task 25 — crossover confirmed after Phase-2 test
+        if (!_latched[24] && _latched[23] &&
             lanTesterPort != null && lanTesterPort.IsCableInstalled &&
             IsCrossover())
         {
-            _latched[25] = true;
+            _latched[24] = true;
             EvaluateConditions();
         }
     }
@@ -627,6 +612,12 @@ public class NetworkCableTaskManager : MonoBehaviour
 
     public Color GetDisplayColor(Color fallback) =>
         (_isCompletionOverride && _displayOverride != null) ? Color.green : fallback;
+
+    public void HideCompletionBanner()
+    {
+        if (allTasksCompletedText != null)
+            allTasksCompletedText.gameObject.SetActive(false);
+    }
 
     public static void CheckConditions()
     {
@@ -743,6 +734,6 @@ public class NetworkCableTaskManager : MonoBehaviour
 
         OnTasksUpdated?.Invoke();
         TopicManager.Instance?.MarkTopicComplete(1); // Adjust index to match COC II's slot in TopicManager.
-        Debug.Log("[NetworkCableTaskManager] All 26 tasks complete — Install Network Cable done.");
+        Debug.Log("[NetworkCableTaskManager] All 25 tasks complete — Install Network Cable done.");
     }
 }

@@ -12,6 +12,9 @@ public class WireSwapManager : MonoBehaviour
 {
     public static WireSwapManager Instance { get; private set; }
 
+    /// <summary>Total successful wire swaps performed this session. Used by NetworkCableTaskManager to gate the swap-tutorial task.</summary>
+    public int TotalSwapCount { get; private set; }
+
     [Tooltip("Duration of the swap animation in seconds.")]
     [SerializeField] private float swapDuration = 0.3f;
 
@@ -160,6 +163,7 @@ public class WireSwapManager : MonoBehaviour
         a.AnimateTo(posB, swapDuration);
         b.AnimateTo(posA, swapDuration);
 
+        TotalSwapCount++;
         NetworkCableTaskManager.CheckConditions();
     }
 }
