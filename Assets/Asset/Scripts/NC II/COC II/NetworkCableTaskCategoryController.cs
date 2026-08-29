@@ -21,23 +21,28 @@
  *      │     ├── BurgerButton
  *      │     └── PopupPanel
  *      │           ├── NetworkCableBtn
- *      │           └── IPConfigBtn
+ *      │           ├── IPConfigBtn
+ *      │           └── PingCmdBtn
  *      └── [CategoryContent]
  *            ├── [NetworkCablePanel]   ← categoryPanels[0]
- *            └── [IPConfigPanel]       ← categoryPanels[1]
+ *            ├── [IPConfigPanel]       ← categoryPanels[1]
+ *            └── [PingCmdPanel]        ← categoryPanels[2]
  *
  *  INSPECTOR SETUP
  *    Category Managers
  *      networkCableManager → NetworkCableTaskManager in the scene
  *      ipConfigManager     → IPConfigTaskManager in the scene
+ *      pingCmdManager      → PingCmdTaskManager in the scene
  *    Category Panels
  *      categoryPanels[0]   → NetworkCablePanel  (shown when index 0 active)
  *      categoryPanels[1]   → IPConfigPanel      (shown when index 1 active)
+ *      categoryPanels[2]   → PingCmdPanel       (shown when index 2 active)
  *    Popup UI
  *      burgerButton        → Button that opens/closes the popup
  *      popupPanel          → Panel containing the category buttons
  *      categoryButtons[0]  → Button for "Network Cable"
  *      categoryButtons[1]  → Button for "IP Configuration"
+ *      categoryButtons[2]  → Button for "Ping Test - CMD"
  *
  *  BUTTON OnClick WIRING
  *    BurgerButton          → no manual wiring needed (done in Start)
@@ -63,15 +68,16 @@ public class NetworkCableTaskCategoryController : MonoBehaviour
     [Header("Category Managers")]
     [SerializeField] private NetworkCableTaskManager networkCableManager;
     [SerializeField] private IPConfigTaskManager     ipConfigManager;
+    [SerializeField] private PingCmdTaskManager      pingCmdManager;
 
     [Header("Category Panels")]
-    [Tooltip("Index must match manager order: [0] = Network Cable, [1] = IP Config.")]
+    [Tooltip("Index must match manager order: [0] = Network Cable, [1] = IP Config, [2] = Ping Test - CMD.")]
     [SerializeField] private GameObject[] categoryPanels;
 
     [Header("Popup UI")]
     [SerializeField] private Button     burgerButton;
     [SerializeField] private GameObject popupPanel;
-    [Tooltip("Index must match manager order: [0] = Network Cable, [1] = IP Config.")]
+    [Tooltip("Index must match manager order: [0] = Network Cable, [1] = IP Config, [2] = Ping Test - CMD.")]
     [SerializeField] private Button[]   categoryButtons;
 
     // ── State ──────────────────────────────────────────────────────────────────────────
@@ -84,7 +90,7 @@ public class NetworkCableTaskCategoryController : MonoBehaviour
 
     private void Start()
     {
-        _managers = new ITaskCategory[] { networkCableManager, ipConfigManager };
+        _managers = new ITaskCategory[] { networkCableManager, ipConfigManager, pingCmdManager };
 
         if (burgerButton != null)
             burgerButton.onClick.AddListener(TogglePopup);
@@ -108,12 +114,14 @@ public class NetworkCableTaskCategoryController : MonoBehaviour
 
         NetworkCableTaskManager.OnTasksUpdated += OnNetworkCableUpdated;
         IPConfigTaskManager.OnTasksUpdated     += OnIPConfigUpdated;
+        PingCmdTaskManager.OnTasksUpdated      += OnPingCmdUpdated;
     }
 
     private void OnDestroy()
     {
         NetworkCableTaskManager.OnTasksUpdated -= OnNetworkCableUpdated;
         IPConfigTaskManager.OnTasksUpdated     -= OnIPConfigUpdated;
+        PingCmdTaskManager.OnTasksUpdated      -= OnPingCmdUpdated;
     }
 
     private void OnDisable()
@@ -133,6 +141,12 @@ public class NetworkCableTaskCategoryController : MonoBehaviour
     private void OnIPConfigUpdated()
     {
         if (_activeCategory == 1)
+            OnActiveCategoryUpdated?.Invoke();
+    }
+
+    private void OnPingCmdUpdated()
+    {
+        if (_activeCategory == 2)
             OnActiveCategoryUpdated?.Invoke();
     }
 

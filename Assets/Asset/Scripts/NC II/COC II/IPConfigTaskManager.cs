@@ -1577,6 +1577,10 @@ public class IPConfigTaskManager : MonoBehaviour, ITaskCategory
             allTasksCompletedText.gameObject.SetActive(false);
     }
 
+    public bool     IsFullyComplete    => _tasks != null && _tasks.All(t => t.isCompleted);
+    public DeviceID ServerDevice       => _serverDevice;
+    public DeviceID SecondDesktopDevice => _secondDesktopDevice;
+
     public static void CheckConditions()
     {
         if (Instance == null) return;

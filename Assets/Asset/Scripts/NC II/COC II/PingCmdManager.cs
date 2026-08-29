@@ -322,6 +322,8 @@ public class PingCmdManager : MonoBehaviour
             ? "Wireless LAN adapter Wi-Fi:"
             : "Ethernet adapter Local Area Connection:";
 
+        if (state != null) state.IpconfigRunCount++;
+        ActivityLogManager.Log($"ipconfig executed — {DeviceName(device)}", ActivityLogManager.EntryType.Action);
         SpawnOutputLine("Windows IP Configuration");
         SpawnOutputLine(BlankLine);
         SpawnOutputLine(adapterLine);
@@ -376,6 +378,7 @@ public class PingCmdManager : MonoBehaviour
         // Step 2 — source connectivity
         if (!CheckSourceConnectivity(currentState, currentDevice, out string sourceHint))
         {
+            ActivityLogManager.Log($"Ping {arg} — failed: {DeviceName(currentDevice)} has no network connectivity", ActivityLogManager.EntryType.Warning);
             yield return StartCoroutine(SpawnTimeoutBlock(arg, sourceHint));
             yield break;
         }
@@ -383,7 +386,7 @@ public class PingCmdManager : MonoBehaviour
         // Step 3 — resolve typed IP to a known device index
         if (!TryResolveTarget(arg, out int targetIndex))
         {
-            // Unknown IP — no hint (we can't tell what device they intended)
+            ActivityLogManager.Log($"Ping {arg} — no matching device found on network", ActivityLogManager.EntryType.Warning);
             yield return StartCoroutine(SpawnTimeoutBlock(arg, ""));
             yield break;
         }
@@ -391,6 +394,7 @@ public class PingCmdManager : MonoBehaviour
         // Step 4 — target conditions + subnet check
         if (!CheckTargetConditions(arg, targetIndex, currentState, currentDevice, out string targetHint))
         {
+            ActivityLogManager.Log($"Ping {arg} — request timed out from {DeviceName(currentDevice)}", ActivityLogManager.EntryType.Warning);
             yield return StartCoroutine(SpawnTimeoutBlock(arg, targetHint));
             yield break;
         }
@@ -411,6 +415,7 @@ public class PingCmdManager : MonoBehaviour
         if (currentState?.PingResults != null && targetIndex < currentState.PingResults.Length)
             currentState.PingResults[targetIndex] = true;
 
+        ActivityLogManager.Log($"Ping {arg} — success from {DeviceName(currentDevice)}", ActivityLogManager.EntryType.Action);
         Debug.Log($"[PingCmdManager] {currentDevice} pinged target index {targetIndex} ({arg}) — SUCCESS.");
     }
 
@@ -643,6 +648,18 @@ public class PingCmdManager : MonoBehaviour
         if (scrollRect != null)
             scrollRect.verticalNormalizedPosition = 0f;
     }
+
+    // ----------------------------------------------------------------
+    //  Helpers
+    // ----------------------------------------------------------------
+
+    private static string DeviceName(DeviceID d) => d switch
+    {
+        DeviceID.Computer1 => "Computer 1",
+        DeviceID.Computer2 => "Computer 2",
+        DeviceID.Laptop    => "Laptop",
+        _                  => d.ToString()
+    };
 
     // ----------------------------------------------------------------
     //  Public read (for future task list integration)
