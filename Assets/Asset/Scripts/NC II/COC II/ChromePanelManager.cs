@@ -38,7 +38,7 @@
  *    loginBtn          → Login Button inside Login Body
  *    errorTMP          → ErrorTMP GameObject inside Login Body
  *    defaultWelcomeText → text displayed on Default Page when search is empty or on Back
- *    routerDefaultIP   → IP address that navigates to the Router TP-Link page
+ *    tpLinkTabManager  → TPLinkTabManager on Page 2 - Main (router IP read dynamically)
  *    apSearchKeyword   → keyword that navigates to the AP DLink page (default: "dlinkap")
  *    routerReset       → RouterResetController on the router reset button
  *    apReset           → AccessPointResetController on the AP reset button
@@ -49,7 +49,7 @@
  *  BUTTON OnClick — auto-wired in Awake. Do NOT wire loginBtn/exitBtn/backBtn manually.
  *
  *  NAVIGATION FLOW
- *    Search submit routerDefaultIP → TP Link Page
+ *    Search submit router LAN IP  → TP Link Page  (IP read live from TPLinkTabManager)
  *                                     not yet logged in → Page 1 - Login
  *                                     already logged in → Page 2 - Main
  *    Search submit apSearchKeyword → DLink AP Page (no login — opens directly)
@@ -101,10 +101,12 @@ public class ChromePanelManager : MonoBehaviour
         "Welcome!\nType an IP address in the address bar to navigate to a device.";
 
     [Header("Device Search Keywords (set in Inspector)")]
-    [Tooltip("IP address that routes to the Router TP-Link page (typed after router reset).")]
-    [SerializeField] private string routerDefaultIP = "";
     [Tooltip("Keyword that routes to the AP DLink page (typed after AP reset).")]
     [SerializeField] private string apSearchKeyword = "dlinkap";
+
+    [Header("Router WebUI")]
+    [Tooltip("TPLinkTabManager on Page 2 - Main. Router IP is read live from GetRouterLanIP().")]
+    [SerializeField] private TPLinkTabManager tpLinkTabManager;
 
     [Header("Reset Controllers")]
     [SerializeField] private RouterResetController      routerReset;
@@ -193,7 +195,8 @@ public class ChromePanelManager : MonoBehaviour
     {
         string trimmed = input.Trim();
 
-        if (!string.IsNullOrEmpty(routerDefaultIP) && trimmed == routerDefaultIP)
+        string routerIP = tpLinkTabManager?.GetRouterLanIP() ?? "";
+        if (!string.IsNullOrEmpty(routerIP) && trimmed == routerIP)
         {
             HandleWifiNavigation(
                 VirtualOSManager.Instance?.IsWifiRouterTopologySatisfied() ?? false,
@@ -333,6 +336,10 @@ public class ChromePanelManager : MonoBehaviour
     private void ShowPage(ChromePage page)
     {
         _currentPage = page;
+
+        // Sync immediately so task conditions read the live page without waiting for SaveState.
+        var liveState = VirtualOSManager.Instance?.CurrentState;
+        if (liveState != null) liveState.ChromeCurrentPage = (int)page;
 
         bool isDefault = page == ChromePage.Default;
         bool isTPLink  = page == ChromePage.TPLinkLogin || page == ChromePage.TPLinkMain;

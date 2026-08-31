@@ -204,6 +204,7 @@ public class TPLinkTabManager : MonoBehaviour
     [Header("Configurable Defaults")]
     [SerializeField] private string defaultSsid         = "TP-LINK_WiFi";
     [SerializeField] private string defaultPreSharedKey = "12345678";
+    [SerializeField] private string defaultLanIP        = "192.168.1.1";
 
     [Header("Router Reset Controller")]
     [SerializeField] private RouterResetController routerReset;
@@ -224,6 +225,10 @@ public class TPLinkTabManager : MonoBehaviour
     // Router config — physical device state, shared across all student devices.
     private TPLinkConfig _routerConfig;
     private bool         _routerHasSavedOnce;
+
+    // Session-local save flags — reset every OnEnable so re-entry always starts clean.
+    private bool _sessionSavedWithWireless;     // saved with non-default SSID + PSK this session
+    private bool _sessionSavedWithChangedLanIP; // saved with non-default LAN IP this session
 
     // True after the first OnEnable (first-ever login activates this panel)
     private bool _initialized;
@@ -281,6 +286,10 @@ public class TPLinkTabManager : MonoBehaviour
 
     private void OnEnable()
     {
+        // Reset per-session save flags so every login starts fresh.
+        _sessionSavedWithWireless     = false;
+        _sessionSavedWithChangedLanIP = false;
+
         if (!_initialized)
         {
             _routerConfig       = BuildDefaultConfig();
@@ -346,7 +355,7 @@ public class TPLinkTabManager : MonoBehaviour
 
     private TPLinkConfig BuildDefaultConfig() => new TPLinkConfig
     {
-        LanIP            = "192.168.1.1",
+        LanIP            = defaultLanIP,
         LanSubnetMask    = "255.255.255.0",
         DynamicRouter    = 0,     // None
         Direction        = 0,     // None
@@ -478,8 +487,26 @@ public class TPLinkTabManager : MonoBehaviour
         string savedLanIP  = _routerConfig.LanIP;
         bool   lanIPChanged = savedLanIP != previousLanIP;
 
-        if (IsValidIPAddress(savedLanIP))
+        if (_routerConfig.Ssid != defaultSsid &&
+            !string.IsNullOrEmpty(_routerConfig.PreSharedKey) &&
+            _routerConfig.PreSharedKey != defaultPreSharedKey)
+            _sessionSavedWithWireless = true;
+
+        if (savedLanIP != defaultLanIP && IsValidIPAddress(savedLanIP))
+        {
+            _sessionSavedWithChangedLanIP = true;
             routerReset?.SetConfigured();
+        }
+
+        string[] authLabels = { "Open", "Shared", "WPA-PSK", "WPA2-PSK", "WPA-PSK/WPA2-PSK" };
+        string   authLabel  = _routerConfig.AuthType >= 0 && _routerConfig.AuthType < authLabels.Length
+                              ? authLabels[_routerConfig.AuthType] : "Unknown";
+        string[] dhcpLabels = { "Disabled", "Enabled", "Relay" };
+        string   dhcpLabel  = _routerConfig.DhcpMode >= 0 && _routerConfig.DhcpMode < dhcpLabels.Length
+                              ? dhcpLabels[_routerConfig.DhcpMode] : "Unknown";
+        ActivityLogManager.Log(
+            $"Router saved — SSID: {_routerConfig.Ssid}, Auth: {authLabel}, LAN IP: {savedLanIP}, DHCP: {dhcpLabel}",
+            ActivityLogManager.EntryType.Action);
 
         if (lanIPChanged)
         {
@@ -594,8 +621,41 @@ public class TPLinkTabManager : MonoBehaviour
         if (img != null) img.color = color;
     }
 
-    // Public API used by PingCmdManager
+    // Public API used by PingCmdManager and ChromePanelManager
     public string GetRouterLanIP() => _routerConfig.LanIP;
+
+    /// <summary>
+    /// Resets the saved TP-Link config back to factory defaults.
+    /// Called by RouterResetController when the hardware reset button is held.
+    /// The next time the WebUI opens it reinitialises from BuildDefaultConfig().
+    /// </summary>
+    public void ResetToDefaults()
+    {
+        _routerConfig       = BuildDefaultConfig();
+        _routerHasSavedOnce = false;
+        _initialized        = false;
+        Debug.Log("[TPLinkTabManager] Config reset to factory defaults.");
+        ActivityLogManager.Log("TP-Link WebUI configuration reset to defaults.", ActivityLogManager.EntryType.Action);
+    }
+
+    // Public API used by IPConfigTaskManager
+    /// <summary>True when the live SSID and Pre-Shared Key fields both differ from their defaults.</summary>
+    public bool HasLiveModifiedWireless =>
+        ssidField         != null && ssidField.text != defaultSsid &&
+        preSharedKeyField != null && !string.IsNullOrEmpty(preSharedKeyField.text) &&
+                                     preSharedKeyField.text != defaultPreSharedKey;
+
+    /// <summary>True when Save has been clicked at least once (any tab).</summary>
+    public bool HasSavedAtLeastOnce => _routerHasSavedOnce;
+
+    /// <summary>True while the LAN body panel is the active view.</summary>
+    public bool LanPanelVisible => lanPanel != null && lanPanel.activeSelf;
+
+    /// <summary>True when saved with non-default SSID and PSK this login session.</summary>
+    public bool HasSavedConfiguredWireless => _sessionSavedWithWireless;
+
+    /// <summary>True when saved with a non-default valid LAN IP this login session.</summary>
+    public bool HasSavedStaticLanConfig => _sessionSavedWithChangedLanIP;
 
     // Returns true if ip is four dot-separated octets each in 0–255.
     private static bool IsValidIPAddress(string ip)

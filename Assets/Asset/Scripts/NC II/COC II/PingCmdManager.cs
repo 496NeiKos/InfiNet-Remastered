@@ -37,6 +37,11 @@
  *    dLinkAPManager    → DLinkAPManager on DLink AP Page
  *    routerReset       → RouterResetController on the Router reset button
  *    apReset           → AccessPointResetController on the AP reset button
+ *    computer1Phase2   → NetworkDevicePhase2Manager on Computer 1 device root
+ *    computer2Phase2   → NetworkDevicePhase2Manager on Computer 2 device root
+ *    routerPhase2      → NetworkDevicePhase2Manager on Router device root
+ *    apPhase2          → NetworkDevicePhase2Manager on Access Point device root
+ *    (Laptop has no port cable — Wi-Fi connection is its network gate instead)
  *
  *  ENTRY POINT
  *    CmdBtn on Windows Desktop → VirtualOSManager auto-wires to Toggle()
@@ -53,12 +58,14 @@
  *  PING SUCCESS CONDITIONS
  *    Source (current device):
  *      Computer1/2 → UseStaticIP = true AND all IP octets filled
+ *                    AND Phase2Manager.AreAllInstalled (port cable physically installed)
  *      Laptop      → WifiConnected = true AND UseStaticIP = true AND all IP octets filled
+ *                    (no port cable required — Wi-Fi is the network gate)
  *    Target (typed IP resolves to a device):
- *      Router      → RouterResetController.IsConfigured
- *      AP          → AccessPointResetController.IsConfigured
- *      Computer1/2 → device state IPConfigured
- *      Laptop      → IPConfigured AND WifiConnected
+ *      Router      → RouterResetController.IsConfigured AND routerPhase2.AreAllInstalled
+ *      AP          → AccessPointResetController.IsConfigured AND apPhase2.AreAllInstalled
+ *      Computer1/2 → device state IPConfigured AND Phase2Manager.AreAllInstalled
+ *      Laptop      → IPConfigured AND WifiConnected (no port cable — Wi-Fi only)
  *    Subnet check  → source and target share the same /24 prefix (first 3 octets match)
  *    Failure in any condition → "Request timed out." × 4 + stats + hint message
  *    Unknown IP (no device match) → "Request timed out." × 4 + stats, no hint
@@ -119,6 +126,12 @@ public class PingCmdManager : MonoBehaviour
     [SerializeField] private DLinkAPManager             dLinkAPManager;
     [SerializeField] private RouterResetController      routerReset;
     [SerializeField] private AccessPointResetController apReset;
+
+    [Header("Phase 2 Managers — cable install validation")]
+    [SerializeField] private NetworkDevicePhase2Manager computer1Phase2;
+    [SerializeField] private NetworkDevicePhase2Manager computer2Phase2;
+    [SerializeField] private NetworkDevicePhase2Manager routerPhase2;
+    [SerializeField] private NetworkDevicePhase2Manager apPhase2;
 
     // ----------------------------------------------------------------
     //  Runtime state
@@ -442,7 +455,7 @@ public class PingCmdManager : MonoBehaviour
     //  Source connectivity check
     // ----------------------------------------------------------------
 
-    private static bool CheckSourceConnectivity(DeviceOSState state, DeviceID device, out string hint)
+    private bool CheckSourceConnectivity(DeviceOSState state, DeviceID device, out string hint)
     {
         hint = "";
         if (state == null) return false;
@@ -467,6 +480,14 @@ public class PingCmdManager : MonoBehaviour
                 hint = "Hint: This device does not have a valid static IP configured. Set it in Network and Sharing Center.";
                 return false;
             }
+        }
+
+        NetworkDevicePhase2Manager srcPhase2 = GetPhase2Manager(device);
+        if (srcPhase2 != null && !srcPhase2.AreAllInstalled)
+        {
+            hint = "Hint: The network port cable on this device is not fully installed. " +
+                   "Open the device detail view and plug in the port cable to the correct socket.";
+            return false;
         }
 
         return true;
@@ -520,12 +541,24 @@ public class PingCmdManager : MonoBehaviour
                     hint = "Hint: The Router is not configured. Complete the TP-Link LAN setup first.";
                     return false;
                 }
+                if (routerPhase2 != null && !routerPhase2.AreAllInstalled)
+                {
+                    hint = "Hint: The Router's network port cable is not fully installed. " +
+                           "Open the Router detail view and plug in the port cable.";
+                    return false;
+                }
                 break;
 
             case IdxAP:
                 if (apReset == null || !apReset.IsConfigured)
                 {
                     hint = "Hint: The Access Point is not configured. Complete the D-Link setup with a Static IP first.";
+                    return false;
+                }
+                if (apPhase2 != null && !apPhase2.AreAllInstalled)
+                {
+                    hint = "Hint: The Access Point's network port cable is not fully installed. " +
+                           "Open the Access Point detail view and plug in the port cable.";
                     return false;
                 }
                 break;
@@ -538,6 +571,12 @@ public class PingCmdManager : MonoBehaviour
                     hint = "Hint: Computer 1 does not have a valid static IP configured.";
                     return false;
                 }
+                if (computer1Phase2 != null && !computer1Phase2.AreAllInstalled)
+                {
+                    hint = "Hint: Computer 1's network port cable is not fully installed. " +
+                           "Open Computer 1's detail view and plug in the port cable.";
+                    return false;
+                }
                 break;
             }
 
@@ -547,6 +586,12 @@ public class PingCmdManager : MonoBehaviour
                 if (s == null || !s.IPConfigured)
                 {
                     hint = "Hint: Computer 2 does not have a valid static IP configured.";
+                    return false;
+                }
+                if (computer2Phase2 != null && !computer2Phase2.AreAllInstalled)
+                {
+                    hint = "Hint: Computer 2's network port cable is not fully installed. " +
+                           "Open Computer 2's detail view and plug in the port cable.";
                     return false;
                 }
                 break;
@@ -652,6 +697,13 @@ public class PingCmdManager : MonoBehaviour
     // ----------------------------------------------------------------
     //  Helpers
     // ----------------------------------------------------------------
+
+    private NetworkDevicePhase2Manager GetPhase2Manager(DeviceID device) => device switch
+    {
+        DeviceID.Computer1 => computer1Phase2,
+        DeviceID.Computer2 => computer2Phase2,
+        _                  => null   // Laptop uses Wi-Fi; no port cable required
+    };
 
     private static string DeviceName(DeviceID d) => d switch
     {

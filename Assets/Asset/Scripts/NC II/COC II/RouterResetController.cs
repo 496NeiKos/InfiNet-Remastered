@@ -12,6 +12,9 @@ public class RouterResetController : MonoBehaviour
     [Tooltip("Seconds to hold before the reset triggers.")]
     [SerializeField] private float holdDuration = 10f;
 
+    [Tooltip("TPLinkTabManager to reset to factory defaults when the router is reset.")]
+    [SerializeField] private TPLinkTabManager tpLinkTabManager;
+
     /// <summary>
     /// False by default — router starts without its default IP ready.
     /// Becomes true only after the user performs a factory reset (hold for holdDuration).
@@ -87,6 +90,7 @@ public class RouterResetController : MonoBehaviour
     {
         IsDefaultIPReady = true;
         IsConfigured     = false;
+        tpLinkTabManager?.ResetToDefaults();
         Debug.Log("[RouterReset] Reset triggered — IsDefaultIPReady = true, IsConfigured = false");
         ActivityLogManager.Log("Router reset to factory defaults.", ActivityLogManager.EntryType.Action);
     }

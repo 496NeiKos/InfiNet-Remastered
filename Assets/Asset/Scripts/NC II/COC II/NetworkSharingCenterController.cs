@@ -29,6 +29,8 @@
  *    advancedSharingBtn → SideNavTop > Advance sharing settings
  *    firewallBtn        → SideNavBottom > Firewall
  *    closeBtn           → Nav > Home Button
+ *    laptopAdapterEntry → The adapter icon/entry inside Network Connections Panel
+ *                         (e.g. EthernetNamePanel). Hidden for Laptop when not Wi-Fi connected.
  *
  *  BUTTON OnClick WIRING (do in Inspector as persistent listeners)
  *    Home (closeBtn)  → NetworkSharingCenterController.GoBack()
@@ -67,6 +69,11 @@ public class NetworkSharingCenterController : MonoBehaviour
     [Tooltip("Back/close button inside Nav — deactivates the current panel.")]
     [SerializeField] private Button closeBtn;
 
+    [Header("Laptop Adapter Visibility")]
+    [Tooltip("Adapter entry inside Network Connections Panel (e.g. EthernetNamePanel). " +
+             "Hidden for Laptop when Wi-Fi is not connected. Start ACTIVE.")]
+    [SerializeField] private GameObject laptopAdapterEntry;
+
     [Header("IP Topology Gate")]
     [Tooltip("Full-rect Image child (Raycast Target ON) that blocks NSC interaction. Start INACTIVE.")]
     [SerializeField] private GameObject nscBlocker;
@@ -103,6 +110,7 @@ public class NetworkSharingCenterController : MonoBehaviour
         {
             gameObject.SetActive(true);
             panels[_currentPanel]?.SetActive(true);
+            if (_currentPanel == 0) RefreshAdapterEntry();
             UpdateBlocker(); // Set correct blocker state immediately — no one-frame flash.
         }
         else
@@ -126,6 +134,7 @@ public class NetworkSharingCenterController : MonoBehaviour
         HideAllPanels();
         panels[index]?.SetActive(true);
         _currentPanel = index;
+        if (index == 0) RefreshAdapterEntry();
         Debug.Log($"[NetworkSharingCenterController] Panel {index} opened.");
     }
 
@@ -139,6 +148,9 @@ public class NetworkSharingCenterController : MonoBehaviour
 
     // Inspector alias used by the Home button (wired as "GoBack" in the scene).
     public void GoBack() => CloseCurrentPanel();
+
+    // True when NSC is visible but no sub-panel is open (student clicked Home).
+    public bool IsAtMainContent => gameObject.activeInHierarchy && _currentPanel == -1;
 
     // Called by the Exit button — closes the entire NSC panel.
     public void ClosePanel()
@@ -156,6 +168,14 @@ public class NetworkSharingCenterController : MonoBehaviour
     {
         foreach (var p in panels) p?.SetActive(false);
         _currentPanel = -1;
+    }
+
+    private void RefreshAdapterEntry()
+    {
+        if (laptopAdapterEntry == null) return;
+        bool isLaptop      = VirtualOSManager.Instance?.CurrentDevice == DeviceID.Laptop;
+        bool wifiConnected = VirtualOSManager.Instance?.CurrentState?.WifiConnected ?? false;
+        laptopAdapterEntry.SetActive(!isLaptop || wifiConnected);
     }
 
     private void UpdateBlocker()
