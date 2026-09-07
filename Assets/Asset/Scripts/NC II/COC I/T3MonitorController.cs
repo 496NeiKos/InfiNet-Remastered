@@ -118,6 +118,9 @@ public class T3MonitorController : MonoBehaviour
 
     private PanelState _panelState = PanelState.Loading;
     private WindowsSetupNavigator _windowsSetupNavigator;
+    private bool _restartInProgress;
+
+    public static bool IsRestartInProgress { get; private set; }
 
     private void Awake()
     {
@@ -203,11 +206,39 @@ public class T3MonitorController : MonoBehaviour
     // Called by T3MonitorInteraction.HideDetail() via GameManager.CloseEditor (Escape).
     public void HideDetail()
     {
+        if (_restartInProgress) return;
+
         navigator?.Close();
         loadingPanel?.SetActive(false);
         uefiPanel?.SetActive(false);
         windowsSetupPanel?.SetActive(false);
         uefiCanvasRoot?.SetActive(false);
+    }
+
+    // Called by WindowsSetupNavigator, WindowsInstallationManager, and FifthPhaseManager
+    // to overlay the LoadingPanel as a restart simulation. Escape is blocked until done.
+    public void PlayRestartAnimation(System.Action onComplete)
+    {
+        if (uefiLoadingPanel == null)
+        {
+            Debug.LogError("[T3MonitorController] PlayRestartAnimation — uefiLoadingPanel is NULL.");
+            onComplete?.Invoke();
+            return;
+        }
+
+        _restartInProgress = true;
+        IsRestartInProgress = true;
+        uefiLoadingPanel.PlayAsRestart(() =>
+        {
+            _restartInProgress = false;
+            IsRestartInProgress = false;
+            loadingPanel?.SetActive(false);
+            onComplete?.Invoke();
+        });
+
+        loadingPanel.transform.SetAsLastSibling();
+        loadingPanel?.SetActive(true);
+        Debug.Log("[T3MonitorController] Restart animation started.");
     }
 
     // Called by UEFILoadingPanel when DEL/F2 is pressed during the input window.

@@ -102,6 +102,9 @@ public class UEFILoadingPanel : MonoBehaviour
     private float _timer;
     private Color _defaultTextColor;
 
+    private bool _restartMode;
+    private System.Action _onRestartComplete;
+
     private void Start()
     {
         if (systemUnit != null)
@@ -147,7 +150,8 @@ public class UEFILoadingPanel : MonoBehaviour
         if (_state == LoadingState.Fresh && _timer >= inputDelay)
         {
             _state = LoadingState.Interactive;
-            hintText?.SetActive(true);
+            if (!_restartMode)
+                hintText?.SetActive(true);
             Debug.Log("[UEFILoadingPanel] DEL/F2 now active.");
         }
 
@@ -157,7 +161,7 @@ public class UEFILoadingPanel : MonoBehaviour
             return;
         }
 
-        if (_state == LoadingState.Interactive)
+        if (_state == LoadingState.Interactive && !_restartMode)
         {
             if (Keyboard.current.deleteKey.wasPressedThisFrame ||
                 Keyboard.current.f2Key.wasPressedThisFrame)
@@ -167,10 +171,26 @@ public class UEFILoadingPanel : MonoBehaviour
         }
     }
 
+    public void PlayAsRestart(System.Action onComplete)
+    {
+        ResetState();
+        _restartMode = true;
+        _onRestartComplete = onComplete;
+    }
+
     private void TransitionToTimedOut()
     {
         _state = LoadingState.TimedOut;
         hintText?.SetActive(false);
+
+        if (_restartMode)
+        {
+            _restartMode = false;
+            var cb = _onRestartComplete;
+            _onRestartComplete = null;
+            cb?.Invoke();
+            return;
+        }
 
         // If the OS is already installed, skip all boot validation — the system boots
         // from the internal drive regardless of USB or UEFI boot settings.
@@ -267,6 +287,8 @@ public class UEFILoadingPanel : MonoBehaviour
         _state = LoadingState.Fresh;
         _timer = 0f;
         _loggedTimedOutBail = false;
+        _restartMode = false;
+        _onRestartComplete = null;
         hintText?.SetActive(false);
         bootPopup?.SetActive(false);
         Debug.Log("[UEFILoadingPanel] State reset to Fresh — done.");

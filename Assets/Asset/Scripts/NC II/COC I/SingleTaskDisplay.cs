@@ -192,6 +192,7 @@ public class SingleTaskDisplay : MonoBehaviour
         }
         else
         {
+            if (T3MonitorController.IsRestartInProgress) return;
             _isDragging = false;
             displayPanel?.SetActive(false);
         }

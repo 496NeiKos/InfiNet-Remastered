@@ -137,6 +137,9 @@ public class WindowsSetupNavigator : MonoBehaviour
     [SerializeField] private GameObject licenseFifthPhase;
     [SerializeField] private FifthPhaseManager fifthPhaseManager;
 
+    [Header("Restart Animation")]
+    [SerializeField] private T3MonitorController monitorController;
+
     // ----------------------------------------------------------------
     //  Reset — called by T3MonitorController.ProceedToWindowsSetup()
     // ----------------------------------------------------------------
@@ -201,17 +204,38 @@ public class WindowsSetupNavigator : MonoBehaviour
         Debug.Log("[WindowsSetupNavigator] Moved to SetUpInitialize SecondPhase.");
     }
 
+    // Wired to: SetUpInitialize > SecondPhase > Back > OnClick
+    public void OnBackFromInitSecondPhase()
+    {
+        initSecondPhase?.SetActive(false);
+        initFirstPhase?.SetActive(true);
+        Debug.Log("[WindowsSetupNavigator] Back to SetUpInitialize FirstPhase.");
+    }
+
     // Wired to: SetUpInitialize > SecondPhase > Selection > InstallNow > OnClick
     public void OnInstallNow()
     {
         setupInitialize?.SetActive(false);
 
-        setupLicenseAgreement?.SetActive(true);
-        licenseFirstPhase?.SetActive(true);
-        licenseSecondPhase?.SetActive(false);
-        licenseThirdPhase?.SetActive(false);
-
-        Debug.Log("[WindowsSetupNavigator] Entered SetUpLicenseAgreement.");
+        if (monitorController != null)
+        {
+            monitorController.PlayRestartAnimation(() =>
+            {
+                setupLicenseAgreement?.SetActive(true);
+                licenseFirstPhase?.SetActive(true);
+                licenseSecondPhase?.SetActive(false);
+                licenseThirdPhase?.SetActive(false);
+                Debug.Log("[WindowsSetupNavigator] Entered SetUpLicenseAgreement.");
+            });
+        }
+        else
+        {
+            setupLicenseAgreement?.SetActive(true);
+            licenseFirstPhase?.SetActive(true);
+            licenseSecondPhase?.SetActive(false);
+            licenseThirdPhase?.SetActive(false);
+            Debug.Log("[WindowsSetupNavigator] Entered SetUpLicenseAgreement (no restart — monitorController not assigned).");
+        }
     }
 
     // ----------------------------------------------------------------
@@ -238,6 +262,22 @@ public class WindowsSetupNavigator : MonoBehaviour
         }
 
         Debug.Log("[WindowsSetupNavigator] Moved to SetUpLicenseAgreement SecondPhase.");
+    }
+
+    // Wired to: SetUpLicenseAgreement > SecondPhase > Back > OnClick
+    public void OnBackFromLicenseSecondPhase()
+    {
+        licenseSecondPhase?.SetActive(false);
+        licenseFirstPhase?.SetActive(true);
+        Debug.Log("[WindowsSetupNavigator] Back to SetUpLicenseAgreement FirstPhase.");
+    }
+
+    // Wired to: SetUpLicenseAgreement > ThirdPhase > Back > OnClick
+    public void OnBackFromLicenseThirdPhase()
+    {
+        licenseThirdPhase?.SetActive(false);
+        licenseSecondPhase?.SetActive(true);
+        Debug.Log("[WindowsSetupNavigator] Back to SetUpLicenseAgreement SecondPhase.");
     }
 
     // Wired to: SetUpLicenseAgreement > SecondPhase > InstallationOption > Upgrade > OnClick

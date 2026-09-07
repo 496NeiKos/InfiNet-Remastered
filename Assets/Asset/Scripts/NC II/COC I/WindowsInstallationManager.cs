@@ -56,6 +56,9 @@ public class WindowsInstallationManager : MonoBehaviour
     [Header("Navigation")]
     [SerializeField] private WindowsSetupNavigator navigator;
 
+    [Header("Restart Animation")]
+    [SerializeField] private T3MonitorController monitorController;
+
     // ----------------------------------------------------------------
     //  Visual constants
     // ----------------------------------------------------------------
@@ -137,10 +140,30 @@ public class WindowsInstallationManager : MonoBehaviour
 
             // Lock step at 100% and mark complete
             SetStepState(step, StepState.Done, 100);
+
+            // Restart after step 2 (index 1)
+            if (step == 1)
+                yield return AwaitRestart();
         }
+
+        // Restart after all steps complete, then enter FifthPhase
+        yield return AwaitRestart();
 
         installCoroutine = null;
         OnInstallationComplete();
+    }
+
+    private IEnumerator AwaitRestart()
+    {
+        if (monitorController == null)
+        {
+            Debug.LogWarning("[WindowsInstallationManager] monitorController not assigned — skipping restart.");
+            yield break;
+        }
+
+        bool done = false;
+        monitorController.PlayRestartAnimation(() => done = true);
+        yield return new WaitUntil(() => done);
     }
 
     // ----------------------------------------------------------------

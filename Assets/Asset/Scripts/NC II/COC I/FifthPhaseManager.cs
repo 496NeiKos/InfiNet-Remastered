@@ -118,6 +118,9 @@ public class FifthPhaseManager : MonoBehaviour
     [Header("Windows10")]
     [SerializeField] private Windows10Manager windows10Manager;
 
+    [Header("Restart Animation")]
+    [SerializeField] private T3MonitorController monitorController;
+
     // ----------------------------------------------------------------
     //  Option containers — children are auto-wired on Start
     // ----------------------------------------------------------------
@@ -291,6 +294,13 @@ public class FifthPhaseManager : MonoBehaviour
         Debug.Log("[FifthPhaseManager] → KeyboardLayout");
     }
 
+    // Wired to: KeyboardLayout > Back > OnClick
+    public void OnBackFromKeyboardLayout()
+    {
+        ShowOnly(regionPanel);
+        Debug.Log("[FifthPhaseManager] Back → Region");
+    }
+
     // ----------------------------------------------------------------
     //  KeyboardLayout panel
     // ----------------------------------------------------------------
@@ -313,6 +323,13 @@ public class FifthPhaseManager : MonoBehaviour
         if (selectedKeyboardButton == null) return;
         ShowOnly(secondKeyboardPanel);
         Debug.Log("[FifthPhaseManager] → SecondKeyboardLayout");
+    }
+
+    // Wired to: SecondKeyboardLayout > Back > OnClick
+    public void OnBackFromSecondKeyboard()
+    {
+        ShowOnly(keyboardLayoutPanel);
+        Debug.Log("[FifthPhaseManager] Back → KeyboardLayout");
     }
 
     // ----------------------------------------------------------------
@@ -344,6 +361,13 @@ public class FifthPhaseManager : MonoBehaviour
         Debug.Log("[FifthPhaseManager] → NoInternetPanel");
     }
 
+    // Wired to: ConnectToInternet > Back > OnClick
+    public void OnBackFromConnectToInternet()
+    {
+        ShowOnly(secondKeyboardPanel);
+        Debug.Log("[FifthPhaseManager] Back → SecondKeyboardLayout");
+    }
+
     // ----------------------------------------------------------------
     //  NoInternetPanel
     // ----------------------------------------------------------------
@@ -353,6 +377,13 @@ public class FifthPhaseManager : MonoBehaviour
     {
         ShowOnly(connectToInternetPanel);
         Debug.Log("[FifthPhaseManager] ConnectNow → back to ConnectToInternet");
+    }
+
+    // Wired to: NoInternetPanel > Back > OnClick
+    public void OnBackFromNoInternet()
+    {
+        ShowOnly(connectToInternetPanel);
+        Debug.Log("[FifthPhaseManager] Back → ConnectToInternet");
     }
 
     // Wired to: NoInternetPanel > LimitedSetup > OnClick
@@ -399,24 +430,52 @@ public class FifthPhaseManager : MonoBehaviour
         Debug.Log($"[FifthPhaseManager] Privacy toggle [{index}] → {(privacyToggles[index] ? "ON" : "OFF")}");
     }
 
+    // Wired to: PrivacySetting > Back > OnClick
+    public void OnBackFromPrivacySetting()
+    {
+        ShowOnly(noInternetPanel);
+        Debug.Log("[FifthPhaseManager] Back → NoInternetPanel");
+    }
+
     // Wired to: PrivacySetting > Footer > Accept button > OnClick
     public void OnAcceptPrivacy()
     {
-        _privacyAccepted = true;
+        if (monitorController != null)
+        {
+            monitorController.PlayRestartAnimation(() =>
+            {
+                _privacyAccepted = true;
+                gameObject.SetActive(false);
+                windows10Panel?.SetActive(true);
 
-        gameObject.SetActive(false);
-        windows10Panel?.SetActive(true);
+                var mgr = windows10Manager;
+                if (mgr == null && windows10Panel != null)
+                    mgr = windows10Panel.GetComponent<Windows10Manager>();
 
-        // Resolve manager via inspector ref first, then fall back to GetComponent
-        var mgr = windows10Manager;
-        if (mgr == null && windows10Panel != null)
-            mgr = windows10Panel.GetComponent<Windows10Manager>();
+                if (mgr != null)
+                    mgr.InitWindows10Panel();
+                else
+                    Debug.LogError("[FifthPhaseManager] Windows10Manager not found — assign it in the Inspector or place it on Windows10Panel.");
 
-        if (mgr != null)
-            mgr.InitWindows10Panel();
+                Debug.Log("[FifthPhaseManager] Privacy accepted → Windows10Panel");
+            });
+        }
         else
-            Debug.LogError("[FifthPhaseManager] Windows10Manager not found — assign it in the Inspector or place it on Windows10Panel.");
+        {
+            _privacyAccepted = true;
+            gameObject.SetActive(false);
+            windows10Panel?.SetActive(true);
 
-        Debug.Log("[FifthPhaseManager] Privacy accepted → Windows10Panel");
+            var mgr = windows10Manager;
+            if (mgr == null && windows10Panel != null)
+                mgr = windows10Panel.GetComponent<Windows10Manager>();
+
+            if (mgr != null)
+                mgr.InitWindows10Panel();
+            else
+                Debug.LogError("[FifthPhaseManager] Windows10Manager not found — assign it in the Inspector or place it on Windows10Panel.");
+
+            Debug.Log("[FifthPhaseManager] Privacy accepted → Windows10Panel (no restart — monitorController not assigned).");
+        }
     }
 }
