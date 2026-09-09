@@ -18,6 +18,9 @@ public class HDDController : MonoBehaviour
     [Tooltip("HDD-side power cable port (cable hdd-psu) — direct child of HDD. Must be uninstalled before drag-out.")]
     [SerializeField] private CablePort cableHddPsu;
 
+    public CablePort SATADataPort => cableHddMobo;
+    public CablePort SATAPowerPort => cableHddPsu;
+
     public bool CanBeRemoved
     {
         get

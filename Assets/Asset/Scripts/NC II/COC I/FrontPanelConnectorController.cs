@@ -28,6 +28,17 @@ public class FrontPanelConnectorController : MonoBehaviour, IDetachGate
         }
     }
 
+    public bool IsPhase2FullyInstalled
+    {
+        get
+        {
+            if (phase2ProperSubPorts == null || phase2ProperSubPorts.Length == 0) return false;
+            foreach (var port in phase2ProperSubPorts)
+                if (port == null || !port.IsInstalled) return false;
+            return true;
+        }
+    }
+
     // IDetachGate — blocks Phase 1 cable detach while any ProperSubPort has a cable seated.
     public bool CanDetach()
     {

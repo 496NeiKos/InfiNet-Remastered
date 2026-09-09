@@ -19,22 +19,47 @@ public class CPUController : MonoBehaviour
     [SerializeField] private Sprite cpuDetailedNoPasteSprite;
     [SerializeField] private Sprite cpuDetailedPasteAppliedSprite;
 
+    [Header("Installed Slot Transform")]
+    [Tooltip("When true, the Inspector fields below are used instead of the auto-captured values. " +
+             "Enable this and fill in the fields if reinstall still positions the CPU incorrectly " +
+             "after the Start()-capture fix.")]
+    [SerializeField] private bool overrideInstalledTransform = false;
+    [SerializeField] private Vector3 installedLocalPositionOverride;
+    [SerializeField] private Vector3 installedLocalScaleOverride;
+
     private PasteState _pasteState = PasteState.PasteApplied;
     private Vector3 _installedLocalScale;
     private Vector3 _installedLocalPosition;
+    private bool _transformCaptured;
 
     public PasteState CurrentPasteState => _pasteState;
-    public Vector3 InstalledLocalScale => _installedLocalScale;
-    public Vector3 InstalledLocalPosition => _installedLocalPosition;
+    public Vector3 InstalledLocalScale    => overrideInstalledTransform ? installedLocalScaleOverride    : _installedLocalScale;
+    public Vector3 InstalledLocalPosition => overrideInstalledTransform ? installedLocalPositionOverride : _installedLocalPosition;
     public bool IsInstalledInSlot => GetComponentInParent<CPUSlotController>()?.IsCPUInstalled ?? false;
 
     private void Awake()
     {
         if (cpuRootSprite == null)
             cpuRootSprite = GetComponent<SpriteRenderer>();
-        _installedLocalScale = transform.localScale;
-        _installedLocalPosition = transform.localPosition;
         ApplySprites();
+    }
+
+    private void OnEnable()
+    {
+        // OnEnable fires synchronously (unlike Start which is deferred to the next frame).
+        // This matters because MotherboardDetailViewManager can call OpenInnerPanel in the
+        // same frame that _detailedView.SetActive(true) activates the CPU — by the time
+        // Start() would fire, the CPU has already been reparented to the inner panel and
+        // its localPosition is panel-relative (wrong). OnEnable captures while the CPU is
+        // still seated in CPUSlot. The _transformCaptured guard prevents subsequent
+        // OnEnable calls (e.g. from OpenInnerPanel reparenting) from overwriting the value.
+        if (_transformCaptured) return;
+        if (overrideInstalledTransform) return;
+        if (GetComponentInParent<CPUSlotController>(true) == null) return;
+
+        _installedLocalScale    = transform.localScale;
+        _installedLocalPosition = transform.localPosition;
+        _transformCaptured      = true;
     }
 
     public void ApplyThermalPaste()
@@ -62,6 +87,7 @@ public class CPUController : MonoBehaviour
         ApplySprites();
         ActivityLogManager.Log("Thermal paste removed from CPU", ActivityLogManager.EntryType.Remove);
         Debug.Log("[CPUController] Thermal paste removed.");
+        NCIITaskListManager.CheckConditions();
     }
 
     private void ApplySprites()
