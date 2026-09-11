@@ -58,7 +58,15 @@ public class LessonOverviewManager : MonoBehaviour
         ShowOverview(lesson3Sprite,
             "Certificate of Competency III",
             "Objective Goal: To prepare learners to install, configure, secure, and manage computer servers that provide network services. It includes creating user accounts, assigning access permissions, configuring server roles and services, implementing security measures, testing server functionality, and ensuring that the server operates efficiently based on organizational requirements.",
-            "Networking"); // replace with your actual scene name
+            "COC III"); // replace with your actual scene name
+    }
+
+    public void ShowLesson4()
+    {
+        ShowOverview(lesson3Sprite,
+            "Certificate of Competency IV",
+            "Objective Goal: To train learners to inspect, diagnose, maintain, troubleshoot, and repair computer systems and networks. It focuses on performing preventive maintenance, identifying hardware and software faults, replacing defective components, restoring normal system operation, documenting repair activities, and ensuring that all work complies with established procedures, safety regulations, and quality standards.",
+            "COC IV"); // replace with your actual scene name
     }
 
     // Called by Return button

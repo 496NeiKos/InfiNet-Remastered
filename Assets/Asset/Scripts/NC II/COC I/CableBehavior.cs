@@ -83,6 +83,7 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
 
     public bool IsDetached => _detached;
     public string GetCableType() => cableType;
+    public string DisplayName => LogName;
 
     // World position of this cable's original home port. Used by HardwareHolder's
     // multi-cable install picker to preserve correct sprite assignment per port.
@@ -94,22 +95,28 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
     public void OnDrag(PointerEventData eventData)      { }
     public void OnEndDrag(PointerEventData eventData)   { }
 
-    private void Start()
+    private void Awake()
     {
         if (homePort == null)
             homePort = GetComponentInParent<CablePort>();
 
-        // Lock in the original port once at startup — homePort is updated at runtime on installs.
+        // Lock in the original port at first activation — homePort changes at runtime on installs.
+        // Must be in Awake (not Start) so it reflects the pre-install position rather than the
+        // port the cable was first installed to (Start() is deferred until after SetActive+Install).
         _originalHomePort = homePort;
 
-        // Auto-resolve hardwareHolder by direct object reference if not wired in the inspector.
-        // Name-based matching is fragile; this check is always reliable.
+        // Cache the holder here so InstallToPort's OnCableInstalled fires correctly even when
+        // TryInstallInSlot calls SetActive(true) and InstallToPort in the same frame (Start()
+        // would be deferred to the next frame and too late for the first install).
         if (hardwareHolder == null)
             hardwareHolder = FindHardwareHolderForThis();
 
         _installedLocalPos = transform.localPosition;
         _installedLocalScale = transform.localScale;
+    }
 
+    private void Start()
+    {
         if (powerButtonSource != null)
             _powerButton = powerButtonSource as IPowerButton;
 
@@ -174,12 +181,22 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
 
         if (mouse.leftButton.wasPressedThisFrame && IsMouseOver())
         {
-            _holdTarget = this;
-            if (Camera.main != null)
+            // Only claim hold target if we're visually on top (higher sortingOrder wins).
+            // This prevents an overlapping cable from stealing the hold from the intended one.
+            int myOrder = GetComponent<SpriteRenderer>()?.sortingOrder ?? 0;
+            int currentOrder = _holdTarget != null
+                ? (_holdTarget.GetComponent<SpriteRenderer>()?.sortingOrder ?? 0)
+                : int.MinValue;
+
+            if (myOrder >= currentOrder)
             {
-                Vector2 sp = mouse.position.ReadValue();
-                _holdStartMouseWorld = Camera.main.ScreenToWorldPoint(new Vector3(sp.x, sp.y, 10f));
-                _holdStartMouseWorld.z = 0f;
+                _holdTarget = this;
+                if (Camera.main != null)
+                {
+                    Vector2 sp = mouse.position.ReadValue();
+                    _holdStartMouseWorld = Camera.main.ScreenToWorldPoint(new Vector3(sp.x, sp.y, 10f));
+                    _holdStartMouseWorld.z = 0f;
+                }
             }
         }
 
@@ -295,10 +312,6 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
 
         CableDragManager.Instance.Register(this);
 
-        // Show the proxy immediately on detach so the player sees the cable is available.
-        // For multi-cable holders this enables the shared proxy; for single holders this is a no-op.
-        hardwareHolder?.UpdateProxyVisibility();
-
         Debug.Log($"[CableBehavior] {cableType} detached.");
 
         // CableDragManager already ran its Update() this frame (execution order 0 < 1),
@@ -375,8 +388,26 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         }
         else
         {
+            CablePort nearestWrong = FindNearestPortIgnoreValidity(dropPos);
+            if (nearestWrong != null)
+                ActivityLogManager.Log($"{LogName} cannot be installed, make sure you match correctly the installation", ActivityLogManager.EntryType.Warning);
             SnapBack();
         }
+    }
+
+    private CablePort FindNearestPortIgnoreValidity(Vector3 worldPos)
+    {
+        const float radius = 1.5f;
+        CablePort[] allPorts = FindObjectsOfType<CablePort>(true);
+        CablePort best = null;
+        float bestDist = float.MaxValue;
+        foreach (CablePort port in allPorts)
+        {
+            if (!port.gameObject.activeInHierarchy) continue;
+            float dist = Vector3.Distance(port.transform.position, worldPos);
+            if (dist < radius && dist < bestDist) { bestDist = dist; best = port; }
+        }
+        return best;
     }
 
     private CablePort FindPortAtPosition(Vector3 worldPos)
@@ -434,9 +465,20 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         _detached = false;
         if (homePort != null)
         {
-            transform.SetParent(homePort.transform, false);
-            transform.localPosition = _installedLocalPos;
-            transform.localScale = _installedLocalScale;
+            // If the port's hierarchy is active (panel open), parent normally.
+            // If the port is inside an inactive panel (e.g. frontView closed), stay in
+            // worldRoot positioned at the port's world location so Update() keeps running.
+            if (homePort.gameObject.activeInHierarchy)
+            {
+                transform.SetParent(homePort.transform, false);
+                transform.localPosition = _installedLocalPos;
+                transform.localScale = _installedLocalScale;
+            }
+            else
+            {
+                transform.SetParent(GameManager.Instance.worldRoot, true);
+                transform.position = homePort.transform.position;
+            }
             homePort.SetInstalled();
             // Re-evaluate proxy visibility — another managed cable may still be uninstalled,
             // in which case the proxy should stay visible even though this cable returned.
@@ -480,12 +522,6 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
             if (col is BoxCollider2D box && (box.size.x < 0.01f || box.size.y < 0.01f)) continue;
             if (col.OverlapPoint(mouseWorld)) return true;
         }
-
-        // Fallback: use the SpriteRenderer world bounds so a misconfigured collider
-        // doesn't silently break hold-to-detach.
-        SpriteRenderer sr = GetComponent<SpriteRenderer>();
-        if (sr != null)
-            return sr.bounds.Contains(new Vector3(mouseWorld.x, mouseWorld.y, sr.bounds.center.z));
 
         return false;
     }

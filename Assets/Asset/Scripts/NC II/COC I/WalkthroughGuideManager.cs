@@ -158,6 +158,17 @@ public class WalkthroughGuideManager : MonoBehaviour
     private int _angleChangeCount;
 
     public bool IsShowing => _isShowing;
+    public bool IsEnabled { get; private set; } = true;
+
+    public void SetEnabled(bool value)
+    {
+        IsEnabled = value;
+        if (!IsEnabled && _isShowing)
+        {
+            _queue.Clear();
+            HidePanel();
+        }
+    }
 
     // ----------------------------------------------------------------
     //  Unity lifecycle
@@ -210,6 +221,7 @@ public class WalkthroughGuideManager : MonoBehaviour
     /// </summary>
     public void TryTrigger(WalkthroughTrigger trigger)
     {
+        if (!IsEnabled) return;
         if (_seenOrQueued.Contains(trigger)) return;
 
         WalkthroughSequence seq = sequences.Find(s => s.trigger == trigger);

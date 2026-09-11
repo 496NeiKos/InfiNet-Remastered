@@ -11,6 +11,16 @@ public class MotherboardPhaseManager : MonoBehaviour
 
     public Phase CurrentPhase { get; private set; } = Phase.Phase1;
 
+    private GuideContext _activePhaseContext = GuideContext.None;
+
+    private void ReplacePhaseContext(GuideContext next)
+    {
+        if (_activePhaseContext != GuideContext.None)
+            InlineNotificationGuide.Instance?.PopContext(_activePhaseContext);
+        _activePhaseContext = next;
+        InlineNotificationGuide.Instance?.PushContext(next);
+    }
+
     public Transform GetPhase1Root() => phase1Root != null ? phase1Root.transform : null;
     public Transform GetPhase2Root() => phase2Root != null ? phase2Root.transform : null;
     public GPUPhase1CableInteraction GetGPUPhase1CableInteraction() => gpuPhase1CableInteraction;
@@ -18,11 +28,13 @@ public class MotherboardPhaseManager : MonoBehaviour
     public void SetPhase1Interactive()
     {
         CurrentPhase = Phase.Phase1;
+        ReplacePhaseContext(GuideContext.Motherboard_Phase1);
         SetPhase1Enabled(true);
-        SetPhase2Enabled(false);
+        SetPhase2Enabled(true); // Both phases active while MB is inside the system unit.
 
-        // Re-enable full GPU interaction in Phase 1 AFTER SetPhase2Enabled, which sweeps
-        // and disables all phase2Root Collider2Ds (including the GPU root collider).
+        // Re-enable GPU interaction — SetPhase2Interactive (called when MB was in workspace)
+        // explicitly disables GPU components outside the SetPhase2Enabled sweep, so they
+        // must be restored explicitly here when the MB returns to the system unit.
         if (gpuPhase1CableInteraction != null)
         {
             gpuPhase1CableInteraction.enabled = true;
@@ -41,6 +53,7 @@ public class MotherboardPhaseManager : MonoBehaviour
     public void SetPhase2Interactive()
     {
         CurrentPhase = Phase.Phase2;
+        ReplacePhaseContext(GuideContext.Motherboard_Phase2);
         // Close and fully disable GPU — all GPU work is done in Phase 1.
         if (gpuPhase1CableInteraction != null)
         {

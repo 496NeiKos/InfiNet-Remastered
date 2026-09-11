@@ -18,7 +18,7 @@ public class NetworkDevicePort : MonoBehaviour
     [SerializeField] private Transform cableAnchor;
 
     [Tooltip("Maximum number of logical cables that can connect to this device at once.")]
-    [SerializeField] public int maxConnections = 4;
+    [SerializeField] public int maxConnections = 8;
 
     [Tooltip("World-unit radius within which a click counts as 'on this anchor' for the double-click popup.")]
     [SerializeField] private float popupClickRadius = 1f;

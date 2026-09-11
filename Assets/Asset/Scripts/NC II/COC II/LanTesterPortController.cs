@@ -21,7 +21,7 @@ public class LanTesterPortController : MonoBehaviour
     [SerializeField] private GameObject cableInstalledIndicator;
 
     [Header("Hold to Detach")]
-    [SerializeField] private float holdDuration = 1f;
+    private const float holdDuration = 1f;
 
     public bool IsCableInstalled { get; private set; }
 
@@ -29,6 +29,7 @@ public class LanTesterPortController : MonoBehaviour
     private GameObject            _installedCable;
     private Collider2D            _col;
     private SpriteRenderer        _sr;
+    private Collider2D            _indicatorCol;
 
     // Hold state
     private bool  _holding;
@@ -39,6 +40,7 @@ public class LanTesterPortController : MonoBehaviour
     private bool       _isDragging;
     private GameObject _dragIndicator;
     private Vector3    _cachedWorldScale;
+    private int        _originalSortingOrder;
 
     private void Awake()
     {
@@ -49,7 +51,10 @@ public class LanTesterPortController : MonoBehaviour
     private void Start()
     {
         if (cableInstalledIndicator != null)
+        {
             cableInstalledIndicator.SetActive(false);
+            _indicatorCol = cableInstalledIndicator.GetComponent<Collider2D>();
+        }
     }
 
     // ----------------------------------------------------------------
@@ -79,11 +84,19 @@ public class LanTesterPortController : MonoBehaviour
         RestoreWorldScale(_installedCable.transform, _cachedWorldScale);
         _installedCable.transform.localPosition = Vector3.zero;
 
+        var cableSR = _installedCable.GetComponentInChildren<SpriteRenderer>(true);
+        if (cableSR != null)
+        {
+            _originalSortingOrder = cableSR.sortingOrder;
+            cableSR.sortingOrder  = -1;
+        }
+
         SetCableInteractable(false);
 
         if (cableInstalledIndicator != null)
             cableInstalledIndicator.SetActive(true);
 
+        ActivityLogManager.Log("Cable connected to LAN Tester port", ActivityLogManager.EntryType.Install);
         _holding   = false;
         _holdTimer = 0f;
         return true;
@@ -108,7 +121,7 @@ public class LanTesterPortController : MonoBehaviour
         if (Mouse.current.leftButton.wasPressedThisFrame)
         {
             Vector2 worldPt = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
-            if (IsClickOnPortOrCable(worldPt))
+            if (_indicatorCol != null && _indicatorCol.OverlapPoint(worldPt))
             {
                 _holding   = true;
                 _holdTimer = 0f;
@@ -150,6 +163,9 @@ public class LanTesterPortController : MonoBehaviour
         // stays visible at its current world position.
         _cachedWorldScale = _installedCable.transform.lossyScale;
         _installedCable.transform.SetParent(GameManager.Instance.ActiveWorldContainer, true);
+
+        var cableSR = _installedCable.GetComponentInChildren<SpriteRenderer>(true);
+        if (cableSR != null) cableSR.sortingOrder = _originalSortingOrder;
 
         // Spawn a drag indicator sprite that follows the cursor.
         SpriteRenderer sourceSR = _installedCable.GetComponentInChildren<SpriteRenderer>(true);
@@ -222,6 +238,7 @@ public class LanTesterPortController : MonoBehaviour
     private void SendToHolder()
     {
         SetCableInteractable(true);
+        ActivityLogManager.Log("Cable returned to storage from LAN Tester", ActivityLogManager.EntryType.Remove);
         _hardwareHolder?.StoreHardware();
         _installedCable = null;
         _hardwareHolder = null;
@@ -237,10 +254,15 @@ public class LanTesterPortController : MonoBehaviour
         RestoreWorldScale(_installedCable.transform, _cachedWorldScale);
         _installedCable.transform.localPosition = Vector3.zero;
 
+        var cableSR = _installedCable.GetComponentInChildren<SpriteRenderer>(true);
+        if (cableSR != null) cableSR.sortingOrder = -1;
+
         SetCableInteractable(false);
 
         if (cableInstalledIndicator != null)
             cableInstalledIndicator.SetActive(true);
+
+        ActivityLogManager.Log("Cable reconnected to LAN Tester port", ActivityLogManager.EntryType.Install);
     }
 
     // ----------------------------------------------------------------
@@ -254,20 +276,6 @@ public class LanTesterPortController : MonoBehaviour
         var interact = _installedCable.GetComponent<NetworkPrefabInteraction>();
         if (drag     != null) drag.enabled     = on;
         if (interact != null) interact.enabled = on;
-    }
-
-    private bool IsClickOnPortOrCable(Vector2 worldPt)
-    {
-        if (_col != null && _col.OverlapPoint(worldPt)) return true;
-        if (_col == null && _sr != null && _sr.bounds.Contains(worldPt)) return true;
-
-        if (_installedCable != null)
-        {
-            Collider2D cableCol = _installedCable.GetComponent<Collider2D>();
-            if (cableCol != null && cableCol.OverlapPoint(worldPt)) return true;
-        }
-
-        return false;
     }
 
     private static void RestoreWorldScale(Transform t, Vector3 targetWorldScale)

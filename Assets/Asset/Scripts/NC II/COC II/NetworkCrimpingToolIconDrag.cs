@@ -120,13 +120,17 @@ public class NetworkCrimpingToolIconDrag : MonoBehaviour, IBeginDragHandler, IDr
         if (crimpTarget != null)
         {
             crimpTarget.Crimp();
+            ActivityLogManager.Log($"RJ45 crimped — {crimpTarget.name}", ActivityLogManager.EntryType.Install);
             return;
         }
 
         // Priority 2: cut and fully reset a stripped cable end via the cable body area.
         NetworkCableEndController resetTarget = FindNearestResettableEnd(dropPos);
         if (resetTarget != null)
+        {
             resetTarget.ResetEnd();
+            ActivityLogManager.Log($"Cable end reset to unstripped — {resetTarget.name}", ActivityLogManager.EntryType.Remove);
+        }
     }
 
     private NetworkCableEndController FindNearestCrimpableEnd(Vector3 worldPos)

@@ -39,7 +39,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
-public class VirtualOSManager : MonoBehaviour
+public class VirtualOSManager : MonoBehaviour, IVirtualOSManager
 {
     public static VirtualOSManager Instance { get; private set; }
 
@@ -83,6 +83,7 @@ public class VirtualOSManager : MonoBehaviour
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
+        VirtualOSManagerLocator.Current = this;
 
         _currentDevice = DeviceID.Computer1;
         _states[_currentDevice] = new DeviceOSState { Device = _currentDevice };
@@ -111,6 +112,12 @@ public class VirtualOSManager : MonoBehaviour
         if (!_isOpen) return;
         if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
             Close();
+    }
+
+    private void OnDestroy()
+    {
+        if (VirtualOSManagerLocator.Current == (IVirtualOSManager)this)
+            VirtualOSManagerLocator.Current = null;
     }
 
     // ----------------------------------------------------------------
@@ -175,6 +182,7 @@ public class VirtualOSManager : MonoBehaviour
 
     public DeviceOSState CurrentState  => _currentState;
     public DeviceID      CurrentDevice => _currentDevice;
+    public bool          IsOpen        => _isOpen;
 
     public bool IsWifiRouterTopologySatisfied() => topologyManager?.IsWifiRouterSatisfied(_currentDevice) ?? false;
     public bool IsWifiAPTopologySatisfied()     => topologyManager?.IsWifiAPSatisfied(_currentDevice)     ?? false;

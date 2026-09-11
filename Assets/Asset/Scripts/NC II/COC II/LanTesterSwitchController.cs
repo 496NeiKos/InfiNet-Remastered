@@ -72,5 +72,7 @@ public class LanTesterSwitchController : MonoBehaviour
 
         if (frontDetailRenderer != null)
             frontDetailRenderer.sprite = IsOn ? frontDetailOnSprite : _frontDetailOffSprite;
+
+        ActivityLogManager.Log($"LAN Tester powered {(IsOn ? "ON" : "OFF")}", ActivityLogManager.EntryType.Action);
     }
 }

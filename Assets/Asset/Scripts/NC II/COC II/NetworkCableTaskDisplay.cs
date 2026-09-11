@@ -22,7 +22,7 @@
  *   8. Wire the inspector fields on NetworkCableTaskDisplay:
  *        displayPanel      → SingleTaskPanel
  *        taskText          → TaskText
- *        cableTaskManager  → NetworkCableTaskManager in the scene
+ *        categoryController → NetworkCableTaskCategoryController in the scene
  */
 
 using System.Collections;
@@ -37,7 +37,7 @@ public class NetworkCableTaskDisplay : MonoBehaviour
     [SerializeField] private TMP_Text   taskText;
 
     [Header("Task Manager")]
-    [SerializeField] private NetworkCableTaskManager cableTaskManager;
+    [SerializeField] private NetworkCableTaskCategoryController categoryController;
 
     private CanvasGroup   _canvasGroup;
     private RectTransform _panelRect;
@@ -70,12 +70,12 @@ public class NetworkCableTaskDisplay : MonoBehaviour
 
         _defaultTextColor = taskText != null ? taskText.color : Color.white;
 
-        NetworkCableTaskManager.OnTasksUpdated += Refresh;
+        NetworkCableTaskCategoryController.OnActiveCategoryUpdated += Refresh;
     }
 
     private void OnDestroy()
     {
-        NetworkCableTaskManager.OnTasksUpdated -= Refresh;
+        NetworkCableTaskCategoryController.OnActiveCategoryUpdated -= Refresh;
     }
 
     private void Update()
@@ -125,7 +125,7 @@ public class NetworkCableTaskDisplay : MonoBehaviour
             }
         }
 
-        bool isOpen = GameManager.Instance != null && GameManager.Instance.IsEditorOpen;
+        bool isOpen = IsAnyViewOpen();
         if (isOpen == _wasEditorOpen) return;
         _wasEditorOpen = isOpen;
 
@@ -133,15 +133,20 @@ public class NetworkCableTaskDisplay : MonoBehaviour
         else        { _isDragging = false; displayPanel?.SetActive(false); }
     }
 
+    // True when either the hardware detail editor OR the Virtual OS canvas is open.
+    private static bool IsAnyViewOpen() =>
+        (GameManager.Instance    != null && GameManager.Instance.IsEditorOpen) ||
+        (VirtualOSManager.Instance != null && VirtualOSManager.Instance.IsOpen);
+
     private void Refresh()
     {
         if (_userHidden) { displayPanel?.SetActive(false); return; }
-        if (GameManager.Instance == null || !GameManager.Instance.IsEditorOpen)
+        if (!IsAnyViewOpen())
         { displayPanel?.SetActive(false); return; }
 
-        string newText      = cableTaskManager != null ? cableTaskManager.GetNextIncompleteTaskText() : null;
-        Color  displayColor = cableTaskManager != null
-            ? cableTaskManager.GetDisplayColor(_defaultTextColor)
+        string newText      = categoryController != null ? categoryController.GetActiveTaskText() : null;
+        Color  displayColor = categoryController != null
+            ? categoryController.GetActiveDisplayColor(_defaultTextColor)
             : _defaultTextColor;
 
         bool panelVisible = displayPanel != null && displayPanel.activeSelf;

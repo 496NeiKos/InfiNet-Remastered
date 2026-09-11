@@ -39,6 +39,10 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
         _workspaceCanvas = workspaceArea != null
             ? workspaceArea.GetComponentInParent<Canvas>()
             : null;
+
+        bool inSlot = GetComponentInParent<SlotContainer>() != null
+                   || GetComponentInParent<CPUSlotController>() != null;
+        SetOutlineIndicator(inSlot);
     }
 
     private void Update()
@@ -94,6 +98,29 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
                     child.OnBeginDrag(eventData);
                     return;
                 }
+            }
+
+            // Fallback for thin components (e.g. RAM sticks, 0.09 u wide): find the child
+            // DragPrefab whose collider is closest to the cursor within a small tolerance.
+            // ClosestPoint returns the point itself when the cursor is already inside, so
+            // this only activates when OverlapPoint missed due to a thin collider.
+            const float kProximityTolerance = 0.12f;
+            DragPrefab nearestChild = null;
+            float nearestDist = kProximityTolerance;
+            foreach (DragPrefab child in GetComponentsInChildren<DragPrefab>(true))
+            {
+                if (child == this || !child.enabled) continue;
+                Collider2D col = child.GetComponent<Collider2D>()
+                              ?? child.GetComponentInChildren<Collider2D>(true);
+                if (col == null || !col.enabled) continue;
+                float dist = Vector2.Distance(col.ClosestPoint(mouseWorld), mouseWorld);
+                if (dist < nearestDist) { nearestDist = dist; nearestChild = child; }
+            }
+            if (nearestChild != null)
+            {
+                _redirectTarget = nearestChild;
+                nearestChild.OnBeginDrag(eventData);
+                return;
             }
 
             Debug.Log($"[DragPrefab:{name}] BLOCKED — editor open but not in slot.");
@@ -272,6 +299,7 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
             Vector3 worldScale = transform.lossyScale;
             transform.SetParent(GameManager.Instance.ActiveWorldContainer, true);
             ApplyWorldScale(worldScale);
+            SetOutlineIndicator(false);
             GetComponent<RAMController>()?.OnRemovedFromSlot();
             GetComponent<GPUController>()?.OnRemovedFromSlot();
             GetComponent<HDDController>()?.OnRemovedFromSlot();
@@ -453,6 +481,7 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
             transform.SetParent(_originalParent, false);
             transform.localPosition = _originalLocalPos;
             transform.localScale = _originalLocalScale;
+            SetOutlineIndicator(true);
         }
         else if (onHardwareArea)
         {
@@ -465,8 +494,18 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
             if (!onWorkspace || !canPlaceInWorkspace)
                 transform.position = _originalPos;
             else
+            {
+                SetOutlineIndicator(false);
                 WalkthroughGuideManager.Instance?.TryTrigger(WalkthroughGuideManager.WalkthroughTrigger.FirstComponentDrop);
+            }
         }
+    }
+
+    public void SetOutlineIndicator(bool active)
+    {
+        foreach (Transform child in transform)
+            if (child.name.Contains("OutlineIndicator"))
+                child.gameObject.SetActive(active);
     }
 
     private void SendToHolder()
@@ -530,6 +569,7 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
 
         foreach (var c in cableRoot.GetComponentsInChildren<CablePort>(true))
         {
+            if (c.IsLoosePort) continue;
             if (c.IsInstalled)
             {
                 Debug.Log($"[DragPrefab:{name}] Cable blocking: {c.gameObject.name}");

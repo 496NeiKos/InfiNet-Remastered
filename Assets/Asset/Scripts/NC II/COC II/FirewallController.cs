@@ -123,9 +123,15 @@ public class FirewallController : MonoBehaviour
         Debug.Log($"[FirewallController] Public firewall off = {_publicOff}.");
     }
 
+    // True when the student has clicked "Turn Windows Defender Firewall On and Off".
+    public bool IsOnOffPanelOpen => onOffPanel != null && onOffPanel.activeSelf;
+
     public void OnOK()
     {
         SaveToState();
+        ActivityLogManager.Log(
+            $"Firewall settings saved — Private: {(_privateOff ? "OFF" : "ON")}, Public: {(_publicOff ? "OFF" : "ON")}",
+            ActivityLogManager.EntryType.Action);
         onOffPanel?.SetActive(false);
         defaultPanel?.SetActive(true);
         Debug.Log("[FirewallController] OK — firewall settings saved.");

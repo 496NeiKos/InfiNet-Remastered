@@ -95,6 +95,8 @@ public class UserGuideManager : MonoBehaviour
     [SerializeField] private Button closeButton;
     [Tooltip("The root panel that is shown/hidden when the guide opens. Starts inactive.")]
     [SerializeField] private GameObject guidePanel;
+    [Tooltip("Button inside GuidePanel that enables/disables the WalkthroughGuideManager. Label updates to reflect current state.")]
+    [SerializeField] private Button walkthroughToggleButton;
 
     [Header("Navigation")]
     [Tooltip("Parent transform (Vertical Layout Group) that contains the pre-placed nav buttons.")]
@@ -148,6 +150,9 @@ public class UserGuideManager : MonoBehaviour
         if (closeButton != null)
             closeButton.onClick.AddListener(CloseGuide);
 
+        if (walkthroughToggleButton != null)
+            walkthroughToggleButton.onClick.AddListener(OnWalkthroughToggleClicked);
+
         if (prevImageButton != null)
             prevImageButton.onClick.AddListener(PrevImage);
 
@@ -196,6 +201,7 @@ public class UserGuideManager : MonoBehaviour
 
         ShowAllNavButtons();
         SelectEntry(_lastOpenIndex);
+        RefreshWalkthroughToggleLabel();
     }
 
     public void CloseGuide()
@@ -370,5 +376,30 @@ public class UserGuideManager : MonoBehaviour
             if (bg != null)
                 bg.color = (i == _selectedIndex) ? navSelectedColor : navNormalColor;
         }
+    }
+
+    // ----------------------------------------------------------------
+    //  Walkthrough guide toggle
+    // ----------------------------------------------------------------
+
+    private void OnWalkthroughToggleClicked()
+    {
+        var wg = WalkthroughGuideManager.Instance;
+        if (wg == null) return;
+
+        wg.SetEnabled(!wg.IsEnabled);
+        RefreshWalkthroughToggleLabel();
+    }
+
+    private void RefreshWalkthroughToggleLabel()
+    {
+        if (walkthroughToggleButton == null) return;
+
+        var wg = WalkthroughGuideManager.Instance;
+        bool on = wg == null || wg.IsEnabled;
+
+        TMP_Text label = walkthroughToggleButton.GetComponentInChildren<TMP_Text>();
+        if (label != null)
+            label.text = on ? "Walkthrough: ON" : "Walkthrough: OFF";
     }
 }

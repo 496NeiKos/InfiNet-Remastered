@@ -19,6 +19,10 @@ public class GameManager : MonoBehaviour
     [Header("Shared UI")]
     public HardwareAngleIndicator angleIndicator;
 
+    [Header("Cursor")]
+    public Texture2D cursorTexture;
+    public Vector2 cursorHotspot = Vector2.zero;
+
     public static GameManager Instance { get; private set; }
 
     public bool IsEditorOpen { get; private set; } = false;
@@ -50,10 +54,14 @@ public class GameManager : MonoBehaviour
     public void RegisterFrontPanelInteraction(FrontPanelConnectorInteraction panel) =>
         _activeFrontPanelInteraction = panel;
 
+    public void RegisterMotherboardDetailView(MotherboardDetailViewManager mbdvm) =>
+        _activeMbdvm = mbdvm;
+
     public void OpenEditorInPlace(IInPlaceInteraction interaction)
     {
         _activeInPlaceInteraction = interaction;
         IsEditorOpen = true;
+        InlineNotificationGuide.Instance?.Show();
         interaction.ShowDetail();
         Debug.Log("[GameManager] In-place editor opened.");
     }
@@ -99,6 +107,9 @@ public class GameManager : MonoBehaviour
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
+
+        if (cursorTexture != null)
+            Cursor.SetCursor(cursorTexture, cursorHotspot, CursorMode.Auto);
     }
 
     public void OpenNetworkEditor(NetworkPrefabInteraction interaction)
@@ -152,6 +163,7 @@ public class GameManager : MonoBehaviour
         _prefabOriginalWorldPos = interaction.transform.position;
 
         interaction.transform.SetParent(firstLayer.transform, true);
+        InlineNotificationGuide.Instance?.Show();
         _activeInteraction.ShowDetailCentered(); // triggers side-effects (phase state, cover, etc.)
 
         if (firstLayer != null)
@@ -170,6 +182,7 @@ public class GameManager : MonoBehaviour
             _activeInPlaceInteraction.HideDetail();
             _activeInPlaceInteraction = null;
             IsEditorOpen = false;
+            InlineNotificationGuide.Instance?.Hide();
             Debug.Log("[GameManager] In-place editor closed.");
             return;
         }
@@ -201,6 +214,14 @@ public class GameManager : MonoBehaviour
             return;
         }
 
+        // MB's inner panel (Heatsink / CPU / RAM / SSD) must close before MB itself.
+        // This handles both workspace (MB in firstLayer) and SU context (MB in secondLayer).
+        if (_activeMbdvm != null && _activeMbdvm.IsInnerPanelOpen)
+        {
+            _activeMbdvm.CloseInnerPanel();
+            return;
+        }
+
         if (_activeInteraction != null)
         {
             DetailViewManager dvm = _activeInteraction.GetComponent<DetailViewManager>();
@@ -209,12 +230,6 @@ public class GameManager : MonoBehaviour
                 dvm.CloseInnerPanel();
                 return;
             }
-        }
-
-        if (_activeMbdvm != null && _activeMbdvm.IsInnerPanelOpen)
-        {
-            _activeMbdvm.CloseInnerPanel();
-            return;
         }
 
         IsEditorOpen = false;
@@ -243,5 +258,6 @@ public class GameManager : MonoBehaviour
         if (secondLayer != null) secondLayer.SetActive(false);
         if (thirdLayer != null) thirdLayer.SetActive(false);
         angleIndicator?.Hide();
+        InlineNotificationGuide.Instance?.Hide();
     }
 }

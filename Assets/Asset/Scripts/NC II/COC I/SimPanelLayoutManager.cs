@@ -251,10 +251,10 @@ public class SimPanelLayoutManager : MonoBehaviour
         float canvasH = canvasRT.rect.height;
         if (canvasW <= 0f || canvasH <= 0f) return;
 
-        float wsL = workspaceRect.offsetMin.x;
-        float wsB = workspaceRect.offsetMin.y;
-        float wsR = canvasW + workspaceRect.offsetMax.x;
-        float wsT = canvasH + workspaceRect.offsetMax.y;
+        float wsL = workspaceRect.anchorMin.x * canvasW + workspaceRect.offsetMin.x;
+        float wsB = workspaceRect.anchorMin.y * canvasH + workspaceRect.offsetMin.y;
+        float wsR = workspaceRect.anchorMax.x * canvasW + workspaceRect.offsetMax.x;
+        float wsT = workspaceRect.anchorMax.y * canvasH + workspaceRect.offsetMax.y;
 
         foreach (RectTransform r in detailLayerRects)
         {

@@ -1,5 +1,6 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class ActivityLogManager : MonoBehaviour
 {
@@ -8,6 +9,7 @@ public class ActivityLogManager : MonoBehaviour
     public static ActivityLogManager Instance { get; private set; }
 
     [SerializeField] private TextMeshProUGUI logText;
+    [SerializeField] private ScrollRect scrollRect;
 
     private string _log = "";
 
@@ -39,6 +41,14 @@ public class ActivityLogManager : MonoBehaviour
         _log = $"<color={color}>> {message}</color>\n" + _log;
 
         if (logText != null)
+        {
             logText.text = _log;
+            // Force the Content RectTransform to resize so the ScrollRect viewport
+            // renders the text instead of clipping it.
+            LayoutRebuilder.ForceRebuildLayoutImmediate(logText.rectTransform);
+            // Newest entry is prepended, so scroll to top after each update.
+            if (scrollRect != null)
+                scrollRect.normalizedPosition = new Vector2(0f, 1f);
+        }
     }
 }

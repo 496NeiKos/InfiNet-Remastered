@@ -130,6 +130,7 @@ public class NetworkLogicalCable : MonoBehaviour
         if (_isRerouting)
         {
             _deviceB.GetComponent<NetworkDevicePhase2Manager>()?.RegisterCable(this, _deviceA);
+            _deviceA.GetComponent<NetworkDevicePhase2Manager>()?.UpdateOtherPort(this, _deviceB);
             _isRerouting = false;
         }
         else
@@ -324,6 +325,16 @@ public class NetworkLogicalCable : MonoBehaviour
                 if (_restorePort != null) RestoreEnd();
                 else                      CancelPending();
             }
+            else
+            {
+                // Click was not near any valid port or deviceA — check whether a port was
+                // skipped only because it is at max connections, and warn the user.
+                NetworkDevicePort blocked = FindClosestPortAtCapacity(cursorWorld, secondEndSnapRadius, exclude: _deviceA);
+                if (blocked != null)
+                    ActivityLogManager.Log(
+                        $"Cannot connect — {PortDisplayName(blocked)} is at maximum connections.",
+                        ActivityLogManager.EntryType.Warning);
+            }
         }
     }
 
@@ -391,6 +402,25 @@ public class NetworkLogicalCable : MonoBehaviour
             if (!port.gameObject.activeInHierarchy) continue;
             if (port == exclude)                    continue;
             if (!port.CanAcceptCable())             continue;
+            float dist = Vector3.Distance(port.GetAnchorWorldPosition(), worldPos);
+            if (dist < bestDist) { bestDist = dist; closest = port; }
+        }
+
+        return closest;
+    }
+
+    private static NetworkDevicePort FindClosestPortAtCapacity(Vector3 worldPos, float radius,
+                                                               NetworkDevicePort exclude = null)
+    {
+        NetworkDevicePort[] ports = FindObjectsByType<NetworkDevicePort>(FindObjectsSortMode.None);
+        NetworkDevicePort closest = null;
+        float bestDist = radius;
+
+        foreach (NetworkDevicePort port in ports)
+        {
+            if (!port.gameObject.activeInHierarchy) continue;
+            if (port == exclude)                    continue;
+            if (port.CanAcceptCable())              continue; // only want ports that are full
             float dist = Vector3.Distance(port.GetAnchorWorldPosition(), worldPos);
             if (dist < bestDist) { bestDist = dist; closest = port; }
         }

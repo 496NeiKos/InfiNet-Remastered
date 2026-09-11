@@ -2,22 +2,23 @@ using UnityEngine;
 
 /// <summary>
 /// On RAM1 / RAM2 root.
-/// Tracks the latch state of the RAM stick.
-/// DragPrefab checks IsInstalled before allowing drag out of a RAMSlot.
-/// Default state is Installed (latches engaged when seated in slot).
+/// Owns the state of both retention clip latches (left and right).
+/// IsInstalled is true when either latch is still closed — both must be open before
+/// DragPrefab will allow the stick to be dragged out of the slot.
 /// </summary>
 public class RAMController : MonoBehaviour
 {
-    public enum RAMState { Installed, Uninstalled }
-
     [Header("Slot Sprites")]
     [SerializeField] private Sprite defaultSprite;
     [SerializeField] private Sprite snappedSprite;
 
-    private RAMState _state = RAMState.Installed;
     private SpriteRenderer _sr;
 
-    public bool IsInstalled => _state == RAMState.Installed;
+    public bool IsLeftLatched  { get; private set; } = true;
+    public bool IsRightLatched { get; private set; } = true;
+
+    // True while at least one clip is closed (RAM cannot be removed).
+    public bool IsInstalled => IsLeftLatched || IsRightLatched;
 
     private void Awake()
     {
@@ -26,36 +27,47 @@ public class RAMController : MonoBehaviour
 
     private void Start()
     {
-        // Restore correct sprite when scene loads with RAM already in a slot
         ApplySlotSprite(GetComponentInParent<SlotContainer>() != null);
     }
 
-    public void SetInstalled()
+    /// <summary>Called by RAMLatchController after a successful gesture.</summary>
+    public void SetLatchState(RAMLatchController.LatchSide side, bool latched)
     {
-        if (_state == RAMState.Installed) return;
-        _state = RAMState.Installed;
-        GetComponentInParent<MotherboardController>()?.RefreshCableSprite();
-        Debug.Log($"[RAMController:{name}] State → Installed");
-    }
+        bool wasInstalled = IsInstalled;
 
-    public void SetUninstalled()
-    {
-        if (_state == RAMState.Uninstalled) return;
-        _state = RAMState.Uninstalled;
-        GetComponentInParent<MotherboardController>()?.RefreshCableSprite();
-        Debug.Log($"[RAMController:{name}] State → Uninstalled");
+        if (side == RAMLatchController.LatchSide.Left)  IsLeftLatched  = latched;
+        else                                             IsRightLatched = latched;
+
+        if (IsInstalled != wasInstalled)
+            GetComponentInParent<MotherboardController>()?.RefreshCableSprite();
+
+        GetComponentInChildren<RAMDetailedView>(true)?.SyncSprite();
+        Debug.Log($"[RAMController:{name}] {side} → {(latched ? "Closed" : "Opened")} | IsInstalled={IsInstalled}");
+        NCIITaskListManager.CheckConditions();
     }
 
     public void OnSnappedToSlot()
     {
-        SetUninstalled(); // seated in slot but latch not yet closed — player must slide-down in detail view
+        // Seat the stick with both clips open — player must close them manually.
+        IsLeftLatched  = false;
+        IsRightLatched = false;
         ApplySlotSprite(true);
+        SetIndicatorActive(true);
+        GetComponentInParent<MotherboardController>()?.RefreshCableSprite();
     }
 
     public void OnRemovedFromSlot()
     {
         ApplySlotSprite(false);
+        SetIndicatorActive(false);
         GetComponentInParent<MotherboardController>()?.RefreshCableSprite();
+    }
+
+    private void SetIndicatorActive(bool active)
+    {
+        foreach (Transform child in transform)
+            if (child.name.Contains("Indicator"))
+                child.gameObject.SetActive(active);
     }
 
     private void ApplySlotSprite(bool inSlot)

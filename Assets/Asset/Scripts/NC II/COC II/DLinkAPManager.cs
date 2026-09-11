@@ -237,6 +237,14 @@ public class DLinkAPManager : MonoBehaviour
         if (_config.ConnectionType == 1 && IsValidIPAddress(_config.IPAddress))
             apReset?.SetConfigured();
 
+        string secLabel  = _config.SecurityMode == 0 ? "None" : "WPA/WPA2 Personal";
+        string connLabel = _config.ConnectionType == 1
+                           ? $"Static IP: {_config.IPAddress}"
+                           : "Dynamic IP";
+        ActivityLogManager.Log(
+            $"AP saved — SSID: {_config.Ssid}, Security: {secLabel}, Connection: {connLabel}",
+            ActivityLogManager.EntryType.Action);
+
         Debug.Log($"[DLinkAPManager] Saved — Static: {_config.ConnectionType == 1}, IP: {_config.IPAddress}.");
     }
 
@@ -334,6 +342,36 @@ public class DLinkAPManager : MonoBehaviour
     public string GetApPreSharedKey() => _config.Password;
     public int    GetApSecurityMode() => _config.SecurityMode;
     public string GetApIPAddress()    => _config.IPAddress;
+
+    // Public API used by IPConfigTaskManager
+    /// <summary>True when SSID is non-default, security is WPA-Personal, and a password is typed (live, before Save).</summary>
+    public bool HasLiveModifiedWireless =>
+        ssidField        != null && ssidField.text != defaultSsid &&
+        securityDropdown != null && securityDropdown.value == 1 &&
+        passwordField    != null && !string.IsNullOrEmpty(passwordField.text);
+
+    /// <summary>True when Save has been clicked at least once.</summary>
+    public bool HasSavedAtLeastOnce => _hasSavedOnce;
+
+    /// <summary>True while the Network body panel is the active view.</summary>
+    public bool NetworkPanelVisible => networkPanel != null && networkPanel.activeSelf;
+
+    /// <summary>
+    /// True when Connection Type is Static and all four LAN fields contain valid values (live, before Save).
+    /// AP IP and Gateway must be 192.168.100.x; Subnet Mask and Primary DNS just need to be non-empty.
+    /// </summary>
+    public bool HasLiveStaticLanConfig
+    {
+        get
+        {
+            if (connectionTypeDropdown == null || connectionTypeDropdown.value != 1) return false;
+            if (!IsValidIPAddress(ipAddressField?.text))                             return false;
+            if (string.IsNullOrEmpty(subnetMaskField?.text))                        return false;
+            if (!IsValidIPAddress(gatewayField?.text))                              return false;
+            if (string.IsNullOrEmpty(primaryDNSField?.text))                        return false;
+            return true;
+        }
+    }
 
     // ----------------------------------------------------------------
     //  Helpers

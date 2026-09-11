@@ -18,6 +18,11 @@ public class NetworkPrefabInteraction : MonoBehaviour
                 break;
             }
         }
+
+        // Always start hidden — prevents Phase2 cables from bleeding into the workspace
+        // if the Detail child was accidentally left active in the prefab.
+        if (_detailView != null)
+            _detailView.SetActive(false);
     }
 
     private void Update()

@@ -174,6 +174,7 @@ public class NetworkCableEndController : MonoBehaviour
 
         _installedRJ45.GetComponent<RJ45HoldUninstall>()?.OnInstalled(this);
         SetWiresInteractable(false);
+        ActivityLogManager.Log($"RJ45 connector installed — {gameObject.name}", ActivityLogManager.EntryType.Install);
         NetworkCableTaskManager.CheckConditions();
     }
 

@@ -156,6 +156,9 @@ public class NetworkHardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHand
         NetworkDragPrefab dp = hardwarePrefab.GetComponent<NetworkDragPrefab>();
         if (dp != null) dp.enabled = true;
 
+        string devName = dp != null ? dp.LogDisplayName : hardwarePrefab.name;
+        ActivityLogManager.Log($"{devName} deployed to workspace", ActivityLogManager.EntryType.Install);
+
         gameObject.SetActive(false);
     }
 

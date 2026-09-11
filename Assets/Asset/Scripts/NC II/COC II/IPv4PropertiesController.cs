@@ -129,6 +129,8 @@ public class IPv4PropertiesController : MonoBehaviour
 
     private void OnEnable()
     {
+        var state = VirtualOSManagerLocator.Current?.CurrentState;
+        if (state != null) state.IPv4PanelOpened = true;
         LoadFromState();
         TakeSnapshot();
     }
@@ -202,6 +204,19 @@ public class IPv4PropertiesController : MonoBehaviour
             return;
         }
         SaveToState();
+
+        if (_useStaticIP)
+        {
+            string ip     = $"{ipOctets[0]?.Value}.{ipOctets[1]?.Value}.{ipOctets[2]?.Value}.{ipOctets[3]?.Value}";
+            string subnet = $"{subnetOctets[0]?.Value}.{subnetOctets[1]?.Value}.{subnetOctets[2]?.Value}.{subnetOctets[3]?.Value}";
+            string gw     = $"{gatewayOctets[0]?.Value}.{gatewayOctets[1]?.Value}.{gatewayOctets[2]?.Value}.{gatewayOctets[3]?.Value}";
+            ActivityLogManager.Log($"IP configured: {ip} / {subnet} GW {gw}", ActivityLogManager.EntryType.Action);
+        }
+        else
+        {
+            ActivityLogManager.Log("IP set to obtain automatically (DHCP)", ActivityLogManager.EntryType.Action);
+        }
+
         gameObject.SetActive(false);
         Debug.Log("[IPv4PropertiesController] OK — IP config saved.");
     }
@@ -228,9 +243,10 @@ public class IPv4PropertiesController : MonoBehaviour
         if (!int.TryParse(ipOctets[3].Value, out int host) || host < 1 || host > 254)
             return "Host octet must be between 1 and 254.";
 
-        if (VirtualOSManager.Instance != null)
+        var mgr = VirtualOSManagerLocator.Current;
+        if (mgr != null)
         {
-            string prefix = VirtualOSManager.Instance.GetNetworkPrefix();
+            string prefix = mgr.GetNetworkPrefix();
             if (!string.IsNullOrEmpty(prefix))
             {
                 string myPrefix = $"{ipOctets[0].Value}.{ipOctets[1].Value}.{ipOctets[2].Value}";
@@ -238,7 +254,7 @@ public class IPv4PropertiesController : MonoBehaviour
                     return $"IP must be on the same network ({prefix}.x).";
             }
 
-            var usedHosts = VirtualOSManager.Instance.GetUsedHostOctets();
+            var usedHosts = mgr.GetUsedHostOctets();
             if (usedHosts.Contains(ipOctets[3].Value))
                 return "That IP is already used by another device.";
         }
@@ -382,8 +398,32 @@ public class IPv4PropertiesController : MonoBehaviour
         if (img != null) img.color = c;
     }
 
+    // ----------------------------------------------------------------
+    //  Public read-only live accessors (used by IPConfigTaskManager)
+    // ----------------------------------------------------------------
+
+    public bool IsStaticIPModeActive => _useStaticIP;
+
+    public string[] LiveIPOctets => new[]
+    {
+        ipOctets[0]?.Value ?? "", ipOctets[1]?.Value ?? "",
+        ipOctets[2]?.Value ?? "", ipOctets[3]?.Value ?? ""
+    };
+
+    public string[] LiveGatewayOctets => new[]
+    {
+        gatewayOctets[0]?.Value ?? "", gatewayOctets[1]?.Value ?? "",
+        gatewayOctets[2]?.Value ?? "", gatewayOctets[3]?.Value ?? ""
+    };
+
+    public string[] LivePreferredDNSOctets => new[]
+    {
+        preferredDNSOctets[0]?.Value ?? "", preferredDNSOctets[1]?.Value ?? "",
+        preferredDNSOctets[2]?.Value ?? "", preferredDNSOctets[3]?.Value ?? ""
+    };
+
     private static DeviceOSState GetState()
     {
-        return VirtualOSManager.Instance?.CurrentState ?? new DeviceOSState();
+        return VirtualOSManagerLocator.Current?.CurrentState ?? new DeviceOSState();
     }
 }

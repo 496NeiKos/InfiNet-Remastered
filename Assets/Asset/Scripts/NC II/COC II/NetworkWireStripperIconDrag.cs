@@ -108,7 +108,10 @@ public class NetworkWireStripperIconDrag : MonoBehaviour, IBeginDragHandler, IDr
         if (hit == null) return;
 
         if (!hit.IsStripped)
+        {
             hit.Expose();
+            ActivityLogManager.Log($"Cable jacket stripped — {hit.name}", ActivityLogManager.EntryType.Action);
+        }
     }
 
     private NetworkCableEndController FindNearestCableEnd(Vector3 worldPos)

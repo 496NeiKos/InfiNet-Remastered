@@ -60,6 +60,8 @@ using UnityEngine;
 
 public class ObjectiveTaskDisplay : MonoBehaviour
 {
+    // Fires with the completed objective's name each time a group finishes.
+    public static event Action<string> OnObjectiveGroupComplete;
     [Serializable]
     public class ObjectiveEntry
     {
@@ -162,6 +164,8 @@ public class ObjectiveTaskDisplay : MonoBehaviour
     {
         if (objectives == null || objectives.Length == 0) return;
 
+        bool wasAllDone = allDone;
+
         if (!allDone)
         {
             int total = 0;
@@ -172,13 +176,25 @@ public class ObjectiveTaskDisplay : MonoBehaviour
 
         if (allDone)
         {
+            if (!wasAllDone)
+            {
+                string completedName = latchedIndex < objectives.Length ? objectives[latchedIndex].text : string.Empty;
+                OnObjectiveGroupComplete?.Invoke(completedName);
+            }
             if (objectiveText != null)
                 objectiveText.text = allObjectivesCompletedText;
             return;
         }
 
         int naturalIndex = ResolveObjectiveIndex(objectives, completedCount);
+        int prevLatchedIndex = latchedIndex;
         latchedIndex = Mathf.Max(latchedIndex, naturalIndex);
+
+        if (latchedIndex > prevLatchedIndex)
+        {
+            string completedName = prevLatchedIndex < objectives.Length ? objectives[prevLatchedIndex].text : string.Empty;
+            OnObjectiveGroupComplete?.Invoke(completedName);
+        }
 
         if (objectiveText != null && latchedIndex < objectives.Length)
             objectiveText.text = objectives[latchedIndex].text;

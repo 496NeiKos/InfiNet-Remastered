@@ -105,6 +105,28 @@ public class NetworkDevicePhase2Manager : MonoBehaviour
         return false;
     }
 
+    /// <summary>
+    /// Updates the OtherPort reference and label for an existing Phase2 entry after
+    /// the Phase1 cable is re-routed to a different device. Called by
+    /// NetworkLogicalCable.AttachSecondEnd on the remaining (non-detached) end.
+    /// </summary>
+    public void UpdateOtherPort(NetworkLogicalCable cable, NetworkDevicePort newOtherPort)
+    {
+        int idx = _entries.FindIndex(e => e.Cable == cable);
+        if (idx < 0) return;
+
+        _entries[idx].OtherPort = newOtherPort;
+
+        string ownerName = GetDisplayName(ownerPort != null ? ownerPort.gameObject : gameObject);
+        string otherName = GetDisplayName(newOtherPort != null ? newOtherPort.gameObject : null);
+        _entries[idx].LabelText = $"{ownerName} → {otherName}";
+
+        _entries[idx].Instance?.UpdateTooltipLabel(_entries[idx].LabelText);
+
+        if (idx == _currentIndex && !_entries[idx].IsInstalled)
+            UpdateSharedLabel();
+    }
+
     // ----------------------------------------------------------------
     //  Called by NetworkLogicalCable.AttachSecondEnd
     // ----------------------------------------------------------------
@@ -177,9 +199,17 @@ public class NetworkDevicePhase2Manager : MonoBehaviour
 
         // Keep currentIndex consistent after removal.
         if (idx < _currentIndex)
+        {
             _currentIndex--;
+            while (_currentIndex < _entries.Count && _entries[_currentIndex].IsInstalled)
+                _currentIndex++;
+        }
         else if (idx == _currentIndex)
+        {
             _currentIndex = Mathf.Clamp(_currentIndex, 0, _entries.Count);
+            while (_currentIndex < _entries.Count && _entries[_currentIndex].IsInstalled)
+                _currentIndex++;
+        }
 
         RefreshQueue();
     }
@@ -195,6 +225,8 @@ public class NetworkDevicePhase2Manager : MonoBehaviour
 
         _entries[idx].IsInstalled = true;
         _currentIndex = idx + 1;
+        while (_currentIndex < _entries.Count && _entries[_currentIndex].IsInstalled)
+            _currentIndex++;
 
         ActivityLogManager.Log(
             $"Port cable installed on {GetDisplayName(gameObject)} ({_entries[idx].OtherPort?.name ?? "device"})",
@@ -214,14 +246,20 @@ public class NetworkDevicePhase2Manager : MonoBehaviour
 
         _entries[idx].IsInstalled = false;
 
-        // Strict sequential: hide everything after this index.
+        // Strict sequential: hide every uninstalled entry that comes after idx so the user
+        // cannot install out of order after a mid-queue uninstall.
         for (int i = idx + 1; i < _entries.Count; i++)
         {
             if (!_entries[i].IsInstalled && _entries[i].Instance != null)
                 _entries[i].Instance.gameObject.SetActive(false);
         }
 
-        _currentIndex = idx;
+        // Find the first uninstalled entry from the front.
+        // Using _currentIndex = idx was wrong when an earlier entry is also uninstalled —
+        // that left a higher-indexed entry as the visible head while the lower one was hidden.
+        _currentIndex = 0;
+        while (_currentIndex < _entries.Count && _entries[_currentIndex].IsInstalled)
+            _currentIndex++;
 
         ActivityLogManager.Log(
             $"Port cable removed from {GetDisplayName(gameObject)} ({_entries[idx].OtherPort?.name ?? "device"})",

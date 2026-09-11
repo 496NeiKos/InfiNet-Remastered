@@ -140,6 +140,7 @@ public class EthernetPropertiesController : MonoBehaviour
         _ipv6Enabled = !_ipv6Enabled;
         GetState().IPv6Unchecked = !_ipv6Enabled;
         RefreshAll();
+        ActivityLogManager.Log($"IPv6 {(_ipv6Enabled ? "enabled" : "disabled")}", ActivityLogManager.EntryType.Action);
         Debug.Log($"[EthernetPropertiesController] IPv6 enabled = {_ipv6Enabled}.");
     }
 

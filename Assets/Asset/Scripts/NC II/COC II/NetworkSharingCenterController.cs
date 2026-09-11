@@ -79,6 +79,8 @@ public class NetworkSharingCenterController : MonoBehaviour
     [SerializeField] private GameObject nscBlocker;
     [Tooltip("TMP_Text child above the panel showing the topology hint. Start INACTIVE.")]
     [SerializeField] private TMP_Text   nscHintTMP;
+    [Tooltip("Disable in COC III — no physical topology required before IP config.")]
+    [SerializeField] private bool requiresTopologyGate = true;
 
     private int _currentPanel = -1; // -1 = no panel open (Main Content visible)
 
@@ -88,11 +90,22 @@ public class NetworkSharingCenterController : MonoBehaviour
 
     private void Update() => UpdateBlocker();
 
+    private void OnEnable()
+    {
+        var state = VirtualOSManagerLocator.Current?.CurrentState;
+        if (state != null) state.NSCOpened = true;
+    }
+
     private void Awake()
     {
         HideAllPanels();
 
-        adapterSettingBtn?.onClick.AddListener(() => NavigateTo(0));
+        adapterSettingBtn?.onClick.AddListener(() =>
+        {
+            NavigateTo(0);
+            var state = VirtualOSManagerLocator.Current?.CurrentState;
+            if (state != null) state.AdapterSettingsVisited = true;
+        });
         advancedSharingBtn?.onClick.AddListener(() => NavigateTo(1));
         firewallBtn?.onClick.AddListener(() => NavigateTo(2));
         closeBtn?.onClick.AddListener(CloseCurrentPanel);
@@ -173,23 +186,30 @@ public class NetworkSharingCenterController : MonoBehaviour
     private void RefreshAdapterEntry()
     {
         if (laptopAdapterEntry == null) return;
-        bool isLaptop      = VirtualOSManager.Instance?.CurrentDevice == DeviceID.Laptop;
-        bool wifiConnected = VirtualOSManager.Instance?.CurrentState?.WifiConnected ?? false;
+        var mgr = VirtualOSManagerLocator.Current;
+        bool isLaptop      = mgr?.CurrentDevice == DeviceID.Laptop;
+        bool wifiConnected = mgr?.CurrentState?.WifiConnected ?? false;
         laptopAdapterEntry.SetActive(!isLaptop || wifiConnected);
     }
 
     private void UpdateBlocker()
     {
         if (nscBlocker == null) return;
-        bool satisfied = VirtualOSManager.Instance != null
-                      && VirtualOSManager.Instance.IsIPTopologySatisfied();
+        if (!requiresTopologyGate)
+        {
+            nscBlocker.SetActive(false);
+            if (nscHintTMP != null) nscHintTMP.gameObject.SetActive(false);
+            return;
+        }
+        var mgr = VirtualOSManagerLocator.Current;
+        bool satisfied   = mgr != null && mgr.IsIPTopologySatisfied();
         bool shouldBlock = !satisfied;
         nscBlocker.SetActive(shouldBlock);
         if (nscHintTMP != null)
         {
             nscHintTMP.gameObject.SetActive(shouldBlock);
-            if (shouldBlock && VirtualOSManager.Instance != null)
-                nscHintTMP.text = VirtualOSManager.Instance.GetIPBlockReason();
+            if (shouldBlock && mgr != null)
+                nscHintTMP.text = mgr.GetIPBlockReason();
         }
     }
 }

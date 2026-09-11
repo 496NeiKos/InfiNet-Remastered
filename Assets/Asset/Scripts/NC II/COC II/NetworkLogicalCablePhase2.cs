@@ -47,6 +47,8 @@ public class NetworkLogicalCablePhase2 : MonoBehaviour
 
     public bool IsInstalled => _isInstalled;
 
+    public void UpdateTooltipLabel(string label) => _tooltipLabel = label;
+
     // ----------------------------------------------------------------
     //  Init (called by manager right after normalizing idle scale)
     // ----------------------------------------------------------------
@@ -135,6 +137,17 @@ public class NetworkLogicalCablePhase2 : MonoBehaviour
 
     private void OnDisable()
     {
+        if (_dragTarget == this) _dragTarget = null;
+        if (_currentHoverOwner == this)
+        {
+            _currentHoverOwner = null;
+            HoverLabelManager.Instance?.HideLabel();
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (_dragTarget == this) _dragTarget = null;
         if (_currentHoverOwner == this)
         {
             _currentHoverOwner = null;
@@ -192,6 +205,7 @@ public class NetworkLogicalCablePhase2 : MonoBehaviour
 
     public void ReturnToAnchor()
     {
+        if (_dragTarget == this) _dragTarget = null;
         _isInstalled = false;
         _isDragging  = false;
         if (_anchor != null)

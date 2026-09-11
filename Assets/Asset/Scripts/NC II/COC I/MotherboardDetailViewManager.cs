@@ -3,15 +3,17 @@ using UnityEngine.InputSystem;
 
 /// <summary>
 /// On Motherboard root.
-/// Handles right-click on CPU, Heatsink, RAM, and GPU while Motherboard is in SecondLayer.
-/// Same pattern as DetailViewManager on SystemUnit:
-///   - Motherboard root (this) disables when inner panel opens
-///   - Component reparents to SecondLayer and centers
-///   - Close: Motherboard re-enables FIRST, then component reparents back to its slot
+/// Handles right-click on CPU, Heatsink, RAM, GPU, and SSD while Motherboard is in
+/// FirstLayer (workspace) or SecondLayer (inside the System Unit editing panel).
+///   - Workspace (MB in FirstLayer):  component opens in SecondLayer.
+///   - SU context (MB in SecondLayer): component opens in ThirdLayer.
+/// On close, only the panel that was actually used is deactivated so the parent
+/// editing context (MB or SU panel) remains visible.
 /// </summary>
 public class MotherboardDetailViewManager : MonoBehaviour
 {
     private GameObject _activeChildPrefab;
+    private GameObject _activePanel;          // which layer the component was sent to
     private Transform _childOriginalParent;
     private Vector3 _childOriginalLocalPos;
     private Vector3 _childOriginalLocalScale;
@@ -63,17 +65,7 @@ public class MotherboardDetailViewManager : MonoBehaviour
             if (ram != null) { OpenInnerPanel(ram.gameObject); return; }
 
             GPUController gpu = hit.collider.GetComponent<GPUController>();
-            if (gpu != null)
-            {
-                GPUPhase1CableInteraction phase1Cable = gpu.GetComponent<GPUPhase1CableInteraction>();
-                if (phase1Cable != null && phase1Cable.enabled)
-                {
-                    ActivityLogManager.Log("Cannot open GPU detail — connect or disconnect the GPU power cable directly in this view.", ActivityLogManager.EntryType.Warning);
-                    return;
-                }
-                OpenInnerPanel(gpu.gameObject);
-                return;
-            }
+            if (gpu != null) { OpenInnerPanel(gpu.gameObject); return; }
 
             SSDController ssd = hit.collider.GetComponent<SSDController>();
             if (ssd != null) { OpenInnerPanel(ssd.gameObject); return; }
@@ -82,15 +74,27 @@ public class MotherboardDetailViewManager : MonoBehaviour
 
     private void OpenInnerPanel(GameObject childPrefab)
     {
-        GameObject panel = GameManager.Instance?.secondLayer;
+        // MB in SecondLayer means we're inside the SU editing panel — push the component
+        // one level deeper to ThirdLayer so closing it doesn't kill the MB panel.
+        // MB in FirstLayer is the normal workspace case — SecondLayer is correct.
+        bool mbInSecondLayer = GameManager.Instance?.secondLayer != null &&
+                               transform.IsChildOf(GameManager.Instance.secondLayer.transform);
+        GameObject panel = mbInSecondLayer
+            ? GameManager.Instance.thirdLayer
+            : GameManager.Instance.secondLayer;
+
         if (panel == null)
         {
-            Debug.LogError("[MotherboardDetailViewManager] secondLayer not assigned in GameManager.");
+            Debug.LogError("[MotherboardDetailViewManager] Target layer panel not assigned in GameManager.");
             return;
         }
 
+        _activePanel = panel;
         _activeChildPrefab = childPrefab;
         _isInnerPanelOpen = true;
+
+        // Register so GameManager ESC knows to close this inner panel before the MB or SU panel.
+        GameManager.Instance?.RegisterMotherboardDetailView(this);
         _childOriginalParent = childPrefab.transform.parent;
         _childOriginalLocalPos = childPrefab.transform.localPosition;
         _childOriginalLocalScale = childPrefab.transform.localScale;
@@ -109,10 +113,6 @@ public class MotherboardDetailViewManager : MonoBehaviour
 
         SetDetailedView(childPrefab, true);
 
-        // Re-enable colliders that may have been swept off by a previous Phase1 pass
-        // (SetPhase2Enabled(false)) while the component was still in phase2Root before
-        // being removed. When reinstalled to the slot after Phase2Interactive was already
-        // set, SetPhase2Enabled(true) won't re-sweep it — fix that here.
         foreach (var col in childPrefab.GetComponentsInChildren<Collider2D>(true))
             col.enabled = true;
 
@@ -132,10 +132,11 @@ public class MotherboardDetailViewManager : MonoBehaviour
 
         gameObject.SetActive(true);
 
-        if (GameManager.Instance?.secondLayer != null)
-            GameManager.Instance.secondLayer.SetActive(false);
+        if (_activePanel != null)
+            _activePanel.SetActive(false);
 
         _activeChildPrefab = null;
+        _activePanel = null;
         _isInnerPanelOpen = false;
 
         Debug.Log("[MotherboardDetailViewManager] Inner panel closed, component returned to slot.");

@@ -25,8 +25,11 @@ public class CablePort : MonoBehaviour
     [SerializeField] private bool startEmpty = false;
     [Tooltip("When ticked, cables installing to or detaching from this port produce no activity log entry. Use on LoosePorts.")]
     [SerializeField] private bool suppressActivityLog = false;
+    [Tooltip("Mark this as a loose/sub-pin port (e.g. FrontPanel LoosePorts). When ticked, this port is excluded from the cable-blocking check that prevents hardware removal.")]
+    [SerializeField] private bool isLoosePort = false;
 
     public bool SuppressActivityLog => suppressActivityLog;
+    public bool IsLoosePort => isLoosePort;
 
     [Header("Prerequisite (optional)")]
     [Tooltip("This port only accepts a cable when the referenced port is already installed.")]

@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-public enum DeviceID { Computer1, Computer2, Laptop }
+public enum DeviceID { Computer1, Computer2, Laptop, Server }
 
 public class DeviceOSState
 {
@@ -53,6 +53,11 @@ public class DeviceOSState
     public bool[]       PingResults      = new bool[5];        // [0]=Router [1]=AP [2]=PC1 [3]=PC2 [4]=Laptop
     public List<string> CmdOutputLines   = new List<string>(); // visual history; cleared on CMD exit, kept on ESC/switch
     public int          IpconfigRunCount = 0;                  // incremented each time ipconfig is executed on this device
+
+    // Navigation latches used by COC III task manager (harmless no-ops in COC II)
+    public bool NSCOpened       = false;
+    public bool IPv4PanelOpened = false;
+    public bool AdapterSettingsVisited = false;
 
     public bool IPConfigured      => UseStaticIP && IsValidIP(IPOctets);
     public bool SharingConfigured => NetworkDiscoveryOn && FilePrinterSharingOn && PasswordProtectedSharingOff;

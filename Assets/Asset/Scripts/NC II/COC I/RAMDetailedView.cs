@@ -1,17 +1,10 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 /// <summary>
 /// On the RAMDetailedView child of RAM1 / RAM2.
-/// Detects vertical pointer-drag gestures on this object's 2D collider (100 px threshold,
-/// no time constraint — same as CPULockController) to toggle the RAM latch state.
-///
-/// Slide Down (≥ 100 px) → Install  → InstalledSprite  → parent RAMController.SetInstalled()
-/// Slide Up   (≥ 100 px) → Uninstall → UninstalledSprite → parent RAMController.SetUninstalled()
-///
-/// This child is only active while the InnerEditingPanel is open (MotherboardDetailViewManager
-/// activates/deactivates it via SetDetailedView), so no extra panel-open guard is needed beyond
-/// the standard IsEditorOpen check.
+/// Displays the RAM latch state (installed vs uninstalled sprite) and pushes the parent
+/// RAM sprite and indicator behind the detail panel while it is open.
+/// Gesture detection lives on the RAMLatchController children (LeftLatch, RightLatch).
 /// </summary>
 public class RAMDetailedView : MonoBehaviour
 {
@@ -19,12 +12,12 @@ public class RAMDetailedView : MonoBehaviour
     [SerializeField] private Sprite installedSprite;
     [SerializeField] private Sprite uninstalledSprite;
 
-    private const float DragThreshold = 100f;
-
     private SpriteRenderer _sr;
     private RAMController _ramController;
-    private bool _isPressed;
-    private Vector2 _pressStartScreenPos;
+
+    private bool _ordersSaved;
+    private int _rootOriginalOrder;
+    private int _indicatorOriginalOrder;
 
     private void Awake()
     {
@@ -34,74 +27,56 @@ public class RAMDetailedView : MonoBehaviour
 
     private void OnEnable()
     {
-        // Sync sprite each time the panel opens (state may have changed since last session)
-        ApplySprite();
+        SyncSprite();
+        PushSortingOrders();
     }
 
-    private void Update()
+    public void SyncSprite()
     {
-        if (GameManager.Instance == null || !GameManager.Instance.IsEditorOpen) return;
-
-        Mouse mouse = Mouse.current;
-        if (mouse == null) return;
-
-        if (mouse.leftButton.wasPressedThisFrame && IsMouseOver())
-        {
-            _isPressed = true;
-            _pressStartScreenPos = mouse.position.ReadValue();
-        }
-
-        if (_isPressed && mouse.leftButton.wasReleasedThisFrame)
-        {
-            _isPressed = false;
-            Vector2 delta = mouse.position.ReadValue() - _pressStartScreenPos;
-
-            if (Mathf.Abs(delta.y) >= DragThreshold)
-            {
-                if (delta.y < 0f)
-                    TryInstall();
-                else
-                    TryUninstall();
-            }
-        }
-
-        // Safety cancel if button is released without triggering wasReleasedThisFrame
-        if (_isPressed && !mouse.leftButton.isPressed)
-            _isPressed = false;
+        if (_sr == null || _ramController == null) return;
+        bool bothLatched   = _ramController.IsLeftLatched && _ramController.IsRightLatched;
+        bool bothUnlatched = !_ramController.IsLeftLatched && !_ramController.IsRightLatched;
+        if      (bothLatched)   _sr.sprite = installedSprite;
+        else if (bothUnlatched) _sr.sprite = uninstalledSprite;
+        // mixed state — one latch still engaged, sprite unchanged
     }
 
-    private void TryInstall()
+    private void OnDisable()
     {
-        if (_ramController == null || _ramController.IsInstalled) return;
-        _ramController.SetInstalled();
-        ApplySprite();
-        ActivityLogManager.Log($"{transform.parent.name} latch closed — RAM seated.", ActivityLogManager.EntryType.Install);
-        Debug.Log($"[RAMDetailedView:{name}] Slide-down → Installed");
-        NCIITaskListManager.CheckConditions();
+        RestoreSortingOrders();
     }
 
-    private void TryUninstall()
+    private void PushSortingOrders()
     {
-        if (_ramController == null || !_ramController.IsInstalled) return;
-        _ramController.SetUninstalled();
-        ApplySprite();
-        ActivityLogManager.Log($"{transform.parent.name} latch opened — RAM released.", ActivityLogManager.EntryType.Remove);
-        Debug.Log($"[RAMDetailedView:{name}] Slide-up → Uninstalled");
-        NCIITaskListManager.CheckConditions();
+        SpriteRenderer rootSR      = transform.parent?.GetComponent<SpriteRenderer>();
+        SpriteRenderer indicatorSR = FindSiblingIndicator()?.GetComponent<SpriteRenderer>();
+
+        _rootOriginalOrder      = rootSR      != null ? rootSR.sortingOrder      : 0;
+        _indicatorOriginalOrder = indicatorSR != null ? indicatorSR.sortingOrder : 0;
+        _ordersSaved = true;
+
+        if (rootSR      != null) rootSR.sortingOrder      = -1;
+        if (indicatorSR != null) indicatorSR.sortingOrder = -1;
     }
 
-    private void ApplySprite()
+    private void RestoreSortingOrders()
     {
-        if (_sr == null) return;
-        bool installed = _ramController != null && _ramController.IsInstalled;
-        _sr.sprite = installed ? installedSprite : uninstalledSprite;
+        if (!_ordersSaved) return;
+        _ordersSaved = false;
+
+        SpriteRenderer rootSR      = transform.parent?.GetComponent<SpriteRenderer>();
+        SpriteRenderer indicatorSR = FindSiblingIndicator()?.GetComponent<SpriteRenderer>();
+
+        if (rootSR      != null) rootSR.sortingOrder      = _rootOriginalOrder;
+        if (indicatorSR != null) indicatorSR.sortingOrder = _indicatorOriginalOrder;
     }
 
-    private bool IsMouseOver()
+    private Transform FindSiblingIndicator()
     {
-        Vector2 mouseWorld = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
-        foreach (Collider2D col in GetComponents<Collider2D>())
-            if (col.OverlapPoint(mouseWorld)) return true;
-        return false;
+        if (transform.parent == null) return null;
+        foreach (Transform sibling in transform.parent)
+            if (sibling != transform && sibling.name.Contains("Indicator"))
+                return sibling;
+        return null;
     }
 }

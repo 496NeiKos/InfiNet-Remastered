@@ -129,15 +129,33 @@ public class NetworkCablePopupManager : MonoBehaviour
 
             if (!moveBlocked)
             {
-                var localCable = cable;
-                var localPort  = port;
-                row.MoveEndButton.onClick.AddListener(() => { Hide(); localCable.DetachEnd(localPort); });
+                var localCable     = cable;
+                var localPort      = port;
+                var localOtherName = otherName;
+                var localTitle     = GetDisplayName(port.gameObject);
+                row.MoveEndButton.onClick.AddListener(() =>
+                {
+                    ActivityLogManager.Log(
+                        $"Cable re-routing: {localTitle} ↔ {localOtherName} — select new target",
+                        ActivityLogManager.EntryType.Remove);
+                    Hide();
+                    localCable.DetachEnd(localPort);
+                });
             }
 
             if (!removeBlocked)
             {
-                var localCable = cable;
-                row.RemoveCableButton.onClick.AddListener(() => { Hide(); localCable.Disconnect(); });
+                var localCable     = cable;
+                var localTitle     = GetDisplayName(port.gameObject);
+                var localOtherName = otherName;
+                row.RemoveCableButton.onClick.AddListener(() =>
+                {
+                    ActivityLogManager.Log(
+                        $"Network Cable removed: {localTitle} ↔ {localOtherName}",
+                        ActivityLogManager.EntryType.Remove);
+                    Hide();
+                    localCable.Disconnect();
+                });
             }
         }
 

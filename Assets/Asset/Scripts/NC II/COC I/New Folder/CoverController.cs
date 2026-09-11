@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
 /// <summary>
@@ -8,7 +9,8 @@ using UnityEngine.InputSystem;
 /// Opening: hardware shown immediately, interactable after slide finishes.
 /// Closing: hardware stays visible during slide, hidden after slide finishes.
 /// </summary>
-public class CoverController : MonoBehaviour
+public class CoverController : MonoBehaviour,
+    IPointerDownHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     [Header("References")]
     [SerializeField] private SystemUnitController systemUnitController;
@@ -180,4 +182,12 @@ public class CoverController : MonoBehaviour
         if (screw1 == null || screw2 == null) return false;
         return screw1.IsScrewed() && screw2.IsScrewed();
     }
+
+    // Consume EventSystem pointer/drag events so they don't fall through to DragPrefab
+    // components on hardware inside the SU. The cover uses raw Mouse.current input for
+    // its own slide logic and does not need to act on these EventSystem callbacks.
+    public void OnPointerDown(PointerEventData eventData) { }
+    public void OnBeginDrag(PointerEventData eventData)   { }
+    public void OnDrag(PointerEventData eventData)        { }
+    public void OnEndDrag(PointerEventData eventData)     { }
 }

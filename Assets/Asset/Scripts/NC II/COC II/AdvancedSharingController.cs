@@ -182,6 +182,10 @@ public class AdvancedSharingController : MonoBehaviour
         s.MediaStreamingOn           = _msOn;
         s.PasswordProtectedSharingOff = _ppsOff;
 
+        ActivityLogManager.Log(
+            $"Sharing saved — Network Discovery: {(_ndOn ? "On" : "Off")}, File/Printer: {(_fpsOn ? "On" : "Off")}, Public Folder: {(_pfsOn ? "On" : "Off")}, Media Streaming: {(_msOn ? "On" : "Off")}, Password Protection: {(!_ppsOff ? "On" : "Off")}",
+            ActivityLogManager.EntryType.Action);
+
         Debug.Log("[AdvancedSharingController] Sharing settings saved.");
     }
 
@@ -214,6 +218,15 @@ public class AdvancedSharingController : MonoBehaviour
         SetButtonHighlight(onMSBtn,  offMSBtn,  _msOn);
         SetButtonHighlight(onPPSBtn, offPPSBtn, !_ppsOff);
     }
+
+    // ----------------------------------------------------------------
+    //  Public read-only live accessors (used by IPConfigTaskManager)
+    // ----------------------------------------------------------------
+
+    public bool LiveNetworkDiscoveryOn    => _ndOn;
+    public bool LiveFilePrinterSharingOn  => _fpsOn;
+    public bool LivePublicFolderSharingOn => _pfsOn;
+    public bool LivePasswordSharingOff    => _ppsOff;
 
     // ----------------------------------------------------------------
     //  UI helpers

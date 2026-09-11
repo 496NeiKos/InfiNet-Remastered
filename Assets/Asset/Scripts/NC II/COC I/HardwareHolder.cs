@@ -45,6 +45,8 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
     [Header("Tool / Screw Visual")]
     [Tooltip("Sprite shown while dragging. For multi-cable holders set this to the cable's icon sprite.")]
     [SerializeField] private Sprite dragSprite;
+    [Tooltip("Uniform scale multiplier applied to the drag indicator. Use to shrink/grow the icon while dragging without affecting the installed cable's size.")]
+    [SerializeField] private float dragSpriteScale = 1f;
 
     [Header("Slot Install Proximity (world units)")]
     public float slotInstallRadius = 1.5f;
@@ -256,15 +258,14 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
             SpriteRenderer sr = _dragIndicator.AddComponent<SpriteRenderer>();
             // Unity fake-null won't survive ?. — use explicit != null guard.
             // For multi-cable holders hardwarePrefab is unassigned; fall back to dragSprite.
-            Sprite indicatorSprite = (hardwarePrefab != null)
-                ? hardwarePrefab.GetComponent<SpriteRenderer>()?.sprite
-                : null;
-            if (indicatorSprite == null) indicatorSprite = dragSprite;
+            Sprite indicatorSprite = dragSprite != null
+                ? dragSprite
+                : hardwarePrefab != null ? hardwarePrefab.GetComponent<SpriteRenderer>()?.sprite : null;
             sr.sprite = indicatorSprite;
             sr.sortingOrder = 999;
 
             _dragIndicator.transform.position = worldPos + _grabOffset;
-            _dragIndicator.transform.localScale = _worldScale;
+            _dragIndicator.transform.localScale = _worldScale * dragSpriteScale;
         }
     }
 
@@ -327,6 +328,10 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         ApplyWorldScale(hardwarePrefab.transform, _worldScale);
         hardwarePrefab.SetActive(true);
 
+        // Workspace mode: Phase 1 (screws/cables) is case-bound and must be locked out.
+        // This fires whether the MB is fresh or returning after SU work.
+        hardwarePrefab.GetComponent<MotherboardPhaseManager>()?.SetPhase2Interactive();
+
         WalkthroughGuideManager.Instance?.TryTrigger(WalkthroughGuideManager.WalkthroughTrigger.FirstComponentDrop);
 
         bool isMajorHardware = hardwarePrefab.GetComponent<SystemUnitController>() != null
@@ -369,6 +374,12 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
 
             if (bestPort == null)
             {
+                CablePort nearestWrong = FindNearestPortIgnoreValidity(dropWorldPos);
+                if (nearestWrong != null)
+                {
+                    string cableDisplayName = managedCables.FirstOrDefault(c => c != null)?.DisplayName ?? proxyCableType;
+                    ActivityLogManager.Log($"{cableDisplayName} cannot be installed, make sure you match correctly the installation", ActivityLogManager.EntryType.Warning);
+                }
                 Debug.Log($"[HardwareHolder] Multi-cable proxy '{name}' (type='{proxyCableType}') — no valid port in range.");
                 return;
             }
@@ -445,6 +456,9 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
             }
             else
             {
+                CablePort nearestWrong = FindNearestPortIgnoreValidity(dropWorldPos);
+                if (nearestWrong != null)
+                    ActivityLogManager.Log($"{cable.DisplayName} cannot be installed, make sure you match correctly the installation", ActivityLogManager.EntryType.Warning);
                 Debug.Log($"[HardwareHolder] {prefabName} (cableType='{cableType}') failed.\n" +
                           $"  Inactive: [{string.Join(", ", rejectedActive)}]\n" +
                           $"  Already installed: [{string.Join(", ", rejectedInstalled)}]\n" +
@@ -475,6 +489,9 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
 
             if (bestSlot == null)
             {
+                CPUSlotController nearest = FindNearestCPUSlot(allSlots, dropWorldPos);
+                if (nearest != null)
+                    ActivityLogManager.Log("Heatsink cannot be installed, make sure you match correctly the installation", ActivityLogManager.EntryType.Warning);
                 Debug.Log($"[HardwareHolder] No valid CPUSlot found for Heatsink.");
                 return;
             }
@@ -487,6 +504,7 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
                 : _originalLocalScale;
             hardwarePrefab.SetActive(true);
             heatsink.OnInstalledToSlot(bestSlot);
+            hardwarePrefab.GetComponent<DragPrefab>()?.SetOutlineIndicator(true);
             gameObject.SetActive(false);
             ActivityLogManager.Log("Heatsink installed", ActivityLogManager.EntryType.Install);
             Debug.Log($"[HardwareHolder] Heatsink installed to CPUSlot.");
@@ -521,6 +539,9 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
 
             if (bestSlot == null)
             {
+                CPUSlotController nearest = FindNearestCPUSlot(allSlots, dropWorldPos);
+                if (nearest != null)
+                    ActivityLogManager.Log("CPU cannot be installed, make sure you match correctly the installation", ActivityLogManager.EntryType.Warning);
                 Debug.Log($"[HardwareHolder] No valid CPUSlot found for CPU.");
                 return;
             }
@@ -531,6 +552,7 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
             hardwarePrefab.transform.localScale = cpuScale != Vector3.zero ? cpuScale : _originalLocalScale;
             hardwarePrefab.SetActive(true);
             bestSlot.OnCPUInstalled();
+            hardwarePrefab.GetComponent<DragPrefab>()?.SetOutlineIndicator(true);
             gameObject.SetActive(false);
             ActivityLogManager.Log("CPU installed to slot", ActivityLogManager.EntryType.Install);
             Debug.Log($"[HardwareHolder] CPU installed to CPUSlot.");
@@ -555,13 +577,20 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
             }
         }
 
-        if (bestSlotContainer == null) return;
+        if (bestSlotContainer == null)
+        {
+            SlotContainer nearest = FindNearestSlotContainer(allSlotContainers, dropWorldPos);
+            if (nearest != null)
+                ActivityLogManager.Log($"{prefabDisplay} cannot be installed, make sure you match correctly the installation", ActivityLogManager.EntryType.Warning);
+            return;
+        }
 
         if (hardwarePrefab.GetComponent<GPUController>() != null)
         {
             MotherboardPhaseManager phase = bestSlotContainer.GetComponentInParent<MotherboardPhaseManager>();
             if (phase != null && phase.CurrentPhase == MotherboardPhaseManager.Phase.Phase2)
             {
+                ActivityLogManager.Log($"{prefabDisplay} cannot be installed, make sure you match correctly the installation", ActivityLogManager.EntryType.Warning);
                 Debug.Log($"[HardwareHolder] {prefabName} install blocked — motherboard is in Phase 2.");
                 return;
             }
@@ -579,6 +608,7 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         hardwarePrefab.GetComponent<HDDController>()?.OnSnappedToSlot();
         hardwarePrefab.GetComponent<SSDController>()?.OnSnappedToSlot();
         hardwarePrefab.GetComponent<MotherboardController>()?.OnSnappedToSlot();
+        hardwarePrefab.GetComponent<DragPrefab>()?.SetOutlineIndicator(true);
 
         gameObject.SetActive(false);
         NCIITaskListManager.CheckConditions();
@@ -616,6 +646,44 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         float iconWorldHeight = Vector3.Distance(corners[0], corners[1]);
         float spriteWorldHeight = s.rect.height / s.pixelsPerUnit;
         return spriteWorldHeight > 0f ? iconWorldHeight / spriteWorldHeight : 1f;
+    }
+
+    private CablePort FindNearestPortIgnoreValidity(Vector3 worldPos)
+    {
+        CablePort[] allPorts = FindObjectsOfType<CablePort>(true);
+        CablePort best = null;
+        float bestDist = float.MaxValue;
+        foreach (CablePort port in allPorts)
+        {
+            if (!port.gameObject.activeInHierarchy) continue;
+            float dist = Vector3.Distance(port.transform.position, worldPos);
+            if (dist < slotInstallRadius && dist < bestDist) { bestDist = dist; best = port; }
+        }
+        return best;
+    }
+
+    private CPUSlotController FindNearestCPUSlot(CPUSlotController[] slots, Vector3 worldPos)
+    {
+        CPUSlotController best = null;
+        float bestDist = float.MaxValue;
+        foreach (CPUSlotController slot in slots)
+        {
+            float dist = Vector3.Distance(slot.transform.position, worldPos);
+            if (dist < slotInstallRadius && dist < bestDist) { bestDist = dist; best = slot; }
+        }
+        return best;
+    }
+
+    private SlotContainer FindNearestSlotContainer(SlotContainer[] slots, Vector3 worldPos)
+    {
+        SlotContainer best = null;
+        float bestDist = float.MaxValue;
+        foreach (SlotContainer slot in slots)
+        {
+            float dist = Vector3.Distance(slot.transform.position, worldPos);
+            if (dist < slotInstallRadius && dist < bestDist) { bestDist = dist; best = slot; }
+        }
+        return best;
     }
 
     private void ApplyWorldScale(Transform t, Vector3 targetWorldScale)

@@ -181,6 +181,7 @@ public class RJ45HoldUninstall : MonoBehaviour, IBeginDragHandler, IDragHandler,
 
         if (onHardwareArea)
         {
+            ActivityLogManager.Log("RJ45 returned to storage", ActivityLogManager.EntryType.Remove);
             SendToHolder();
             NetworkCableTaskManager.CheckConditions();
             return;

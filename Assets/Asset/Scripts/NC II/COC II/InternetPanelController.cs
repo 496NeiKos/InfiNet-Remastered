@@ -158,6 +158,9 @@ public class InternetPanelController : MonoBehaviour
     //  Toggle (called by VirtualOSManager via WiFiBtn listener)
     // ----------------------------------------------------------------
 
+    // True when the student is on the password entry step for the AP network.
+    public bool IsPasswordPanelOpen => passwordPanel != null && passwordPanel.activeSelf;
+
     public void Toggle()
     {
         bool willOpen = !gameObject.activeSelf;
@@ -262,6 +265,8 @@ public class InternetPanelController : MonoBehaviour
         }
         else
         {
+            string ssid = dLinkAPManager != null ? dLinkAPManager.GetApSsid() : "network";
+            ActivityLogManager.Log($"WiFi connection failed: incorrect password for {ssid}", ActivityLogManager.EntryType.Warning);
             if (_wrongKeyRoutine != null) StopCoroutine(_wrongKeyRoutine);
             _wrongKeyRoutine = StartCoroutine(ShowWrongKeys(entered));
         }
@@ -293,6 +298,8 @@ public class InternetPanelController : MonoBehaviour
         state.WifiConnected = true;
         state.WifiSSID     = dLinkAPManager != null ? dLinkAPManager.GetApSsid()         : "";
         state.WifiPassword = dLinkAPManager != null ? dLinkAPManager.GetApPreSharedKey() : "";
+
+        ActivityLogManager.Log($"Connected to WiFi network: {state.WifiSSID}", ActivityLogManager.EntryType.Action);
 
         if (passwordPanel != null) passwordPanel.SetActive(false);
         HideOptionPanels();
