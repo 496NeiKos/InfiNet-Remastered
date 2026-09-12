@@ -10,38 +10,51 @@
  *    DHCP Console Panel                 ← this script here
  *      ├── TitleBar / CloseBtn          → closeBtn
  *      ├── TreePanel (left)
- *      │     ├── ServerNode (label)
+ *      │     ├── ServerNode (static label)
  *      │     ├── IPv4Node (Button)      → ipv4NodeBtn
- *      │     └── IPv6Node (Button)      → ipv6NodeBtn
+ *      │     └── IPv6Node              (contains Button + status label)
+ *      │           ├── IPv6Button       → ipv6NodeBtn
+ *      │           └── IPv6StatusLabel  → ipv6StatusLabel
  *      ├── ContentPanel (right)
- *      │     ├── ScopesHeader
- *      │     ├── ScopeRow (runtime)     (added after scope is created)
- *      │     └── NoScopesLabel         → noScopesLabel
+ *      │     ├── ScopesHeader (static label)
+ *      │     ├── ScopeListParent        → scopeListParent  (VerticalLayoutGroup; empty at start)
+ *      │     └── NoScopesLabel         → noScopesLabel     (shown when no scope exists)
  *      ├── Context Menu                 → contextMenu (starts INACTIVE)
  *      │     ├── NewScopeBtn           → ctxNewScopeBtn
  *      │     └── DisableIPv6Btn        → ctxDisableIPv6Btn
  *      └── New Scope Wizard            → scopeWizard (starts INACTIVE)
- *            ├── ScopeNameInput        → scopeNameInput
- *            ├── StartIPInput          → startIPInput
- *            ├── EndIPInput            → endIPInput
- *            ├── WizardNextBtn         → scopeNextBtn
- *            └── WizardFinishBtn       → scopeFinishBtn
+ *            ├── WizardStep0           → wizardStep0  (Scope Name step — starts ACTIVE inside wizard)
+ *            │     ├── ScopeNameLabel  (static label "Scope Name:")
+ *            │     ├── ScopeNameInput  → scopeNameInput  (TMP_InputField)
+ *            │     └── NextBtn         → scopeNextBtn    (Button — advances to IP range step)
+ *            └── WizardStep1           → wizardStep1  (IP Range step — starts INACTIVE)
+ *                  ├── StartIPLabel    (static label "Start IP Address:")
+ *                  ├── StartIPInput    → startIPInput    (TMP_InputField)
+ *                  ├── EndIPLabel      (static label "End IP Address:")
+ *                  ├── EndIPInput      → endIPInput      (TMP_InputField)
+ *                  ├── BackBtn         → scopeBackBtn    (Button — returns to step 0)
+ *                  └── FinishBtn       → scopeFinishBtn  (Button — creates scope)
+ *
+ *  SCOPE ROW PREFAB  (scopeRowPrefab)
+ *    Contains (in order as children):
+ *      ├── ScopeNameTMP   (TMP_Text — shows scope name;  index 0 in GetComponentsInChildren)
+ *      ├── StatusTMP      (TMP_Text — shows Active/Inactive; index 1)
+ *      └── ActivateBtn    (Button — wired at runtime; hidden once scope is active)
  *
  *  INSPECTOR ASSIGNMENTS
- *    All fields as above. scopeWizard has simple two-step inline wizard:
- *      Step 0: ScopeName
- *      Step 1: IP Range (start + end)
- *      Finish: creates scope, activates it
- *
- *  SCOPE ROW PREFAB
- *    scopeRowPrefab → contains TMP_Text (scope name) + "Activate" Button +
- *                     status label. Wired at runtime.
+ *    closeBtn, ipv4NodeBtn, ipv6NodeBtn, ipv6StatusLabel
+ *    scopeListParent, scopeRowPrefab, noScopesLabel
+ *    contextMenu, ctxNewScopeBtn, ctxDisableIPv6Btn
+ *    scopeWizard, wizardStep0, wizardStep1
+ *    scopeNameInput, startIPInput, endIPInput
+ *    scopeNextBtn, scopeBackBtn, scopeFinishBtn
  *
  *  HOW IT WORKS
- *    Right-clicking IPv4 node → context menu: New Scope.
- *    Right-clicking IPv6 node → context menu: Disable DHCPv6.
- *    New Scope wizard: name (step 0) → IP range (step 1) → Finish → scope created + activated.
- *    Disable DHCPv6: sets state.DHCPv6Disabled = true, shows "Disabled" label on IPv6 node.
+ *    Click IPv4 node → context menu → "New Scope" → opens scopeWizard on step 0.
+ *    Step 0: enter scope name → Next → step 1.
+ *    Step 1: enter Start IP + End IP → Finish → scope row appears in ContentPanel (Inactive).
+ *    Player clicks "Activate" on the scope row → scope becomes Active (task 43).
+ *    Click IPv6 node → context menu → "Disable DHCPv6" → sets state flag + shows "Disabled" label.
  * ================================================================
  */
 
@@ -200,13 +213,22 @@ public class DHCPConsoleController : MonoBehaviour
         var state = ServerVirtualOSManager.Instance?.ServerState;
         if (state != null)
         {
-            state.DHCPScopeStart  = start;
-            state.DHCPScopeEnd    = end;
-            state.DHCPScopeActive = true;
+            state.DHCPScopeStart = start;
+            state.DHCPScopeEnd   = end;
+            // Scope is created but not yet active — player must click Activate on the scope row (task 43)
         }
         scopeWizard?.SetActive(false);
         RefreshContent();
-        ActivityLogManager.Log($"DHCP scope created and activated: {start} – {end}", ActivityLogManager.EntryType.Action);
+        ActivityLogManager.Log($"DHCP scope created: {start} – {end}. Click Activate to enable it.", ActivityLogManager.EntryType.Action);
+    }
+
+    private void ActivateScope()
+    {
+        var state = ServerVirtualOSManager.Instance?.ServerState;
+        if (state == null) return;
+        state.DHCPScopeActive = true;
+        RefreshContent();
+        ActivityLogManager.Log("DHCP scope activated.", ActivityLogManager.EntryType.Action);
     }
 
     private void ShowWizardStep(int step)
@@ -236,5 +258,13 @@ public class DHCPConsoleController : MonoBehaviour
         if (labels.Length > 0) labels[0].text = state.DHCPScopeName;
         if (labels.Length > 1)
             labels[1].text = state.DHCPScopeActive ? "Active" : "Inactive";
+
+        // Activate button on the scope row — visible only while scope is inactive
+        var buttons = row.GetComponentsInChildren<Button>();
+        if (buttons.Length > 0)
+        {
+            buttons[0].gameObject.SetActive(!state.DHCPScopeActive);
+            buttons[0].onClick.AddListener(ActivateScope);
+        }
     }
 }

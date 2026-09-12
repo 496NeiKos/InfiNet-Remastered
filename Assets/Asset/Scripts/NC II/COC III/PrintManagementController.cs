@@ -178,7 +178,14 @@ public class PrintManagementController : MonoBehaviour
 
     private void WizardNext()
     {
+        if (_drvStep == 3) { CloseDriverWizard(); return; }
         if (_drvStep < 2) ShowWizardStep(_drvStep + 1);
+    }
+
+    private void CloseDriverWizard()
+    {
+        addDriverWizard?.SetActive(false);
+        ShowPrinters();
     }
 
     private void WizardBack()
@@ -197,13 +204,10 @@ public class PrintManagementController : MonoBehaviour
         var state = ServerVirtualOSManager.Instance?.ServerState;
         if (state != null) state.PrinterDriverAdded = true;
 
-        addDriverWizard?.SetActive(false);
+        // Show results step first — wizard closes when player clicks the "Close" (Next) button
         ShowWizardStep(3);
         RefreshDriverList();
         ActivityLogManager.Log($"Printer driver added: {_selectedDriver}", ActivityLogManager.EntryType.Action);
-
-        // Auto-switch to show printer after driver install
-        ShowPrinters();
     }
 
     private void ShowWizardStep(int step)
@@ -213,9 +217,13 @@ public class PrintManagementController : MonoBehaviour
         drvStep1?.SetActive(step == 1);
         drvStep2?.SetActive(step == 2);
         drvStep3?.SetActive(step == 3);
-        drvNextBtn?.gameObject.SetActive(step < 2);
+        drvNextBtn?.gameObject.SetActive(step < 2 || step == 3);
         drvPrevBtn?.gameObject.SetActive(step > 0 && step < 3);
         drvFinishBtn?.gameObject.SetActive(step == 2);
+
+        // Re-label the Next/Close button depending on step
+        var nextLabel = drvNextBtn?.GetComponentInChildren<TMP_Text>();
+        if (nextLabel != null) nextLabel.text = step == 3 ? "Close" : "Next >";
     }
 
     // ── Share Printer ─────────────────────────────────────────────────────────

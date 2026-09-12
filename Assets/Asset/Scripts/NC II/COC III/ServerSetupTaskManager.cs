@@ -5,7 +5,7 @@
  *  COMPONENT PLACEMENT
  *    Add to an always-active "Managers" GameObject in the COC III scene.
  *
- *  TASK LIST (59 tasks, 0–58, one long linear flow)
+ *  TASK LIST (63 tasks, 0–62, one long linear flow)
  *  ── Pre-Configuration ──────────────────────────────────────────
  *  [ 0] Deploy the Server PC to the workspace
  *  [ 1] Right-click the Server PC to open its Virtual OS

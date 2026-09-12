@@ -31,7 +31,10 @@
  *    prevBtn           → Previous button (shared or per-step)
  *    nextBtn           → Next button (shared or per-step)
  *    installBtn        → Install button in step 2
- *    closeWizardBtn    → Close button in step 3
+ *    closeWizardBtn    → Close button in step 3 (results only)
+ *    cancelBtn         → Cancel/Close button always visible on steps 0–2
+ *                        Place outside the step panels so it is always visible.
+ *                        Lets the player exit the wizard before completing a role install.
  *
  *  ROLE OPTIONS (populate in Inspector)
  *    roleOptions[]     → array of RoleOption (DisplayName + Role enum + Description)
@@ -80,7 +83,8 @@ public class RoleWizardController : MonoBehaviour
     [SerializeField] private Button prevBtn;
     [SerializeField] private Button nextBtn;
     [SerializeField] private Button installBtn;
-    [SerializeField] private Button closeWizardBtn;
+    [SerializeField] private Button closeWizardBtn;  // step 3 only
+    [SerializeField] private Button cancelBtn;        // always visible on steps 0–2
 
     [Header("Role Options (configure in Inspector)")]
     [SerializeField] private RoleOption[] roleOptions;
@@ -101,6 +105,7 @@ public class RoleWizardController : MonoBehaviour
         nextBtn?.onClick.AddListener(GoNext);
         installBtn?.onClick.AddListener(Install);
         closeWizardBtn?.onClick.AddListener(CloseWizard);
+        cancelBtn?.onClick.AddListener(CloseWizard);
 
         gameObject.SetActive(false);
     }
@@ -173,7 +178,8 @@ public class RoleWizardController : MonoBehaviour
             GameObject row = Instantiate(roleTogglePrefab, roleToggleParent);
             var toggle = row.GetComponentInChildren<Toggle>();
             var label  = row.GetComponentInChildren<TMP_Text>();
-            if (label != null) label.text = option.DisplayName;
+            if (label  != null) label.text = option.DisplayName;
+            if (toggle != null) toggle.SetIsOnWithoutNotify(false); // always start unchecked
 
             var captured = option;
             toggle?.onValueChanged.AddListener(on =>
@@ -240,9 +246,10 @@ public class RoleWizardController : MonoBehaviour
             steps[i]?.SetActive(i == index);
         _currentStep = index;
 
-        if (prevBtn != null) prevBtn.gameObject.SetActive(index > 0 && index < 3);
-        if (nextBtn != null) nextBtn.gameObject.SetActive(index < 2);
-        if (installBtn != null) installBtn.gameObject.SetActive(index == 2);
+        if (prevBtn        != null) prevBtn.gameObject.SetActive(index > 0 && index < 3);
+        if (nextBtn        != null) nextBtn.gameObject.SetActive(index < 2);
+        if (installBtn     != null) installBtn.gameObject.SetActive(index == 2);
         if (closeWizardBtn != null) closeWizardBtn.gameObject.SetActive(index == 3);
+        if (cancelBtn      != null) cancelBtn.gameObject.SetActive(index < 3);
     }
 }

@@ -146,6 +146,8 @@ public class ADUCController : MonoBehaviour
         ctxNewOUBtn?.gameObject.SetActive(true);
         ctxNewUserBtn?.gameObject.SetActive(false);
         contextMenu?.SetActive(true);
+        var state = ServerVirtualOSManager.Instance?.ServerState;
+        ShowContent("Domain", GetAllItems(state));
     }
 
     // ── OU node ───────────────────────────────────────────────────────────────
@@ -157,6 +159,8 @@ public class ADUCController : MonoBehaviour
         ctxNewOUBtn?.gameObject.SetActive(false);
         ctxNewUserBtn?.gameObject.SetActive(true);
         contextMenu?.SetActive(true);
+        var state = ServerVirtualOSManager.Instance?.ServerState;
+        ShowContent(ouName, GetUsersInOU(state, ouName));
     }
 
     private void CloseContextMenu() => contextMenu?.SetActive(false);
@@ -185,6 +189,7 @@ public class ADUCController : MonoBehaviour
         state.OrganizationalUnits.Add(new OUData { Name = name });
         newOUDialog?.SetActive(false);
         RefreshAll();
+        ShowContent("Domain", GetAllItems(state));
         ActivityLogManager.Log($"Created Organizational Unit: {name}", ActivityLogManager.EntryType.Action);
     }
 
@@ -247,6 +252,7 @@ public class ADUCController : MonoBehaviour
 
         newUserDialog?.SetActive(false);
         RefreshAll();
+        ShowContent(_selectedOU, GetUsersInOU(state, _selectedOU));
         string type = isAdmin ? "Administrator" : "User";
         ActivityLogManager.Log($"Created {type} account: {uname} in OU: {ouName}", ActivityLogManager.EntryType.Action);
     }

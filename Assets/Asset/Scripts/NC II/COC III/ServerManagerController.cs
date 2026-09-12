@@ -109,11 +109,21 @@ public class ServerManagerController : MonoBehaviour
         toolsMenuBtn?.onClick.AddListener(ToggleToolsMenu);
         promotionFlag?.onClick.AddListener(OpenDCPromo);
 
+        toolDNSBtn?.onClick.AddListener(() =>
+        {
+            CloseToolsMenu();
+            ActivityLogManager.Log("DNS Server is active. DNS was configured during AD DS promotion (dcpromo).", ActivityLogManager.EntryType.Action);
+        });
         toolADUCBtn?.onClick.AddListener(()  => { CloseToolsMenu(); aduc?.Open(); });
         toolDHCPBtn?.onClick.AddListener(()  => { CloseToolsMenu(); dhcp?.Open(); });
         toolGPMBtn?.onClick.AddListener(()   => { CloseToolsMenu(); gpm?.Open(); });
         toolFSRMBtn?.onClick.AddListener(()  => { CloseToolsMenu(); fsrm?.Open(); });
         toolPrintMgmtBtn?.onClick.AddListener(() => { CloseToolsMenu(); printMgmt?.Open(); });
+        toolRDSBtn?.onClick.AddListener(() =>
+        {
+            CloseToolsMenu();
+            ActivityLogManager.Log("Remote Desktop Services is installed. Use the Remote Desktop Connection app on the desktop.", ActivityLogManager.EntryType.Action);
+        });
 
         toolsDropdown?.SetActive(false);
         gameObject.SetActive(false);

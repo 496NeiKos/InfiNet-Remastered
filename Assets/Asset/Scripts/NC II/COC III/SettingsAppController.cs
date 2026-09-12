@@ -14,6 +14,7 @@
  *      │     └── AccountsBtn           → accountsBtn
  *      └── Content Area
  *            ├── System Panel           → systemPanel (starts INACTIVE)
+ *            │     ├── AboutBtn         → aboutBtn  (Button inside System panel — opens About sub-panel)
  *            │     └── About Panel      → aboutPanel  (starts INACTIVE)
  *            │           ├── PC Name Label   → pcNameTMP
  *            │           └── RenameBtn       → renameBtn
@@ -61,6 +62,7 @@ public class SettingsAppController : MonoBehaviour
 
     [Header("Panels")]
     [SerializeField] private GameObject systemPanel;
+    [SerializeField] private Button     aboutBtn;    // inside systemPanel — navigates to About sub-panel
     [SerializeField] private GameObject aboutPanel;
     [SerializeField] private GameObject accountsPanel;
 
@@ -89,6 +91,7 @@ public class SettingsAppController : MonoBehaviour
 
         closeBtn?.onClick.AddListener(Close);
         systemBtn?.onClick.AddListener(OpenSystem);
+        aboutBtn?.onClick.AddListener(OpenAbout);
         accountsBtn?.onClick.AddListener(OpenAccounts);
         renameBtn?.onClick.AddListener(OpenRenameDialog);
         renameConfirmBtn?.onClick.AddListener(ConfirmRename);
@@ -125,15 +128,18 @@ public class SettingsAppController : MonoBehaviour
     {
         HideAll();
         systemPanel?.SetActive(true);
+        var state = ServerVirtualOSManager.Instance?.ServerState;
+        if (state != null) state.SettingsSystemOpened = true;
+        ActivityLogManager.Log("Navigated to Settings → System", ActivityLogManager.EntryType.Action);
+    }
+
+    private void OpenAbout()
+    {
         aboutPanel?.SetActive(true);
         RefreshPCName();
         var state = ServerVirtualOSManager.Instance?.ServerState;
-        if (state != null)
-        {
-            state.SettingsSystemOpened = true;
-            state.SettingsAboutOpened  = true;
-        }
-        ActivityLogManager.Log("Navigated to Settings → System", ActivityLogManager.EntryType.Action);
+        if (state != null) state.SettingsAboutOpened = true;
+        ActivityLogManager.Log("Navigated to Settings → About", ActivityLogManager.EntryType.Action);
     }
 
     private void OpenAccounts()
