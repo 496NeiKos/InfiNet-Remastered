@@ -83,11 +83,22 @@ public class ServerDeviceState : DeviceOSState
     public bool RDServicesInstalled        = false;
 
     // Wizard opened latches (one per role, prevents double-counting)
+    public bool AddRolesWizardOpenedForDNS   = false;
     public bool AddRolesWizardOpenedForADDS  = false;
     public bool AddRolesWizardOpenedForDHCP  = false;
     public bool AddRolesWizardOpenedForFile  = false;
     public bool AddRolesWizardOpenedForPrint = false;
     public bool AddRolesWizardOpenedForRD    = false;
+
+    // ── DNS Manager ──────────────────────────────────────────────────────────
+    public bool   DNSManagerOpened  = false;
+    public bool   DNSZoneCreated    = false;
+    public string DNSZoneName       = "";
+    public string DNSZoneType       = "";   // "Standard Primary" | "Standard Secondary" | "Stub"
+    public string DNSLookupType     = "";   // "Forward" | "Reverse"
+    public string DNSFileName       = "";
+    public bool   DNSStoreInAD      = false;
+    public string DNSDynamicUpdates = "";   // "Both" | "DoNotAllow" | "SecureOnly"
 
     // ── Domain / dcpromo ─────────────────────────────────────────────────────
     public bool   PromotionNotificationClicked = false;
@@ -105,12 +116,25 @@ public class ServerDeviceState : DeviceOSState
     public int  RegularUserCount    => UserAccounts.FindAll(u => !u.IsAdmin).Count;
 
     // ── DHCP ─────────────────────────────────────────────────────────────────
-    public bool   DHCPConsoleOpened = false;
-    public string DHCPScopeName     = "";
-    public string DHCPScopeStart    = "";
-    public string DHCPScopeEnd      = "";
-    public bool   DHCPScopeActive   = false;
-    public bool   DHCPv6Disabled    = false;
+    public bool   DHCPConsoleOpened    = false;
+    public string DHCPScopeName        = "";
+    public string DHCPScopeDescription = "";
+    public string DHCPScopeStart       = "";
+    public string DHCPScopeEnd         = "";
+    public string DHCPSubnetLength     = "";
+    public string DHCPSubnetMask       = "";
+    public string DHCPSubnetDelay      = "0";
+    public List<string> DHCPExclusions = new List<string>();
+    public int    DHCPLeaseDays        = 8;
+    public int    DHCPLeaseHours       = 0;
+    public int    DHCPLeaseMinutes     = 0;
+    public bool   DHCPConfigureNow     = true;
+    public List<string> DHCPRouterList = new List<string>();
+    public string DHCPParentDomain     = "";
+    public List<string> DHCPDNSList    = new List<string>();
+    public bool   DHCPScopeActive      = false;
+    public bool   DHCPActivatedOnFinish = false;
+    public bool   DHCPv6Disabled       = false;
 
     public bool DHCPScopeNameSet  => !string.IsNullOrEmpty(DHCPScopeName);
     public bool DHCPScopeStartSet => !string.IsNullOrEmpty(DHCPScopeStart);
