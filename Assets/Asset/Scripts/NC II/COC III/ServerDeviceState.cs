@@ -103,8 +103,16 @@ public class ServerDeviceState : DeviceOSState
     // ── Domain / dcpromo ─────────────────────────────────────────────────────
     public bool   PromotionNotificationClicked = false;
     public string DomainName                   = "";
+    public string NetBIOSName                  = "";
+    public string DCPromoDeploymentType        = "";   // "NewForest" | "AddDC" | "AddDomain"
     public bool   DNSCheckedInDCPromo          = false;
+    public bool   DNSDelegationEnabled         = false;
     public string ForestFunctionalLevel        = "";
+    public string DomainFunctionalLevel        = "";
+    public string DSRMPassword                 = "";
+    public string DCDatabasePath               = @"C:\Windows\NTDS";
+    public string DCLogPath                    = @"C:\Windows\NTDS";
+    public string DCSysvolPath                 = @"C:\Windows\SYSVOL";
     public bool   DCPromoCompleted             = false;
 
     // ── Active Directory ─────────────────────────────────────────────────────
