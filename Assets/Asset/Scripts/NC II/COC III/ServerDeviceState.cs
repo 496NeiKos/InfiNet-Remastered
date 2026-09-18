@@ -22,8 +22,10 @@ public class UserData
 [System.Serializable]
 public class SharedFolderData
 {
-    public string FolderName   = "";
-    public string Path         = "";  // e.g. D:\SharedFolder
+    public string FolderName    = "";
+    public string Path          = "";  // local path e.g. C:\Profiles
+    public string ShareName     = "";  // the share name
+    public string NetworkPath   = "";  // \\SERVER\ShareName
     public bool   PermissionsSet = false;
 }
 
@@ -38,11 +40,17 @@ public class FileScreenData
 [System.Serializable]
 public class GPOData
 {
-    public string Name          = "";
-    public string LinkedOUName  = ""; // which OUData.Name it is linked to
-    public string RedirectPath  = ""; // \\SERVER\FolderName
-    public bool   EditorOpened  = false;
-    public bool   RedirectSet   = false;
+    public string Name                  = "";
+    public string LinkedOUName          = "";
+    public int    LinkOrder             = 0;
+    public string ModifiedDate          = "";
+    public bool   Enforced              = false;
+    public bool   LinkEnabled           = true;
+    public bool   EditorOpened          = false;
+    public bool   DesktopRedirectSet    = false;
+    public string DesktopRedirectPath   = "";
+    public bool   DocumentsRedirectSet  = false;
+    public string DocumentsRedirectPath = "";
 }
 
 // ── Main state class ─────────────────────────────────────────────────────────
@@ -149,9 +157,11 @@ public class ServerDeviceState : DeviceOSState
     public bool DHCPScopeEndSet   => !string.IsNullOrEmpty(DHCPScopeEnd);
 
     // ── File Services ─────────────────────────────────────────────────────────
-    public bool FSRMOpened = false;
-    public List<SharedFolderData> SharedFolders = new List<SharedFolderData>();
-    public List<FileScreenData>   FileScreens   = new List<FileScreenData>();
+    public bool FSRMOpened          = false;
+    public bool FileExplorerOpened  = false;
+    public List<FolderData>       UserCreatedFolders = new List<FolderData>();
+    public List<SharedFolderData> SharedFolders      = new List<SharedFolderData>();
+    public List<FileScreenData>   FileScreens        = new List<FileScreenData>();
 
     public bool SharedFolderCreated    => SharedFolders.Count > 0;
     public bool FolderPermissionsSet   => SharedFolders.Exists(f => f.PermissionsSet);
@@ -162,9 +172,34 @@ public class ServerDeviceState : DeviceOSState
     public bool GPMOpened = false;
     public List<GPOData> GroupPolicies = new List<GPOData>();
 
-    public int  GPOCount                  => GroupPolicies.Count;
-    public bool BothGPOsEditorOpened      => GroupPolicies.FindAll(g => g.EditorOpened).Count >= 2;
-    public bool BothFolderRedirectsSet    => GroupPolicies.FindAll(g => g.RedirectSet).Count >= 2;
+    // At least one GPO exists for every OU
+    public bool GPOCreatedForAllOUs =>
+        OrganizationalUnits.Count > 0 &&
+        OrganizationalUnits.TrueForAll(ou => GroupPolicies.Exists(g => g.LinkedOUName == ou.Name));
+
+    // Every OU's GPO has been opened in the editor
+    public bool AllGPOEditorsOpened =>
+        GPOCreatedForAllOUs &&
+        OrganizationalUnits.TrueForAll(ou =>
+            GroupPolicies.Exists(g => g.LinkedOUName == ou.Name && g.EditorOpened));
+
+    // Every OU's GPO has Desktop redirect configured
+    public bool AllDesktopRedirectsSet =>
+        GPOCreatedForAllOUs &&
+        OrganizationalUnits.TrueForAll(ou =>
+            GroupPolicies.Exists(g => g.LinkedOUName == ou.Name && g.DesktopRedirectSet));
+
+    // Every OU's GPO has Documents redirect configured
+    public bool AllDocumentsRedirectsSet =>
+        GPOCreatedForAllOUs &&
+        OrganizationalUnits.TrueForAll(ou =>
+            GroupPolicies.Exists(g => g.LinkedOUName == ou.Name && g.DocumentsRedirectSet));
+
+    // Every OU's GPO is set to Enforced
+    public bool AllGPOsEnforced =>
+        GPOCreatedForAllOUs &&
+        OrganizationalUnits.TrueForAll(ou =>
+            GroupPolicies.Exists(g => g.LinkedOUName == ou.Name && g.Enforced));
 
     // ── Print Services ────────────────────────────────────────────────────────
     public bool PrintMgmtOpened    = false;

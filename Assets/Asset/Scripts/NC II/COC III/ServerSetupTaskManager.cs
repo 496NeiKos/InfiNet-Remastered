@@ -63,25 +63,27 @@
  *  [49] Apply a File Screen to the shared folder
  *  ── Group Policy ────────────────────────────────────────────────
  *  [50] Open Tools → Group Policy Management
- *  [51] Create a GPO linked to the first OU
- *  [52] Open the GPO editor for the first OU and configure Folder Redirection
- *  [53] Create a GPO linked to the second OU
- *  [54] Open the GPO editor for the second OU and configure Folder Redirection
+ *  [51] Create a GPO linked to each Organizational Unit
+ *  [52] Open the GPO editor for every OU's GPO
+ *  [53] Configure Desktop Folder Redirection in every GPO
+ *  [54] Configure Documents Folder Redirection in every GPO
+ *  [55] Set Enforced = Yes on every GPO
  *  ── Print Services ──────────────────────────────────────────────
- *  [55] Open Tools → Print Management
- *  [56] Add a Printer Driver using the Add Driver Wizard
- *  [57] Share the printer and set a share name
+ *  [56] Open Tools → Print Management
+ *  [57] Add a Printer Driver using the Add Driver Wizard
+ *  [58] Share the printer and set a share name
  *  ── Client Verification ─────────────────────────────────────────
- *  [58] Open Remote Desktop Connection and connect to the client machine
- *  [59] In the client CMD, run ipconfig — verify the client received a DHCP IP
- *  [60] In the client File Explorer, verify Documents is redirected to the server
- *  [61] In the client Devices and Printers, verify the shared printer is accessible
- *  [62] In the client CMD, ping the server IP — confirm connectivity
+ *  [59] Open Remote Desktop Connection and connect to the client machine
+ *  [60] In the client CMD, run ipconfig — verify the client received a DHCP IP
+ *  [61] In the client File Explorer, verify Documents is redirected to the server
+ *  [62] In the client Devices and Printers, verify the shared printer is accessible
+ *  [63] In the client CMD, ping the server IP — confirm connectivity
  *
  *  INSPECTOR SETUP
  *    taskParent           → VerticalLayoutGroup parent for active task rows
  *    finishedParent       → Off-screen parent for completed task GameObjects
- *    taskObjects[0..62]   → 63 task row GameObjects (TMP_Text labels)
+ *    taskObjects[0..63]   → 64 task row GameObjects (TMP_Text labels)
+ *    NOTE: TASK_COUNT changed 63→64. Re-assign taskObjects[55..63] in inspector.
  *    sectionHeaders[]     → Section divider GameObjects (non-interactive labels)
  *                           Order: Pre-Configuration, Role Installation,
  *                           Active Directory, DHCP, File Services,
@@ -103,12 +105,12 @@ public class ServerSetupTaskManager : MonoBehaviour
 {
     public static ServerSetupTaskManager Instance { get; private set; }
 
-    private const int TASK_COUNT = 63;
+    private const int TASK_COUNT = 64;
 
     [Header("Task UI")]
     [SerializeField] private Transform   taskParent;
     [SerializeField] private Transform   finishedParent;
-    [SerializeField] private GameObject[] taskObjects = new GameObject[TASK_COUNT];
+    [SerializeField] private GameObject[] taskObjects = new GameObject[64];
     [SerializeField] private GameObject  allTasksCompletedText;
 
     [Header("Hardware")]
@@ -211,22 +213,23 @@ public class ServerSetupTaskManager : MonoBehaviour
 
             // Group Policy
             50 => state.GPMOpened,
-            51 => state.GPOCount >= 1,
-            52 => state.GroupPolicies.Count >= 1 && state.GroupPolicies[0].RedirectSet,
-            53 => state.GPOCount >= 2,
-            54 => state.GroupPolicies.Count >= 2 && state.GroupPolicies[1].RedirectSet,
+            51 => state.GPOCreatedForAllOUs,
+            52 => state.AllGPOEditorsOpened,
+            53 => state.AllDesktopRedirectsSet,
+            54 => state.AllDocumentsRedirectsSet,
+            55 => state.AllGPOsEnforced,
 
             // Print Services
-            55 => state.PrintMgmtOpened,
-            56 => state.PrinterDriverAdded,
-            57 => state.PrinterShared,
+            56 => state.PrintMgmtOpened,
+            57 => state.PrinterDriverAdded,
+            58 => state.PrinterShared,
 
             // Client Verification
-            58 => state.ClientConnected,
-            59 => state.ClientDHCPVerified,
-            60 => state.FolderRedirectionVerified,
-            61 => state.PrinterVerified,
-            62 => state.ConnectivityVerified,
+            59 => state.ClientConnected,
+            60 => state.ClientDHCPVerified,
+            61 => state.FolderRedirectionVerified,
+            62 => state.PrinterVerified,
+            63 => state.ConnectivityVerified,
 
             _ => false
         };
@@ -344,18 +347,19 @@ public class ServerSetupTaskManager : MonoBehaviour
             48 => "Create File Group with blocked extensions",
             49 => "Apply File Screen to shared folder",
             50 => "Open Group Policy Management",
-            51 => "Create GPO for first OU",
-            52 => "Configure Folder Redirection for first OU",
-            53 => "Create GPO for second OU",
-            54 => "Configure Folder Redirection for second OU",
-            55 => "Open Print Management",
-            56 => "Add printer driver",
-            57 => "Share the printer",
-            58 => "Connect to client via Remote Desktop",
-            59 => "Verify client DHCP IP (ipconfig)",
-            60 => "Verify Folder Redirection in client File Explorer",
-            61 => "Verify shared printer in client Devices and Printers",
-            62 => "Verify connectivity (ping server)",
+            51 => "Create a GPO linked to each OU",
+            52 => "Open GPO editor for all GPOs",
+            53 => "Configure Desktop Folder Redirection in all GPOs",
+            54 => "Configure Documents Folder Redirection in all GPOs",
+            55 => "Set Enforced on all GPOs",
+            56 => "Open Print Management",
+            57 => "Add printer driver",
+            58 => "Share the printer",
+            59 => "Connect to client via Remote Desktop",
+            60 => "Verify client DHCP IP (ipconfig)",
+            61 => "Verify Folder Redirection in client File Explorer",
+            62 => "Verify shared printer in client Devices and Printers",
+            63 => "Verify connectivity (ping server)",
             _  => $"Task {index}"
         };
     }

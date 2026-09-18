@@ -213,13 +213,16 @@ public class ClientRDSessionController : MonoBehaviour
 
         var state      = ServerVirtualOSManager.Instance?.ServerState;
         string serverName = !string.IsNullOrEmpty(state?.ComputerName) ? state.ComputerName : "SERVER";
-        bool anyRedirect = state != null && state.GroupPolicies.Exists(g => g.RedirectSet);
+        bool anyRedirect = state != null && state.GroupPolicies.Exists(g => g.DocumentsRedirectSet);
 
         if (documentsRowTMP != null)
         {
             if (anyRedirect && state.SharedFolders.Count > 0)
             {
-                string path = $"\\\\{serverName}\\{state.SharedFolders[0].FolderName}";
+                var gpo     = state.GroupPolicies.Find(g => g.DocumentsRedirectSet);
+                string path = gpo != null && !string.IsNullOrEmpty(gpo.DocumentsRedirectPath)
+                              ? gpo.DocumentsRedirectPath
+                              : $"\\\\{serverName}\\{state.SharedFolders[0].ShareName}";
                 documentsRowTMP.text = $"Documents → {path} (Network Location)";
                 if (state != null) state.FolderRedirectionVerified = true;
                 ActivityLogManager.Log("Folder Redirection verified in client File Explorer",
