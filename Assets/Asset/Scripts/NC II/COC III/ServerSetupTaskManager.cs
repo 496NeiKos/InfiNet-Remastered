@@ -5,7 +5,7 @@
  *  COMPONENT PLACEMENT
  *    Add to an always-active "Managers" GameObject in the COC III scene.
  *
- *  TASK LIST (63 tasks, 0–62, one long linear flow)
+ *  TASK LIST (65 tasks, 0–64, one long linear flow)
  *  ── Pre-Configuration ──────────────────────────────────────────
  *  [ 0] Deploy the Server PC to the workspace
  *  [ 1] Right-click the Server PC to open its Virtual OS
@@ -68,27 +68,30 @@
  *  [53] Configure Desktop Folder Redirection in every GPO
  *  [54] Configure Documents Folder Redirection in every GPO
  *  [55] Set Enforced = Yes on every GPO
+ *  [56] Add domain users to GPO Security Filtering (one per GPO)
  *  ── Print Services ──────────────────────────────────────────────
- *  [56] Open Tools → Print Management
- *  [57] Add a Printer Driver using the Add Driver Wizard
- *  [58] Share the printer and set a share name
+ *  [57] Open Tools → Print Management
+ *  [58] Add a Printer Driver using the Add Driver Wizard
+ *  [59] Share the printer and set a share name
  *  ── Client Verification ─────────────────────────────────────────
- *  [59] Open Remote Desktop Connection and connect to the client machine
- *  [60] In the client CMD, run ipconfig — verify the client received a DHCP IP
- *  [61] In the client File Explorer, verify Documents is redirected to the server
- *  [62] In the client Devices and Printers, verify the shared printer is accessible
- *  [63] In the client CMD, ping the server IP — confirm connectivity
+ *  [60] Open Remote Desktop Connection and connect to the client machine
+ *  [61] In the client CMD, run ipconfig — verify the client received a DHCP IP
+ *  [62] In the client File Explorer, verify Documents is redirected to the server
+ *  [63] In the client Devices and Printers, verify the shared printer is accessible
+ *  [64] In the client CMD, ping the server IP — confirm connectivity
  *
  *  INSPECTOR SETUP
- *    taskParent           → VerticalLayoutGroup parent for active task rows
- *    finishedParent       → Off-screen parent for completed task GameObjects
- *    taskObjects[0..63]   → 64 task row GameObjects (TMP_Text labels)
- *    NOTE: TASK_COUNT changed 63→64. Re-assign taskObjects[55..63] in inspector.
- *    sectionHeaders[]     → Section divider GameObjects (non-interactive labels)
- *                           Order: Pre-Configuration, Role Installation,
- *                           Active Directory, DHCP, File Services,
- *                           Group Policy, Print Services, Client Verification
- *    serverHolder         → NetworkHardwareHolder (or equivalent) on the Server PC icon
+ *    taskParent            → VerticalLayoutGroup parent for active task rows
+ *    finishedParent        → Off-screen parent for completed task GameObjects
+ *    taskObjects[0..64]    → 65 task row GameObjects (TMP_Text labels)
+ *    NOTE: TASK_COUNT is now 65. Add a new task row GO at slot [56] and
+ *          re-assign slots [56] through [64] in the inspector. Old slots
+ *          [56]-[63] (Print + Client) shift to [57]-[64].
+ *    sectionHeaders[]      → Section divider GameObjects (non-interactive labels)
+ *                            Order: Pre-Configuration, Role Installation,
+ *                            Active Directory, DHCP, File Services,
+ *                            Group Policy, Print Services, Client Verification
+ *    serverHolder          → NetworkHardwareHolder (or equivalent) on the Server PC icon
  *    allTasksCompletedText → (optional) TMP shown when all tasks done
  *
  *  PATTERN
@@ -105,13 +108,13 @@ public class ServerSetupTaskManager : MonoBehaviour
 {
     public static ServerSetupTaskManager Instance { get; private set; }
 
-    private const int TASK_COUNT = 64;
+    private const int TASK_COUNT = 65;
 
     [Header("Task UI")]
-    [SerializeField] private Transform   taskParent;
-    [SerializeField] private Transform   finishedParent;
-    [SerializeField] private GameObject[] taskObjects = new GameObject[64];
-    [SerializeField] private GameObject  allTasksCompletedText;
+    [SerializeField] private Transform    taskParent;
+    [SerializeField] private Transform    finishedParent;
+    [SerializeField] private GameObject[] taskObjects = new GameObject[65];
+    [SerializeField] private GameObject   allTasksCompletedText;
 
     [Header("Hardware")]
     [Tooltip("The hardware holder for the Server PC — exposes IsDeployed.")]
@@ -119,9 +122,9 @@ public class ServerSetupTaskManager : MonoBehaviour
 
     // ── Internal state ────────────────────────────────────────────────────────
 
-    private bool[]  _latched  = new bool[TASK_COUNT];
-    private int     _currentTask = 0;
-    private bool    _allDone  = false;
+    private bool[] _latched      = new bool[TASK_COUNT];
+    private int    _currentTask  = 0;
+    private bool   _allDone      = false;
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
@@ -218,18 +221,19 @@ public class ServerSetupTaskManager : MonoBehaviour
             53 => state.AllDesktopRedirectsSet,
             54 => state.AllDocumentsRedirectsSet,
             55 => state.AllGPOsEnforced,
+            56 => state.SecurityFilteringConfigured,
 
             // Print Services
-            56 => state.PrintMgmtOpened,
-            57 => state.PrinterDriverAdded,
-            58 => state.PrinterShared,
+            57 => state.PrintMgmtOpened,
+            58 => state.PrinterDriverAdded,
+            59 => state.PrinterShared,
 
             // Client Verification
-            59 => state.ClientConnected,
-            60 => state.ClientDHCPVerified,
-            61 => state.FolderRedirectionVerified,
-            62 => state.PrinterVerified,
-            63 => state.ConnectivityVerified,
+            60 => state.ClientConnected,
+            61 => state.ClientDHCPVerified,
+            62 => state.FolderRedirectionVerified,
+            63 => state.PrinterVerified,
+            64 => state.ConnectivityVerified,
 
             _ => false
         };
@@ -253,7 +257,6 @@ public class ServerSetupTaskManager : MonoBehaviour
         _latched[index] = true;
         ActivityLogManager.Log($"Task completed: {GetTaskLabel(index)}", ActivityLogManager.EntryType.Action);
 
-        // Move completed task GameObject off-screen
         if (taskObjects[index] != null && finishedParent != null)
             taskObjects[index].transform.SetParent(finishedParent, false);
 
@@ -276,7 +279,6 @@ public class ServerSetupTaskManager : MonoBehaviour
 
     private void RefreshWindow()
     {
-        // Show up to 3 upcoming tasks under taskParent
         int shown = 0;
         for (int i = _currentTask; i < TASK_COUNT && shown < 3; i++)
         {
@@ -352,19 +354,20 @@ public class ServerSetupTaskManager : MonoBehaviour
             53 => "Configure Desktop Folder Redirection in all GPOs",
             54 => "Configure Documents Folder Redirection in all GPOs",
             55 => "Set Enforced on all GPOs",
-            56 => "Open Print Management",
-            57 => "Add printer driver",
-            58 => "Share the printer",
-            59 => "Connect to client via Remote Desktop",
-            60 => "Verify client DHCP IP (ipconfig)",
-            61 => "Verify Folder Redirection in client File Explorer",
-            62 => "Verify shared printer in client Devices and Printers",
-            63 => "Verify connectivity (ping server)",
+            56 => "Add domain users to GPO Security Filtering",
+            57 => "Open Print Management",
+            58 => "Add printer driver",
+            59 => "Share the printer",
+            60 => "Connect to client via Remote Desktop",
+            61 => "Verify client DHCP IP (ipconfig)",
+            62 => "Verify Folder Redirection in client File Explorer",
+            63 => "Verify shared printer in client Devices and Printers",
+            64 => "Verify connectivity (ping server)",
             _  => $"Task {index}"
         };
     }
 
-    // ── Public API (called by controllers to force-check a task) ─────────────
+    // ── Public API ────────────────────────────────────────────────────────────
 
     public void NotifyStateChanged() { /* Update() handles polling; this is a hook for future use */ }
 }

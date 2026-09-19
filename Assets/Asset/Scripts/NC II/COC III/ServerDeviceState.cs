@@ -11,12 +11,18 @@ public class OUData
 [System.Serializable]
 public class UserData
 {
-    public string FirstName  = "";
-    public string LastName   = "";
-    public string Username   = "";
-    public string Password   = "";
-    public string OUName     = "";    // which OU this user belongs to
-    public bool   IsAdmin    = false; // true = added to Domain Admins group
+    public string FirstName           = "";
+    public string LastName            = "";
+    public string Initials            = "";
+    public string FullName            = "";   // auto-filled from First + Last, manually editable
+    public string Username            = "";
+    public string Password            = "";
+    public string OUName              = "";   // which OU this user belongs to
+    public bool   IsAdmin             = false; // true = added to Domain Admins group
+    public bool   MustChangePassword  = false;
+    public bool   CannotChangePassword = false;
+    public bool   PasswordNeverExpires = true;
+    public bool   AccountDisabled     = false;
 }
 
 [System.Serializable]
@@ -51,6 +57,7 @@ public class GPOData
     public string DesktopRedirectPath   = "";
     public bool   DocumentsRedirectSet  = false;
     public string DocumentsRedirectPath = "";
+    public List<string> SecurityFilterUsernames = new List<string>();
 }
 
 // ── Main state class ─────────────────────────────────────────────────────────
@@ -200,6 +207,13 @@ public class ServerDeviceState : DeviceOSState
         GPOCreatedForAllOUs &&
         OrganizationalUnits.TrueForAll(ou =>
             GroupPolicies.Exists(g => g.LinkedOUName == ou.Name && g.Enforced));
+
+    // Every OU's GPO has at least one user added to Security Filtering
+    public bool SecurityFilteringConfigured =>
+        GPOCreatedForAllOUs &&
+        OrganizationalUnits.TrueForAll(ou =>
+            GroupPolicies.Exists(g => g.LinkedOUName == ou.Name
+                                   && g.SecurityFilterUsernames.Count > 0));
 
     // ── Print Services ────────────────────────────────────────────────────────
     public bool PrintMgmtOpened    = false;
