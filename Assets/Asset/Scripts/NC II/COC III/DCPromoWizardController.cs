@@ -262,8 +262,9 @@ public class DCPromoWizardController : MonoBehaviour
     // ── Step 7 — Reboot ───────────────────────────────────────────────────────
 
     [Header("Step 7 — Reboot")]
-    [Tooltip("Seconds to show reboot screen before closing the wizard.")]
-    [SerializeField] private float rebootDuration = 3f;
+    [Tooltip("Seconds to show reboot screen before handing off to RestartUIController. " +
+             "Set to 0 to skip the DCPromo reboot panel entirely (RestartUIController handles the visual).")]
+    [SerializeField] private float rebootDuration = 0f;
 
     // ── Persistent Navigation ─────────────────────────────────────────────────
 
@@ -689,7 +690,8 @@ public class DCPromoWizardController : MonoBehaviour
             $"Forest Level: {GetDropdownText(forestLevelDropdown)}",
             ActivityLogManager.EntryType.Action);
 
-        gameObject.SetActive(false);
+        // Hand off to RestartUIController — deactivating desktopPanel closes this wizard too.
+        ServerVirtualOSManager.Instance?.TriggerRestart();
     }
 
     // ── Deployment Toggle Wiring ──────────────────────────────────────────────

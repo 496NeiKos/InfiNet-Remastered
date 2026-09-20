@@ -73,6 +73,10 @@ public class ServerDeviceState : DeviceOSState
     public string ComputerName    = "";
     public string AdminPassword   = "";
 
+    // ── Session state ────────────────────────────────────────────────────────
+    public string CurrentLoggedInUser = "";
+    public bool   FirstBootDone       = false;
+
     // Computed shortcuts
     public bool PCRenamed         => !string.IsNullOrEmpty(ComputerName);
     public bool PasswordSet       => !string.IsNullOrEmpty(AdminPassword);

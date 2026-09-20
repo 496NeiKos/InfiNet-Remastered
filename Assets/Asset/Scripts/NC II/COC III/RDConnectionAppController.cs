@@ -4,39 +4,38 @@
  * ================================================================
  *  COMPONENT PLACEMENT
  *    Add to "Remote Desktop Connection Panel" (starts INACTIVE).
- *    Desktop icon is INACTIVE until state.RDServicesInstalled = true.
- *    (Wire the desktop icon's SetActive to a script that checks state,
- *     or simply let ServerManagerController enable it after RD role install.)
+ *    Desktop icon is ONLY SHOWN when CurrentPC == Client.
+ *    (Managed automatically by ServerVirtualOSManager.RefreshDesktopIcons)
  *
  *  HIERARCHY
  *    Remote Desktop Connection Panel    ← this script here
  *      ├── TitleBar / CloseBtn          → closeBtn
  *      ├── Body
  *      │     ├── ComputerLabel          (static: "Computer:")
- *      │     ├── IPInputField           → computerInput
- *      │     │     (auto-populated with DHCP scope start IP)
+ *      │     ├── ComputerInput          → computerInput
+ *      │     │     (auto-populated with server's static IP on Open)
  *      │     ├── ConnectBtn             → connectBtn
  *      │     └── StatusLabel            → statusLabelTMP
  *      └── (ClientRDSessionController panel is a sibling or child,
- *            opened by this controller after connect)
+ *            opened by this controller after successful connect)
  *
  *  INSPECTOR ASSIGNMENTS
- *    computerInput   → TMP_InputField for the target IP
+ *    computerInput   → TMP_InputField for the target server IP
  *    connectBtn      → Button
- *    statusLabelTMP  → TMP_Text showing "Connecting..." / error messages
+ *    statusLabelTMP  → TMP_Text for "Connecting..." / error messages
  *    clientSession   → ClientRDSessionController (sibling panel)
  *
- *  DESKTOP ICON WIRING
+ *  WIRING
  *    RD Connection desktop icon → Button OnClick → RDConnectionAppController.Open()
- *    Make the icon's GameObject start INACTIVE.
- *    In ServerManagerController, after RD Services is installed,
- *    call rdConnectionIcon.SetActive(true).
- *    Reference: rdIconObject field in ServerManagerController (add if needed).
+ *    The icon starts INACTIVE. ServerVirtualOSManager.RefreshDesktopIcons()
+ *    activates it when CurrentPC == Client.
  *
  *  HOW IT WORKS
- *    On Open(): auto-populates computerInput with the DHCP scope start IP.
- *    On Connect(): validates input is non-empty → opens ClientRDSessionController.
- *    Sets state.ClientConnected = true and state.RDSessionOpened = true.
+ *    On Open(): auto-populates computerInput with the server's static IP
+ *    (ServerDeviceState.IPOctets joined as an IP string).
+ *    On Connect(): validates input is non-empty AND state.RDServicesInstalled == true.
+ *    If both pass, sets state.RDSessionOpened = true and opens ClientRDSessionController.
+ *    Only accessible from Client PC context (icon hidden on Server PC).
  * ================================================================
  */
 
@@ -76,7 +75,7 @@ public class RDConnectionAppController : MonoBehaviour
     {
         gameObject.SetActive(true);
         if (statusLabelTMP != null) statusLabelTMP.text = "";
-        AutoFillClientIP();
+        AutoFillServerIP();
         ActivityLogManager.Log("Opened Remote Desktop Connection", ActivityLogManager.EntryType.Action);
     }
 
@@ -92,38 +91,41 @@ public class RDConnectionAppController : MonoBehaviour
         string ip = computerInput != null ? computerInput.text.Trim() : "";
         if (string.IsNullOrEmpty(ip))
         {
-            if (statusLabelTMP != null) statusLabelTMP.text = "Please enter a computer name or IP address.";
+            if (statusLabelTMP != null)
+                statusLabelTMP.text = "Please enter a computer name or IP address.";
             return;
         }
 
         var state = ServerVirtualOSManager.Instance?.ServerState;
-        if (state != null && !state.RDServicesInstalled)
+        if (state == null || !state.RDServicesInstalled)
         {
-            if (statusLabelTMP != null) statusLabelTMP.text = "Remote Desktop Services are not installed.";
+            if (statusLabelTMP != null)
+                statusLabelTMP.text = "Remote Desktop Services are not installed on the server.";
             return;
         }
 
         if (statusLabelTMP != null) statusLabelTMP.text = $"Connecting to {ip}...";
 
-        if (state != null)
-        {
-            state.RDSessionOpened  = true;
-            state.ClientConnected  = true;
-        }
+        state.RDSessionOpened = true;
+        state.ClientConnected = true;
 
-        // Hide this panel and open the client session
         gameObject.SetActive(false);
         clientSession?.OpenSession(ip);
-        ActivityLogManager.Log($"Remote Desktop connected to: {ip}", ActivityLogManager.EntryType.Action);
+
+        ActivityLogManager.Log($"Remote Desktop connected to server at: {ip}", ActivityLogManager.EntryType.Action);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    private void AutoFillClientIP()
+    private void AutoFillServerIP()
     {
         if (computerInput == null) return;
         var state = ServerVirtualOSManager.Instance?.ServerState;
-        if (state != null && !string.IsNullOrEmpty(state.DHCPScopeStart))
-            computerInput.text = state.DHCPScopeStart;
+        if (state != null && state.UseStaticIP && state.IPOctets != null && state.IPOctets.Length == 4
+            && !string.IsNullOrEmpty(state.IPOctets[0]))
+        {
+            computerInput.text =
+                $"{state.IPOctets[0]}.{state.IPOctets[1]}.{state.IPOctets[2]}.{state.IPOctets[3]}";
+        }
     }
 }
