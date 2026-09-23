@@ -13,7 +13,7 @@ public class ClientPCData
     public string ComputerName = "Client_PC-001";
 
     [Tooltip("Display name of the default local account on the client PC.")]
-    public string LocalUserName = "Administrator";
+    public string LocalUserName = "User";
 
     [Tooltip("Password for the default local account. Also shown as the password hint.")]
     public string LocalUserPassword = "password";

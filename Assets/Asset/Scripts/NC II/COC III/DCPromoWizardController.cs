@@ -690,7 +690,7 @@ public class DCPromoWizardController : MonoBehaviour
             $"Forest Level: {GetDropdownText(forestLevelDropdown)}",
             ActivityLogManager.EntryType.Action);
 
-        // Hand off to RestartUIController — deactivating desktopPanel closes this wizard too.
+        gameObject.SetActive(false);
         ServerVirtualOSManager.Instance?.TriggerRestart();
     }
 

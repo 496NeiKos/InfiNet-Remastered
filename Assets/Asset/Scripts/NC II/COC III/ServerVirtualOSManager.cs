@@ -68,6 +68,7 @@ public class ServerVirtualOSManager : MonoBehaviour, IVirtualOSManager
     [Header("Canvas")]
     [SerializeField] private GameObject virtualOSCanvas;
     [SerializeField] private GameObject desktopPanel;
+    [SerializeField] private Transform  appPanelsRoot;
 
     [Header("Boot UI")]
     [SerializeField] private RestartUIController restartUI;
@@ -211,6 +212,7 @@ public class ServerVirtualOSManager : MonoBehaviour, IVirtualOSManager
     /// </summary>
     public void TriggerRestart()
     {
+        CloseAllApps();
         desktopPanel?.SetActive(false);
         restartUI?.Show(ShowLoginUI);
         ActivityLogManager.Log("System restarting...", ActivityLogManager.EntryType.Action);
@@ -240,6 +242,8 @@ public class ServerVirtualOSManager : MonoBehaviour, IVirtualOSManager
         else
             _clientState.CurrentLoggedInUser = username;
 
+        TryCreateUserRedirectionFolder(username);
+
         desktopPanel?.SetActive(true);
         RefreshDesktopIcons();
 
@@ -249,6 +253,94 @@ public class ServerVirtualOSManager : MonoBehaviour, IVirtualOSManager
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────
+
+    private void TryCreateUserRedirectionFolder(string username)
+    {
+        // Only applies when a domain user logs into a domain-joined client PC
+        if (_currentPC != ActivePC.Client) return;
+        if (!(_clientState?.DomainJoined ?? false)) return;
+
+        bool isDomainUser = _state.UserAccounts.Exists(u =>
+            string.Equals(u.Username, username, System.StringComparison.OrdinalIgnoreCase));
+        if (!isDomainUser) return;
+
+        // Find a GPO that has folder redirection configured
+        var gpo = _state.GroupPolicies.Find(g => g.DocumentsRedirectSet || g.DesktopRedirectSet);
+        if (gpo == null) return;
+
+        // Respect security filtering — if the GPO restricts to specific users, check membership
+        if (gpo.SecurityFilterUsernames.Count > 0 &&
+            !gpo.SecurityFilterUsernames.Exists(u =>
+                string.Equals(u, username, System.StringComparison.OrdinalIgnoreCase)))
+            return;
+
+        // Get the UNC redirect path (prefer Documents, fallback to Desktop)
+        string redirectUNC = !string.IsNullOrEmpty(gpo.DocumentsRedirectPath)
+            ? gpo.DocumentsRedirectPath
+            : gpo.DesktopRedirectPath;
+        if (string.IsNullOrEmpty(redirectUNC)) return;
+
+        // Find the shared folder whose NetworkPath matches the redirect UNC
+        var shared = _state.SharedFolders.Find(s =>
+            !string.IsNullOrEmpty(s.NetworkPath) &&
+            redirectUNC.StartsWith(s.NetworkPath, System.StringComparison.OrdinalIgnoreCase));
+
+        // Fallback: match by extracted share name
+        if (shared == null)
+        {
+            string shareName = ExtractShareName(redirectUNC);
+            if (!string.IsNullOrEmpty(shareName))
+                shared = _state.SharedFolders.Find(s =>
+                    string.Equals(s.ShareName, shareName, System.StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (shared == null || string.IsNullOrEmpty(shared.Path)) return;
+
+        // shared.Path == FolderData.FullPath of the parent (e.g. "C:\REDIRECTION")
+        string parentPath = shared.Path.TrimEnd('\\');
+        string userSubPath = parentPath + "\\" + username;
+
+        // Skip if already exists
+        if (_state.UserCreatedFolders.Exists(f =>
+                string.Equals(f.FullPath, userSubPath, System.StringComparison.OrdinalIgnoreCase)))
+            return;
+
+        _state.UserCreatedFolders.Add(new FolderData
+        {
+            Name        = username,
+            ParentPath  = parentPath,
+            FullPath    = userSubPath,
+            DateCreated = System.DateTime.Now.ToString("M/d/yyyy h:mm tt"),
+            Permissions = new System.Collections.Generic.List<FolderPermissionEntry>
+            {
+                new FolderPermissionEntry { GroupOrUser = username, FullControlAllow = true }
+            }
+        });
+
+        ActivityLogManager.Log(
+            $"Auto-created redirection folder: {userSubPath}",
+            ActivityLogManager.EntryType.Action);
+    }
+
+    private static string ExtractShareName(string uncPath)
+    {
+        // \\SERVER\SHARENAME[\...] — skip empty segments, return 2nd non-empty (the share name)
+        int count = 0;
+        foreach (string part in uncPath.Split('\\'))
+        {
+            if (string.IsNullOrEmpty(part)) continue;
+            count++;
+            if (count == 2) return part;
+        }
+        return "";
+    }
+
+    private void CloseAllApps()
+    {
+        if (appPanelsRoot == null) return;
+        foreach (Transform child in appPanelsRoot)
+            child.gameObject.SetActive(false);
+    }
 
     private void ShowLoginUI()
     {

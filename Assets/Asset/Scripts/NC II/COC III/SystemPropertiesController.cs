@@ -309,6 +309,15 @@ public class SystemPropertiesController : MonoBehaviour
         if (!string.Equals(domain, state.DomainName, System.StringComparison.OrdinalIgnoreCase))
             return "The specified domain either does not exist or could not be contacted.";
 
+        // Built-in Administrator account (password stored separately from UserAccounts)
+        if (string.Equals(username, "Administrator", System.StringComparison.OrdinalIgnoreCase))
+        {
+            if (!string.IsNullOrEmpty(state.AdminPassword) && password == state.AdminPassword)
+                return "";
+            return "Logon failure: unknown user name or bad password.";
+        }
+
+        // ADUC-created user added to Domain Admins group
         var admin = state.UserAccounts.Find(u =>
             string.Equals(u.Username, username, System.StringComparison.OrdinalIgnoreCase)
             && u.IsAdmin);

@@ -226,6 +226,7 @@ public class ServerDeviceState : DeviceOSState
     public string PrinterShareName = "";
 
     // ── Remote Desktop ────────────────────────────────────────────────────────
+    public bool RemoteDesktopEnabled  = false; // toggled via System Properties → Remote tab
     public bool RDVerifiedInDashboard = false;
     public bool RDAppAvailable        => RDServicesInstalled;
 
