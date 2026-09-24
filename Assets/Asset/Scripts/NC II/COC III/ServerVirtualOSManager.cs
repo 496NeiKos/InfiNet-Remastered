@@ -355,10 +355,32 @@ public class ServerVirtualOSManager : MonoBehaviour, IVirtualOSManager
             _clientState.FirstBootDone = true;
     }
 
+    /// <summary>
+    /// Public entry point for external scripts (e.g. RDLoadingController) to trigger
+    /// an immediate icon refresh without waiting for the next login cycle.
+    /// </summary>
+    public void RefreshIcons() => RefreshDesktopIcons();
+
     private void RefreshDesktopIcons()
     {
         bool isServer = _currentPC == ActivePC.Server;
+
+        // RD Connection icon: only on client PC, only when a domain user is logged in,
+        // and only before an RD session has already been established.
+        // RD Connection icon: client PC only, domain user must be logged in.
+        // Stays visible even after an RD session has been established — the player
+        // can re-open Remote Desktop as many times as they want.
+        bool isDomainUserLoggedIn = _clientState != null
+            && _clientState.DomainJoined
+            && !string.IsNullOrEmpty(_clientState.CurrentLoggedInUser)
+            && (_state?.UserAccounts.Exists(u =>
+                string.Equals(u.Username, _clientState.CurrentLoggedInUser,
+                    System.StringComparison.OrdinalIgnoreCase)) ?? false);
+
+        // Server Manager icon: Server PC only. Never shown on the client desktop —
+        // the only way to access Server Manager from the client is through the
+        // Remote Desktop Connection chain (RDLoadingController opens it directly).
         serverManagerIcon?.SetActive(isServer);
-        rdConnectionIcon?.SetActive(!isServer);
+        rdConnectionIcon?.SetActive(!isServer && isDomainUserLoggedIn);
     }
 }

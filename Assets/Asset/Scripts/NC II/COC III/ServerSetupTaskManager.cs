@@ -73,12 +73,12 @@
  *  [57] Open Tools → Print Management
  *  [58] Add a Printer Driver using the Add Driver Wizard
  *  [59] Share the printer and set a share name
- *  ── Client Verification ─────────────────────────────────────────
- *  [60] Open Remote Desktop Connection and connect to the client machine
- *  [61] In the client CMD, run ipconfig — verify the client received a DHCP IP
- *  [62] In the client File Explorer, verify Documents is redirected to the server
- *  [63] In the client Devices and Printers, verify the shared printer is accessible
- *  [64] In the client CMD, ping the server IP — confirm connectivity
+ *  ── Remote Desktop ──────────────────────────────────────────────
+ *  [60] Switch to the Client PC and log in as the domain user account
+ *  [61] Open the Remote Desktop Connection app on the Client PC desktop
+ *  [62] Enter the server computer name and click Connect
+ *  [63] Enter domain credentials in Windows Security and click OK
+ *  [64] Wait for the Remote Desktop session to establish
  *
  *  INSPECTOR SETUP
  *    taskParent            → VerticalLayoutGroup parent for active task rows
@@ -90,7 +90,7 @@
  *    sectionHeaders[]      → Section divider GameObjects (non-interactive labels)
  *                            Order: Pre-Configuration, Role Installation,
  *                            Active Directory, DHCP, File Services,
- *                            Group Policy, Print Services, Client Verification
+ *                            Group Policy, Print Services, Remote Desktop
  *    serverHolder          → NetworkHardwareHolder (or equivalent) on the Server PC icon
  *    allTasksCompletedText → (optional) TMP shown when all tasks done
  *
@@ -228,12 +228,12 @@ public class ServerSetupTaskManager : MonoBehaviour
             58 => state.PrinterDriverAdded,
             59 => state.PrinterShared,
 
-            // Client Verification
-            60 => state.ClientConnected,
-            61 => state.ClientDHCPVerified,
-            62 => state.FolderRedirectionVerified,
-            63 => state.PrinterVerified,
-            64 => state.ConnectivityVerified,
+            // Remote Desktop
+            60 => CheckClientDomainUserLoggedIn(),
+            61 => state.RDConnectionPanelOpened,
+            62 => state.RDComputerNameEntered,
+            63 => state.RDCredentialsEntered,
+            64 => state.RDSessionOpened,
 
             _ => false
         };
@@ -358,13 +358,31 @@ public class ServerSetupTaskManager : MonoBehaviour
             57 => "Open Print Management",
             58 => "Add printer driver",
             59 => "Share the printer",
-            60 => "Connect to client via Remote Desktop",
-            61 => "Verify client DHCP IP (ipconfig)",
-            62 => "Verify Folder Redirection in client File Explorer",
-            63 => "Verify shared printer in client Devices and Printers",
-            64 => "Verify connectivity (ping server)",
+            60 => "Switch to Client PC and log in as domain user",
+            61 => "Open Remote Desktop Connection app on Client PC",
+            62 => "Enter server computer name and click Connect",
+            63 => "Enter domain credentials in Windows Security",
+            64 => "RD session established — Server Manager accessible from Client PC",
             _  => $"Task {index}"
         };
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    // Task [60]: true when the player is on the Client PC and logged in as a domain user
+    // (a user that exists in the server's UserAccounts list).
+    private static bool CheckClientDomainUserLoggedIn()
+    {
+        var mgr    = ServerVirtualOSManager.Instance;
+        var client = mgr?.ClientState;
+        if (client == null || mgr?.ServerState == null) return false;
+
+        return mgr.CurrentPC == ActivePC.Client
+            && client.DomainJoined
+            && !string.IsNullOrEmpty(client.CurrentLoggedInUser)
+            && mgr.ServerState.UserAccounts.Exists(u =>
+                string.Equals(u.Username, client.CurrentLoggedInUser,
+                    System.StringComparison.OrdinalIgnoreCase));
     }
 
     // ── Public API ────────────────────────────────────────────────────────────

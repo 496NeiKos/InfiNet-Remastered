@@ -230,11 +230,10 @@ public class ServerDeviceState : DeviceOSState
     public bool RDVerifiedInDashboard = false;
     public bool RDAppAvailable        => RDServicesInstalled;
 
-    // ── Client Verification ───────────────────────────────────────────────────
-    public bool RDSessionOpened           = false;
-    public bool ClientConnected           = false;
-    public bool ClientDHCPVerified        = false;
-    public bool FolderRedirectionVerified = false;
-    public bool PrinterVerified           = false;
-    public bool ConnectivityVerified      = false;
+    // ── Remote Desktop Session (Client PC → Server) ───────────────────────────
+    public bool RDConnectionPanelOpened = false; // client opened the RD Connection app (task 61)
+    public bool RDComputerNameEntered   = false; // valid name entered, Windows Security opened (task 62)
+    public bool RDCredentialsEntered    = false; // credentials validated, loading started (task 63)
+    public bool RDSessionOpened         = false; // loading complete, Server Manager opened on client (task 64)
+    public bool ClientConnected         = false; // mirrors RDSessionOpened; kept for compatibility
 }

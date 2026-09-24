@@ -4,38 +4,81 @@
  * ================================================================
  *  COMPONENT PLACEMENT
  *    Add to "Remote Desktop Connection Panel" (starts INACTIVE).
- *    Desktop icon is ONLY SHOWN when CurrentPC == Client.
- *    (Managed automatically by ServerVirtualOSManager.RefreshDesktopIcons)
+ *    This is Stage 1 of the 3-stage Remote Desktop chain.
+ *    Place as a child of the Desktop Panel's App Panels group,
+ *    alongside the other app panels.
+ *
+ *  WHEN THIS PANEL IS ACCESSIBLE
+ *    The desktop icon that opens this panel (rdConnectionIcon in
+ *    ServerVirtualOSManager) is only visible when ALL of:
+ *      • currentPC == Client
+ *      • ClientPCData.DomainJoined == true
+ *      • The currently logged-in client user exists in UserAccounts
+ *      • state.RDSessionOpened == false (session not yet established)
+ *    (Managed by ServerVirtualOSManager.RefreshDesktopIcons)
  *
  *  HIERARCHY
- *    Remote Desktop Connection Panel    ← this script here
- *      ├── TitleBar / CloseBtn          → closeBtn
+ *    Remote Desktop Connection Panel       ← this script here
+ *      ├── TitleBar
+ *      │     ├── TitleTMP                  TMP_Text  "Remote Desktop Connection"
+ *      │     └── CloseBtn                  Button  → closeBtn
  *      ├── Body
- *      │     ├── ComputerLabel          (static: "Computer:")
- *      │     ├── ComputerInput          → computerInput
- *      │     │     (auto-populated with server's static IP on Open)
- *      │     ├── ConnectBtn             → connectBtn
- *      │     └── StatusLabel            → statusLabelTMP
- *      └── (ClientRDSessionController panel is a sibling or child,
- *            opened by this controller after successful connect)
+ *      │     ├── ComputerLabel             TMP_Text  "Computer:"
+ *      │     ├── ComputerInput             TMP_InputField  → computerInput
+ *      │     │     Placeholder: "Enter PC name or IP address"
+ *      │     ├── HintTMP                   TMP_Text  → hintTMP
+ *      │     │     (auto-populated: "Hint: [ServerComputerName]")
+ *      │     ├── UsernameLabel             TMP_Text  "User name:"
+ *      │     └── UsernameTMP               TMP_Text  → usernameTMP
+ *      │           (read-only, auto-filled: "NETBIOS\username")
+ *      ├── StatusTMP                       TMP_Text  → statusTMP
+ *      │     (error/status messages — starts with text "")
+ *      └── Footer
+ *            ├── ConnectBtn                Button  → connectBtn  label: "Connect"
+ *            └── HelpBtn                   Button  → helpBtn     label: "Help"
+ *                  interactable: false
  *
  *  INSPECTOR ASSIGNMENTS
- *    computerInput   → TMP_InputField for the target server IP
- *    connectBtn      → Button
- *    statusLabelTMP  → TMP_Text for "Connecting..." / error messages
- *    clientSession   → ClientRDSessionController (sibling panel)
+ *    closeBtn       → TitleBar/CloseBtn
+ *    computerInput  → Body/ComputerInput (TMP_InputField)
+ *    hintTMP        → Body/HintTMP
+ *    usernameTMP    → Body/UsernameTMP
+ *    statusTMP      → StatusTMP
+ *    connectBtn     → Footer/ConnectBtn
+ *    helpBtn        → Footer/HelpBtn
+ *    windowsSecurity → WindowsSecurityRDController (sibling panel, starts INACTIVE)
  *
  *  WIRING
- *    RD Connection desktop icon → Button OnClick → RDConnectionAppController.Open()
- *    The icon starts INACTIVE. ServerVirtualOSManager.RefreshDesktopIcons()
- *    activates it when CurrentPC == Client.
+ *    rdConnectionIcon desktop Button → OnClick → RDConnectionAppController.Open()
+ *    (Assign in the Inspector on the desktop icon's Button component.)
  *
  *  HOW IT WORKS
- *    On Open(): auto-populates computerInput with the server's static IP
- *    (ServerDeviceState.IPOctets joined as an IP string).
- *    On Connect(): validates input is non-empty AND state.RDServicesInstalled == true.
- *    If both pass, sets state.RDSessionOpened = true and opens ClientRDSessionController.
- *    Only accessible from Client PC context (icon hidden on Server PC).
+ *    Open(): fills hintTMP with server ComputerName, fills usernameTMP with
+ *    NETBIOS\CurrentLoggedInUser, clears computerInput and statusTMP,
+ *    sets state.RDConnectionPanelOpened = true.
+ *
+ *    Connect() runs 3 validation steps in order:
+ *      1. computerInput not empty
+ *         → "Please enter the computer name or IP address."
+ *      2. Typed value matches ServerDeviceState.ComputerName (case-insensitive)
+ *         OR matches the server's static IP string
+ *         → "Remote Desktop can't connect to the remote computer.
+ *            Make sure the computer name or IP address is correct."
+ *      3. Both RDServicesInstalled == true AND RemoteDesktopEnabled == true
+ *         → specific message per missing condition (see below)
+ *    All pass → sets state.RDComputerNameEntered = true, closes this panel,
+ *    calls WindowsSecurityRDController.Open(computerName).
+ *
+ *  VALIDATION STATUS MESSAGES
+ *    Neither flag set:
+ *      "Make sure to add the Remote Desktop role and enable Remote Desktop
+ *       in Local Server → System Properties → Remote in the server
+ *       before connecting."
+ *    Role not installed only:
+ *      "Make sure the Remote Desktop role is first installed in the server."
+ *    RD not enabled only:
+ *      "Make sure Remote Desktop is enabled in Local Server →
+ *       System Properties → Remote."
  * ================================================================
  */
 
@@ -48,13 +91,16 @@ public class RDConnectionAppController : MonoBehaviour
     public static RDConnectionAppController Instance { get; private set; }
 
     [Header("UI")]
-    [SerializeField] private Button         closeBtn;
-    [SerializeField] private TMP_InputField computerInput;
-    [SerializeField] private Button         connectBtn;
-    [SerializeField] private TMP_Text       statusLabelTMP;
+    [SerializeField] private Button          closeBtn;
+    [SerializeField] private TMP_InputField  computerInput;
+    [SerializeField] private TMP_Text        hintTMP;
+    [SerializeField] private TMP_Text        usernameTMP;
+    [SerializeField] private TMP_Text        statusTMP;
+    [SerializeField] private Button          connectBtn;
+    [SerializeField] private Button          helpBtn;
 
     [Header("References")]
-    [SerializeField] private ClientRDSessionController clientSession;
+    [SerializeField] private WindowsSecurityRDController windowsSecurity;
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
@@ -65,6 +111,7 @@ public class RDConnectionAppController : MonoBehaviour
 
         closeBtn?.onClick.AddListener(Close);
         connectBtn?.onClick.AddListener(Connect);
+        if (helpBtn != null) helpBtn.interactable = false;
 
         gameObject.SetActive(false);
     }
@@ -74,8 +121,16 @@ public class RDConnectionAppController : MonoBehaviour
     public void Open()
     {
         gameObject.SetActive(true);
-        if (statusLabelTMP != null) statusLabelTMP.text = "";
-        AutoFillServerIP();
+
+        if (computerInput != null) computerInput.text = "";
+        if (statusTMP     != null) statusTMP.text     = "";
+
+        AutoFillHint();
+        AutoFillUsername();
+
+        var state = ServerVirtualOSManager.Instance?.ServerState;
+        if (state != null) state.RDConnectionPanelOpened = true;
+
         ActivityLogManager.Log("Opened Remote Desktop Connection", ActivityLogManager.EntryType.Action);
     }
 
@@ -88,44 +143,107 @@ public class RDConnectionAppController : MonoBehaviour
 
     private void Connect()
     {
-        string ip = computerInput != null ? computerInput.text.Trim() : "";
-        if (string.IsNullOrEmpty(ip))
+        string input = computerInput != null ? computerInput.text.Trim() : "";
+
+        // Step 1 — field must not be empty
+        if (string.IsNullOrEmpty(input))
         {
-            if (statusLabelTMP != null)
-                statusLabelTMP.text = "Please enter a computer name or IP address.";
+            SetStatus("Please enter the computer name or IP address.");
             return;
         }
 
         var state = ServerVirtualOSManager.Instance?.ServerState;
-        if (state == null || !state.RDServicesInstalled)
+
+        // Step 2 — must match server PC name or IP
+        if (!MatchesServer(input, state))
         {
-            if (statusLabelTMP != null)
-                statusLabelTMP.text = "Remote Desktop Services are not installed on the server.";
+            SetStatus("Remote Desktop can't connect to the remote computer.\nMake sure the computer name or IP address is correct.");
             return;
         }
 
-        if (statusLabelTMP != null) statusLabelTMP.text = $"Connecting to {ip}...";
+        // Step 3 — both server flags must be true
+        bool roleInstalled = state?.RDServicesInstalled ?? false;
+        bool rdEnabled     = state?.RemoteDesktopEnabled ?? false;
 
-        state.RDSessionOpened = true;
-        state.ClientConnected = true;
+        if (!roleInstalled && !rdEnabled)
+        {
+            SetStatus("Make sure to add the Remote Desktop role and enable Remote Desktop in Local Server → System Properties → Remote in the server before connecting.");
+            return;
+        }
+        if (!roleInstalled)
+        {
+            SetStatus("Make sure the Remote Desktop role is first installed in the server.");
+            return;
+        }
+        if (!rdEnabled)
+        {
+            SetStatus("Make sure Remote Desktop is enabled in Local Server → System Properties → Remote.");
+            return;
+        }
 
+        // All validations passed
+        if (state != null) state.RDComputerNameEntered = true;
+
+        string computerName = !string.IsNullOrEmpty(state?.ComputerName) ? state.ComputerName : input;
         gameObject.SetActive(false);
-        clientSession?.OpenSession(ip);
+        windowsSecurity?.Open(computerName);
 
-        ActivityLogManager.Log($"Remote Desktop connected to server at: {ip}", ActivityLogManager.EntryType.Action);
+        ActivityLogManager.Log($"RD Connection: validated — opening Windows Security for {input}", ActivityLogManager.EntryType.Action);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    private void AutoFillServerIP()
+    private void AutoFillHint()
     {
-        if (computerInput == null) return;
+        if (hintTMP == null) return;
         var state = ServerVirtualOSManager.Instance?.ServerState;
-        if (state != null && state.UseStaticIP && state.IPOctets != null && state.IPOctets.Length == 4
+        string name = !string.IsNullOrEmpty(state?.ComputerName)
+            ? state.ComputerName
+            : "(Server PC name not set)";
+        hintTMP.text = $"Hint: {name}";
+    }
+
+    private void AutoFillUsername()
+    {
+        if (usernameTMP == null) return;
+        var mgr     = ServerVirtualOSManager.Instance;
+        string user = mgr?.ClientState?.CurrentLoggedInUser ?? "";
+        string nb   = GetNetBIOS(mgr?.ServerState);
+        usernameTMP.text = string.IsNullOrEmpty(user) ? "" : $"{nb}\\{user}";
+    }
+
+    private static bool MatchesServer(string input, ServerDeviceState state)
+    {
+        if (state == null) return false;
+
+        if (!string.IsNullOrEmpty(state.ComputerName) &&
+            string.Equals(input, state.ComputerName, System.StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (state.UseStaticIP && state.IPOctets != null && state.IPOctets.Length == 4
             && !string.IsNullOrEmpty(state.IPOctets[0]))
         {
-            computerInput.text =
-                $"{state.IPOctets[0]}.{state.IPOctets[1]}.{state.IPOctets[2]}.{state.IPOctets[3]}";
+            string ip = $"{state.IPOctets[0]}.{state.IPOctets[1]}.{state.IPOctets[2]}.{state.IPOctets[3]}";
+            if (input == ip) return true;
         }
+
+        return false;
+    }
+
+    internal static string GetNetBIOS(ServerDeviceState state)
+    {
+        if (state != null && !string.IsNullOrEmpty(state.NetBIOSName))
+            return state.NetBIOSName.ToUpper();
+        if (state != null && !string.IsNullOrEmpty(state.DomainName))
+        {
+            int dot = state.DomainName.IndexOf('.');
+            return (dot > 0 ? state.DomainName.Substring(0, dot) : state.DomainName).ToUpper();
+        }
+        return "DOMAIN";
+    }
+
+    private void SetStatus(string msg)
+    {
+        if (statusTMP != null) statusTMP.text = msg;
     }
 }
