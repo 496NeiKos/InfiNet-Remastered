@@ -220,10 +220,13 @@ public class ServerDeviceState : DeviceOSState
                                    && g.SecurityFilterUsernames.Count > 0));
 
     // ── Print Services ────────────────────────────────────────────────────────
-    public bool PrintMgmtOpened    = false;
-    public bool PrinterDriverAdded = false;
-    public bool PrinterShared      = false;
-    public string PrinterShareName = "";
+    public bool   PrintMgmtOpened      = false;
+    public bool   PrinterDriverAdded   = false; // task 58 — set when wizard summary (step 5) renders
+    public bool   PrinterShared        = false; // task 59 — set when Finish is clicked (step 6)
+    public string PrinterShareName     = "";    // kept for state compatibility
+    public string InstalledPrinterName = "";
+    public string InstalledDriverName  = "";
+    public string InstalledPortName    = "";
 
     // ── Remote Desktop ────────────────────────────────────────────────────────
     public bool RemoteDesktopEnabled  = false; // toggled via System Properties → Remote tab
