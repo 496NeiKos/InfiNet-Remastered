@@ -60,6 +60,17 @@ public class GPOData
     public List<string> SecurityFilterUsernames = new List<string>();
 }
 
+[System.Serializable]
+public class DNSZoneData
+{
+    public string ZoneName       = "";
+    public string ZoneType       = "";  // "Standard Primary" | "Standard Secondary" | "Stub"
+    public string LookupType     = "";  // "Forward" | "Reverse"
+    public string FileName       = "";
+    public bool   StoreInAD      = false;
+    public string DynamicUpdates = "";  // "Both" | "DoNotAllow" | "SecureOnly"
+}
+
 // ── Main state class ─────────────────────────────────────────────────────────
 
 /// <summary>
@@ -110,14 +121,9 @@ public class ServerDeviceState : DeviceOSState
     public bool AddRolesWizardOpenedForRD    = false;
 
     // ── DNS Manager ──────────────────────────────────────────────────────────
-    public bool   DNSManagerOpened  = false;
-    public bool   DNSZoneCreated    = false;
-    public string DNSZoneName       = "";
-    public string DNSZoneType       = "";   // "Standard Primary" | "Standard Secondary" | "Stub"
-    public string DNSLookupType     = "";   // "Forward" | "Reverse"
-    public string DNSFileName       = "";
-    public bool   DNSStoreInAD      = false;
-    public string DNSDynamicUpdates = "";   // "Both" | "DoNotAllow" | "SecureOnly"
+    public bool              DNSManagerOpened = false;
+    public List<DNSZoneData> DNSZones         = new List<DNSZoneData>();
+    public bool              DNSZoneCreated   => DNSZones.Count > 0;
 
     // ── Domain / dcpromo ─────────────────────────────────────────────────────
     public bool   PromotionNotificationClicked = false;
@@ -162,6 +168,7 @@ public class ServerDeviceState : DeviceOSState
     public bool   DHCPScopeActive      = false;
     public bool   DHCPActivatedOnFinish = false;
     public bool   DHCPv6Disabled       = false;
+    public bool   DHCPAuthorized       = false;
 
     public bool DHCPScopeNameSet  => !string.IsNullOrEmpty(DHCPScopeName);
     public bool DHCPScopeStartSet => !string.IsNullOrEmpty(DHCPScopeStart);

@@ -54,7 +54,7 @@
  *  [41] Set the Start IP Address for the DHCP Scope
  *  [42] Set the End IP Address for the DHCP Scope
  *  [43] Activate the DHCP Scope
- *  [44] Disable DHCPv6 stateless mode
+ *  [44] Authorize the DHCP Server
  *  ── File Services ───────────────────────────────────────────────
  *  [45] Open Tools → File Server Resource Manager
  *  [46] Create a Shared Folder
@@ -205,7 +205,7 @@ public class ServerSetupTaskManager : MonoBehaviour
             41 => state.DHCPScopeStartSet,
             42 => state.DHCPScopeEndSet,
             43 => state.DHCPScopeActive,
-            44 => state.DHCPv6Disabled,
+            44 => state.DHCPAuthorized,
 
             // File Services
             45 => state.FSRMOpened,
@@ -342,7 +342,7 @@ public class ServerSetupTaskManager : MonoBehaviour
             41 => "Set DHCP Scope start IP",
             42 => "Set DHCP Scope end IP",
             43 => "Activate DHCP Scope",
-            44 => "Disable DHCPv6",
+            44 => "Authorize DHCP Server",
             45 => "Open File Server Resource Manager",
             46 => "Create shared folder",
             47 => "Set shared folder permissions",

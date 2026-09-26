@@ -3,141 +3,68 @@
  *  UNITY SETUP GUIDE — ADUCController (COC III)
  * ================================================================
  *  COMPONENT PLACEMENT
- *    Add to "ADUC Panel" GameObject (starts INACTIVE).
- *    Opened from ServerManagerController Tools → Active Directory Users and Computers.
+ *    Add to "ADUC Panel" (starts INACTIVE).
+ *    Opened via ServerManagerController Tools → Active Directory Users and Computers.
  *
- *  HIERARCHY
- *    ADUC Panel                              ← this script here
- *      ├── TitleBar / CloseBtn              → closeBtn
- *      ├── TreePanel (left)
- *      │     ├── DomainNode (TMP)           → domainNodeLabel
- *      │     │     └── NodeClickHandler     ← pre-place this component on DomainNode
- *      │     └── DomainChildren (Inactive)  → domainChildrenGroup
- *      │           ├── Builtin [TMP]         (static, no interaction)
- *      │           ├── Computers [TMP]
- *      │           ├── Domain Controllers [TMP]
- *      │           ├── ForeignSecurityPrincipals [TMP]
- *      │           ├── Managed Service Accounts [TMP]
- *      │           ├── Users [TMP]
- *      │           └── OUNodeParent          → ouNodeParent (OU prefabs spawn here)
- *      ├── ContentPanel (right)
- *      │     ├── ContentTitle               → contentTitleTMP
- *      │     ├── StaticFolders (Inactive)   → staticFoldersGroup
- *      │     │     ├── Builtin [TMP]
- *      │     │     ├── Computers [TMP]
- *      │     │     ├── Domain Controllers [TMP]
- *      │     │     ├── ForeignSecurityPrincipals [TMP]
- *      │     │     ├── Managed Service Accounts [TMP]
- *      │     │     └── Users [TMP]
- *      │     └── DynamicItems               → dynamicItemsParent (rows spawn here)
- *      ├── Context Menu (Inactive)          → contextMenu
- *      │     ├── NewOUBtn                   → ctxNewOUBtn
- *      │     └── NewUserBtn                 → ctxNewUserBtn
- *      ├── New OU Dialog (Inactive)         → newOUDialog
- *      │     ├── OUNameInput               → ouNameInput
- *      │     ├── OKBtn                     → ouOKBtn
- *      │     └── CancelBtn                 → ouCancelBtn
- *      └── New User Dialog (Inactive)       → newUserDialog
- *            RectTransform: anchor center-center, pivot 0.5/0.5, width:460, height:500
- *            Image: color (0.13,0.13,0.13,1)
- *            VerticalLayoutGroup: padding T:8 B:8 L:10 R:10, spacing:4,
- *              childControlHeight:OFF, childForceExpandHeight:OFF
- *            ├── CreateInLabel              → createInLabel
- *            │     TMP font-size:11, italic, color:(0.6,0.6,0.6,1), align:left-middle
- *            │     LayoutElement preferredHeight:20
- *            ├── StepPanel0 (starts ACTIVE) → stepPanel0
- *            │     VerticalLayoutGroup spacing:4 childControlHeight:OFF childForceExpandHeight:OFF
- *            │     LayoutElement flexibleHeight:1
- *            │     Each form row: HorizontalLayoutGroup, LayoutElement preferredHeight:26
- *            │     ├── FormRow_FirstName
- *            │     │     ├── Lbl_FirstName (TMP "First name:" LE preferredWidth:140 right-middle)
- *            │     │     └── FirstNameInput (TMP_InputField LE flexibleWidth:1) → firstNameInput
- *            │     ├── FormRow_LastName
- *            │     │     ├── Lbl_LastName (TMP "Last name:")
- *            │     │     └── LastNameInput (TMP_InputField)                    → lastNameInput
- *            │     ├── FormRow_Initials (LE preferredHeight:26)
- *            │     │     ├── Lbl_Initials (TMP "Initials:" LE preferredWidth:140)
- *            │     │     └── InitialsInput (TMP_InputField LE preferredWidth:50 characterLimit:3)
- *            │     │                                                           → initialsInput
- *            │     ├── FormRow_FullName
- *            │     │     ├── Lbl_FullName (TMP "Full name:")
- *            │     │     └── FullNameInput (TMP_InputField LE flexibleWidth:1)  → fullNameInput
- *            │     ├── Divider (Image height:1 color:(0.35,0.35,0.35,1) LE preferredHeight:1)
- *            │     ├── FormRow_LogonName (HLG spacing:4)
- *            │     │     ├── Lbl_LogonName (TMP "User logon name:" LE preferredWidth:140)
- *            │     │     ├── UserLogonNameInput (TMP_InputField LE flexibleWidth:1)
- *            │     │     │                                                     → userLogonNameInput
- *            │     │     └── DomainDropdown (TMP_Dropdown LE preferredWidth:150 interactable:OFF)
- *            │     │                                                           → domainDropdown
- *            │     └── FormRow_PreWin2000 (LE preferredHeight:36)
- *            │           ├── Lbl_PreWin2000 (TMP "User logon name\n(pre-Windows 2000):"
- *            │           │     LE preferredWidth:140, font-size:11, right-middle)
- *            │           └── PreWin2000Display (TMP font-size:12 color:(0.75,0.75,0.75,1)
- *            │                 LE flexibleWidth:1)                             → preWin2000Display
- *            ├── StepPanel1 (starts INACTIVE) → stepPanel1
- *            │     VerticalLayoutGroup spacing:4, LayoutElement flexibleHeight:1
- *            │     ├── FormRow_Password (HLG LE preferredHeight:26)
- *            │     │     ├── Lbl_Password (TMP "Password:" LE preferredWidth:140)
- *            │     │     └── PasswordInput (TMP_InputField contentType:Password LE flexibleWidth:1)
- *            │     │                                                           → passwordInput
- *            │     ├── FormRow_ConfirmPassword
- *            │     │     ├── Lbl_ConfirmPassword (TMP "Confirm password:")
- *            │     │     └── ConfirmPasswordInput (TMP_InputField contentType:Password)
- *            │     │                                                           → confirmPasswordInput
- *            │     ├── Divider (Image height:1 color:(0.35,0.35,0.35,1))
- *            │     ├── ToggleRow_MustChange (HLG LE preferredHeight:24 spacing:6)
- *            │     │     ├── MustChangeToggle (Toggle LE preferredWidth:20
- *            │     │     │     isOn:OFF interactable:OFF)                      → mustChangeToggle
- *            │     │     └── Lbl_MustChange (TMP "User must change password at next logon" size:11)
- *            │     ├── ToggleRow_CannotChange
- *            │     │     ├── CannotChangeToggle (Toggle isOn:OFF interactable:ON) → cannotChangeToggle
- *            │     │     └── Lbl_CannotChange (TMP "User cannot change password")
- *            │     ├── ToggleRow_NeverExpires
- *            │     │     ├── NeverExpiresToggle (Toggle isOn:ON interactable:ON)  → neverExpiresToggle
- *            │     │     └── Lbl_NeverExpires (TMP "Password never expires")
- *            │     ├── ToggleRow_Disabled
- *            │     │     ├── AccountDisabledToggle (Toggle isOn:OFF interactable:ON)
- *            │     │     │                                                     → accountDisabledToggle
- *            │     │     └── Lbl_Disabled (TMP "Account is disabled")
- *            │     └── ToggleRow_DomainAdmins
- *            │           ├── AddToDomainAdminsToggle (Toggle isOn:OFF interactable:ON)
- *            │           │                                                     → addToDomainAdminsToggle
- *            │           └── Lbl_DomainAdmins (TMP "Add to Domain Admins group")
- *            ├── StepPanel2 (starts INACTIVE) → stepPanel2
- *            │     LayoutElement flexibleHeight:1
- *            │     └── SummaryTMP (TMP wrapping:ON overflow:Overflow font-size:11) → summaryTMP
- *            └── Footer (always visible — NOT inside any step panel)
- *                  HorizontalLayoutGroup padding:L4 R4 spacing:6 childForceExpandWidth:OFF
- *                  LayoutElement preferredHeight:36
- *                  ├── BackBtn (Button LE preferredWidth:80 preferredHeight:28) → backBtn
- *                  │     └── Label (TMP "Back")
- *                  ├── Spacer (LayoutElement flexibleWidth:1)
- *                  ├── NextFinishBtn (Button LE preferredWidth:80 preferredHeight:28) → nextFinishBtn
- *                  │     └── Lbl_NextFinish (TMP "Next")                       → nextFinishLabel
- *                  └── CancelBtn (Button LE preferredWidth:80 preferredHeight:28) → userCancelBtn
- *                        └── Label (TMP "Cancel")
+ *  HIERARCHY  (match exactly)
  *
- *  INTERACTION MODEL
- *    DomainNode left-click  → expand/collapse DomainChildren + update ContentPanel
- *    DomainNode right-click → context menu (New OU)
- *    OUNode left-click      → select OU, show its users in ContentPanel
- *    OUNode right-click     → select OU + context menu (New User)
+ *    ADUC Panel                              ← this script
+ *      ├── TitleBar
+ *      │     └── CloseBtn (Button)           → closeBtn
+ *      ├── MainArea (HorizontalLayoutGroup, child force expand H:ON)
+ *      │     ├── TreePanel (fixed width ~220, VerticalLayoutGroup)
+ *      │     │     └── TreeScrollView (ScrollView)
+ *      │     │           └── Viewport
+ *      │     │                 └── TreeContent
+ *      │     │                       VLG + ContentSizeFitter Vertical=Preferred
+ *      │     │                       anchor top-stretch, pivot (0.5,1)
+ *      │     │                       → treeNodeParent
+ *      │     └── ContentPanel (flexible, VerticalLayoutGroup)
+ *      │           └── ContentScrollView (ScrollView)
+ *      │                 └── Viewport
+ *      │                       └── ContentListContent
+ *      │                             VLG + ContentSizeFitter Vertical=Preferred
+ *      │                             anchor top-stretch, pivot (0.5,1)
+ *      │                             → contentListParent
+ *      ├── ContextMenu (starts INACTIVE)     → contextMenu
+ *      │     ├── NewOUBtn (Button)           → ctxNewOUBtn
+ *      │     └── NewUserBtn (Button)         → ctxNewUserBtn
+ *      ├── New OU Dialog (starts INACTIVE)   → newOUDialog
+ *      │     ├── OUNameInput (TMP_InputField) → ouNameInput
+ *      │     ├── OKBtn (Button)              → ouOKBtn
+ *      │     └── CancelBtn (Button)          → ouCancelBtn
+ *      └── New User Dialog (starts INACTIVE) → newUserDialog
+ *            [layout identical to prior guide — all wizard fields unchanged]
+ *            ├── CreateInLabel (TMP_Text)    → createInLabel
+ *            ├── StepPanel0                  → stepPanel0
+ *            │     [FirstNameInput, LastNameInput, InitialsInput, FullNameInput,
+ *            │      UserLogonNameInput, DomainDropdown, PreWin2000Display]
+ *            ├── StepPanel1                  → stepPanel1
+ *            │     [PasswordInput, ConfirmPasswordInput, Toggles x5]
+ *            ├── StepPanel2                  → stepPanel2
+ *            │     [SummaryTMP]
+ *            └── Footer
+ *                  [BackBtn, NextFinishBtn (+ label), CancelBtn]
  *
- *  NEW USER WIZARD RULES
- *    Step 0 → Next: user logon name must not be empty and must be unique
- *    Step 1 → Next: password must not be empty and match confirm password
- *    Step 2 → Finish: saves all data, closes dialog
- *    Cancel: closes dialog on any step without saving
- *    Back:   disabled on step 0; re-enabled on steps 1 and 2
+ *  PREFABS
+ *    treeNodePrefab   — shared
+ *    contentRowPrefab — shared
  *
- *  IMPORTANT SCENE RULES
- *    - DomainChildren starts INACTIVE in scene
- *    - StaticFolders starts INACTIVE in scene
- *    - DynamicItems is empty at start
- *    - StepPanel0, StepPanel1, StepPanel2 all start INACTIVE
- *      (script activates the correct one via RefreshStep on open)
- *    - NodeClickHandler must be pre-placed on DomainNode
- *    - OUNode prefab Button children get NodeClickHandler added at runtime
+ *  INSPECTOR ASSIGNMENTS
+ *    closeBtn, treeNodeParent, treeNodePrefab
+ *    contentListParent, contentRowPrefab
+ *    contextMenu, ctxNewOUBtn, ctxNewUserBtn
+ *    newOUDialog, ouNameInput, ouOKBtn, ouCancelBtn
+ *    newUserDialog, createInLabel
+ *    stepPanel0, stepPanel1, stepPanel2
+ *    firstNameInput, lastNameInput, initialsInput, fullNameInput
+ *    userLogonNameInput, domainDropdown, preWin2000Display
+ *    passwordInput, confirmPasswordInput
+ *    mustChangeToggle, cannotChangeToggle, neverExpiresToggle
+ *    accountDisabledToggle, addToDomainAdminsToggle
+ *    summaryTMP
+ *    backBtn, nextFinishBtn, nextFinishLabel, userCancelBtn
+ *    selectedColor → (0.2, 0.5, 0.9, 0.35)
  * ================================================================
  */
 
@@ -150,31 +77,23 @@ public class ADUCController : MonoBehaviour
 {
     public static ADUCController Instance { get; private set; }
 
-    private enum Selection { None, Domain, OU }
-
     // ── Serialized fields ─────────────────────────────────────────────────────
 
     [Header("Nav")]
     [SerializeField] private Button closeBtn;
 
-    [Header("Tree Panel")]
-    [SerializeField] private TMP_Text     domainNodeLabel;
-    [SerializeField] private GameObject   domainChildrenGroup;
-    [SerializeField] private Transform    ouNodeParent;
-    [SerializeField] private GameObject   ouNodePrefab;
-    [SerializeField] private RectTransform treePanelRect;
+    [Header("Tree")]
+    [SerializeField] private Transform  treeNodeParent;
+    [SerializeField] private GameObject treeNodePrefab;
 
-    [Header("Content Panel")]
-    [SerializeField] private TMP_Text     contentTitleTMP;
-    [SerializeField] private GameObject   staticFoldersGroup;
-    [SerializeField] private Transform    dynamicItemsParent;
-    [SerializeField] private GameObject   itemRowPrefab;
-    [SerializeField] private RectTransform contentPanelRect;
+    [Header("Content")]
+    [SerializeField] private Transform  contentListParent;
+    [SerializeField] private GameObject contentRowPrefab;
 
     [Header("Context Menu")]
-    [SerializeField] private GameObject   contextMenu;
-    [SerializeField] private Button       ctxNewOUBtn;
-    [SerializeField] private Button       ctxNewUserBtn;
+    [SerializeField] private GameObject contextMenu;
+    [SerializeField] private Button     ctxNewOUBtn;
+    [SerializeField] private Button     ctxNewUserBtn;
 
     [Header("New OU Dialog")]
     [SerializeField] private GameObject      newOUDialog;
@@ -218,13 +137,33 @@ public class ADUCController : MonoBehaviour
     [SerializeField] private TMP_Text nextFinishLabel;
     [SerializeField] private Button   userCancelBtn;
 
+    [Header("Colors")]
+    [SerializeField] private Color selectedColor = new Color(0.2f, 0.5f, 0.9f, 0.35f);
+
     // ── Private state ─────────────────────────────────────────────────────────
 
-    private bool      _domainExpanded;
-    private Selection _currentSelection = Selection.None;
-    private string    _selectedOU       = "";
-    private int       _currentStep;
-    private bool      _suppressConstraints;
+    private const float IndentWidth = 16f;
+
+    private readonly Dictionary<string, bool> _expanded      = new Dictionary<string, bool>();
+    private string                            _selectedNodeId = "";
+    private string                            _selectedOU     = "";
+    private int                               _currentStep;
+    private bool                              _suppressConstraints;
+
+    private static readonly string[] StaticContainerIds    =
+        { "Builtin", "Computers", "DomainControllers", "ForeignSecurityPrincipals", "ManagedServiceAccounts", "Users" };
+
+    private static readonly string[] StaticContainerLabels =
+        { "Builtin", "Computers", "Domain Controllers", "Foreign Security Principals", "Managed Service Accounts", "Users" };
+
+    private static readonly string[] BuiltinGroups =
+    {
+        "Administrators", "Backup Operators", "Certificate Service DCOM Access",
+        "Cryptographic Operators", "Distributed COM Users", "Event Log Readers",
+        "Guests", "IIS_IUSRS", "Network Configuration Operators",
+        "Performance Log Users", "Performance Monitor Users", "Power Users",
+        "Print Operators", "Remote Desktop Users", "Replicator", "Users"
+    };
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
@@ -235,33 +174,23 @@ public class ADUCController : MonoBehaviour
 
         closeBtn?.onClick.AddListener(Close);
 
-        var domainHandler = domainNodeLabel?.GetComponent<NodeClickHandler>();
-        if (domainHandler != null)
-        {
-            domainHandler.onLeftClick  = OnDomainLeftClick;
-            domainHandler.onRightClick = OnDomainRightClick;
-        }
-
-        ctxNewOUBtn?.onClick.AddListener(OpenNewOUDialog);
+        ctxNewOUBtn ?.onClick.AddListener(OpenNewOUDialog);
         ctxNewUserBtn?.onClick.AddListener(OpenNewUserDialog);
 
-        ouOKBtn?.onClick.AddListener(ConfirmNewOU);
+        ouOKBtn    ?.onClick.AddListener(ConfirmNewOU);
         ouCancelBtn?.onClick.AddListener(() => newOUDialog?.SetActive(false));
 
-        // Footer buttons
         backBtn      ?.onClick.AddListener(OnBackClick);
         nextFinishBtn?.onClick.AddListener(OnNextFinishClick);
         userCancelBtn?.onClick.AddListener(() => newUserDialog?.SetActive(false));
 
-        // Auto-fill listeners
         firstNameInput     ?.onValueChanged.AddListener(_ => AutoFillFullName());
         lastNameInput      ?.onValueChanged.AddListener(_ => AutoFillFullName());
         userLogonNameInput ?.onValueChanged.AddListener(_ => AutoFillPreWin2000());
 
-        // Toggle mutual-exclusion listeners
-        neverExpiresToggle      ?.onValueChanged.AddListener(_ => ApplyToggleConstraints(neverExpiresToggle));
-        cannotChangeToggle      ?.onValueChanged.AddListener(_ => ApplyToggleConstraints(cannotChangeToggle));
-        mustChangeToggle        ?.onValueChanged.AddListener(_ => ApplyToggleConstraints(mustChangeToggle));
+        neverExpiresToggle  ?.onValueChanged.AddListener(_ => ApplyToggleConstraints(neverExpiresToggle));
+        cannotChangeToggle  ?.onValueChanged.AddListener(_ => ApplyToggleConstraints(cannotChangeToggle));
+        mustChangeToggle    ?.onValueChanged.AddListener(_ => ApplyToggleConstraints(mustChangeToggle));
 
         newUserDialog?.SetActive(false);
         gameObject.SetActive(false);
@@ -271,152 +200,235 @@ public class ADUCController : MonoBehaviour
 
     public void Open()
     {
-        gameObject.SetActive(true);
+        _expanded.Clear();
+        _selectedNodeId = "";
+        _selectedOU     = "";
+
+        contextMenu?.SetActive(false);
+        newOUDialog?.SetActive(false);
+        newUserDialog?.SetActive(false);
+
         var state = ServerVirtualOSManager.Instance?.ServerState;
         if (state != null) state.ADUCOpened = true;
 
-        _domainExpanded   = false;
-        _currentSelection = Selection.None;
-        _selectedOU       = "";
+        gameObject.SetActive(true);
+        RebuildTree();
+        RefreshContentPanel();
 
-        domainChildrenGroup?.SetActive(false);
-        staticFoldersGroup?.SetActive(false);
-        ClearOUNodesFromStatic();
-        ClearDynamicItems();
-        CloseContextMenu();
-        newOUDialog?.SetActive(false);
-        newUserDialog?.SetActive(false);
-        if (contentTitleTMP != null) contentTitleTMP.text = "";
-
-        RefreshAll();
         ActivityLogManager.Log("Opened Active Directory Users and Computers", ActivityLogManager.EntryType.Action);
     }
 
     public void Close()
     {
-        CloseContextMenu();
+        contextMenu?.SetActive(false);
         newOUDialog?.SetActive(false);
         newUserDialog?.SetActive(false);
         gameObject.SetActive(false);
     }
 
-    // ── Domain node ───────────────────────────────────────────────────────────
+    // ── Tree ──────────────────────────────────────────────────────────────────
 
-    private void OnDomainLeftClick()
+    private void RebuildTree()
     {
-        CloseContextMenu();
-        _domainExpanded = !_domainExpanded;
-        domainChildrenGroup?.SetActive(_domainExpanded);
-        RebuildLayout(treePanelRect);
+        foreach (Transform t in treeNodeParent) Destroy(t.gameObject);
 
-        if (_domainExpanded)
+        var state      = ServerVirtualOSManager.Instance?.ServerState;
+        string domain  = state != null && !string.IsNullOrEmpty(state.DomainName)
+                         ? state.DomainName : "domain.local";
+
+        bool domainExp = GetExpanded("Domain");
+        SpawnNode("Domain", domain, 0,
+            isLeaf: false, isExpanded: domainExp,
+            isSelected: _selectedNodeId == "Domain",
+            leftClick: true, rightClick: true);
+
+        if (!domainExp) { RebuildTreeLayout(); return; }
+
+        // Static L1 containers (all leaf)
+        for (int i = 0; i < StaticContainerIds.Length; i++)
         {
-            _currentSelection = Selection.Domain;
-            ShowDomainContent();
+            string sid = StaticContainerIds[i];
+            SpawnNode(sid, StaticContainerLabels[i], 1,
+                isLeaf: true, isExpanded: false,
+                isSelected: _selectedNodeId == sid,
+                leftClick: true, rightClick: false);
         }
-        else
+
+        // Dynamic OU nodes (L1, expandable)
+        if (state != null)
         {
-            _currentSelection = Selection.None;
-            _selectedOU       = "";
-            ClearOUNodesFromStatic();
-            staticFoldersGroup?.SetActive(false);
-            ClearDynamicItems();
-            if (contentTitleTMP != null) contentTitleTMP.text = "";
-            RebuildLayout(contentPanelRect);
+            foreach (var ou in state.OrganizationalUnits)
+            {
+                string ouId  = "OU:" + ou.Name;
+                bool   ouExp = GetExpanded(ouId);
+                SpawnNode(ouId, ou.Name, 1,
+                    isLeaf: false, isExpanded: ouExp,
+                    isSelected: _selectedNodeId == ouId,
+                    leftClick: true, rightClick: true);
+
+                if (!ouExp) continue;
+
+                // L2 user nodes (leaf, no click)
+                foreach (var u in state.UserAccounts)
+                {
+                    if (u.OUName != ou.Name) continue;
+                    string uid     = "User:" + ou.Name + ":" + u.Username;
+                    string display = string.IsNullOrEmpty(u.FullName) ? u.Username : u.FullName;
+                    SpawnNode(uid, display, 2,
+                        isLeaf: true, isExpanded: false,
+                        isSelected: false,
+                        leftClick: false, rightClick: false);
+                }
+            }
+        }
+
+        RebuildTreeLayout();
+    }
+
+    private void SpawnNode(string id, string label, int depth,
+                           bool isLeaf, bool isExpanded, bool isSelected,
+                           bool leftClick, bool rightClick)
+    {
+        var go = Instantiate(treeNodePrefab, treeNodeParent);
+        var ui = go.GetComponent<TreeNodeUI>();
+        if (ui == null) { Debug.LogError("[ADUC] treeNodePrefab missing TreeNodeUI."); return; }
+
+        ui.indentSpacer.preferredWidth = depth * IndentWidth;
+        ui.arrowLabel.gameObject.SetActive(!isLeaf);
+        if (!isLeaf) ui.arrowLabel.text = isExpanded ? "▼" : "▶";
+        ui.nodeLabel.text   = label;
+        ui.background.color = isSelected ? selectedColor : Color.clear;
+
+        if (!leftClick && !rightClick) return;
+
+        var handler       = go.AddComponent<NodeClickHandler>();
+        string capturedId = id;
+
+        if (leftClick)  handler.onLeftClick  = () => OnNodeLeftClick(capturedId);
+        if (rightClick) handler.onRightClick = () => OnNodeRightClick(capturedId);
+    }
+
+    // ── Tree interaction ──────────────────────────────────────────────────────
+
+    private void OnNodeLeftClick(string id)
+    {
+        contextMenu?.SetActive(false);
+
+        if (id == "Domain" || id.StartsWith("OU:"))
+            _expanded[id] = !GetExpanded(id);
+
+        _selectedNodeId = id;
+
+        if (id.StartsWith("OU:"))
+            _selectedOU = id.Substring(3);
+
+        RebuildTree();
+        RefreshContentPanel();
+    }
+
+    private void OnNodeRightClick(string id)
+    {
+        if (id == "Domain")
+        {
+            ctxNewOUBtn ?.gameObject.SetActive(true);
+            ctxNewUserBtn?.gameObject.SetActive(false);
+            contextMenu?.SetActive(true);
+        }
+        else if (id.StartsWith("OU:"))
+        {
+            _selectedOU      = id.Substring(3);
+            _selectedNodeId  = id;
+            ctxNewOUBtn ?.gameObject.SetActive(false);
+            ctxNewUserBtn?.gameObject.SetActive(true);
+            contextMenu?.SetActive(true);
+            RebuildTree();
+            RefreshContentPanel();
         }
     }
-
-    private void OnDomainRightClick()
-    {
-        ctxNewOUBtn?.gameObject.SetActive(true);
-        ctxNewUserBtn?.gameObject.SetActive(false);
-        contextMenu?.SetActive(true);
-    }
-
-    // ── OU node ───────────────────────────────────────────────────────────────
-
-    private void SelectOU(string ouName)
-    {
-        CloseContextMenu();
-        _selectedOU       = ouName;
-        _currentSelection = Selection.OU;
-        ShowOUContent(ouName);
-    }
-
-    private void OnOUNodeRightClick(string ouName)
-    {
-        SelectOU(ouName);
-        ctxNewOUBtn?.gameObject.SetActive(false);
-        ctxNewUserBtn?.gameObject.SetActive(true);
-        contextMenu?.SetActive(true);
-    }
-
-    private void CloseContextMenu() => contextMenu?.SetActive(false);
 
     // ── Content panel ─────────────────────────────────────────────────────────
 
-    private void ShowDomainContent()
+    private void RefreshContentPanel()
     {
-        var state = ServerVirtualOSManager.Instance?.ServerState;
-        string title = !string.IsNullOrEmpty(state?.DomainName) ? state.DomainName : "css.com";
-        if (contentTitleTMP != null) contentTitleTMP.text = title;
-
-        ClearOUNodesFromStatic();
-        ClearDynamicItems();
-        staticFoldersGroup?.SetActive(true);
-
-        if (state == null) { RebuildLayout(contentPanelRect); return; }
-        foreach (var ou in state.OrganizationalUnits)
-            SpawnOUNode(ou.Name, staticFoldersGroup.transform);
-        RebuildLayout(contentPanelRect);
-    }
-
-    private void ShowOUContent(string ouName)
-    {
-        if (contentTitleTMP != null) contentTitleTMP.text = ouName;
-        staticFoldersGroup?.SetActive(false);
-        ClearDynamicItems();
+        foreach (Transform t in contentListParent) Destroy(t.gameObject);
 
         var state = ServerVirtualOSManager.Instance?.ServerState;
-        if (state == null) { RebuildLayout(contentPanelRect); return; }
 
-        foreach (var u in state.UserAccounts)
+        if (_selectedNodeId == "Domain")
         {
-            if (u.OUName != ouName) continue;
-            var row = Instantiate(itemRowPrefab, dynamicItemsParent);
-            var tmp = row.GetComponentInChildren<TMP_Text>();
-            if (tmp != null)
-                tmp.text = $"{u.Username} ({(u.IsAdmin ? "Administrator" : "User")})";
+            for (int i = 0; i < StaticContainerLabels.Length; i++)
+                SpawnContentRow(StaticContainerLabels[i]);
+            if (state != null)
+                foreach (var ou in state.OrganizationalUnits)
+                    SpawnContentRow(ou.Name);
         }
-        RebuildLayout(contentPanelRect);
+        else if (_selectedNodeId == "Builtin")
+        {
+            foreach (string g in BuiltinGroups)
+                SpawnContentRow(g);
+        }
+        else if (_selectedNodeId == "Computers")
+        {
+            var client = ServerVirtualOSManager.Instance?.ClientState;
+            if (client != null && client.DomainJoined)
+                SpawnContentRow(client.ComputerName);
+        }
+        else if (_selectedNodeId == "DomainControllers")
+        {
+            string dc = state != null && !string.IsNullOrEmpty(state.ComputerName)
+                        ? state.ComputerName : "SERVER";
+            SpawnContentRow(dc);
+        }
+        else if (_selectedNodeId == "Users")
+        {
+            SpawnContentRow("Administrator");
+            SpawnContentRow("Guest");
+        }
+        else if (_selectedNodeId.StartsWith("OU:"))
+        {
+            string ouName = _selectedNodeId.Substring(3);
+            if (state != null)
+            {
+                foreach (var u in state.UserAccounts)
+                {
+                    if (u.OUName != ouName) continue;
+                    string display = string.IsNullOrEmpty(u.FullName) ? u.Username : u.FullName;
+                    SpawnContentRow(display, u.Username);
+                }
+            }
+        }
+        // ForeignSecurityPrincipals, ManagedServiceAccounts, User nodes: empty
+
+        RebuildContentLayout();
     }
 
-    private void ClearDynamicItems()
+    private void SpawnContentRow(string col1, string col2 = "",
+                                  bool showBtn = false, string btnLabel = "",
+                                  System.Action onBtnClick = null)
     {
-        if (dynamicItemsParent == null) return;
-        foreach (Transform child in dynamicItemsParent) Destroy(child.gameObject);
-    }
+        var go = Instantiate(contentRowPrefab, contentListParent);
+        var ui = go.GetComponent<ContentRowUI>();
+        if (ui == null) return;
 
-    private void ClearOUNodesFromStatic()
-    {
-        if (staticFoldersGroup == null) return;
-        var toDestroy = new List<GameObject>();
-        foreach (Transform child in staticFoldersGroup.transform)
-            if (child.GetComponentInChildren<Button>() != null)
-                toDestroy.Add(child.gameObject);
-        foreach (var go in toDestroy) Destroy(go);
-    }
+        ui.col1TMP.text = col1;
 
-    private void RebuildLayout(RectTransform rect)
-    {
-        if (rect != null) LayoutRebuilder.ForceRebuildLayoutImmediate(rect);
+        bool hasCol2 = !string.IsNullOrEmpty(col2);
+        ui.col2TMP?.gameObject.SetActive(hasCol2);
+        if (hasCol2 && ui.col2TMP != null) ui.col2TMP.text = col2;
+
+        ui.actionBtn?.gameObject.SetActive(showBtn);
+        if (showBtn)
+        {
+            if (ui.actionBtnLabel != null) ui.actionBtnLabel.text = btnLabel;
+            if (onBtnClick != null)        ui.actionBtn?.onClick.AddListener(() => onBtnClick());
+        }
     }
 
     // ── New OU ────────────────────────────────────────────────────────────────
 
     private void OpenNewOUDialog()
     {
-        CloseContextMenu();
+        contextMenu?.SetActive(false);
         if (ouNameInput != null) ouNameInput.text = "";
         newOUDialog?.SetActive(true);
     }
@@ -428,6 +440,7 @@ public class ADUCController : MonoBehaviour
 
         var state = ServerVirtualOSManager.Instance?.ServerState;
         if (state == null) return;
+
         if (state.OrganizationalUnits.Exists(o => o.Name == name))
         {
             Debug.LogWarning($"[ADUC] OU '{name}' already exists.");
@@ -437,8 +450,10 @@ public class ADUCController : MonoBehaviour
         state.OrganizationalUnits.Add(new OUData { Name = name });
         newOUDialog?.SetActive(false);
 
-        RefreshAll();
-        if (_currentSelection == Selection.Domain) ShowDomainContent();
+        _expanded["Domain"] = true;
+        _selectedNodeId     = "Domain";
+        RebuildTree();
+        RefreshContentPanel();
 
         ActivityLogManager.Log($"Created Organizational Unit: {name}", ActivityLogManager.EntryType.Action);
     }
@@ -447,8 +462,7 @@ public class ADUCController : MonoBehaviour
 
     private void OpenNewUserDialog()
     {
-        CloseContextMenu();
-
+        contextMenu?.SetActive(false);
         _currentStep = 0;
 
         var state   = ServerVirtualOSManager.Instance?.ServerState;
@@ -458,7 +472,6 @@ public class ADUCController : MonoBehaviour
         if (createInLabel != null)
             createInLabel.text = $"Create in:  {domain}/{_selectedOU}";
 
-        // Domain dropdown — single option, always non-interactable
         if (domainDropdown != null)
         {
             domainDropdown.ClearOptions();
@@ -467,20 +480,15 @@ public class ADUCController : MonoBehaviour
             domainDropdown.interactable = false;
         }
 
-        // Clear step 0 inputs
-        if (firstNameInput     != null) firstNameInput.text     = "";
-        if (lastNameInput      != null) lastNameInput.text      = "";
-        if (initialsInput      != null) initialsInput.text      = "";
-        if (fullNameInput      != null) fullNameInput.text      = "";
-        if (userLogonNameInput != null) userLogonNameInput.text = "";
-        if (preWin2000Display  != null) preWin2000Display.text  = $"{netbios}\\";
+        if (firstNameInput      != null) firstNameInput.text      = "";
+        if (lastNameInput       != null) lastNameInput.text       = "";
+        if (initialsInput       != null) initialsInput.text       = "";
+        if (fullNameInput       != null) fullNameInput.text       = "";
+        if (userLogonNameInput  != null) userLogonNameInput.text  = "";
+        if (preWin2000Display   != null) preWin2000Display.text   = $"{netbios}\\";
+        if (passwordInput       != null) passwordInput.text       = "";
+        if (confirmPasswordInput!= null) confirmPasswordInput.text= "";
 
-        // Clear step 1 inputs
-        if (passwordInput        != null) passwordInput.text        = "";
-        if (confirmPasswordInput != null) confirmPasswordInput.text = "";
-
-        // Reset toggles to their default states
-        // NeverExpires ON by default → MustChange starts disabled
         _suppressConstraints = true;
         if (neverExpiresToggle      != null) { neverExpiresToggle.isOn      = true;  neverExpiresToggle.interactable      = true;  }
         if (mustChangeToggle        != null) { mustChangeToggle.isOn        = false; mustChangeToggle.interactable        = false; }
@@ -526,8 +534,8 @@ public class ADUCController : MonoBehaviour
         stepPanel1?.SetActive(_currentStep == 1);
         stepPanel2?.SetActive(_currentStep == 2);
 
-        if (backBtn        != null) backBtn.interactable        = _currentStep > 0;
-        if (nextFinishLabel != null) nextFinishLabel.text       = _currentStep == 2 ? "Finish" : "Next";
+        if (backBtn         != null) backBtn.interactable         = _currentStep > 0;
+        if (nextFinishLabel != null) nextFinishLabel.text         = _currentStep == 2 ? "Finish" : "Next";
     }
 
     // ── New User — validation ─────────────────────────────────────────────────
@@ -535,11 +543,7 @@ public class ADUCController : MonoBehaviour
     private bool ValidateStep0()
     {
         string logon = userLogonNameInput?.text.Trim() ?? "";
-        if (string.IsNullOrEmpty(logon))
-        {
-            Debug.LogWarning("[ADUC] User logon name is required.");
-            return false;
-        }
+        if (string.IsNullOrEmpty(logon)) { Debug.LogWarning("[ADUC] User logon name is required."); return false; }
 
         var state = ServerVirtualOSManager.Instance?.ServerState;
         if (state != null && state.UserAccounts.Exists(u =>
@@ -548,7 +552,6 @@ public class ADUCController : MonoBehaviour
             Debug.LogWarning($"[ADUC] Logon name '{logon}' already exists.");
             return false;
         }
-
         return true;
     }
 
@@ -556,19 +559,8 @@ public class ADUCController : MonoBehaviour
     {
         string pass    = passwordInput?.text        ?? "";
         string confirm = confirmPasswordInput?.text ?? "";
-
-        if (string.IsNullOrEmpty(pass))
-        {
-            Debug.LogWarning("[ADUC] Password is required.");
-            return false;
-        }
-
-        if (pass != confirm)
-        {
-            Debug.LogWarning("[ADUC] Passwords do not match.");
-            return false;
-        }
-
+        if (string.IsNullOrEmpty(pass))  { Debug.LogWarning("[ADUC] Password is required."); return false; }
+        if (pass != confirm)             { Debug.LogWarning("[ADUC] Passwords do not match."); return false; }
         return true;
     }
 
@@ -638,8 +630,13 @@ public class ADUCController : MonoBehaviour
         });
 
         newUserDialog?.SetActive(false);
-        _currentSelection = Selection.OU;
-        ShowOUContent(_selectedOU);
+
+        // Select the OU and expand it to show the new user
+        string ouId      = "OU:" + _selectedOU;
+        _selectedNodeId  = ouId;
+        _expanded[ouId]  = true;
+        RebuildTree();
+        RefreshContentPanel();
 
         string type = isAdmin ? "Administrator" : "User";
         ActivityLogManager.Log(
@@ -647,14 +644,13 @@ public class ADUCController : MonoBehaviour
             ActivityLogManager.EntryType.Action);
     }
 
-    // ── New User — auto-fill helpers ──────────────────────────────────────────
+    // ── Auto-fill helpers ─────────────────────────────────────────────────────
 
     private void AutoFillFullName()
     {
         string first = firstNameInput?.text.Trim() ?? "";
         string last  = lastNameInput?.text.Trim()  ?? "";
-        if (fullNameInput != null)
-            fullNameInput.text = (first + " " + last).Trim();
+        if (fullNameInput != null) fullNameInput.text = (first + " " + last).Trim();
     }
 
     private void AutoFillPreWin2000()
@@ -662,8 +658,7 @@ public class ADUCController : MonoBehaviour
         var state      = ServerVirtualOSManager.Instance?.ServerState;
         string netbios = GetNetBIOSName(state);
         string logon   = userLogonNameInput?.text.Trim() ?? "";
-        if (preWin2000Display != null)
-            preWin2000Display.text = $"{netbios}\\{logon}";
+        if (preWin2000Display != null) preWin2000Display.text = $"{netbios}\\{logon}";
     }
 
     private static string GetNetBIOSName(ServerDeviceState state)
@@ -673,23 +668,14 @@ public class ADUCController : MonoBehaviour
 
         if (state != null && !string.IsNullOrEmpty(state.DomainName))
         {
-            int dot = state.DomainName.IndexOf('.');
-            string prefix = dot > 0 ? state.DomainName.Substring(0, dot) : state.DomainName;
-            return prefix.ToUpper();
+            int dot    = state.DomainName.IndexOf('.');
+            string pre = dot > 0 ? state.DomainName.Substring(0, dot) : state.DomainName;
+            return pre.ToUpper();
         }
-
         return "DOMAIN";
     }
 
     // ── Toggle mutual exclusion ───────────────────────────────────────────────
-    //
-    //  Rules (matching real Windows ADUC behaviour):
-    //    NeverExpires ON   → MustChange disabled (unchecked)
-    //    CannotChange ON   → MustChange disabled (unchecked)
-    //    MustChange ON     → NeverExpires disabled (unchecked) AND CannotChange disabled (unchecked)
-    //    MustChange OFF    → re-enable NeverExpires and CannotChange
-    //    NeverExpires OFF  → re-enable MustChange only if CannotChange is also OFF
-    //    CannotChange OFF  → re-enable MustChange only if NeverExpires is also OFF
 
     private void ApplyToggleConstraints(Toggle changed)
     {
@@ -699,33 +685,25 @@ public class ADUCController : MonoBehaviour
         if (changed == neverExpiresToggle)
         {
             if (neverExpiresToggle.isOn)
-            {
-                if (mustChangeToggle != null) { mustChangeToggle.isOn = false; mustChangeToggle.interactable = false; }
-            }
+            { if (mustChangeToggle != null) { mustChangeToggle.isOn = false; mustChangeToggle.interactable = false; } }
             else
-            {
-                bool blockedByCannotChange = cannotChangeToggle != null && cannotChangeToggle.isOn;
-                if (mustChangeToggle != null) mustChangeToggle.interactable = !blockedByCannotChange;
-            }
+            { bool blocked = cannotChangeToggle != null && cannotChangeToggle.isOn;
+              if (mustChangeToggle != null) mustChangeToggle.interactable = !blocked; }
         }
         else if (changed == cannotChangeToggle)
         {
             if (cannotChangeToggle.isOn)
-            {
-                if (mustChangeToggle != null) { mustChangeToggle.isOn = false; mustChangeToggle.interactable = false; }
-            }
+            { if (mustChangeToggle != null) { mustChangeToggle.isOn = false; mustChangeToggle.interactable = false; } }
             else
-            {
-                bool blockedByNeverExpires = neverExpiresToggle != null && neverExpiresToggle.isOn;
-                if (mustChangeToggle != null) mustChangeToggle.interactable = !blockedByNeverExpires;
-            }
+            { bool blocked = neverExpiresToggle != null && neverExpiresToggle.isOn;
+              if (mustChangeToggle != null) mustChangeToggle.interactable = !blocked; }
         }
         else if (changed == mustChangeToggle)
         {
             if (mustChangeToggle.isOn)
             {
-                if (neverExpiresToggle  != null) { neverExpiresToggle.isOn  = false; neverExpiresToggle.interactable  = false; }
-                if (cannotChangeToggle  != null) { cannotChangeToggle.isOn  = false; cannotChangeToggle.interactable  = false; }
+                if (neverExpiresToggle != null) { neverExpiresToggle.isOn = false; neverExpiresToggle.interactable = false; }
+                if (cannotChangeToggle != null) { cannotChangeToggle.isOn = false; cannotChangeToggle.interactable = false; }
             }
             else
             {
@@ -737,42 +715,23 @@ public class ADUCController : MonoBehaviour
         _suppressConstraints = false;
     }
 
-    // ── Tree refresh ──────────────────────────────────────────────────────────
+    // ── Helpers ───────────────────────────────────────────────────────────────
 
-    private void RefreshAll()
+    private bool GetExpanded(string id)
     {
-        var state = ServerVirtualOSManager.Instance?.ServerState;
-        if (domainNodeLabel != null)
-            domainNodeLabel.text = !string.IsNullOrEmpty(state?.DomainName)
-                ? state.DomainName : "css.com";
-
-        foreach (Transform child in ouNodeParent) Destroy(child.gameObject);
-
-        if (state == null) return;
-        foreach (var ou in state.OrganizationalUnits)
-            SpawnOUNode(ou.Name, ouNodeParent);
-
-        if (domainChildrenGroup != null)
-            RebuildLayout(domainChildrenGroup.GetComponent<RectTransform>());
-        RebuildLayout(treePanelRect);
+        _expanded.TryGetValue(id, out bool val);
+        return val;
     }
 
-    // ── Shared OU node spawner ────────────────────────────────────────────────
-
-    private void SpawnOUNode(string ouName, Transform parent)
+    private void RebuildTreeLayout()
     {
-        var node  = Instantiate(ouNodePrefab, parent);
-        var label = node.GetComponentInChildren<TMP_Text>();
-        if (label != null) label.text = ouName;
+        if (treeNodeParent is RectTransform rt)
+            LayoutRebuilder.ForceRebuildLayoutImmediate(rt);
+    }
 
-        string captured = ouName;
-        var btn = node.GetComponentInChildren<Button>();
-        btn?.onClick.AddListener(() => SelectOU(captured));
-
-        if (btn != null)
-        {
-            var handler = btn.gameObject.AddComponent<NodeClickHandler>();
-            handler.onRightClick = () => OnOUNodeRightClick(captured);
-        }
+    private void RebuildContentLayout()
+    {
+        if (contentListParent is RectTransform rt)
+            LayoutRebuilder.ForceRebuildLayoutImmediate(rt);
     }
 }

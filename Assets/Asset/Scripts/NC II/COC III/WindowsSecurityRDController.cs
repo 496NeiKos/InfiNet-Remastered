@@ -3,13 +3,12 @@
  *  UNITY SETUP GUIDE — WindowsSecurityRDController (COC III)
  * ================================================================
  *  COMPONENT PLACEMENT
- *    Add to "Windows Security RD Panel" (starts INACTIVE).
+ *    Add to "Windows Security RD Panel" (start ACTIVE — Awake hides it).
  *    This is Stage 2 of the 3-stage Remote Desktop chain.
- *    Place as a sibling of "Remote Desktop Connection Panel" inside
- *    the Desktop Panel's App Panels group.
+ *    Place as a CHILD of "Remote Desktop Connection Panel".
  *
  *  HIERARCHY
- *    Windows Security RD Panel            ← this script here
+ *    Windows Security RD Panel            ← this script here  (child of RDCP)
  *      ├── TitleBar
  *      │     └── TitleTMP                 TMP_Text  "Windows Security"
  *      ├── Body
@@ -39,8 +38,7 @@
  *    rememberToggle → Body/RememberToggleRow/RememberToggle
  *    okBtn          → Footer/OKBtn
  *    cancelBtn      → Footer/CancelBtn
- *    rdLoading      → RDLoadingController (next panel in chain, starts INACTIVE)
- *    rdConnection   → RDConnectionAppController (previous panel in chain)
+ *    rdLoading      → RDLoadingController on the child panel
  *
  *  HOW IT WORKS
  *    Open(computerName) is called by RDConnectionAppController after
@@ -53,10 +51,10 @@
  *      • Wrong password → "The credentials that were used to connect to
  *        [ComputerName] did not work. Please try again."
  *      • Valid → sets state.RDCredentialsEntered = true,
- *        closes this panel, calls RDLoadingController.Open(computerName)
+ *        stays open while RD Loading Panel (child) shows on top
  *
- *    Cancel → closes this panel, calls RDConnectionAppController.Open()
- *    (goes back to Stage 1).
+ *    Cancel → closes this panel only; parent RDCP is still active so it
+ *    becomes visible again automatically — no need to call Open() on it.
  *
  *  IMPORTANT
  *    errorTMP must start INACTIVE in the scene (GameObject active = false).
@@ -84,8 +82,7 @@ public class WindowsSecurityRDController : MonoBehaviour
     [SerializeField] private Button cancelBtn;
 
     [Header("References")]
-    [SerializeField] private RDLoadingController       rdLoading;
-    [SerializeField] private RDConnectionAppController rdConnection;
+    [SerializeField] private RDLoadingController rdLoading;
 
     private string _computerName = "";
 
@@ -146,7 +143,8 @@ public class WindowsSecurityRDController : MonoBehaviour
         var state = mgr?.ServerState;
         if (state != null) state.RDCredentialsEntered = true;
 
-        gameObject.SetActive(false);
+        // Do NOT close this panel — RD Loading Panel is a child and will
+        // appear on top while this panel remains active.
         rdLoading?.Open(_computerName);
 
         ActivityLogManager.Log($"RD credentials accepted — starting session to {_computerName}", ActivityLogManager.EntryType.Action);
@@ -156,8 +154,9 @@ public class WindowsSecurityRDController : MonoBehaviour
 
     private void OnCancel()
     {
+        // Close this panel only — parent RDCP is still active and becomes
+        // visible again automatically; no need to call Open() on it.
         gameObject.SetActive(false);
-        rdConnection?.Open();
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

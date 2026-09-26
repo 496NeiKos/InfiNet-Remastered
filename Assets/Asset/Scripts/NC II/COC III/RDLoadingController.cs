@@ -3,10 +3,9 @@
  *  UNITY SETUP GUIDE — RDLoadingController (COC III)
  * ================================================================
  *  COMPONENT PLACEMENT
- *    Add to "RD Loading Panel" (starts INACTIVE).
+ *    Add to "RD Loading Panel" (start ACTIVE — Awake hides it).
  *    This is Stage 3 of the 3-stage Remote Desktop chain.
- *    Place as a sibling of the other RD panels inside the Desktop
- *    Panel's App Panels group.
+ *    Place as a CHILD of "Windows Security RD Panel".
  *
  *  HIERARCHY
  *    RD Loading Panel                     ← this script here
@@ -132,7 +131,12 @@ public class RDLoadingController : MonoBehaviour
         // serverManagerIcon appears on the client desktop without waiting for re-login.
         ServerVirtualOSManager.Instance?.RefreshIcons();
 
+        // Close the entire chain from inside out so every activeSelf is
+        // reset to false before the root panel closes.
         gameObject.SetActive(false);
+        WindowsSecurityRDController.Instance?.gameObject.SetActive(false);
+        RDConnectionAppController.Instance?.Close();
+
         serverManager?.Open();
 
         ActivityLogManager.Log(

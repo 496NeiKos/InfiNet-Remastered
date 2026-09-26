@@ -2,188 +2,55 @@
  * ================================================================
  *  UNITY SETUP GUIDE — DHCPConsoleController (COC III)
  * ================================================================
- *
  *  COMPONENT PLACEMENT
- *    Add to "DHCP Console Panel". START ACTIVE in the scene so Awake fires;
- *    the script deactivates itself at the end of Awake.
+ *    Add to "DHCP Console Panel" (starts ACTIVE, self-deactivates in Awake).
  *    Opened via ServerManagerController Tools → DHCP.
  *
- * ────────────────────────────────────────────────────────────────
- *  MAIN HIERARCHY
- * ────────────────────────────────────────────────────────────────
+ *  HIERARCHY  (match exactly)
  *
- *    DHCP Console Panel                  ← this script (DHCPConsoleController)
+ *    DHCP Console Panel                      ← this script
  *      ├── TitleBar
- *      │     └── CloseBtn               → closeBtn
- *      ├── TreePanel
- *      │     ├── ServerNodeLabel        (static TMP — no reference needed)
- *      │     ├── IPv4Group
- *      │     │     ├── IPv4NodeBtn      → ipv4NodeBtn
- *      │     │     └── ScopeNodesParent → scopeNodesParent
- *      │     │           (VerticalLayoutGroup + ContentSizeFitter Vertical=PreferredSize)
- *      │     │           [scope node prefabs are instantiated here at runtime]
- *      │     └── IPv6Group
- *      │           ├── IPv6NodeBtn      → ipv6NodeBtn
- *      │           └── IPv6StatusLabel  → ipv6StatusLabel  (TMP_Text)
- *      ├── ContentPanel
- *      │     ├── ScopesHeaderTMP        (static TMP — no reference needed)
- *      │     ├── ScopeListParent        → scopeListParent
- *      │     │     (VerticalLayoutGroup + ContentSizeFitter Vertical=PreferredSize)
- *      │     │     [scope row prefab is instantiated here at runtime]
- *      │     └── NoScopesLabel          → noScopesLabel  (starts ACTIVE)
- *      ├── ContextMenu                  → contextMenu  (starts INACTIVE)
- *      │     ├── NewScopeBtn            → ctxNewScopeBtn
- *      │     └── DisableIPv6Btn         → ctxDisableIPv6Btn
- *      └── New Scope Wizard Panel       → newScopeWizard
- *            (NewScopeWizardController — START ACTIVE, self-deactivates in its own Awake)
+ *      │     └── CloseBtn (Button)           → closeBtn
+ *      ├── MainArea (HorizontalLayoutGroup, child force expand H:ON)
+ *      │     ├── TreePanel (fixed width ~220, VerticalLayoutGroup)
+ *      │     │     └── TreeScrollView (ScrollView)
+ *      │     │           └── Viewport
+ *      │     │                 └── TreeContent
+ *      │     │                       VLG + ContentSizeFitter Vertical=Preferred
+ *      │     │                       anchor top-stretch, pivot (0.5,1)
+ *      │     │                       → treeNodeParent
+ *      │     └── ContentPanel (flexible, VerticalLayoutGroup)
+ *      │           └── ContentScrollView (ScrollView)
+ *      │                 └── Viewport
+ *      │                       └── ContentListContent
+ *      │                             VLG + ContentSizeFitter Vertical=Preferred
+ *      │                             anchor top-stretch, pivot (0.5,1)
+ *      │                             → contentListParent
+ *      ├── ContextMenu (starts INACTIVE)     → contextMenu
+ *      │     ├── NewScopeBtn (Button)        → ctxNewScopeBtn
+ *      │     └── AuthorizeBtn (Button)       → ctxAuthorizeBtn
+ *      └── New Scope Wizard Panel            → newScopeWizard
+ *            (NewScopeWizardController — starts ACTIVE, self-deactivates in its own Awake)
  *
- * ────────────────────────────────────────────────────────────────
- *  PREFAB 1 — scopeNodePrefab  (Tree Panel entry)
- * ────────────────────────────────────────────────────────────────
+ *  PREFABS
+ *    treeNodePrefab   — shared
+ *    contentRowPrefab — shared
  *
- *  PURPOSE
- *    Appears as a sub-node under IPv4 in the tree when a scope is created.
- *    Mirrors zoneFileEntryPrefab used by DNSManagerController exactly.
- *    Read-only — no click handler needed.
- *
- *  HIERARCHY
- *    ScopeNode  [ROOT]
- *      ├── Spacer
- *      └── ScopeLabel
- *
- *  COMPONENTS & VALUES
- *
- *    ScopeNode  [ROOT]
- *      └── RectTransform
- *      └── HorizontalLayoutGroup
- *            Child Alignment      : Middle Left
- *            Spacing              : 4
- *            Child Control Width  : false
- *            Child Control Height : true
- *            Child Force Expand W : false
- *            Child Force Expand H : true
- *      └── LayoutElement
- *            Preferred Height     : 22
- *            Flexible Width       : 1
- *
- *    Spacer  [first child]
- *      └── RectTransform
- *      └── Image
- *            Color                : white, Alpha = 0  (fully transparent — invisible)
- *            Raycast Target       : false
- *      └── LayoutElement
- *            Preferred Width      : 20
- *            Flexible Width       : 0
- *
- *    ScopeLabel  [second child]   ← GetComponentInChildren<TMP_Text>() finds this
- *      └── RectTransform
- *      └── TextMeshProUGUI
- *            Text                 : ""  (set at runtime to scope name)
- *            Font Size            : 12
- *            Alignment            : Middle Left
- *            Overflow             : Ellipsis
- *            Color                : match tree text style
- *            Raycast Target       : false
- *      └── LayoutElement
- *            Flexible Width       : 1
- *
- * ────────────────────────────────────────────────────────────────
- *  PREFAB 2 — scopeRowPrefab  (Content Panel entry)
- * ────────────────────────────────────────────────────────────────
- *
- *  PURPOSE
- *    The right-side listing of the created scope. Shows scope name, active/inactive
- *    status, and an Activate button the student clicks to activate the scope.
- *    One instance exists at a time; destroyed and recreated on each RefreshContent call.
- *
- *  CHILD ORDER IS CRITICAL
- *    GetComponentsInChildren<TMP_Text>(true) reads by index:
- *      [0] = ScopeNameTMP  → receives scope name
- *      [1] = StatusTMP     → receives "Active" or "Inactive"
- *      [2] = ActivateBtnLabel (inside ActivateBtn) → never read, but present
- *    GetComponentsInChildren<Button>(true) reads by index:
- *      [0] = ActivateBtn   → wired to ActivateScope() at runtime
- *    Do NOT add any other TMP_Text or Button outside this order.
- *
- *  HIERARCHY
- *    ScopeRow  [ROOT]
- *      ├── ScopeNameTMP
- *      ├── StatusTMP
- *      └── ActivateBtn
- *            └── ActivateBtnLabel
- *
- *  COMPONENTS & VALUES
- *
- *    ScopeRow  [ROOT]
- *      └── RectTransform
- *      └── HorizontalLayoutGroup
- *            Child Alignment      : Middle Left
- *            Spacing              : 8
- *            Child Control Width  : false
- *            Child Control Height : true
- *            Child Force Expand W : false
- *            Child Force Expand H : true
- *      └── LayoutElement
- *            Preferred Height     : 28
- *            Flexible Width       : 1
- *
- *    ScopeNameTMP  [first child]   ← TMP index [0]
- *      └── RectTransform
- *      └── TextMeshProUGUI
- *            Text                 : ""  (set at runtime to scope name)
- *            Font Size            : 13
- *            Alignment            : Middle Left
- *            Overflow             : Ellipsis
- *            Raycast Target       : false
- *      └── LayoutElement
- *            Preferred Width      : 180
- *            Flexible Width       : 1
- *
- *    StatusTMP  [second child]     ← TMP index [1]
- *      └── RectTransform
- *      └── TextMeshProUGUI
- *            Text                 : ""  (set at runtime: "Active" or "Inactive")
- *            Font Size            : 13
- *            Alignment            : Middle Center
- *            Raycast Target       : false
- *      └── LayoutElement
- *            Preferred Width      : 80
- *            Flexible Width       : 0
- *
- *    ActivateBtn  [third child]    ← Button index [0]; starts INACTIVE in prefab
- *      └── RectTransform
- *      └── Image  (button background)
- *      └── Button  (no OnClick set in prefab — wired at runtime by RefreshContent)
- *      └── LayoutElement
- *            Preferred Width      : 80
- *            Flexible Width       : 0
- *
- *      └── ActivateBtnLabel  [child of ActivateBtn]   ← TMP index [2] (never read)
- *            └── RectTransform
- *            └── TextMeshProUGUI
- *                  Text           : "Activate"
- *                  Font Size      : 12
- *                  Alignment      : Middle Center
- *                  Raycast Target : false
- *
- *  IMPORTANT — ActivateBtn starts INACTIVE in the prefab.
- *    RefreshContent uses GetComponentsInChildren<Button>(true) — the (true) argument
- *    includes inactive children. Without it, ActivateBtn would never be found.
- *    The code then calls SetActive(!state.DHCPScopeActive) to show it when inactive.
- *
- * ────────────────────────────────────────────────────────────────
  *  INSPECTOR ASSIGNMENTS
- * ────────────────────────────────────────────────────────────────
- *    closeBtn
- *    ipv4NodeBtn, ipv6NodeBtn, ipv6StatusLabel, scopeNodesParent
- *    scopeListParent, scopeNodePrefab, scopeRowPrefab, noScopesLabel
- *    contextMenu, ctxNewScopeBtn, ctxDisableIPv6Btn
- *    newScopeWizard
+ *    closeBtn          → CloseBtn
+ *    treeNodeParent    → TreeContent Transform
+ *    treeNodePrefab    → treeNodePrefab asset
+ *    contentListParent → ContentListContent Transform
+ *    contentRowPrefab  → contentRowPrefab asset
+ *    contextMenu       → ContextMenu GO
+ *    ctxNewScopeBtn    → NewScopeBtn
+ *    ctxAuthorizeBtn   → AuthorizeBtn
+ *    newScopeWizard    → NewScopeWizardController on wizard panel
+ *    selectedColor     → (0.2, 0.5, 0.9, 0.35) blue tint
  * ================================================================
  */
 
-using System.Collections;
-using TMPro;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -195,26 +62,30 @@ public class DHCPConsoleController : MonoBehaviour
     [SerializeField] private Button closeBtn;
 
     [Header("Tree")]
-    [SerializeField] private Button    ipv4NodeBtn;
-    [SerializeField] private Button    ipv6NodeBtn;
-    [SerializeField] private TMP_Text  ipv6StatusLabel;
-    [SerializeField] private Transform scopeNodesParent;
+    [SerializeField] private Transform  treeNodeParent;
+    [SerializeField] private GameObject treeNodePrefab;
 
     [Header("Content")]
-    [SerializeField] private Transform  scopeListParent;
-    [SerializeField] private GameObject scopeNodePrefab;
-    [SerializeField] private GameObject scopeRowPrefab;
-    [SerializeField] private GameObject noScopesLabel;
+    [SerializeField] private Transform  contentListParent;
+    [SerializeField] private GameObject contentRowPrefab;
 
     [Header("Context Menu")]
     [SerializeField] private GameObject contextMenu;
     [SerializeField] private Button     ctxNewScopeBtn;
-    [SerializeField] private Button     ctxDisableIPv6Btn;
+    [SerializeField] private Button     ctxAuthorizeBtn;
 
     [Header("Wizard")]
     [SerializeField] private NewScopeWizardController newScopeWizard;
 
-    private bool _scopeNodeSpawned = false;
+    [Header("Colors")]
+    [SerializeField] private Color selectedColor = new Color(0.2f, 0.5f, 0.9f, 0.35f);
+
+    // ── Private state ─────────────────────────────────────────────────────────
+
+    private const float IndentWidth = 16f;
+
+    private readonly Dictionary<string, bool> _expanded       = new Dictionary<string, bool>();
+    private string                            _selectedNodeId  = "";
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
@@ -223,11 +94,9 @@ public class DHCPConsoleController : MonoBehaviour
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
 
-        closeBtn?.onClick.AddListener(Close);
-        ipv4NodeBtn?.onClick.AddListener(OnIPv4Clicked);
-        ipv6NodeBtn?.onClick.AddListener(OnIPv6Clicked);
-        ctxNewScopeBtn?.onClick.AddListener(OpenScopeWizard);
-        ctxDisableIPv6Btn?.onClick.AddListener(DisableIPv6);
+        closeBtn       ?.onClick.AddListener(Close);
+        ctxNewScopeBtn ?.onClick.AddListener(OnNewScopeClicked);
+        ctxAuthorizeBtn?.onClick.AddListener(OnAuthorizeClicked);
 
         contextMenu?.SetActive(false);
         gameObject.SetActive(false);
@@ -237,152 +106,320 @@ public class DHCPConsoleController : MonoBehaviour
 
     public void Open()
     {
-        gameObject.SetActive(true);
+        _expanded.Clear();
+        _expanded["Server"] = true;
+        _expanded["IPv4"]   = true;
+        _selectedNodeId     = "";
+
+        contextMenu?.SetActive(false);
+
         var state = ServerVirtualOSManager.Instance?.ServerState;
         if (state != null) state.DHCPConsoleOpened = true;
 
-        CloseContextMenu();
+        gameObject.SetActive(true);
+        RebuildTree();
+        RefreshContentPanel();
 
-        if (state != null && state.DHCPScopeNameSet && !_scopeNodeSpawned)
-            SpawnScopeNode(state);
-
-        RefreshContent();
-        RefreshLayout();
         ActivityLogManager.Log("Opened DHCP Console", ActivityLogManager.EntryType.Action);
     }
 
     public void Close()
     {
-        CloseContextMenu();
+        contextMenu?.SetActive(false);
         newScopeWizard?.gameObject.SetActive(false);
         gameObject.SetActive(false);
     }
 
-    // ── Called by NewScopeWizardController on Finish ──────────────────────────
-
+    // Called by NewScopeWizardController on Finish
     public void OnWizardComplete()
     {
         var state = ServerVirtualOSManager.Instance?.ServerState;
         if (state == null) return;
 
-        SpawnScopeNode(state);
-        RefreshContent();
-        RefreshLayout();
+        _expanded["Server"] = true;
+        _expanded["IPv4"]   = true;
+        _selectedNodeId     = "IPv4";
+
+        RebuildTree();
+        RefreshContentPanel();
     }
 
-    // ── Tree node clicks ──────────────────────────────────────────────────────
+    // ── Tree ──────────────────────────────────────────────────────────────────
 
-    private void OnIPv4Clicked()
+    private void RebuildTree()
     {
+        foreach (Transform t in treeNodeParent) Destroy(t.gameObject);
+
         var state = ServerVirtualOSManager.Instance?.ServerState;
-        if (state != null && state.DHCPScopeNameSet) return;
 
-        ctxNewScopeBtn?.gameObject.SetActive(true);
-        ctxDisableIPv6Btn?.gameObject.SetActive(false);
-        contextMenu?.SetActive(true);
-    }
+        bool serverExp = GetExpanded("Server");
+        SpawnNode("Server", BuildServerFQDN(state), 0,
+            isLeaf: false, isExpanded: serverExp,
+            isSelected: _selectedNodeId == "Server",
+            leftClick: true, rightClick: true);
 
-    private void OnIPv6Clicked()
-    {
-        var state = ServerVirtualOSManager.Instance?.ServerState;
-        if (state != null && state.DHCPv6Disabled) return;
+        if (!serverExp) { RebuildTreeLayout(); return; }
 
-        ctxNewScopeBtn?.gameObject.SetActive(false);
-        ctxDisableIPv6Btn?.gameObject.SetActive(true);
-        contextMenu?.SetActive(true);
-    }
+        // ── IPv4 ──────────────────────────────────────────────────────────────
+        bool ipv4Exp = GetExpanded("IPv4");
+        SpawnNode("IPv4", "IPv4", 1,
+            isLeaf: false, isExpanded: ipv4Exp,
+            isSelected: _selectedNodeId == "IPv4",
+            leftClick: true, rightClick: true);
 
-    private void CloseContextMenu() => contextMenu?.SetActive(false);
-
-    // ── Disable DHCPv6 ────────────────────────────────────────────────────────
-
-    private void DisableIPv6()
-    {
-        CloseContextMenu();
-        var state = ServerVirtualOSManager.Instance?.ServerState;
-        if (state != null) state.DHCPv6Disabled = true;
-        if (ipv6StatusLabel != null) ipv6StatusLabel.text = "IPv6 [Disabled]";
-        ActivityLogManager.Log("DHCPv6 disabled", ActivityLogManager.EntryType.Action);
-    }
-
-    // ── Scope wizard ──────────────────────────────────────────────────────────
-
-    private void OpenScopeWizard()
-    {
-        CloseContextMenu();
-        if (newScopeWizard == null)
+        if (ipv4Exp)
         {
-            Debug.LogWarning("[DHCPConsole] newScopeWizard is not assigned in the Inspector.");
-            return;
+            bool hasScope = state != null && state.DHCPScopeNameSet;
+            if (hasScope)
+            {
+                string scopeId  = "Scope:" + state.DHCPScopeName;
+                bool   scopeExp = GetExpanded(scopeId);
+                SpawnNode(scopeId, state.DHCPScopeName, 2,
+                    isLeaf: false, isExpanded: scopeExp,
+                    isSelected: _selectedNodeId == scopeId,
+                    leftClick: true, rightClick: false);
+
+                if (scopeExp)
+                {
+                    SpawnScopeChild("Scope:" + state.DHCPScopeName + ":AddressPool",    "Address Pool",    state);
+                    SpawnScopeChild("Scope:" + state.DHCPScopeName + ":AddressLeases",  "Address Leases",  state);
+                    SpawnScopeChild("Scope:" + state.DHCPScopeName + ":Reservations",   "Reservations",    state);
+                    SpawnScopeChild("Scope:" + state.DHCPScopeName + ":ScopeOptions",   "Scope Options",   state);
+                    SpawnScopeChild("Scope:" + state.DHCPScopeName + ":Policies",       "Policies",        state);
+                }
+            }
+
+            SpawnIPv4Static("IPv4:ServerOptions", "Server Options");
+            SpawnIPv4Static("IPv4:Policies",      "Policies");
+            SpawnIPv4Static("IPv4:Filters",       "Filters");
         }
+
+        // ── IPv6 ──────────────────────────────────────────────────────────────
+        bool ipv6Exp = GetExpanded("IPv6");
+        SpawnNode("IPv6", "IPv6", 1,
+            isLeaf: false, isExpanded: ipv6Exp,
+            isSelected: _selectedNodeId == "IPv6",
+            leftClick: true, rightClick: false);
+
+        if (ipv6Exp)
+        {
+            SpawnIPv4Static("IPv6:ServerOptions", "Server Options");
+            SpawnIPv4Static("IPv6:Policies",      "Policies");
+            SpawnIPv4Static("IPv6:Filters",       "Filters");
+        }
+
+        RebuildTreeLayout();
+    }
+
+    private void SpawnScopeChild(string id, string label, ServerDeviceState state)
+    {
+        SpawnNode(id, label, 3,
+            isLeaf: true, isExpanded: false,
+            isSelected: _selectedNodeId == id,
+            leftClick: true, rightClick: false);
+    }
+
+    private void SpawnIPv4Static(string id, string label)
+    {
+        SpawnNode(id, label, 2,
+            isLeaf: true, isExpanded: false,
+            isSelected: _selectedNodeId == id,
+            leftClick: true, rightClick: false);
+    }
+
+    private void SpawnNode(string id, string label, int depth,
+                           bool isLeaf, bool isExpanded, bool isSelected,
+                           bool leftClick, bool rightClick)
+    {
+        var go = Instantiate(treeNodePrefab, treeNodeParent);
+        var ui = go.GetComponent<TreeNodeUI>();
+        if (ui == null) { Debug.LogError("[DHCP] treeNodePrefab missing TreeNodeUI."); return; }
+
+        ui.indentSpacer.preferredWidth = depth * IndentWidth;
+        ui.arrowLabel.gameObject.SetActive(!isLeaf);
+        if (!isLeaf) ui.arrowLabel.text = isExpanded ? "▼" : "▶";
+        ui.nodeLabel.text   = label;
+        ui.background.color = isSelected ? selectedColor : Color.clear;
+
+        if (!leftClick && !rightClick) return;
+
+        var handler       = go.AddComponent<NodeClickHandler>();
+        string capturedId = id;
+
+        if (leftClick)  handler.onLeftClick  = () => OnNodeLeftClick(capturedId);
+        if (rightClick) handler.onRightClick = () => OnNodeRightClick(capturedId);
+    }
+
+    // ── Tree interaction ──────────────────────────────────────────────────────
+
+    private void OnNodeLeftClick(string id)
+    {
+        contextMenu?.SetActive(false);
+
+        // Toggle expansion for non-leaf nodes
+        if (id == "Server" || id == "IPv4" || id == "IPv6" || IsScopeRootId(id))
+            _expanded[id] = !GetExpanded(id);
+
+        _selectedNodeId = id;
+        RebuildTree();
+        RefreshContentPanel();
+    }
+
+    private void OnNodeRightClick(string id)
+    {
+        var state = ServerVirtualOSManager.Instance?.ServerState;
+
+        if (id == "Server")
+        {
+            if (state == null || state.DHCPAuthorized) return;
+            ctxAuthorizeBtn?.gameObject.SetActive(true);
+            ctxNewScopeBtn?.gameObject.SetActive(false);
+            contextMenu?.SetActive(true);
+        }
+        else if (id == "IPv4")
+        {
+            if (state == null || state.DHCPScopeNameSet) return;
+            ctxNewScopeBtn?.gameObject.SetActive(true);
+            ctxAuthorizeBtn?.gameObject.SetActive(false);
+            contextMenu?.SetActive(true);
+        }
+    }
+
+    private void OnAuthorizeClicked()
+    {
+        contextMenu?.SetActive(false);
+        var state = ServerVirtualOSManager.Instance?.ServerState;
+        if (state == null) return;
+        state.DHCPAuthorized = true;
+        RefreshContentPanel();
+        ActivityLogManager.Log("DHCP Server authorized.", ActivityLogManager.EntryType.Action);
+    }
+
+    private void OnNewScopeClicked()
+    {
+        contextMenu?.SetActive(false);
+        if (newScopeWizard == null) { Debug.LogWarning("[DHCP] newScopeWizard not assigned."); return; }
         newScopeWizard.Open();
     }
 
-    // ── Scope activation (scope row Activate button) ──────────────────────────
+    // ── Content panel ─────────────────────────────────────────────────────────
+
+    private void RefreshContentPanel()
+    {
+        foreach (Transform t in contentListParent) Destroy(t.gameObject);
+
+        var state = ServerVirtualOSManager.Instance?.ServerState;
+
+        if (_selectedNodeId == "Server")
+        {
+            bool auth  = state != null && state.DHCPAuthorized;
+            bool ipv6d = state != null && state.DHCPv6Disabled;
+            SpawnContentRow("IPv4", auth  ? "Active"   : "Disabled");
+            SpawnContentRow("IPv6", ipv6d ? "Disabled" : "Active");
+        }
+        else if (_selectedNodeId == "IPv4")
+        {
+            if (state != null && state.DHCPScopeNameSet)
+            {
+                bool active = state.DHCPScopeActive;
+                SpawnContentRow(state.DHCPScopeName, active ? "Active" : "Inactive",
+                    showBtn: !active, btnLabel: "Activate",
+                    onBtnClick: ActivateScope);
+            }
+        }
+        else if (_selectedNodeId == "IPv6")
+        {
+            bool disabled = state != null && state.DHCPv6Disabled;
+            SpawnContentRow("IPv6", disabled ? "Disabled" : "Active");
+        }
+        else if (state != null && _selectedNodeId == "Scope:" + state.DHCPScopeName)
+        {
+            SpawnContentRow(state.DHCPScopeName, state.DHCPScopeActive ? "Active" : "Inactive");
+        }
+        else if (state != null && _selectedNodeId == "Scope:" + state.DHCPScopeName + ":AddressPool")
+        {
+            if (!string.IsNullOrEmpty(state.DHCPScopeStart))
+                SpawnContentRow("Start Address", state.DHCPScopeStart);
+            if (!string.IsNullOrEmpty(state.DHCPScopeEnd))
+                SpawnContentRow("End Address", state.DHCPScopeEnd);
+            if (!string.IsNullOrEmpty(state.DHCPSubnetMask))
+                SpawnContentRow("Subnet Mask", state.DHCPSubnetMask);
+        }
+        else if (state != null && _selectedNodeId == "Scope:" + state.DHCPScopeName + ":ScopeOptions")
+        {
+            foreach (string r in state.DHCPRouterList)
+                if (!string.IsNullOrEmpty(r)) SpawnContentRow("003 Router", r);
+            foreach (string d in state.DHCPDNSList)
+                if (!string.IsNullOrEmpty(d)) SpawnContentRow("006 DNS Servers", d);
+            if (!string.IsNullOrEmpty(state.DHCPParentDomain))
+                SpawnContentRow("015 DNS Domain Name", state.DHCPParentDomain);
+        }
+        // All other IDs: empty content panel
+
+        RebuildContentLayout();
+    }
 
     private void ActivateScope()
     {
         var state = ServerVirtualOSManager.Instance?.ServerState;
         if (state == null) return;
         state.DHCPScopeActive = true;
-        RefreshContent();
+        RefreshContentPanel();
         ActivityLogManager.Log("DHCP scope activated.", ActivityLogManager.EntryType.Action);
     }
 
-    // ── Tree population ───────────────────────────────────────────────────────
-
-    private void SpawnScopeNode(ServerDeviceState state)
+    private void SpawnContentRow(string col1, string col2 = "",
+                                  bool showBtn = false, string btnLabel = "",
+                                  System.Action onBtnClick = null)
     {
-        if (_scopeNodeSpawned || scopeNodePrefab == null || scopeNodesParent == null) return;
+        var go = Instantiate(contentRowPrefab, contentListParent);
+        var ui = go.GetComponent<ContentRowUI>();
+        if (ui == null) return;
 
-        var node = Instantiate(scopeNodePrefab, scopeNodesParent);
-        var tmp  = node.GetComponentInChildren<TMP_Text>(true);
-        if (tmp != null) tmp.text = state.DHCPScopeName;
+        ui.col1TMP.text = col1;
 
-        _scopeNodeSpawned = true;
-    }
+        bool hasCol2 = !string.IsNullOrEmpty(col2);
+        ui.col2TMP?.gameObject.SetActive(hasCol2);
+        if (hasCol2 && ui.col2TMP != null) ui.col2TMP.text = col2;
 
-    // ── Content refresh ───────────────────────────────────────────────────────
-
-    private void RefreshContent()
-    {
-        var state     = ServerVirtualOSManager.Instance?.ServerState;
-        bool hasScope = state != null && state.DHCPScopeNameSet;
-
-        noScopesLabel?.SetActive(!hasScope);
-
-        foreach (Transform child in scopeListParent) Destroy(child.gameObject);
-        if (!hasScope || scopeRowPrefab == null) return;
-
-        var row     = Instantiate(scopeRowPrefab, scopeListParent);
-        var labels  = row.GetComponentsInChildren<TMP_Text>(true);
-        if (labels.Length > 0) labels[0].text = state.DHCPScopeName;
-        if (labels.Length > 1) labels[1].text = state.DHCPScopeActive ? "Active" : "Inactive";
-
-        var buttons = row.GetComponentsInChildren<Button>(true);
-        if (buttons.Length > 0)
+        ui.actionBtn?.gameObject.SetActive(showBtn);
+        if (showBtn)
         {
-            buttons[0].gameObject.SetActive(!state.DHCPScopeActive);
-            buttons[0].onClick.AddListener(ActivateScope);
+            if (ui.actionBtnLabel != null) ui.actionBtnLabel.text = btnLabel;
+            if (onBtnClick != null)        ui.actionBtn?.onClick.AddListener(() => onBtnClick());
         }
     }
 
-    // ── Layout refresh ────────────────────────────────────────────────────────
+    // ── Helpers ───────────────────────────────────────────────────────────────
 
-    private void RefreshLayout() => StartCoroutine(RefreshLayoutCoroutine());
-
-    private IEnumerator RefreshLayoutCoroutine()
+    private bool IsScopeRootId(string id)
     {
-        yield return null;
+        var state = ServerVirtualOSManager.Instance?.ServerState;
+        return state != null && id == "Scope:" + state.DHCPScopeName;
+    }
 
-        if (scopeNodesParent != null)
-            LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)scopeNodesParent);
+    private static string BuildServerFQDN(ServerDeviceState state)
+    {
+        string name   = state != null && !string.IsNullOrEmpty(state.ComputerName) ? state.ComputerName : "SERVER";
+        string domain = state != null && !string.IsNullOrEmpty(state.DomainName)   ? state.DomainName   : "domain.local";
+        return $"{name}.{domain}";
+    }
 
-        var ipv4Group = scopeNodesParent?.parent as RectTransform;
-        if (ipv4Group != null)
-            LayoutRebuilder.ForceRebuildLayoutImmediate(ipv4Group);
+    private bool GetExpanded(string id)
+    {
+        _expanded.TryGetValue(id, out bool val);
+        return val;
+    }
 
-        if (scopeListParent != null)
-            LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)scopeListParent);
+    private void RebuildTreeLayout()
+    {
+        if (treeNodeParent is RectTransform rt)
+            LayoutRebuilder.ForceRebuildLayoutImmediate(rt);
+    }
+
+    private void RebuildContentLayout()
+    {
+        if (contentListParent is RectTransform rt)
+            LayoutRebuilder.ForceRebuildLayoutImmediate(rt);
     }
 }

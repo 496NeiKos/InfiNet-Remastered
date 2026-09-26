@@ -18,7 +18,7 @@
  *    (Managed by ServerVirtualOSManager.RefreshDesktopIcons)
  *
  *  HIERARCHY
- *    Remote Desktop Connection Panel       ← this script here
+ *    Remote Desktop Connection Panel       ← this script here  (start ACTIVE)
  *      ├── TitleBar
  *      │     ├── TitleTMP                  TMP_Text  "Remote Desktop Connection"
  *      │     └── CloseBtn                  Button  → closeBtn
@@ -33,20 +33,29 @@
  *      │           (read-only, auto-filled: "NETBIOS\username")
  *      ├── StatusTMP                       TMP_Text  → statusTMP
  *      │     (error/status messages — starts with text "")
- *      └── Footer
- *            ├── ConnectBtn                Button  → connectBtn  label: "Connect"
- *            └── HelpBtn                   Button  → helpBtn     label: "Help"
- *                  interactable: false
+ *      ├── Footer
+ *      │     ├── ConnectBtn                Button  → connectBtn  label: "Connect"
+ *      │     └── HelpBtn                   Button  → helpBtn     label: "Help"
+ *      │           interactable: false
+ *      └── Windows Security RD Panel       ← child panel (start ACTIVE — Awake hides it)
+ *            └── RD Loading Panel          ← grandchild panel (start ACTIVE — Awake hides it)
+ *
+ *  NESTING RULE
+ *    All three RD panels start ACTIVE in the editor so their Awake() runs at
+ *    scene load and wires buttons. Each Awake calls SetActive(false) on itself.
+ *    When Connect() validates successfully, this panel stays OPEN while
+ *    Windows Security RD Panel (child) shows on top. This panel only closes
+ *    itself after the full RD session is established (called by RDLoadingController).
  *
  *  INSPECTOR ASSIGNMENTS
- *    closeBtn       → TitleBar/CloseBtn
- *    computerInput  → Body/ComputerInput (TMP_InputField)
- *    hintTMP        → Body/HintTMP
- *    usernameTMP    → Body/UsernameTMP
- *    statusTMP      → StatusTMP
- *    connectBtn     → Footer/ConnectBtn
- *    helpBtn        → Footer/HelpBtn
- *    windowsSecurity → WindowsSecurityRDController (sibling panel, starts INACTIVE)
+ *    closeBtn        → TitleBar/CloseBtn
+ *    computerInput   → Body/ComputerInput (TMP_InputField)
+ *    hintTMP         → Body/HintTMP
+ *    usernameTMP     → Body/UsernameTMP
+ *    statusTMP       → StatusTMP
+ *    connectBtn      → Footer/ConnectBtn
+ *    helpBtn         → Footer/HelpBtn
+ *    windowsSecurity → WindowsSecurityRDController on the child panel
  *
  *  WIRING
  *    rdConnectionIcon desktop Button → OnClick → RDConnectionAppController.Open()
@@ -184,8 +193,9 @@ public class RDConnectionAppController : MonoBehaviour
         // All validations passed
         if (state != null) state.RDComputerNameEntered = true;
 
+        // Do NOT close this panel — Windows Security RD Panel is a child and
+        // will appear on top while this panel remains the active root of the chain.
         string computerName = !string.IsNullOrEmpty(state?.ComputerName) ? state.ComputerName : input;
-        gameObject.SetActive(false);
         windowsSecurity?.Open(computerName);
 
         ActivityLogManager.Log($"RD Connection: validated — opening Windows Security for {input}", ActivityLogManager.EntryType.Action);
