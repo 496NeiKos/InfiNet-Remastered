@@ -1,4 +1,4 @@
-﻿%YAML 1.1
+%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!1 &779371497516179726
 GameObject:
@@ -205,6 +205,7 @@ MonoBehaviour:
   pendingSprite: {fileID: 8227254658316489142, guid: adfea4553fc64f341a95d6fb5be0b3b7, type: 3}
   emptySprite: {fileID: 7368833634316579776, guid: bfe439adba61c234a82ab5110f06c7b3, type: 3}
   screwdriverDuration: 1
+  displayName: 
   coverController: {fileID: 0}
 --- !u!1 &995814639256383670
 GameObject:
@@ -379,6 +380,7 @@ MonoBehaviour:
   pendingSprite: {fileID: 8227254658316489142, guid: adfea4553fc64f341a95d6fb5be0b3b7, type: 3}
   emptySprite: {fileID: 7368833634316579776, guid: bfe439adba61c234a82ab5110f06c7b3, type: 3}
   screwdriverDuration: 1
+  displayName: 
   coverController: {fileID: 0}
 --- !u!1 &1125676675873344204
 GameObject:
@@ -553,6 +555,7 @@ MonoBehaviour:
   pendingSprite: {fileID: 8227254658316489142, guid: adfea4553fc64f341a95d6fb5be0b3b7, type: 3}
   emptySprite: {fileID: 7368833634316579776, guid: bfe439adba61c234a82ab5110f06c7b3, type: 3}
   screwdriverDuration: 1
+  displayName: 
   coverController: {fileID: 0}
 --- !u!1 &1820356063017265982
 GameObject:
@@ -649,7 +652,7 @@ SpriteRenderer:
   m_Size: {x: 1, y: 1}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 1
+  m_WasSpriteAssigned: 0
   m_SpriteSortPoint: 0
 --- !u!61 &2348670716774135780
 BoxCollider2D:
@@ -709,7 +712,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fa1aa9c3dff636b4a96cd407c467e7de, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
-  editingPanel: {fileID: 0}
 --- !u!114 &8731543936453371572
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -723,6 +725,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DragPrefab
   hardwareHolder: {fileID: 0}
+  workspaceProxy: {fileID: 0}
+  displayName: 
+  canPlaceInWorkspace: 1
 --- !u!114 &5083438734142553130
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -735,6 +740,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b287c73e2cd71be4c9d3d167e2cfc87b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MotherboardController
+  indicatorSources: []
+  cableIndicators: []
+  indicators: {fileID: 0}
 --- !u!114 &8871422822920419828
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -749,6 +757,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MotherboardPhaseManager
   phase1Root: {fileID: 3483325912767561985}
   phase2Root: {fileID: 779371497516179726}
+  gpuPhase1CableInteraction: {fileID: 0}
+  frontPanelConnectorInteraction: {fileID: 0}
 --- !u!1 &2043135424166710797
 GameObject:
   m_ObjectHideFlags: 0
@@ -928,11 +938,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 323ecceffc034f04d81451bb4aefde33, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CablePort
-  installedSprite: {fileID: -527664293115241574, guid: 8712f5bc2ae8adc45b3616680bf18986, type: 3}
-  uninstalledSprite: {fileID: 6580451491421541301, guid: 2a5c80e9508c58a40be5c76071253c0f, type: 3}
-  detachDuration: 1
+  acceptedCableTypes: []
   cableType: Cable3
-  cablePrefab: {fileID: 8579413882440704509, guid: 41b2fa0b25449854cb950d71da338a57, type: 3}
+  startEmpty: 0
+  suppressActivityLog: 0
+  isLoosePort: 0
+  prerequisitePort: {fileID: 0}
+  prerequisiteSlot: {fileID: 0}
+  gpuController: {fileID: 0}
+  hddController: {fileID: 0}
+  motherboardController: {fileID: 0}
 --- !u!1 &2245074796273777282
 GameObject:
   m_ObjectHideFlags: 0
@@ -1024,7 +1039,7 @@ SpriteRenderer:
   m_Size: {x: 1, y: 1}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 1
+  m_WasSpriteAssigned: 0
   m_SpriteSortPoint: 0
 --- !u!1 &2754773823974629885
 GameObject:
@@ -1529,11 +1544,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 323ecceffc034f04d81451bb4aefde33, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CablePort
-  installedSprite: {fileID: -527664293115241574, guid: 8712f5bc2ae8adc45b3616680bf18986, type: 3}
-  uninstalledSprite: {fileID: 6580451491421541301, guid: 2a5c80e9508c58a40be5c76071253c0f, type: 3}
-  detachDuration: 1
+  acceptedCableTypes: []
   cableType: Cable4
-  cablePrefab: {fileID: 8579413882440704509, guid: cd02f848cc6e2a04bb33ddb82b61bbfc, type: 3}
+  startEmpty: 0
+  suppressActivityLog: 0
+  isLoosePort: 0
+  prerequisitePort: {fileID: 0}
+  prerequisiteSlot: {fileID: 0}
+  gpuController: {fileID: 0}
+  hddController: {fileID: 0}
+  motherboardController: {fileID: 0}
 --- !u!1 &3483325912767561985
 GameObject:
   m_ObjectHideFlags: 0
@@ -1746,11 +1766,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 323ecceffc034f04d81451bb4aefde33, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CablePort
-  installedSprite: {fileID: -527664293115241574, guid: 8712f5bc2ae8adc45b3616680bf18986, type: 3}
-  uninstalledSprite: {fileID: 6580451491421541301, guid: 2a5c80e9508c58a40be5c76071253c0f, type: 3}
-  detachDuration: 1
+  acceptedCableTypes: []
   cableType: Cable2
-  cablePrefab: {fileID: 8579413882440704509, guid: 9977b1789cc33c84eae7ee18b4b434a8, type: 3}
+  startEmpty: 0
+  suppressActivityLog: 0
+  isLoosePort: 0
+  prerequisitePort: {fileID: 0}
+  prerequisiteSlot: {fileID: 0}
+  gpuController: {fileID: 0}
+  hddController: {fileID: 0}
+  motherboardController: {fileID: 0}
 --- !u!1 &4650241643145990624
 GameObject:
   m_ObjectHideFlags: 0
@@ -1965,11 +1990,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 323ecceffc034f04d81451bb4aefde33, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CablePort
-  installedSprite: {fileID: -527664293115241574, guid: 8712f5bc2ae8adc45b3616680bf18986, type: 3}
-  uninstalledSprite: {fileID: 6580451491421541301, guid: 2a5c80e9508c58a40be5c76071253c0f, type: 3}
-  detachDuration: 1
+  acceptedCableTypes: []
   cableType: Cable1
-  cablePrefab: {fileID: 8579413882440704509, guid: d128e480e312b6f4ebf7a079ab3d29ab, type: 3}
+  startEmpty: 0
+  suppressActivityLog: 0
+  isLoosePort: 0
+  prerequisitePort: {fileID: 0}
+  prerequisiteSlot: {fileID: 0}
+  gpuController: {fileID: 0}
+  hddController: {fileID: 0}
+  motherboardController: {fileID: 0}
 --- !u!1 &7372706424193945778
 GameObject:
   m_ObjectHideFlags: 0
@@ -2321,6 +2351,7 @@ MonoBehaviour:
   pendingSprite: {fileID: 8227254658316489142, guid: adfea4553fc64f341a95d6fb5be0b3b7, type: 3}
   emptySprite: {fileID: 7368833634316579776, guid: bfe439adba61c234a82ab5110f06c7b3, type: 3}
   screwdriverDuration: 1
+  displayName: 
   coverController: {fileID: 0}
 --- !u!1001 &671180470677821208
 PrefabInstance:
