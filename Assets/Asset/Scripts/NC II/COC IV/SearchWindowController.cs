@@ -34,13 +34,14 @@
  *      │           └── Windows Security Entry → windowsSecurityEntry  (INACTIVE)
  *      │                 ├── AppNameTMP   "Windows Security"
  *      │                 ├── CategoryTMP  "System"
- *      │                 └── OpenBtn      → windowsSecurityBtn  (interactable = FALSE — future topic)
+ *      │                 └── OpenBtn      → windowsSecurityBtn  (interactable = TRUE — enable now)
  *      │
  *      ├── Desktop Icons
  *      └── App Panels
  *            ├── System Protection Chain  (SystemProtectionController)
- *            ├── Disk Cleanup Chain       (DiskCleanupController)  ← NEW
- *            └── Defrag Chain             (DefragController)        ← NEW
+ *            ├── Disk Cleanup Chain       (DiskCleanupController)
+ *            ├── Defrag Chain             (DefragController)
+ *            └── Windows Security Chain   (WindowsSecurityController)  ← NEW
  *
  *  INSPECTOR ASSIGNMENTS
  *    searchBarBtn               Button on the Search Bar in Taskbar
@@ -50,21 +51,21 @@
  *    searchInput                TMP_InputField inside the panel
  *    restorePointEntry          Parent GO of the "Create a restore point" result row
  *    diskCleanupEntry           Parent GO of the "Disk Cleanup" result row
- *    defragEntry                Parent GO of the "Defragment and Optimize Drives" result row (NEW)
+ *    defragEntry                Parent GO of the "Defragment and Optimize Drives" result row
  *    windowsSecurityEntry       Parent GO of the "Windows Security" result row
  *    restorePointBtn            Button inside restorePointEntry
  *    diskCleanupBtn             Button inside diskCleanupEntry    (set interactable = TRUE)
  *    defragBtn                  Button inside defragEntry         (set interactable = true)
- *    windowsSecurityBtn         Button inside windowsSecurityEntry (leave interactable = false)
+ *    windowsSecurityBtn         Button inside windowsSecurityEntry (set interactable = TRUE — enable now)
  *    startMenuController        StartMenuController reference
  *    systemProtectionController SystemProtectionController reference
- *    diskCleanupController      DiskCleanupController reference   (NEW — drag from scene)
- *    defragController           DefragController reference        (NEW — drag from scene)
+ *    diskCleanupController      DiskCleanupController reference
+ *    defragController           DefragController reference
+ *    windowsSecurityController  WindowsSecurityController reference  (NEW — drag from scene)
  *
  *  HOW IT WORKS
  *    Typing filters all entries by substring match against keyword arrays.
  *    Clicking an active entry closes the search window and opens its controller.
- *    Windows Security remains non-interactable (future topic).
  * ================================================================
  */
 
@@ -102,6 +103,7 @@ public class SearchWindowController : MonoBehaviour
     [SerializeField] private SystemProtectionController  systemProtectionController;
     [SerializeField] private DiskCleanupController       diskCleanupController;
     [SerializeField] private DefragController            defragController;
+    [SerializeField] private WindowsSecurityController   windowsSecurityController;
 
     // Keywords per app entry (all lowercase)
     private static readonly string[] RestorePointKeywords    = { "create a restore point", "restore point", "restore", "system protection" };
@@ -118,6 +120,7 @@ public class SearchWindowController : MonoBehaviour
         restorePointBtn?.onClick.AddListener(OpenRestorePoint);
         diskCleanupBtn?.onClick.AddListener(OpenDiskCleanup);
         defragBtn?.onClick.AddListener(OpenDefrag);
+        windowsSecurityBtn?.onClick.AddListener(OpenWindowsSecurity);
 
         searchWindowPanel?.SetActive(false);
         overlay?.SetActive(false);
@@ -150,12 +153,12 @@ public class SearchWindowController : MonoBehaviour
     private void OnSearchChanged(string value)
     {
         string lower = value.ToLowerInvariant().Trim();
-        bool   empty = string.IsNullOrEmpty(lower);
+        bool   ready = lower.Length >= 3;
 
-        restorePointEntry?.SetActive(!empty && Matches(lower, RestorePointKeywords));
-        diskCleanupEntry?.SetActive(!empty && Matches(lower, DiskCleanupKeywords));
-        defragEntry?.SetActive(!empty && Matches(lower, DefragKeywords));
-        windowsSecurityEntry?.SetActive(!empty && Matches(lower, WindowsSecurityKeywords));
+        restorePointEntry?.SetActive(ready && Matches(lower, RestorePointKeywords));
+        diskCleanupEntry?.SetActive(ready && Matches(lower, DiskCleanupKeywords));
+        defragEntry?.SetActive(ready && Matches(lower, DefragKeywords));
+        windowsSecurityEntry?.SetActive(ready && Matches(lower, WindowsSecurityKeywords));
     }
 
     private static bool Matches(string input, string[] keywords)
@@ -182,5 +185,11 @@ public class SearchWindowController : MonoBehaviour
     {
         CloseSearch();
         defragController?.Open();
+    }
+
+    private void OpenWindowsSecurity()
+    {
+        CloseSearch();
+        windowsSecurityController?.Open();
     }
 }
