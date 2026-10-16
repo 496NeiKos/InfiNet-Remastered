@@ -95,7 +95,11 @@ public class WindowsSecurityToastController : MonoBehaviour
         gameObject.SetActive(false);
     }
 
-    private void Dismiss() => Hide();
+    private void Dismiss()
+    {
+        WindowsSecurityController.Instance?.MarkToastDismissed();
+        Hide();
+    }
 
     private IEnumerator SlideIn()
     {

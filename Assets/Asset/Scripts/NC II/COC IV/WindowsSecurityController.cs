@@ -172,6 +172,19 @@ public class WindowsSecurityController : MonoBehaviour
 
     private const int VtpNavIndex = 1;
 
+    // ── Singleton ─────────────────────────────────────────────────────────────
+
+    public static WindowsSecurityController Instance { get; private set; }
+
+    // ── Task State ────────────────────────────────────────────────────────────
+
+    public bool VTPSectionOpened   { get; private set; }
+    public bool QuickScanStarted   { get; private set; }
+    public bool QuickScanCompleted { get; private set; }
+    public bool ToastDismissed     { get; private set; }
+
+    public void MarkToastDismissed() => ToastDismissed = true;
+
     // ── Runtime State ─────────────────────────────────────────────────────────
 
     private ScanState      _scanState;
@@ -185,6 +198,9 @@ public class WindowsSecurityController : MonoBehaviour
 
     private void Awake()
     {
+        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
+        Instance = this;
+
         closeBtn?.onClick.AddListener(CloseChain);
 
         for (int i = 0; i < navButtons.Length; i++)
@@ -231,6 +247,7 @@ public class WindowsSecurityController : MonoBehaviour
 
         if (index == VtpNavIndex)
         {
+            VTPSectionOpened = true;
             placeholderContentPanel?.SetActive(false);
             vtpContentPanel?.SetActive(true);
             if (scanSlider != null)
@@ -284,6 +301,7 @@ public class WindowsSecurityController : MonoBehaviour
 
     private void StartScan()
     {
+        QuickScanStarted = true;
         _scanState       = ScanState.Scanning;
         _scanTargetFiles = UnityEngine.Random.Range(8000, 25001);
         _currentFiles    = 0;
@@ -367,6 +385,7 @@ public class WindowsSecurityController : MonoBehaviour
             FilesScanned   = _currentFiles,
         };
 
+        QuickScanCompleted = true;
         _scanState = ScanState.Complete;
         SetScanBtnLabel("Quick Scan");
         RefreshVtpTMP();

@@ -117,6 +117,16 @@ public class DefragController : MonoBehaviour
         },
     };
 
+    // ── Singleton ─────────────────────────────────────────────────────────────
+
+    public static DefragController Instance { get; private set; }
+
+    // ── Task State ────────────────────────────────────────────────────────────
+
+    public bool AnalyzeStarted   { get; private set; }
+    public bool OptimizeStarted  { get; private set; }
+    public bool OptimizeCompleted { get; private set; }
+
     // ── Runtime State ─────────────────────────────────────────────────────────
 
     private readonly List<DefragDriveRowUI> _spawnedRows = new List<DefragDriveRowUI>();
@@ -129,6 +139,9 @@ public class DefragController : MonoBehaviour
 
     private void Awake()
     {
+        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
+        Instance = this;
+
         analyzeBtn?.onClick.AddListener(OnAnalyze);
         optimizeBtn?.onClick.AddListener(OnOptimize);
         stopBtn?.onClick.AddListener(OnStop);
@@ -195,6 +208,7 @@ public class DefragController : MonoBehaviour
     {
         if (_selectedRow == null) return;
 
+        AnalyzeStarted = true;
         SetInteractable(analyzeBtn,  false);
         SetInteractable(optimizeBtn, false);
 
@@ -211,6 +225,8 @@ public class DefragController : MonoBehaviour
     private void OnOptimize()
     {
         if (_selectedRow == null) return;
+
+        OptimizeStarted = true;
 
         // Both action buttons hide; Stop takes their place
         if (analyzeBtn  != null) analyzeBtn.gameObject.SetActive(false);
@@ -283,6 +299,8 @@ public class DefragController : MonoBehaviour
         _selectedRow.UpdateStatus(completionStatus);
 
         RestoreActionButtons();
+
+        if (_isOptimizing) OptimizeCompleted = true;
 
         string opLabel = _isOptimizing ? "Optimization" : "Analysis";
         ActivityLogManager.Log($"{opLabel} of {_selectedRow.Entry.DriveDisplay} complete.", ActivityLogManager.EntryType.Action);

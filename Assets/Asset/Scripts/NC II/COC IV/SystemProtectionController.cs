@@ -258,6 +258,20 @@ public class SystemProtectionController : MonoBehaviour
     [Header("Prefab")]
     [SerializeField] private GameObject restorePointRowPrefab;
 
+    // ── Singleton ─────────────────────────────────────────────────────────────
+
+    public static SystemProtectionController Instance { get; private set; }
+
+    // ── Task State ────────────────────────────────────────────────────────────
+
+    public bool ConfigureOKClicked    { get; private set; }
+    public bool CreateClicked         { get; private set; }
+    public bool SuccessPanelClosed    { get; private set; }
+    public bool SPCChooseDifferentOn  { get; private set; }
+    public bool SPCPhase2NextClicked  { get; private set; }
+    public bool SPCFinishClicked      { get; private set; }
+    public bool SPCRestartTriggered   { get; private set; }
+
     // ── Runtime State ─────────────────────────────────────────────────────────
 
     private bool  _protectionEnabled = true;
@@ -278,6 +292,9 @@ public class SystemProtectionController : MonoBehaviour
 
     private void Awake()
     {
+        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
+        Instance = this;
+
         // System Properties
         sysPropsOKBtn?.onClick.AddListener(CloseChain);
         sysPropsCancelBtn?.onClick.AddListener(CloseChain);
@@ -307,7 +324,7 @@ public class SystemProtectionController : MonoBehaviour
         phase1CancelBtn?.onClick.AddListener(CloseWizard);
         phase1NextBtn?.onClick.AddListener(OnPhase1Next);
         recommendedRestoreToggle?.onValueChanged.AddListener(_ => RefreshPhase1Next());
-        chooseDifferentToggle?.onValueChanged.AddListener(_ => RefreshPhase1Next());
+        chooseDifferentToggle?.onValueChanged.AddListener(v => { if (v) SPCChooseDifferentOn = true; RefreshPhase1Next(); });
 
         // Wizard — Phase 2
         phase2BackBtn?.onClick.AddListener(ShowPhase1);
@@ -406,6 +423,7 @@ public class SystemProtectionController : MonoBehaviour
 
     private void CommitConfig()
     {
+        ConfigureOKClicked = true;
         _protectionEnabled = turnOnToggle != null && turnOnToggle.isOn;
         _maxUsagePercent   = _tempMaxUsagePercent;
         CloseConfigPanel();
@@ -433,6 +451,7 @@ public class SystemProtectionController : MonoBehaviour
 
     private void OnCreateClicked()
     {
+        CreateClicked = true;
         string name = nameInput != null ? nameInput.text.Trim() : "Restore Point";
         createDialogPanel?.SetActive(false);
         loadingPanel?.SetActive(true);
@@ -472,6 +491,7 @@ public class SystemProtectionController : MonoBehaviour
 
     private void CloseSuccessPanel()
     {
+        SuccessPanelClosed = true;
         successPanel?.SetActive(false);
         RefreshSystemPropertiesPanel();
         systemPropertiesPanel?.SetActive(true);
@@ -577,6 +597,7 @@ public class SystemProtectionController : MonoBehaviour
     private void OnPhase2Next()
     {
         if (_selectedEntry == null) return;
+        SPCPhase2NextClicked = true;
         wizardPhase2?.SetActive(false);
         ShowPhase3();
     }
@@ -611,6 +632,7 @@ public class SystemProtectionController : MonoBehaviour
 
     private void OnPhase3Finish()
     {
+        SPCFinishClicked = true;
         wizardPhase3?.SetActive(false);
         warningDialog?.SetActive(true);
     }
@@ -621,6 +643,7 @@ public class SystemProtectionController : MonoBehaviour
     {
         CleanupPhase2Rows();
         HideAll();
+        SPCRestartTriggered = true;
         gameObject.SetActive(false);
         ActivityLogManager.Log("System Restore initiated — restarting.", ActivityLogManager.EntryType.Action);
         ServerVirtualOSManager.Instance?.TriggerRestart();

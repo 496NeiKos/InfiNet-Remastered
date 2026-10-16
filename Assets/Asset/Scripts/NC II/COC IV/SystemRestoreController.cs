@@ -229,6 +229,21 @@ public class SystemRestoreController : MonoBehaviour
         new RestorePointEntry { DateTime = "9/28/2026 8:00 AM",   Name = "Device Driver Installation", Type = "Install",         IsHiddenByDefault = true  },
     };
 
+    // ── Singleton ─────────────────────────────────────────────────────────────
+
+    public static SystemRestoreController Instance { get; private set; }
+
+    // ── Task State ────────────────────────────────────────────────────────────
+
+    public bool RunPanelOpen       { get; private set; }
+    public bool Panel1Open         { get; private set; }
+    public bool SRPanel2Shown      { get; private set; }
+    public bool ShowMoreToggled    { get; private set; }
+    public bool ScanAffectedClicked { get; private set; }
+    public bool SRConfirmShown     { get; private set; }
+    public bool SRFinishClicked    { get; private set; }
+    public bool SRRestartTriggered { get; private set; }
+
     // ── Runtime State ─────────────────────────────────────────────────────────
 
     private RestorePointRowUI                _selectedRow;
@@ -241,6 +256,9 @@ public class SystemRestoreController : MonoBehaviour
 
     private void Awake()
     {
+        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
+        Instance = this;
+
         // Run Panel
         runOKBtn?.onClick.AddListener(OnRunOK);
         runCancelBtn?.onClick.AddListener(CloseChain);
@@ -299,6 +317,7 @@ public class SystemRestoreController : MonoBehaviour
 
     private void ShowRunPanel()
     {
+        RunPanelOpen = true;
         HideRunError();
         if (runInput != null) runInput.text = "";
         runPanel?.SetActive(true);
@@ -337,6 +356,8 @@ public class SystemRestoreController : MonoBehaviour
 
     private void ShowPanel1(bool resetToggle)
     {
+        Panel1Open = true;
+
         if (resetToggle)
         {
             recommendedToggle?.SetIsOnWithoutNotify(true);
@@ -383,6 +404,7 @@ public class SystemRestoreController : MonoBehaviour
 
     private void ShowPanel2()
     {
+        SRPanel2Shown = true;
         EnsureRowsInitialized();
         UpdateP2ButtonStates();
         panel2?.SetActive(true);
@@ -422,6 +444,8 @@ public class SystemRestoreController : MonoBehaviour
 
     private void OnShowMoreChanged(bool isOn)
     {
+        if (isOn) ShowMoreToggled = true;
+
         foreach (RestorePointRowUI row in _spawnedRows)
         {
             if (row == null || !row.Entry.IsHiddenByDefault) continue;
@@ -460,6 +484,7 @@ public class SystemRestoreController : MonoBehaviour
 
     private void OpenScanPopup()
     {
+        ScanAffectedClicked = true;
         scanPopup?.SetActive(true);
         ActivityLogManager.Log("Opened Scan for Affected Programs", ActivityLogManager.EntryType.Action);
     }
@@ -475,6 +500,8 @@ public class SystemRestoreController : MonoBehaviour
     {
         // Safety guard — should never be null at this point in the flow
         if (_selectedRow == null) return;
+
+        SRConfirmShown = true;
 
         if (p3TimeTMP != null) p3TimeTMP.text = _selectedRow.Entry.DateTime;
         if (p3DescTMP != null) p3DescTMP.text = _selectedRow.Entry.Name;
@@ -494,6 +521,7 @@ public class SystemRestoreController : MonoBehaviour
 
     private void OnPanel3Finish()
     {
+        SRFinishClicked = true;
         panel3?.SetActive(false);
         ShowPanel4();
         ActivityLogManager.Log($"System Restore initiated — restore point: {_selectedRow?.Entry.Name}", ActivityLogManager.EntryType.Action);
@@ -530,6 +558,7 @@ public class SystemRestoreController : MonoBehaviour
         yield return new WaitForSeconds(completionHoldSeconds);
 
         _restoreCoroutine = null;
+        SRRestartTriggered = true;
         ServerVirtualOSManager.Instance?.TriggerRestart();
     }
 
