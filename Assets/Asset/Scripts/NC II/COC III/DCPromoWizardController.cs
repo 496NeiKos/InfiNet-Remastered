@@ -674,8 +674,6 @@ public class DCPromoWizardController : MonoBehaviour
             state.DomainName            = _enteredDomainName;
             state.NetBIOSName           = _computedNetBIOS;
             state.DCPromoDeploymentType = GetDeploymentTypeString();
-            state.DNSCheckedInDCPromo   = _dnsInstallSelected;
-            state.DNSInstalled          = _dnsInstallSelected;
             state.ForestFunctionalLevel = GetDropdownText(forestLevelDropdown);
             state.DomainFunctionalLevel = GetDropdownText(domainLevelDropdown);
             state.DSRMPassword          = dsrmPasswordInput != null ? dsrmPasswordInput.text : "";

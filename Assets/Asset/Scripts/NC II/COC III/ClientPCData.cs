@@ -24,4 +24,16 @@ public class ClientPCData
     [NonSerialized] public string JoinedDomain        = "";
     [NonSerialized] public string CurrentLoggedInUser = "";
     [NonSerialized] public bool   FirstBootDone       = false;
+
+    // ── Client-side navigation latches ────────────────────────────────────────
+
+    [NonSerialized] public bool ClientLocalUserLoggedIn   = false; // local user signed in before domain join
+    [NonSerialized] public bool ClientSettingsOpened      = false;
+    [NonSerialized] public bool ClientSettingsAboutOpened = false;
+    [NonSerialized] public bool ClientAdvancedSysOpened   = false; // Advanced System Settings dialog
+    [NonSerialized] public bool ClientDomainChangeOpened  = false; // Computer Name/Domain Changes dialog
+    [NonSerialized] public bool ClientDomainNameEntered   = false; // Domain radio toggled + name typed
+    [NonSerialized] public bool ClientDomainCredsEntered  = false; // Server credentials entered
+    [NonSerialized] public bool ClientOtherUserClicked    = false; // "Other Users" pressed at login screen
+    [NonSerialized] public bool ClientDomainUserSelected  = false; // domain user selected at login
 }

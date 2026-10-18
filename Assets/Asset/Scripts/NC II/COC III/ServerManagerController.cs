@@ -184,7 +184,6 @@ public class ServerManagerController : MonoBehaviour
     [SerializeField] private Button toolDNSBtn;
     [SerializeField] private Button toolDHCPBtn;
     [SerializeField] private Button toolGPMBtn;
-    [SerializeField] private Button toolFSRMBtn;
     [SerializeField] private Button toolPrintMgmtBtn;
     [SerializeField] private Button toolRDSBtn;
 
@@ -235,7 +234,6 @@ public class ServerManagerController : MonoBehaviour
     [SerializeField] private ADUCController            aduc;
     [SerializeField] private DHCPConsoleController     dhcp;
     [SerializeField] private GroupPolicyController     gpm;
-    [SerializeField] private FileServerRMController    fsrm;
     [SerializeField] private PrintManagementController printMgmt;
 
     // ── Runtime ───────────────────────────────────────────────────────────────
@@ -260,7 +258,6 @@ public class ServerManagerController : MonoBehaviour
         toolADUCBtn?.onClick.AddListener(()  => { CloseToolsMenu(); aduc?.Open(); });
         toolDHCPBtn?.onClick.AddListener(()  => { CloseToolsMenu(); dhcp?.Open(); });
         toolGPMBtn?.onClick.AddListener(()   => { CloseToolsMenu(); gpm?.Open(); });
-        toolFSRMBtn?.onClick.AddListener(()  => { CloseToolsMenu(); fsrm?.Open(); });
         toolPrintMgmtBtn?.onClick.AddListener(() => { CloseToolsMenu(); printMgmt?.Open(); });
         toolRDSBtn?.onClick.AddListener(() =>
         {
@@ -440,7 +437,6 @@ public class ServerManagerController : MonoBehaviour
         ServerRole.DNS                   => s.DNSInstalled,
         ServerRole.ADDS                  => s.ADDSInstalled,
         ServerRole.DHCP                  => s.DHCPInstalled,
-        ServerRole.FileServices          => s.FileServicesInstalled,
         ServerRole.PrintServices         => s.PrintServicesInstalled,
         ServerRole.RemoteDesktopServices => s.RDServicesInstalled,
         _                                => false
@@ -473,7 +469,6 @@ public class ServerManagerController : MonoBehaviour
         toolDNSBtn?.gameObject.SetActive(state.DNSInstalled);
         toolDHCPBtn?.gameObject.SetActive(state.DHCPInstalled);
         toolGPMBtn?.gameObject.SetActive(state.IsDomainController);
-        toolFSRMBtn?.gameObject.SetActive(state.FileServicesInstalled);
         toolPrintMgmtBtn?.gameObject.SetActive(state.PrintServicesInstalled);
         toolRDSBtn?.gameObject.SetActive(state.RDServicesInstalled);
     }
