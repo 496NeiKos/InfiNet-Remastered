@@ -259,6 +259,19 @@ public class DiskCleanupController : MonoBehaviour
     private static readonly string[] DriveDisplayOptions = { "(C:) Windows", "(D:) New Volume", "(E:) Backup" };
     private static readonly string[] DriveCodes          = { "C:",            "D:",              "E:"          };
 
+    // ── Singleton ─────────────────────────────────────────────────────────────
+
+    public static DiskCleanupController Instance { get; private set; }
+
+    // ── Task State ────────────────────────────────────────────────────────────
+
+    public bool DriveSelectedAndOKClicked  { get; private set; }
+    public bool CleanupSystemFilesClicked  { get; private set; }
+    public bool SecondPassDriveOKClicked   { get; private set; }
+    public bool SystemAnalysisComplete     { get; private set; }
+    public bool DeleteFilesClicked         { get; private set; }
+    public bool CleanupFinished            { get; private set; }
+
     // ── Runtime State ─────────────────────────────────────────────────────────
 
     private CleanupMode _mode               = CleanupMode.Idle;
@@ -273,6 +286,9 @@ public class DiskCleanupController : MonoBehaviour
 
     private void Awake()
     {
+        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
+        Instance = this;
+
         // Panel 1
         panel1ExitBtn?.onClick.AddListener(CloseChain);
         panel1CancelBtn?.onClick.AddListener(CloseChain);
@@ -325,6 +341,11 @@ public class DiskCleanupController : MonoBehaviour
 
     private void OnPanel1OK()
     {
+        if (!DriveSelectedAndOKClicked)
+            DriveSelectedAndOKClicked = true;
+        else if (CleanupSystemFilesClicked && !SecondPassDriveOKClicked)
+            SecondPassDriveOKClicked = true;
+
         _mode = _systemFilesIncluded ? CleanupMode.AnalyzingSystem : CleanupMode.Analyzing;
         driveSelectionPanel?.SetActive(false);
         ShowCalculating();
@@ -386,7 +407,12 @@ public class DiskCleanupController : MonoBehaviour
         switch (_mode)
         {
             case CleanupMode.Analyzing:
+                _calculatedSpaceMB = CalculateDefaultCheckedSize();
+                ShowFileList();
+                break;
+
             case CleanupMode.AnalyzingSystem:
+                SystemAnalysisComplete = true;
                 _calculatedSpaceMB = CalculateDefaultCheckedSize();
                 ShowFileList();
                 break;
@@ -421,6 +447,7 @@ public class DiskCleanupController : MonoBehaviour
 
         yield return new WaitForSeconds(completionHoldTime);
 
+        CleanupFinished = true;
         CloseChain();
     }
 
@@ -463,6 +490,7 @@ public class DiskCleanupController : MonoBehaviour
 
     private void OnCleanupSystemFiles()
     {
+        CleanupSystemFilesClicked = true;
         _systemFilesIncluded = true;
         ClearFileRows();
         fileListPanel?.SetActive(false);
@@ -512,6 +540,7 @@ public class DiskCleanupController : MonoBehaviour
 
     private void OnDeleteFiles()
     {
+        DeleteFilesClicked = true;
         _mode = CleanupMode.Deleting;
         confirmationPanel?.SetActive(false);
         ShowCalculating();

@@ -169,6 +169,8 @@ public class NetworkSharingCenterController : MonoBehaviour
     public void ClosePanel()
     {
         HideAllPanels();
+        if (VirtualOSManagerLocator.Current?.CurrentState is ServerDeviceState sd)
+            sd.NSCClosed = true;
         gameObject.SetActive(false);
         Debug.Log("[NetworkSharingCenterController] NSC closed.");
     }

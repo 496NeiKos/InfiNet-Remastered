@@ -342,6 +342,9 @@ public class PrintManagementController : MonoBehaviour
     {
         HideContextMenu();
         wizardPanel?.SetActive(false);
+        var state = ServerVirtualOSManager.Instance?.ServerState;
+        if (state != null) state.PrintMgmtClosed = true;
+        ActivityLogManager.Log("Closed Print Management", ActivityLogManager.EntryType.Action);
         gameObject.SetActive(false);
     }
 

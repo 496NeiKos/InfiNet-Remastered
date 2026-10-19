@@ -122,6 +122,9 @@ public class DNSManagerController : MonoBehaviour
     public void Close()
     {
         contextMenu?.SetActive(false);
+        var state = ServerVirtualOSManager.Instance?.ServerState;
+        if (state != null) state.DNSManagerClosed = true;
+        ActivityLogManager.Log("Closed DNS Manager", ActivityLogManager.EntryType.Action);
         gameObject.SetActive(false);
     }
 

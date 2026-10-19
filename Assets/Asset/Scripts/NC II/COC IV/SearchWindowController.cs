@@ -31,17 +31,22 @@
  *      │           │     ├── AppNameTMP   "Defragment and Optimize Drives"
  *      │           │     ├── CategoryTMP  "System"
  *      │           │     └── OpenBtn      → defragBtn   (interactable = true)
- *      │           └── Windows Security Entry → windowsSecurityEntry  (INACTIVE)
- *      │                 ├── AppNameTMP   "Windows Security"
- *      │                 ├── CategoryTMP  "System"
- *      │                 └── OpenBtn      → windowsSecurityBtn  (interactable = TRUE — enable now)
+ *      │           ├── Windows Security Entry → windowsSecurityEntry  (INACTIVE)
+ *      │           │     ├── AppNameTMP   "Windows Security"
+ *      │           │     ├── CategoryTMP  "System"
+ *      │           │     └── OpenBtn      → windowsSecurityBtn  (interactable = TRUE — enable now)
+ *      │           └── System Restore Entry → systemRestoreEntry  (INACTIVE)
+ *      │                 ├── AppNameTMP   "Run"
+ *      │                 ├── CategoryTMP  "Windows System"
+ *      │                 └── OpenBtn      → systemRestoreBtn  (interactable = TRUE — enable now)
  *      │
  *      ├── Desktop Icons
  *      └── App Panels
  *            ├── System Protection Chain  (SystemProtectionController)
  *            ├── Disk Cleanup Chain       (DiskCleanupController)
  *            ├── Defrag Chain             (DefragController)
- *            └── Windows Security Chain   (WindowsSecurityController)  ← NEW
+ *            ├── Windows Security Chain   (WindowsSecurityController)
+ *            └── System Restore Chain     (SystemRestoreController)   ← NEW
  *
  *  INSPECTOR ASSIGNMENTS
  *    searchBarBtn               Button on the Search Bar in Taskbar
@@ -53,15 +58,18 @@
  *    diskCleanupEntry           Parent GO of the "Disk Cleanup" result row
  *    defragEntry                Parent GO of the "Defragment and Optimize Drives" result row
  *    windowsSecurityEntry       Parent GO of the "Windows Security" result row
+ *    systemRestoreEntry         Parent GO of the "System Restore" result row
  *    restorePointBtn            Button inside restorePointEntry
  *    diskCleanupBtn             Button inside diskCleanupEntry    (set interactable = TRUE)
  *    defragBtn                  Button inside defragEntry         (set interactable = true)
  *    windowsSecurityBtn         Button inside windowsSecurityEntry (set interactable = TRUE — enable now)
+ *    systemRestoreBtn           Button inside systemRestoreEntry   (set interactable = TRUE — enable now)
  *    startMenuController        StartMenuController reference
  *    systemProtectionController SystemProtectionController reference
  *    diskCleanupController      DiskCleanupController reference
  *    defragController           DefragController reference
- *    windowsSecurityController  WindowsSecurityController reference  (NEW — drag from scene)
+ *    windowsSecurityController  WindowsSecurityController reference
+ *    systemRestoreController    SystemRestoreController reference  (NEW — drag from scene)
  *
  *  HOW IT WORKS
  *    Typing filters all entries by substring match against keyword arrays.
@@ -91,12 +99,14 @@ public class SearchWindowController : MonoBehaviour
     [SerializeField] private GameObject diskCleanupEntry;
     [SerializeField] private GameObject defragEntry;
     [SerializeField] private GameObject windowsSecurityEntry;
+    [SerializeField] private GameObject systemRestoreEntry;
 
     [Header("Result Buttons")]
     [SerializeField] private Button restorePointBtn;
     [SerializeField] private Button diskCleanupBtn;
     [SerializeField] private Button defragBtn;
     [SerializeField] private Button windowsSecurityBtn;
+    [SerializeField] private Button systemRestoreBtn;
 
     [Header("References")]
     [SerializeField] private StartMenuController         startMenuController;
@@ -104,12 +114,14 @@ public class SearchWindowController : MonoBehaviour
     [SerializeField] private DiskCleanupController       diskCleanupController;
     [SerializeField] private DefragController            defragController;
     [SerializeField] private WindowsSecurityController   windowsSecurityController;
+    [SerializeField] private SystemRestoreController     systemRestoreController;
 
     // Keywords per app entry (all lowercase)
     private static readonly string[] RestorePointKeywords    = { "create a restore point", "restore point", "restore", "system protection" };
     private static readonly string[] DiskCleanupKeywords     = { "disk cleanup", "disk", "cleanup" };
     private static readonly string[] DefragKeywords          = { "defragment and optimize drives", "defragment", "defrag", "optimize drives", "optimize" };
     private static readonly string[] WindowsSecurityKeywords = { "windows security", "security", "defender", "firewall" };
+    private static readonly string[] SystemRestoreKeywords   = { "run" };
 
     private void Awake()
     {
@@ -121,6 +133,7 @@ public class SearchWindowController : MonoBehaviour
         diskCleanupBtn?.onClick.AddListener(OpenDiskCleanup);
         defragBtn?.onClick.AddListener(OpenDefrag);
         windowsSecurityBtn?.onClick.AddListener(OpenWindowsSecurity);
+        systemRestoreBtn?.onClick.AddListener(OpenSystemRestore);
 
         searchWindowPanel?.SetActive(false);
         overlay?.SetActive(false);
@@ -148,6 +161,7 @@ public class SearchWindowController : MonoBehaviour
         diskCleanupEntry?.SetActive(false);
         defragEntry?.SetActive(false);
         windowsSecurityEntry?.SetActive(false);
+        systemRestoreEntry?.SetActive(false);
     }
 
     private void OnSearchChanged(string value)
@@ -159,6 +173,7 @@ public class SearchWindowController : MonoBehaviour
         diskCleanupEntry?.SetActive(ready && Matches(lower, DiskCleanupKeywords));
         defragEntry?.SetActive(ready && Matches(lower, DefragKeywords));
         windowsSecurityEntry?.SetActive(ready && Matches(lower, WindowsSecurityKeywords));
+        systemRestoreEntry?.SetActive(ready && Matches(lower, SystemRestoreKeywords));
     }
 
     private static bool Matches(string input, string[] keywords)
@@ -191,5 +206,11 @@ public class SearchWindowController : MonoBehaviour
     {
         CloseSearch();
         windowsSecurityController?.Open();
+    }
+
+    private void OpenSystemRestore()
+    {
+        CloseSearch();
+        systemRestoreController?.Open();
     }
 }

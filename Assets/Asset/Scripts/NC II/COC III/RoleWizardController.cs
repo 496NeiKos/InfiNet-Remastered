@@ -94,7 +94,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public enum ServerRole { ADDS, DNS, DHCP, FileServices, PrintServices, RemoteDesktopServices }
+public enum ServerRole { ADDS, DNS, DHCP, PrintServices, RemoteDesktopServices }
 
 [System.Serializable]
 public class RoleOption
@@ -212,6 +212,9 @@ public class RoleWizardController : MonoBehaviour
         addFeaturesPopup?.SetActive(false);
 
         if (trackerEntries.Length > 4) trackerEntries[4]?.SetActive(false);
+
+        var state = ServerVirtualOSManager.Instance?.ServerState;
+        if (state != null) state.AddRolesWizardOpened = true;
 
         gameObject.SetActive(true);
         ShowStep(0);
@@ -522,12 +525,6 @@ public class RoleWizardController : MonoBehaviour
             "    Role Administration Tools\n" +
             "      DHCP Server Tools",
 
-        ServerRole.FileServices =>
-            "File and Storage Services\n" +
-            "  File Server\n" +
-            "  File Server Resource Manager\n" +
-            "  Storage Services",
-
         ServerRole.PrintServices =>
             "Print and Document Services\n" +
             "  Print Server\n" +
@@ -566,12 +563,6 @@ public class RoleWizardController : MonoBehaviour
             "related network configuration settings — such as subnet mask, default gateway, and DNS " +
             "server addresses — to client computers on your network, eliminating the need to " +
             "manually configure each device.",
-
-        ServerRole.FileServices =>
-            "File and Storage Services provides technologies that help you set up and manage file " +
-            "servers and storage. File servers provide a central location on your network where you " +
-            "can store and share files with users. Shared folders allow users across the network " +
-            "to access and collaborate on files from a single managed location.",
 
         ServerRole.PrintServices =>
             "Print and Document Services enables you to centralize print server and network printer " +
@@ -614,15 +605,6 @@ public class RoleWizardController : MonoBehaviour
             "• If a domain controller is present, you must authorize the DHCP server in Active " +
             "Directory before it can serve leases.",
 
-        ServerRole.FileServices =>
-            "• After installation, use File Server Resource Manager (FSRM) to manage shared " +
-            "folders, quotas, and file screening policies.\n" +
-            "• Both share permissions and NTFS permissions must be configured correctly for " +
-            "secure network access to shared folders.\n" +
-            "• File screening allows you to block specific file types from being saved on the server.\n" +
-            "• Folder redirection can be configured through Group Policy to transparently redirect " +
-            "user profile folders (e.g., Documents) to the file server.",
-
         ServerRole.PrintServices =>
             "• After installation, open Print Management to add printer drivers and configure " +
             "shared printers on the network.\n" +
@@ -650,7 +632,6 @@ public class RoleWizardController : MonoBehaviour
         ServerRole.DNS                   => s.DNSInstalled,
         ServerRole.ADDS                  => s.ADDSInstalled,
         ServerRole.DHCP                  => s.DHCPInstalled,
-        ServerRole.FileServices          => s.FileServicesInstalled,
         ServerRole.PrintServices         => s.PrintServicesInstalled,
         ServerRole.RemoteDesktopServices => s.RDServicesInstalled,
         _                                => false
@@ -665,7 +646,6 @@ public class RoleWizardController : MonoBehaviour
             case ServerRole.DNS:                   state.DNSInstalled           = true; break;
             case ServerRole.ADDS:                  state.ADDSInstalled          = true; break;
             case ServerRole.DHCP:                  state.DHCPInstalled          = true; break;
-            case ServerRole.FileServices:          state.FileServicesInstalled  = true; break;
             case ServerRole.PrintServices:         state.PrintServicesInstalled = true; break;
             case ServerRole.RemoteDesktopServices: state.RDServicesInstalled    = true; break;
         }
@@ -680,7 +660,6 @@ public class RoleWizardController : MonoBehaviour
             case ServerRole.DNS:                   state.AddRolesWizardOpenedForDNS   = true; break;
             case ServerRole.ADDS:                  state.AddRolesWizardOpenedForADDS  = true; break;
             case ServerRole.DHCP:                  state.AddRolesWizardOpenedForDHCP  = true; break;
-            case ServerRole.FileServices:          state.AddRolesWizardOpenedForFile  = true; break;
             case ServerRole.PrintServices:         state.AddRolesWizardOpenedForPrint = true; break;
             case ServerRole.RemoteDesktopServices: state.AddRolesWizardOpenedForRD    = true; break;
         }

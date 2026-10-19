@@ -187,6 +187,9 @@ public class FileExplorerController : MonoBehaviour
     public void Close()
     {
         HideContextMenu();
+        var state = ServerVirtualOSManager.Instance?.ServerState;
+        if (state != null) state.FileExplorerClosed = true;
+        ActivityLogManager.Log("Closed File Explorer", ActivityLogManager.EntryType.Action);
         gameObject.SetActive(false);
     }
 

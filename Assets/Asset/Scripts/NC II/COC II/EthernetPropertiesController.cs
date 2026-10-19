@@ -98,6 +98,9 @@ public class EthernetPropertiesController : MonoBehaviour
         _ipv4Selected = false;
         _ipv6Selected = false;
         RefreshAll();
+
+        if (VirtualOSManagerLocator.Current?.CurrentState is ServerDeviceState sd)
+            sd.EthernetPropertiesOpened = true;
     }
 
     // ----------------------------------------------------------------
@@ -156,6 +159,8 @@ public class EthernetPropertiesController : MonoBehaviour
 
     public void OnOK()
     {
+        if (VirtualOSManagerLocator.Current?.CurrentState is ServerDeviceState sd)
+            sd.IPv4Applied = true;
         gameObject.SetActive(false);
         Debug.Log("[EthernetPropertiesController] OK.");
     }
