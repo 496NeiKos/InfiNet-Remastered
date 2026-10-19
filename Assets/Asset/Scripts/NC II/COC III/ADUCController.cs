@@ -223,6 +223,15 @@ public class ADUCController : MonoBehaviour
         contextMenu?.SetActive(false);
         newOUDialog?.SetActive(false);
         newUserDialog?.SetActive(false);
+        var state = ServerVirtualOSManager.Instance?.ServerState;
+        if (state != null)
+        {
+            if (state.RDSessionOpened)
+                state.ADUCClosedInRDSSession = true;
+            else
+                state.ADUCClosed = true;
+        }
+        ActivityLogManager.Log("Closed Active Directory Users and Computers", ActivityLogManager.EntryType.Action);
         gameObject.SetActive(false);
     }
 

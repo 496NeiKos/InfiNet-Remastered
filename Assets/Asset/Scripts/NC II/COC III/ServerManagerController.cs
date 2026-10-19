@@ -302,6 +302,15 @@ public class ServerManagerController : MonoBehaviour
     public void Close()
     {
         CloseToolsMenu();
+        var state = ServerVirtualOSManager.Instance?.ServerState;
+        if (state != null)
+        {
+            if (state.RDSessionOpened)
+                state.ServerManagerClosedInRDS = true;
+            else
+                state.ServerManagerClosed = true;
+        }
+        ActivityLogManager.Log("Closed Server Manager", ActivityLogManager.EntryType.Action);
         gameObject.SetActive(false);
     }
 

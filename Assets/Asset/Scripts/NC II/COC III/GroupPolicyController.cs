@@ -309,6 +309,9 @@ public class GroupPolicyController : MonoBehaviour
         createGPODialog?.SetActive(false);
         addUserPopup   ?.SetActive(false);
         gpoEditor      ?.Close();
+        var state = ServerVirtualOSManager.Instance?.ServerState;
+        if (state != null) state.GPMClosed = true;
+        ActivityLogManager.Log("Closed Group Policy Management", ActivityLogManager.EntryType.Action);
         gameObject.SetActive(false);
     }
 

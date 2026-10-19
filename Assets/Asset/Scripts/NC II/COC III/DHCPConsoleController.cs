@@ -127,6 +127,9 @@ public class DHCPConsoleController : MonoBehaviour
     {
         contextMenu?.SetActive(false);
         newScopeWizard?.gameObject.SetActive(false);
+        var state = ServerVirtualOSManager.Instance?.ServerState;
+        if (state != null) state.DHCPConsoleClosed = true;
+        ActivityLogManager.Log("Closed DHCP Console", ActivityLogManager.EntryType.Action);
         gameObject.SetActive(false);
     }
 

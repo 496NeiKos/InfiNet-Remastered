@@ -111,6 +111,9 @@ public class ServerDeviceState : DeviceOSState
     public bool PrintServicesInstalled     = false;
     public bool RDServicesInstalled        = false;
 
+    // Generic latch: fires as soon as the Add Roles wizard opens (task 16)
+    public bool AddRolesWizardOpened         = false;
+
     // Wizard opened latches (one per role, prevents double-counting)
     public bool AddRolesWizardOpenedForDNS   = false;
     public bool AddRolesWizardOpenedForADDS  = false;

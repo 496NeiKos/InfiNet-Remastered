@@ -203,8 +203,8 @@ public class ServerSetupTaskManager : MonoBehaviour
 
             // ── Group 2: DNS Role - Lookup Zone Configuration ─────────────────
             15 => state.ServerManagerOpened,
-            16 => state.AddRolesWizardOpenedForDNS,
-            17 => state.DNSRoleSelectedInWizard,
+            16 => state.AddRolesWizardOpened,
+            17 => state.AddRolesWizardOpenedForDNS,
             18 => state.DNSInstalled && state.DNSManagerOpened,
             19 => state.ForwardZoneWizardOpened,
             20 => state.ForwardZoneTypeSelected,
@@ -354,22 +354,27 @@ public class ServerSetupTaskManager : MonoBehaviour
 
     private void CheckCurrentTask()
     {
-        if (_currentTask >= TASK_COUNT) return;
-        if (_latched[_currentTask]) { AdvanceIfPossible(); return; }
-        if (!CheckCondition(_currentTask)) return;
-        LatchTask(_currentTask);
+        // Loop so that if multiple consecutive conditions are already satisfied
+        // (e.g. player acted faster than one frame, or Update was briefly paused),
+        // they all latch in the same frame instead of trickling one-per-frame.
+        while (_currentTask < TASK_COUNT && !_allDone)
+        {
+            if (_latched[_currentTask]) { AdvanceIfPossible(); continue; }
+            if (!CheckCondition(_currentTask)) return;
+            LatchTask(_currentTask);
+        }
     }
 
     private void LatchTask(int index)
     {
         _latched[index] = true;
-        OnTaskLatched?.Invoke();
         ActivityLogManager.Log($"Task completed: {GetTaskLabel(index)}", ActivityLogManager.EntryType.Action);
 
         if (taskObjects[index] != null && finishedParent != null)
             taskObjects[index].transform.SetParent(finishedParent, false);
 
         AdvanceIfPossible();
+        OnTaskLatched?.Invoke(); // fire after advance so listeners see the updated _currentTask
         RefreshWindow();
         RefreshGroupTitle();
 

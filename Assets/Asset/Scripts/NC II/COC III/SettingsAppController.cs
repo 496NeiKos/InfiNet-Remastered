@@ -260,6 +260,9 @@ public class SettingsAppController : MonoBehaviour
     {
         CloseRenameDialog();
         ClosePasswordDialog();
+        var state = ServerVirtualOSManager.Instance?.ServerState;
+        if (state != null) state.SettingsClosed = true;
+        ActivityLogManager.Log("Closed Settings", ActivityLogManager.EntryType.Action);
         gameObject.SetActive(false);
     }
 

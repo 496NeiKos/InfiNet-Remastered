@@ -213,6 +213,9 @@ public class RoleWizardController : MonoBehaviour
 
         if (trackerEntries.Length > 4) trackerEntries[4]?.SetActive(false);
 
+        var state = ServerVirtualOSManager.Instance?.ServerState;
+        if (state != null) state.AddRolesWizardOpened = true;
+
         gameObject.SetActive(true);
         ShowStep(0);
         ActivityLogManager.Log("Opened Add Roles and Features Wizard", ActivityLogManager.EntryType.Action);
