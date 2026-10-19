@@ -5,7 +5,6 @@ public class AVR : MonoBehaviour
 {
     public SystemUnit systemUnit;
     public Motherboard motherboard;
-    public VGACable vgaCable;
 
     [Header("AVR Sprites")]
     public Sprite lightsOffSprite;
@@ -102,16 +101,6 @@ public class AVR : MonoBehaviour
                         );
                         return;
                     }
-                }
-
-                // ✅ VGA cable check
-                bool vgaSystemUnit = vgaCable.IsConnectedToSystemUnit();
-                bool vgaMonitor = vgaCable.IsConnectedToMonitor();
-
-                if (!vgaSystemUnit || !vgaMonitor)
-                {
-                    TroubleshootManager.Instance.ShowMessage("Cannot operate AVR, VGA cable not fully connected.", true);
-                    return;
                 }
 
                 // ✅ Toggle AVR

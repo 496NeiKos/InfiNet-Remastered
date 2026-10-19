@@ -134,10 +134,7 @@ public class TaskListManager : MonoBehaviour
                 button.interactable = false;
         }
 
-        foreach (var cable in FindObjectsOfType<VGACable>(true))
-            cable.enabled = false;
-
-        foreach (var descslot in FindObjectsOfType<DescSlot>(true))
+foreach (var descslot in FindObjectsOfType<DescSlot>(true))
             descslot.enabled = false;
 
         foreach (var componentitem in FindObjectsOfType<ComponentItem>(true))
@@ -164,10 +161,7 @@ public class TaskListManager : MonoBehaviour
                 button.interactable = true;
         }
 
-        foreach (var cable in FindObjectsOfType<VGACable>(true))
-            cable.enabled = true;
-
-        foreach (var descslot in FindObjectsOfType<DescSlot>(true))
+foreach (var descslot in FindObjectsOfType<DescSlot>(true))
             descslot.enabled = true;
 
         foreach (var componentitem in FindObjectsOfType<ComponentItem>(true))

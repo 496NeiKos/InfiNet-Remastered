@@ -1,443 +1,380 @@
 /*
  * ================================================================
- *  UNITY SETUP GUIDE — T3TaskListManager  (20-task version)
+ *  UNITY SETUP GUIDE — T3TaskListManager (COC I — Topic 3)
  * ================================================================
- *  STEP 1 — Create 20 task text GameObjects (in order)
- *    taskObjects[0]  "Install Flashdrive to the System Unit then Turn on the power switch"
- *    taskObjects[1]  "Enter Virtual OS via Monitor (Right-click)"
- *    taskObjects[2]  "Wait for the loading then press F2/DEL to enter and configure UEFI Boot Settings"
- *    taskObjects[3]  "Go to Advance then configure Boot Option, OS Type and Legacy USB Support"
- *    taskObjects[4]  "Save UEFI Boot Configuration: F10"
- *    taskObjects[5]  "Restart the Computer and enter Virtual OS again"
- *    taskObjects[6]  "Wait for the loading to enter Windows Setup wizard"
- *    taskObjects[7]  "Install Windows setup initialization. Read the terms & conditions before accepting"
- *    taskObjects[8]  "Create/Choose Windows installation path (Install on primary disk)"
- *    taskObjects[9]  "Wait for installation process"
- *    taskObjects[10] "Setup: Region & Keyboard"
- *    taskObjects[11] "Continue without internet connection"
- *    taskObjects[12] "Configure personal privacy setting"
- *    taskObjects[13] "Set up a Password"
- *    taskObjects[14] "Check the current status of drivers in the Device Manager from the Windows Taskbar"
- *    taskObjects[15] "Check the driver's installation status in Windows Setting: Windows Update"
- *    taskObjects[16] "Click Retry on drivers that did not automatically download"
- *    taskObjects[17] "Open default Windows browser application: Microsoft Edge"
- *    taskObjects[18] "Search and download Windows applications: Google Chrome & WinRar"
- *    taskObjects[19] "Execute all downloaded Windows Applications"
- *    Place them under taskParent with a Vertical Layout Group.
- *    Create a separate off-screen finishedParent for completed tasks.
+ *  COMPONENT PLACEMENT
+ *    Add to the Topic 3 task container GameObject in the COC I scene.
  *
- *  STEP 2 — Wire the inspector
- *    T3TaskListManager:
- *      taskParent              → layout parent holding active tasks
- *      finishedParent          → off-screen parent for completed tasks
- *      taskObjects[0..19]      → 20 TMP text GameObjects (in order above)
- *      usbPort                 → T3SystemUnit > T3SystemUnitFront > USBPort (CablePort)
- *      systemUnit              → T3SystemUnitController on the T3 System Unit root
- *      monitorInteraction      → T3MonitorInteraction on the UEFI Monitor root
- *      uefiNavigator           → UEFINavigator on the UEFI Monitor root
- *      bootOptionButton        → UEFISettingButton on the Boot Option field inside Panel_Boot
- *      osTypeButton            → UEFISettingButton on the OS Type field inside Panel_SecureBoot (or wherever OS Type lives)
- *      legacyUSBButton         → UEFISettingButton on the Legacy USB Support field inside Panel_USB
- *      windowsSetupNavigator   → WindowsSetupNavigator on WindowsSetupPanel
- *      windows10Manager        → Windows10Manager on Windows10Panel
- *      settingController       → SettingPanelController on Windows10Desktop > WindowsContent > SettingPanel
- *      deviceManagerController → DeviceManagerController on Windows10Desktop > WindowsContent > DeviceManagerPanel
- *      driverPanelManager      → WU_DriverPanelManager on Windows10Desktop
- *      desktopManager          → DesktopManager on DesktopContent
- *      requiredTaskCount       → 20
+ *  ── HIERARCHY ────────────────────────────────────────────────────
  *
- *  TASK CONDITIONS (auto-evaluated; no manual wiring needed beyond inspector)
- *    Task  1 — USB installed + powered on (latch; reverts only on USB removal)
- *    Task  2 — monitorInteraction.CanvasOpenCount >= 1
- *    Task  3 — uefiNavigator.UEFIOpened
- *    Task  4 — bootOptionButton.CurrentValue != "None"  (Kingston USB selected)
- *              AND osTypeButton.CurrentValue == "Windows UEFI Mode"
- *              AND legacyUSBButton.CurrentValue == "Enabled"
- *    Task  5 — uefiNavigator.BootStateSaved AND Task 4 complete
- *    Task  6 — systemUnit.HasPowerCycled AND monitorInteraction.CanvasOpenCount >= 2
- *    Task  7 — windowsSetupNavigator.SetupInitializeAccessed
- *    Task  8 — windowsSetupNavigator.LicenseFirstPhaseNextClicked
- *    Task  9 — windowsSetupNavigator.PartitionNextClicked
- *    Task 10 — windowsSetupNavigator.FifthPhaseAccessed
- *    Task 11 — FifthPhaseManager.SecondKeyboardSkipped
- *    Task 12 — FifthPhaseManager.LimitedSetupClicked
- *    Task 13 — FifthPhaseManager.PrivacyAccepted
- *    Task 14 — Windows10Manager.Windows10DesktopAccessed
- *    Task 15 — deviceManagerController.WasOpened
- *    Task 16 — settingController.WindowsUpdateAccessed
- *    Task 17 — driverPanelManager.AllDriversDownloaded
- *    Task 18 — desktopManager.MicrosoftEdgeOpened
- *    Task 19 — DesktopManager.IsInstalled(GoogleChrome) AND IsInstalled(WinRar)
- *    Task 20 — desktopManager.ChromeExecuted AND desktopManager.WinrarExecuted
+ *    Task Panel
+ *      ├── Group Title Row
+ *      │     ├── GroupTitleTMP     TMP_Text → groupTitleTMP
+ *      │     └── Button            Button   → groupTitleBtn
+ *      ├── Task List               → taskParent (VerticalLayoutGroup)
+ *      └── Finished Bucket         → finishedParent (off-screen)
  *
- *  When all 20 tasks complete, TopicManager.MarkTopicComplete(2) fires.
+ *    Group Overview Popup          → groupOverviewPopup (INACTIVE)
+ *      ├── Row Parent              → groupRowParent (VerticalLayoutGroup)
+ *      └── CloseBtn               Button → closePopupBtn
+ *
+ *  ── GROUP ROW PREFAB ─────────────────────────────────────────────
+ *    Root: HorizontalLayoutGroup
+ *      ├── NameTMP      TMP_Text [0]
+ *      ├── ProgressTMP  TMP_Text [1]
+ *      └── StatusTMP    TMP_Text [2]
+ *
+ *  ── TASK GROUPS — 20 tasks total (suggested, configure in Inspector)
+ *    Group 0  "UEFI Setup"          tasks  0 –  4
+ *    Group 1  "Windows Setup"       tasks  5 – 13
+ *    Group 2  "Driver & Software"   tasks 14 – 19
+ *
+ *  ── PATTERN ──────────────────────────────────────────────────────
+ *    Latch-based: once a task condition is true it latches permanently.
+ *    Sliding window: up to 3 unlatched tasks shown, capped to the
+ *    current group. Group advances after all its tasks latch.
  * ================================================================
  */
 
-using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class T3TaskListManager : MonoBehaviour
 {
     public static T3TaskListManager Instance { get; private set; }
 
-    // Fires whenever a task completes or reverts — SingleTaskDisplay subscribes to this.
     public static event System.Action OnTasksUpdated;
 
-    private static readonly Color GoldColor = new Color(1f, 0.843f, 0f);
+    private const int TASK_COUNT = 20;
+
+    // ── Task UI ───────────────────────────────────────────────────────────────
 
     [Header("Task UI")]
-    [SerializeField] private Transform taskParent;
-    [SerializeField] private Transform finishedParent;
-    [SerializeField] private GameObject[] taskObjects;
-
-    [Header("Completion UI")]
+    [SerializeField] private Transform       taskParent;
+    [SerializeField] private Transform       finishedParent;
+    [SerializeField] private GameObject[]    taskObjects = new GameObject[TASK_COUNT];
     [SerializeField] private TextMeshProUGUI allTasksCompletedText;
 
+    // ── Group Title ───────────────────────────────────────────────────────────
+
+    [Header("Group Title")]
+    [SerializeField] private TMP_Text groupTitleTMP;
+    [SerializeField] private Button   groupTitleBtn;
+    [SerializeField] private Color    flashColor    = Color.green;
+    [SerializeField] private float    flashDuration = 1f;
+
+    // ── Group Overview Popup ──────────────────────────────────────────────────
+
+    [Header("Group Overview Popup")]
+    [SerializeField] private GameObject groupOverviewPopup;
+    [SerializeField] private Transform  groupRowParent;
+    [SerializeField] private GameObject groupRowPrefab;
+    [SerializeField] private Button     closePopupBtn;
+    [SerializeField] private Color      groupPendingColor = Color.gray;
+    [SerializeField] private Color      groupActiveColor  = Color.yellow;
+    [SerializeField] private Color      groupDoneColor    = Color.green;
+
+    // ── Task Groups ───────────────────────────────────────────────────────────
+
+    [Header("Task Groups (configure all entries in Inspector)")]
+    [SerializeField] private TaskGroup[] taskGroups;
+
+    // ── Condition References ──────────────────────────────────────────────────
+
     [Header("Condition References")]
-    [SerializeField] private CablePort usbPort;
-    [SerializeField] private T3SystemUnitController systemUnit;
-    [SerializeField] private T3MonitorInteraction monitorInteraction;
-    [SerializeField] private UEFINavigator uefiNavigator;
-    [Tooltip("The Boot Option UEFISettingButton in Panel_Boot — Task 4 reads its CurrentValue.")]
-    [SerializeField] private UEFISettingButton bootOptionButton;
-    [Tooltip("The OS Type UEFISettingButton (Secure Boot panel) — Task 4 requires 'Windows UEFI Mode'.")]
-    [SerializeField] private UEFISettingButton osTypeButton;
-    [Tooltip("The Legacy USB Support UEFISettingButton (USB panel) — Task 4 requires 'Enabled'.")]
-    [SerializeField] private UEFISettingButton legacyUSBButton;
-    [SerializeField] private WindowsSetupNavigator windowsSetupNavigator;
-    [SerializeField] private Windows10Manager windows10Manager;
-    [SerializeField] private SettingPanelController settingController;
-    [SerializeField] private DeviceManagerController deviceManagerController;
-    [SerializeField] private WU_DriverPanelManager driverPanelManager;
-    [SerializeField] private DesktopManager desktopManager;
+    [SerializeField] private CablePort                usbPort;
+    [SerializeField] private T3SystemUnitController   systemUnit;
+    [SerializeField] private T3MonitorInteraction     monitorInteraction;
+    [SerializeField] private UEFINavigator            uefiNavigator;
+    [Tooltip("Boot Option UEFISettingButton in Panel_Boot")]
+    [SerializeField] private UEFISettingButton        bootOptionButton;
+    [Tooltip("OS Type UEFISettingButton — requires 'Windows UEFI Mode'")]
+    [SerializeField] private UEFISettingButton        osTypeButton;
+    [Tooltip("Legacy USB Support UEFISettingButton — requires 'Enabled'")]
+    [SerializeField] private UEFISettingButton        legacyUSBButton;
+    [SerializeField] private WindowsSetupNavigator    windowsSetupNavigator;
+    [SerializeField] private Windows10Manager         windows10Manager;
+    [SerializeField] private SettingPanelController   settingController;
+    [SerializeField] private DeviceManagerController  deviceManagerController;
+    [SerializeField] private WU_DriverPanelManager    driverPanelManager;
+    [SerializeField] private DesktopManager           desktopManager;
 
-    [Tooltip("How many tasks (from index 0) must complete to mark Topic 3 done.")]
-    [SerializeField] private int requiredTaskCount = 20;
+    // ── Runtime ───────────────────────────────────────────────────────────────
 
-    // Task 1 latch: once USB+power are met simultaneously, only USB removal can revert the task.
-    private bool _task1Latched;
+    private bool[]       _latched           = new bool[TASK_COUNT];
+    private int          _currentTask       = 0;
+    private int          _currentGroupIndex = 0;
+    private bool         _allDone           = false;
+    private bool         _isFlashing        = false;
+    private TMP_Text[][] _popupRowTMPs;
 
-    private class TaskEntry
-    {
-        public GameObject taskObject;
-        public int originalIndex;
-        public bool isCompleted;
-        public bool isFlashing;
-        public Func<bool> condition;
-        // When false, a completed task is never reverted even if its condition becomes false.
-        public bool canRevert = true;
-    }
-
-    private List<TaskEntry> _tasks;
-    private const int WindowSize = 3;
-
-    private string _displayOverride      = null;
-    private bool   _isCompletionOverride = false;
+    // ── Lifecycle ─────────────────────────────────────────────────────────────
 
     private void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
 
-        // Reset all Topic 3 static state on scene load.
         Windows10Manager.ResetAll();
         DesktopManager.ResetAll();
         FifthPhaseManager.ResetAll();
+
+        groupTitleBtn?.onClick.AddListener(OpenPopup);
+        closePopupBtn?.onClick.AddListener(ClosePopup);
     }
 
     private void Start()
     {
-        if (taskObjects == null || taskObjects.Length < 20)
+        for (int i = 0; i < TASK_COUNT; i++)
+            if (taskObjects[i] != null) taskObjects[i].SetActive(false);
+
+        groupOverviewPopup?.SetActive(false);
+        if (allTasksCompletedText != null) allTasksCompletedText.gameObject.SetActive(false);
+
+        BuildPopupRows();
+        RefreshGroupTitle();
+        RefreshPopup();
+        RefreshWindow();
+    }
+
+    private void Update()
+    {
+        if (_allDone) return;
+        CheckCurrentTask();
+    }
+
+    // ── Task condition checks ─────────────────────────────────────────────────
+
+    private bool CheckCondition(int index)
+    {
+        return index switch
         {
-            Debug.LogError("[T3TaskListManager] Assign all 20 task objects in the inspector.");
+             0 => usbPort != null && usbPort.IsInstalled && systemUnit != null && systemUnit.IsPoweredOn,
+             1 => monitorInteraction != null && monitorInteraction.CanvasOpenCount >= 1,
+             2 => uefiNavigator != null && uefiNavigator.UEFIOpened,
+             3 => bootOptionButton != null && bootOptionButton.CurrentValue != "None"
+               && osTypeButton    != null && osTypeButton.CurrentValue    == "Windows UEFI Mode"
+               && legacyUSBButton != null && legacyUSBButton.CurrentValue == "Enabled",
+             4 => _latched[3] && uefiNavigator != null && uefiNavigator.BootStateSaved,
+             5 => systemUnit != null && systemUnit.HasPowerCycled
+               && monitorInteraction != null && monitorInteraction.CanvasOpenCount >= 2,
+             6 => windowsSetupNavigator != null && windowsSetupNavigator.SetupInitializeAccessed,
+             7 => windowsSetupNavigator != null && windowsSetupNavigator.LicenseFirstPhaseNextClicked,
+             8 => windowsSetupNavigator != null && windowsSetupNavigator.PartitionNextClicked,
+             9 => windowsSetupNavigator != null && windowsSetupNavigator.FifthPhaseAccessed,
+            10 => FifthPhaseManager.SecondKeyboardSkipped,
+            11 => FifthPhaseManager.LimitedSetupClicked,
+            12 => FifthPhaseManager.PrivacyAccepted,
+            13 => Windows10Manager.Windows10DesktopAccessed,
+            14 => deviceManagerController != null && deviceManagerController.WasOpened,
+            15 => settingController != null && settingController.WindowsUpdateAccessed,
+            16 => driverPanelManager != null && driverPanelManager.AllDriversDownloaded,
+            17 => desktopManager != null && desktopManager.MicrosoftEdgeOpened,
+            18 => DesktopManager.IsInstalled(AppType.GoogleChrome) && DesktopManager.IsInstalled(AppType.WinRar),
+            19 => desktopManager != null && desktopManager.ChromeExecuted && desktopManager.WinrarExecuted,
+            _  => false
+        };
+    }
+
+    // ── Latch & window logic ──────────────────────────────────────────────────
+
+    private void CheckCurrentTask()
+    {
+        while (_currentTask < TASK_COUNT && !_allDone)
+        {
+            if (_latched[_currentTask]) { AdvanceIfPossible(); continue; }
+            if (!CheckCondition(_currentTask)) return;
+            LatchTask(_currentTask);
+        }
+    }
+
+    private void LatchTask(int index)
+    {
+        _latched[index] = true;
+
+        if (taskObjects[index] != null && finishedParent != null)
+            taskObjects[index].transform.SetParent(finishedParent, false);
+
+        AdvanceIfPossible();
+        OnTasksUpdated?.Invoke();
+        RefreshWindow();
+        RefreshGroupTitle();
+
+        if (groupOverviewPopup != null && groupOverviewPopup.activeSelf)
+            RefreshPopup();
+
+        if (!_isFlashing)
+            CheckGroupCompletion();
+    }
+
+    private void AdvanceIfPossible()
+    {
+        while (_currentTask < TASK_COUNT && _latched[_currentTask])
+            _currentTask++;
+
+        if (_currentTask >= TASK_COUNT)
+        {
+            _allDone = true;
+            ShowAllTasksCompleted();
+            TopicManager.Instance?.MarkTopicComplete(2);
+            Debug.Log("[T3TaskListManager] All tasks completed — Topic 3 marked complete.");
+        }
+    }
+
+    private void RefreshWindow()
+    {
+        if (taskGroups == null || taskGroups.Length == 0)
+        {
+            int shown = 0;
+            for (int i = _currentTask; i < TASK_COUNT && shown < 3; i++)
+            {
+                if (_latched[i]) continue;
+                if (taskObjects[i] != null)
+                {
+                    taskObjects[i].transform.SetParent(taskParent, false);
+                    taskObjects[i].SetActive(true);
+                    shown++;
+                }
+            }
             return;
         }
 
-        _tasks = new List<TaskEntry>
+        int groupEnd  = GetCurrentGroupLastTask();
+        int displayed = 0;
+        for (int i = _currentTask; i <= groupEnd && displayed < 3; i++)
         {
-            // Task 1 — install flash drive + power on system unit
-            new TaskEntry
+            if (_latched[i]) continue;
+            if (taskObjects[i] != null)
             {
-                taskObject    = taskObjects[0],
-                originalIndex = 0,
-                condition     = () =>
-                {
-                    bool usbIn = usbPort != null && usbPort.IsInstalled;
-                    bool on    = systemUnit != null && systemUnit.IsPoweredOn;
-                    if (usbIn && on) _task1Latched = true;
-                    return _task1Latched && usbIn;
-                }
-            },
-            // Task 2 — right-click monitor to enter Virtual OS (canvas)
-            new TaskEntry
-            {
-                taskObject    = taskObjects[1],
-                originalIndex = 1,
-                condition     = () => monitorInteraction != null && monitorInteraction.CanvasOpenCount >= 1
-            },
-            // Task 3 — press F2/DEL during loading to open UEFI panel
-            new TaskEntry
-            {
-                taskObject    = taskObjects[2],
-                originalIndex = 2,
-                condition     = () => uefiNavigator != null && uefiNavigator.UEFIOpened
-            },
-            // Task 4 — Boot Option set (not "None"), OS Type = "Windows UEFI Mode", Legacy USB Support = "Enabled"
-            new TaskEntry
-            {
-                taskObject    = taskObjects[3],
-                originalIndex = 3,
-                condition     = () => bootOptionButton != null && bootOptionButton.CurrentValue != "None"
-                                   && osTypeButton     != null && osTypeButton.CurrentValue == "Windows UEFI Mode"
-                                   && legacyUSBButton  != null && legacyUSBButton.CurrentValue == "Enabled"
-            },
-            // Task 5 — press F10 and confirm save (Task 4 must be done first)
-            new TaskEntry
-            {
-                taskObject    = taskObjects[4],
-                originalIndex = 4,
-                condition     = () => _tasks != null && _tasks[3].isCompleted
-                                   && uefiNavigator != null && uefiNavigator.BootStateSaved
-            },
-            // Task 6 — power-cycle system unit then re-enter Virtual OS
-            new TaskEntry
-            {
-                taskObject    = taskObjects[5],
-                originalIndex = 5,
-                condition     = () => systemUnit != null && systemUnit.HasPowerCycled
-                                   && monitorInteraction != null && monitorInteraction.CanvasOpenCount >= 2
-            },
-            // Task 7 — Windows Setup wizard opened (SetUpInitialize shown)
-            new TaskEntry
-            {
-                taskObject    = taskObjects[6],
-                originalIndex = 6,
-                condition     = () => windowsSetupNavigator != null && windowsSetupNavigator.SetupInitializeAccessed
-            },
-            // Task 8 — accepted license terms (FirstPhase Next clicked with checkbox ticked)
-            new TaskEntry
-            {
-                taskObject    = taskObjects[7],
-                originalIndex = 7,
-                condition     = () => windowsSetupNavigator != null && windowsSetupNavigator.LicenseFirstPhaseNextClicked
-            },
-            // Task 9 — chose installation path and advanced from ThirdPhase
-            new TaskEntry
-            {
-                taskObject    = taskObjects[8],
-                originalIndex = 8,
-                condition     = () => windowsSetupNavigator != null && windowsSetupNavigator.PartitionNextClicked
-            },
-            // Task 10 — installation complete, FifthPhase (Region) accessed
-            new TaskEntry
-            {
-                taskObject    = taskObjects[9],
-                originalIndex = 9,
-                condition     = () => windowsSetupNavigator != null && windowsSetupNavigator.FifthPhaseAccessed
-            },
-            // Task 11 — Region & Keyboard done (SecondKeyboardLayout Skip clicked)
-            new TaskEntry
-            {
-                taskObject    = taskObjects[10],
-                originalIndex = 10,
-                condition     = () => FifthPhaseManager.SecondKeyboardSkipped
-            },
-            // Task 12 — LimitedSetup clicked (continue without internet)
-            new TaskEntry
-            {
-                taskObject    = taskObjects[11],
-                originalIndex = 11,
-                condition     = () => FifthPhaseManager.LimitedSetupClicked
-            },
-            // Task 13 — PrivacySetting Accept clicked
-            new TaskEntry
-            {
-                taskObject    = taskObjects[12],
-                originalIndex = 12,
-                condition     = () => FifthPhaseManager.PrivacyAccepted
-            },
-            // Task 14 — Windows10Desktop accessed (password set up and entered)
-            new TaskEntry
-            {
-                taskObject    = taskObjects[13],
-                originalIndex = 13,
-                condition     = () => Windows10Manager.Windows10DesktopAccessed
-            },
-            // Task 15 — Device Manager panel opened from Taskbar
-            new TaskEntry
-            {
-                taskObject    = taskObjects[14],
-                originalIndex = 14,
-                condition     = () => deviceManagerController != null && deviceManagerController.WasOpened
-            },
-            // Task 16 — Windows Update panel opened in Settings (2ndLevel)
-            new TaskEntry
-            {
-                taskObject    = taskObjects[15],
-                originalIndex = 15,
-                condition     = () => settingController != null && settingController.WindowsUpdateAccessed
-            },
-            // Task 17 — all drivers reached Downloaded state
-            new TaskEntry
-            {
-                taskObject    = taskObjects[16],
-                originalIndex = 16,
-                condition     = () => driverPanelManager != null && driverPanelManager.AllDriversDownloaded
-            },
-            // Task 18 — Microsoft Edge opened from desktop
-            new TaskEntry
-            {
-                taskObject    = taskObjects[17],
-                originalIndex = 17,
-                condition     = () => desktopManager != null && desktopManager.MicrosoftEdgeOpened
-            },
-            // Task 19 — Google Chrome and WinRar downloaded via Microsoft Edge
-            new TaskEntry
-            {
-                taskObject    = taskObjects[18],
-                originalIndex = 18,
-                condition     = () => DesktopManager.IsInstalled(AppType.GoogleChrome)
-                                   && DesktopManager.IsInstalled(AppType.WinRar)
-            },
-            // Task 20 — both apps executed from the desktop
-            new TaskEntry
-            {
-                taskObject    = taskObjects[19],
-                originalIndex = 19,
-                condition     = () => desktopManager != null
-                                   && desktopManager.ChromeExecuted && desktopManager.WinrarExecuted
-            },
-        };
-
-        // Subscribe to instant-fire events so CheckConditions runs without waiting for a poll.
-        if (usbPort    != null) usbPort.OnInstalled    += CheckConditions;
-        if (usbPort    != null) usbPort.OnUninstalled  += CheckConditions;
-        if (systemUnit != null) systemUnit.OnPoweredOn += CheckConditions;
-
-        foreach (var task in _tasks)
-        {
-            task.taskObject.SetActive(false);
-            task.taskObject.transform.SetParent(taskParent, false);
-            task.taskObject.transform.SetSiblingIndex(task.originalIndex);
-            var tmp = task.taskObject.GetComponent<TextMeshProUGUI>();
-            if (tmp != null) tmp.color = GoldColor;
-        }
-
-        if (allTasksCompletedText != null)
-            allTasksCompletedText.gameObject.SetActive(false);
-
-        RefreshWindow();
-    }
-
-    private void OnDestroy()
-    {
-        if (usbPort    != null) usbPort.OnInstalled    -= CheckConditions;
-        if (usbPort    != null) usbPort.OnUninstalled  -= CheckConditions;
-        if (systemUnit != null) systemUnit.OnPoweredOn -= CheckConditions;
-        TopicManager.OnAllTopicsComplete -= OnAllTopicsComplete;
-    }
-
-    // Returns override text (completion banner) when set, otherwise the next incomplete task.
-    public string GetNextIncompleteTaskText()
-    {
-        if (_displayOverride != null) return _displayOverride;
-        if (_tasks == null) return null;
-        var next = _tasks.FirstOrDefault(t => !t.isCompleted);
-        if (next == null) return null;
-        var tmp = next.taskObject.GetComponent<TextMeshProUGUI>();
-        return tmp != null ? tmp.text : null;
-    }
-
-    public Color GetDisplayColor(Color fallback) =>
-        (_isCompletionOverride && _displayOverride != null) ? Color.green : fallback;
-
-    public int GetCompletedTaskCount() => _tasks?.Count(t => t.isCompleted) ?? 0;
-
-    public static void CheckConditions()
-    {
-        if (Instance == null) return;
-        Instance.EvaluateConditions();
-    }
-
-    private void EvaluateConditions()
-    {
-        if (!gameObject.activeInHierarchy) return;
-        if (_tasks == null) return;
-
-        foreach (var task in _tasks)
-        {
-            if (task.isFlashing) continue;
-
-            if (!task.isCompleted)
-            {
-                // Only check completion for tasks currently visible in the active 3-task window.
-                if (!task.taskObject.activeSelf) continue;
-
-                if (task.condition())
-                {
-                    task.isCompleted = true;
-                    StartCoroutine(FlashAndComplete(task));
-                }
-            }
-            else
-            {
-                // Check completed tasks for reversion only if the task allows it.
-                if (task.canRevert && !task.condition())
-                {
-                    task.isCompleted = false;
-                    task.taskObject.transform.SetParent(taskParent, false);
-                    task.taskObject.transform.SetSiblingIndex(task.originalIndex);
-                    task.taskObject.SetActive(false);
-                    RefreshWindow();
-                    if (task.taskObject.activeSelf)
-                        StartCoroutine(FlashRevert(task));
-                }
+                taskObjects[i].transform.SetParent(taskParent, false);
+                taskObjects[i].SetActive(true);
+                displayed++;
             }
         }
     }
 
-    private IEnumerator FlashAndComplete(TaskEntry task)
-    {
-        task.isFlashing = true;
-        var tmp = task.taskObject.GetComponent<TextMeshProUGUI>();
-        if (tmp != null) tmp.color = Color.green;
-        yield return new WaitForSeconds(0.6f);
-        task.isFlashing = false;
-        task.taskObject.transform.SetParent(finishedParent, false);
-        task.taskObject.SetActive(false);
-        RefreshWindow();
-        OnTasksUpdated?.Invoke();
+    // ── Group logic ───────────────────────────────────────────────────────────
 
-        int required = Mathf.Clamp(requiredTaskCount, 1, _tasks.Count);
-        if (_tasks.Take(required).All(t => t.isCompleted))
+    private int GetCurrentGroupLastTask()
+    {
+        if (taskGroups == null || _currentGroupIndex >= taskGroups.Length)
+            return TASK_COUNT - 1;
+        var g = taskGroups[_currentGroupIndex];
+        return Mathf.Min(g.FirstTask + g.TaskCount - 1, TASK_COUNT - 1);
+    }
+
+    private int CountCompletedInGroup(int groupIndex)
+    {
+        if (taskGroups == null || groupIndex >= taskGroups.Length) return 0;
+        var g    = taskGroups[groupIndex];
+        int last = Mathf.Min(g.FirstTask + g.TaskCount - 1, TASK_COUNT - 1);
+        int count = 0;
+        for (int i = g.FirstTask; i <= last; i++)
+            if (_latched[i]) count++;
+        return count;
+    }
+
+    private void CheckGroupCompletion()
+    {
+        if (taskGroups == null || _currentGroupIndex >= taskGroups.Length) return;
+        var g = taskGroups[_currentGroupIndex];
+        if (CountCompletedInGroup(_currentGroupIndex) >= g.TaskCount)
+            StartCoroutine(FlashAndAdvance());
+    }
+
+    private IEnumerator FlashAndAdvance()
+    {
+        _isFlashing = true;
+
+        Color original = groupTitleTMP != null ? groupTitleTMP.color : Color.white;
+        if (groupTitleTMP != null) groupTitleTMP.color = flashColor;
+
+        yield return new WaitForSeconds(flashDuration);
+
+        if (groupTitleTMP != null) groupTitleTMP.color = original;
+        _isFlashing = false;
+
+        if (_allDone)
         {
-            ShowAllTasksCompleted();
-            TopicManager.Instance?.MarkTopicComplete(2);
-            Debug.Log("[T3TaskListManager] All required tasks complete — Topic 3 marked complete.");
-            yield break;
+            if (groupTitleTMP != null)
+                groupTitleTMP.text = "Objective in COC I Topic 3 is met, all tasks have been completed.";
+        }
+        else
+        {
+            _currentGroupIndex++;
+            RefreshGroupTitle();
+            RefreshWindow();
         }
 
-        EvaluateConditions();
+        if (groupOverviewPopup != null && groupOverviewPopup.activeSelf)
+            RefreshPopup();
     }
 
-    private IEnumerator FlashRevert(TaskEntry task)
+    private void RefreshGroupTitle()
     {
-        task.isFlashing = true;
-        var tmp = task.taskObject.GetComponent<TextMeshProUGUI>();
-        if (tmp != null) tmp.color = new Color(1f, 0.647f, 0f);
-        yield return new WaitForSeconds(0.6f);
-        task.isFlashing = false;
-        if (tmp != null) tmp.color = GoldColor;
-        OnTasksUpdated?.Invoke();
-        EvaluateConditions();
+        if (groupTitleTMP == null || taskGroups == null || _currentGroupIndex >= taskGroups.Length) return;
+        var g         = taskGroups[_currentGroupIndex];
+        int completed = CountCompletedInGroup(_currentGroupIndex);
+        groupTitleTMP.text = $"{g.Title}  {completed} / {g.TaskCount}";
     }
 
-    private const string TopicCompleteMsg = "All task and objective has been completed on this topic. Go to settings and navigate other topic for the COC I.";
+    // ── Group Overview Popup ──────────────────────────────────────────────────
+
+    private void OpenPopup()  { RefreshPopup(); groupOverviewPopup?.SetActive(true); }
+    private void ClosePopup() { groupOverviewPopup?.SetActive(false); }
+
+    private void BuildPopupRows()
+    {
+        if (groupRowParent == null || groupRowPrefab == null || taskGroups == null) return;
+
+        foreach (Transform child in groupRowParent)
+            Destroy(child.gameObject);
+
+        _popupRowTMPs = new TMP_Text[taskGroups.Length][];
+        for (int g = 0; g < taskGroups.Length; g++)
+        {
+            var row  = Instantiate(groupRowPrefab, groupRowParent);
+            var tmps = row.GetComponentsInChildren<TMP_Text>();
+            _popupRowTMPs[g] = new TMP_Text[3];
+            if (tmps.Length >= 3)
+            {
+                _popupRowTMPs[g][0] = tmps[0];
+                _popupRowTMPs[g][1] = tmps[1];
+                _popupRowTMPs[g][2] = tmps[2];
+            }
+        }
+    }
+
+    private void RefreshPopup()
+    {
+        if (_popupRowTMPs == null || taskGroups == null) return;
+
+        for (int g = 0; g < taskGroups.Length; g++)
+        {
+            if (_popupRowTMPs[g] == null) continue;
+
+            var   group     = taskGroups[g];
+            int   completed = CountCompletedInGroup(g);
+            bool  isDone    = completed >= group.TaskCount;
+
+            string statusText;
+            Color  rowColor;
+
+            if (isDone)                       { statusText = "Done";    rowColor = groupDoneColor; }
+            else if (g == _currentGroupIndex) { statusText = "Active";  rowColor = groupActiveColor; }
+            else                              { statusText = "Pending"; rowColor = groupPendingColor; }
+
+            if (_popupRowTMPs[g][0] != null) { _popupRowTMPs[g][0].text = group.Title;                         _popupRowTMPs[g][0].color = rowColor; }
+            if (_popupRowTMPs[g][1] != null) { _popupRowTMPs[g][1].text = $"{completed} / {group.TaskCount}";  _popupRowTMPs[g][1].color = rowColor; }
+            if (_popupRowTMPs[g][2] != null) { _popupRowTMPs[g][2].text = statusText;                          _popupRowTMPs[g][2].color = rowColor; }
+        }
+    }
+
+    // ── Completion ────────────────────────────────────────────────────────────
+
+    private const string TopicCompleteMsg     = "All task and objective has been completed on this topic. Go to settings and navigate other topic for the COC I.";
     private const string AllTopicsCompleteMsg = "All topic has been completed, objective for COC I has been met. Proceed to COC II.";
 
     private void ShowAllTasksCompleted()
@@ -446,35 +383,46 @@ public class T3TaskListManager : MonoBehaviour
 
         if (allTasksCompletedText != null)
         {
-            allTasksCompletedText.text = TopicCompleteMsg;
+            allTasksCompletedText.text  = TopicCompleteMsg;
             allTasksCompletedText.color = Color.green;
             allTasksCompletedText.gameObject.SetActive(true);
         }
-        _displayOverride      = TopicCompleteMsg;
-        _isCompletionOverride = true;
         OnTasksUpdated?.Invoke();
     }
 
     private void OnAllTopicsComplete()
     {
         TopicManager.OnAllTopicsComplete -= OnAllTopicsComplete;
-
         if (allTasksCompletedText != null)
             allTasksCompletedText.text = AllTopicsCompleteMsg;
-        _displayOverride = AllTopicsCompleteMsg;
         OnTasksUpdated?.Invoke();
     }
 
-    private void RefreshWindow()
+    private void OnDestroy()
     {
-        if (_tasks == null) return;
-
-        var incomplete = _tasks
-            .Where(t => !t.isCompleted)
-            .OrderBy(t => t.originalIndex)
-            .ToList();
-
-        for (int i = 0; i < incomplete.Count; i++)
-            incomplete[i].taskObject.SetActive(i < WindowSize);
+        TopicManager.OnAllTopicsComplete -= OnAllTopicsComplete;
     }
+
+    // ── Public API ────────────────────────────────────────────────────────────
+
+    public string GetNextIncompleteTaskText()
+    {
+        if (_allDone || _currentTask >= TASK_COUNT) return null;
+        var obj = taskObjects[_currentTask];
+        if (obj == null) return null;
+        var tmp = obj.GetComponent<TMP_Text>();
+        return tmp != null ? tmp.text : null;
+    }
+
+    public Color GetDisplayColor(Color fallback) => fallback;
+
+    public int GetCompletedTaskCount()
+    {
+        int count = 0;
+        for (int i = 0; i < TASK_COUNT; i++)
+            if (_latched[i]) count++;
+        return count;
+    }
+
+    public static void CheckConditions() { } // No-op; Update() handles polling
 }
