@@ -325683,7 +325683,19 @@ MonoBehaviour:
   groupPendingColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   groupActiveColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
   groupDoneColor: {r: 0, g: 1, b: 0, a: 1}
-  taskGroups: []
+  taskGroups:
+  - Title: 'Creating System Restore Point '
+    FirstTask: 0
+    TaskCount: 10
+  - Title: Disk Defragmentation and Clen up
+    FirstTask: 10
+    TaskCount: 11
+  - Title: Windows Defender Scan
+    FirstTask: 21
+    TaskCount: 5
+  - Title: System Restore Using System Restore
+    FirstTask: 26
+    TaskCount: 7
   computerHolder: {fileID: 2118222168}
 --- !u!1 &1988445677
 GameObject:
