@@ -5,8 +5,8 @@ using UnityEngine.InputSystem;
 /// Attach to LanTesterPort (inside TopDetail view of the LanTester).
 /// Drag the NetworkCable icon proxy onto this port to install the cable.
 ///
-/// Uninstall — mirrors RJ45HoldUninstall / CableBehavior pattern:
-///   1. Click-and-hold for holdDuration seconds on the installed cable.
+/// Uninstall — click-and-hold on the installed cable sprite in TopDetail:
+///   1. Hold for holdDuration seconds on the installed cable.
 ///   2. Cable detaches and becomes draggable (Update-driven, same as BackCable).
 ///   3. Drop on hardware area  → stored; icon proxy reappears.
 ///      Drop anywhere else     → snaps back and reinstalls into the port.
@@ -20,6 +20,10 @@ public class LanTesterPortController : MonoBehaviour
     [Tooltip("The CableInstalledIndicator GameObject in FrontDetail — enabled when cable is installed.")]
     [SerializeField] private GameObject cableInstalledIndicator;
 
+    [Header("Cable Sprites")]
+    [Tooltip("Sprite shown on the cable when it is installed in the port.")]
+    [SerializeField] private Sprite installedCableSprite;
+
     [Header("Hold to Detach")]
     private const float holdDuration = 1f;
 
@@ -29,7 +33,6 @@ public class LanTesterPortController : MonoBehaviour
     private GameObject            _installedCable;
     private Collider2D            _col;
     private SpriteRenderer        _sr;
-    private Collider2D            _indicatorCol;
 
     // Hold state
     private bool  _holding;
@@ -41,6 +44,7 @@ public class LanTesterPortController : MonoBehaviour
     private GameObject _dragIndicator;
     private Vector3    _cachedWorldScale;
     private int        _originalSortingOrder;
+    private Sprite     _originalCableSprite;
 
     private void Awake()
     {
@@ -51,10 +55,7 @@ public class LanTesterPortController : MonoBehaviour
     private void Start()
     {
         if (cableInstalledIndicator != null)
-        {
             cableInstalledIndicator.SetActive(false);
-            _indicatorCol = cableInstalledIndicator.GetComponent<Collider2D>();
-        }
     }
 
     // ----------------------------------------------------------------
@@ -88,7 +89,9 @@ public class LanTesterPortController : MonoBehaviour
         if (cableSR != null)
         {
             _originalSortingOrder = cableSR.sortingOrder;
-            cableSR.sortingOrder  = -1;
+            _originalCableSprite  = cableSR.sprite;
+            if (installedCableSprite != null)
+                cableSR.sprite = installedCableSprite;
         }
 
         SetCableInteractable(false);
@@ -121,7 +124,7 @@ public class LanTesterPortController : MonoBehaviour
         if (Mouse.current.leftButton.wasPressedThisFrame)
         {
             Vector2 worldPt = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
-            if (_indicatorCol != null && _indicatorCol.OverlapPoint(worldPt))
+            if (IsCableHit(worldPt))
             {
                 _holding   = true;
                 _holdTimer = 0f;
@@ -146,6 +149,17 @@ public class LanTesterPortController : MonoBehaviour
         }
     }
 
+    // Returns true if worldPt overlaps the installed cable's collider or sprite bounds.
+    private bool IsCableHit(Vector2 worldPt)
+    {
+        if (_installedCable == null) return false;
+        var col = _installedCable.GetComponentInChildren<Collider2D>(true);
+        if (col != null) return col.OverlapPoint(worldPt);
+        var sr = _installedCable.GetComponentInChildren<SpriteRenderer>(true);
+        if (sr  != null) return sr.bounds.Contains(worldPt);
+        return false;
+    }
+
     // ----------------------------------------------------------------
     //  Detach — reparent to world root, spawn drag indicator
     // ----------------------------------------------------------------
@@ -159,13 +173,19 @@ public class LanTesterPortController : MonoBehaviour
         if (cableInstalledIndicator != null)
             cableInstalledIndicator.SetActive(false);
 
+        // Restore original sprite before the cable re-enters the world.
+        var cableSR = _installedCable.GetComponentInChildren<SpriteRenderer>(true);
+        if (cableSR != null)
+        {
+            if (_originalCableSprite != null)
+                cableSR.sprite = _originalCableSprite;
+            cableSR.sortingOrder = _originalSortingOrder;
+        }
+
         // Reparent to world root before touching anything else so the cable
         // stays visible at its current world position.
         _cachedWorldScale = _installedCable.transform.lossyScale;
         _installedCable.transform.SetParent(GameManager.Instance.ActiveWorldContainer, true);
-
-        var cableSR = _installedCable.GetComponentInChildren<SpriteRenderer>(true);
-        if (cableSR != null) cableSR.sortingOrder = _originalSortingOrder;
 
         // Spawn a drag indicator sprite that follows the cursor.
         SpriteRenderer sourceSR = _installedCable.GetComponentInChildren<SpriteRenderer>(true);
@@ -255,7 +275,12 @@ public class LanTesterPortController : MonoBehaviour
         _installedCable.transform.localPosition = Vector3.zero;
 
         var cableSR = _installedCable.GetComponentInChildren<SpriteRenderer>(true);
-        if (cableSR != null) cableSR.sortingOrder = -1;
+        if (cableSR != null)
+        {
+            if (installedCableSprite != null)
+                cableSR.sprite = installedCableSprite;
+            cableSR.sortingOrder = _originalSortingOrder;
+        }
 
         SetCableInteractable(false);
 
