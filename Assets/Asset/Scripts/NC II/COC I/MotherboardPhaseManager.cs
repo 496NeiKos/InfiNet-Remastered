@@ -50,6 +50,28 @@ public class MotherboardPhaseManager : MonoBehaviour
             frontPanelConnectorInteraction.enabled = true;
     }
 
+    /// <summary>
+    /// Called when the motherboard is returned to the system unit slot after its detail
+    /// view is closed. Disables all interactable MB components (screws, cables, CPU, heatsink,
+    /// RAM, GPU, SSD colliders/scripts) so they cannot be triggered from the SU side view.
+    /// Symmetrically undone by SetPhase1Interactive when the MB detail view is reopened.
+    /// </summary>
+    public void SetSlottedState()
+    {
+        SetPhase1Enabled(false);
+        SetPhase2Enabled(false);
+        // GPU is excluded from SetPhase2Enabled — disable it explicitly (mirrors SetPhase2Interactive).
+        // OnDisable on GPUPhase1CableInteraction will close the GPU cable panel if it was open.
+        if (gpuPhase1CableInteraction != null)
+        {
+            gpuPhase1CableInteraction.enabled = false;
+            foreach (DragPrefab dp in gpuPhase1CableInteraction.GetComponents<DragPrefab>())
+                dp.enabled = false;
+            foreach (Collider2D col in gpuPhase1CableInteraction.GetComponents<Collider2D>())
+                col.enabled = false;
+        }
+    }
+
     public void SetPhase2Interactive()
     {
         CurrentPhase = Phase.Phase2;

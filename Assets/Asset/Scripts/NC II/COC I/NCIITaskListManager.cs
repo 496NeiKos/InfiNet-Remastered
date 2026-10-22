@@ -35,10 +35,10 @@
  *      ├── ProgressTMP  TMP_Text [1]
  *      └── StatusTMP    TMP_Text [2]
  *
- *  ── TASK GROUPS — 43 disassembly + 43 assembly tasks ─────────────
+ *  ── TASK GROUPS — 86 disassembly + 65 assembly tasks ─────────────
  *    Configure both disassemblyTaskGroups[] and assemblyTaskGroups[]
  *    in the Inspector. FirstTask index is relative to 0 within each
- *    phase's 43-task array (not a combined index).
+ *    phase's task array (not a combined index).
  *
  *  ── PATTERN ──────────────────────────────────────────────────────
  *    Latch-based: once a task condition is true it latches permanently.
@@ -59,15 +59,15 @@ public class NCIITaskListManager : MonoBehaviour
 
     public static event System.Action OnTasksUpdated;
 
-    private const int DISASSEMBLY_COUNT = 43;
-    private const int ASSEMBLY_COUNT    = 43;
+    private const int DISASSEMBLY_COUNT = 85;
+    private const int ASSEMBLY_COUNT    = 65;
 
     // ── Disassembly Task UI ───────────────────────────────────────────────────
 
     [Header("Disassembly UI")]
     [SerializeField] private Transform    disassemblyTaskParent;
     [SerializeField] private Transform    disassemblyFinishedParent;
-    [SerializeField] private GameObject[] disassemblyTaskObjects = new GameObject[DISASSEMBLY_COUNT];
+    [SerializeField] private GameObject[] disassemblyTaskObjects = new GameObject[85];
 
     // ── Assembly Task UI ──────────────────────────────────────────────────────
 
@@ -155,6 +155,7 @@ public class NCIITaskListManager : MonoBehaviour
     [SerializeField] private HardwareHolder ram2Holder;
     [SerializeField] private HardwareHolder cmosHolder;
     [SerializeField] private HardwareHolder ssdHolder;
+    [SerializeField] private HardwareHolder motherboardHolder;
 
     // ── PPE Slots ─────────────────────────────────────────────────────────────
 
@@ -189,6 +190,30 @@ public class NCIITaskListManager : MonoBehaviour
     [SerializeField] private CablePort _mb4PinATX12VPort;
     [SerializeField] private CablePort _mb24PinATXPort;
 
+    // ── New Fields (wire once in Inspector) ───────────────────────────────────
+
+    [Header("System Unit Controller (for view tracking)")]
+    [SerializeField] private SystemUnitController systemUnitController;
+
+    [Header("Peripheral Controllers")]
+    [SerializeField] private AVRController     _avrController;
+    [SerializeField] private MonitorController _monitorController;
+
+    [Header("Front Panel Sub-Pins")]
+    [SerializeField] private CablePort _fpPinPowerSW;
+    [SerializeField] private CablePort _fpPinResetSW;
+    [SerializeField] private CablePort _fpPinHddLED;
+    [SerializeField] private CablePort _fpPinPowerLEDPos;
+    [SerializeField] private CablePort _fpPinPowerLEDNeg;
+
+    [Header("PSU Screws")]
+    [SerializeField] private ScrewController[] _psuScrews;
+
+    [Header("UI Panels")]
+    [SerializeField] private GameObject settingsPanel;
+    [SerializeField] private GameObject ppeInventoryPanel;
+    [SerializeField] private GameObject gpuLatchSideView;
+
     // ── Runtime ───────────────────────────────────────────────────────────────
 
     // Disassembly state
@@ -212,6 +237,7 @@ public class NCIITaskListManager : MonoBehaviour
     private bool   _isTransitioningToAssembly = false;
     private string _displayOverride           = null;
     private bool   _isCompletionOverride      = false;
+    private bool   _mbTakenOutForAssembly     = false;
 
     // Cached controller refs
     private CPUController      _cpuController;
@@ -228,10 +254,12 @@ public class NCIITaskListManager : MonoBehaviour
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
 
-        disassemblyGroupTitleBtn?.onClick.AddListener(OpenDisassemblyPopup);
-        disassemblyClosePopupBtn?.onClick.AddListener(CloseDisassemblyPopup);
-        assemblyGroupTitleBtn?.onClick.AddListener(OpenAssemblyPopup);
-        assemblyClosePopupBtn?.onClick.AddListener(CloseAssemblyPopup);
+        // All four buttons route through the phase-aware dispatcher so a single
+        // shared popup panel works correctly for both disassembly and assembly phases.
+        disassemblyGroupTitleBtn?.onClick.AddListener(OpenCurrentGroupPopup);
+        disassemblyClosePopupBtn?.onClick.AddListener(CloseCurrentGroupPopup);
+        assemblyGroupTitleBtn?.onClick.AddListener(OpenCurrentGroupPopup);
+        assemblyClosePopupBtn?.onClick.AddListener(CloseCurrentGroupPopup);
     }
 
     private void Start()
@@ -244,9 +272,9 @@ public class NCIITaskListManager : MonoBehaviour
         _ram2Controller     = ram2Holder?.hardwarePrefab?.GetComponent<RAMController>();
 
         if (disassemblyTaskObjects == null || disassemblyTaskObjects.Length < DISASSEMBLY_COUNT)
-        { Debug.LogError("[NCIITaskListManager] Assign all 43 disassembly task objects."); return; }
+        { Debug.LogError("[NCIITaskListManager] Assign all 86 disassembly task objects."); return; }
         if (assemblyTaskObjects == null || assemblyTaskObjects.Length < ASSEMBLY_COUNT)
-        { Debug.LogError("[NCIITaskListManager] Assign all 43 assembly task objects."); return; }
+        { Debug.LogError("[NCIITaskListManager] Assign all 65 assembly task objects."); return; }
 
         for (int i = 0; i < DISASSEMBLY_COUNT; i++)
             if (disassemblyTaskObjects[i] != null) disassemblyTaskObjects[i].SetActive(false);
@@ -259,12 +287,8 @@ public class NCIITaskListManager : MonoBehaviour
         if (transitionText != null)     transitionText.gameObject.SetActive(false);
         if (allTasksCompletedText != null) allTasksCompletedText.gameObject.SetActive(false);
 
-        BuildDisassemblyPopupRows();
-        BuildAssemblyPopupRows();
         RefreshDisassemblyGroupTitle();
         RefreshAssemblyGroupTitle();
-        RefreshDisassemblyPopup();
-        RefreshAssemblyPopup();
         RefreshDisassemblyWindow();
     }
 
@@ -274,6 +298,9 @@ public class NCIITaskListManager : MonoBehaviour
 
         if (_showingAssembly)
         {
+            if (!_mbTakenOutForAssembly && motherboardHolder != null && !motherboardHolder.IsAvailable())
+                _mbTakenOutForAssembly = true;
+
             if (!_assemblyAllDone) CheckCurrentAssemblyTask();
         }
         else
@@ -282,59 +309,162 @@ public class NCIITaskListManager : MonoBehaviour
         }
     }
 
+    // ── Shared Condition Helpers ──────────────────────────────────────────────
+
+    // True when the given transform is currently displayed in a detail layer.
+    private bool IsInDetailView(Transform t)
+    {
+        if (t == null || GameManager.Instance == null || !GameManager.Instance.IsEditorOpen) return false;
+        var fl = GameManager.Instance.firstLayer?.transform;
+        var sl = GameManager.Instance.secondLayer?.transform;
+        var tl = GameManager.Instance.thirdLayer?.transform;
+        return (fl != null && t.parent == fl)
+            || (sl != null && t.parent == sl)
+            || (tl != null && t.parent == tl);
+    }
+
+    // True when any System Unit view panel is active (SU editor is open).
+    private bool IsSUEditorOpen() =>
+        systemUnitController != null &&
+        (systemUnitController.systemUnitFront.activeSelf ||
+         systemUnitController.systemUnitSide.activeSelf  ||
+         systemUnitController.systemUnitBack.activeSelf);
+
+    private static bool AllUnscrewed(ScrewController[] sc) =>
+        sc != null && sc.Length > 0 && sc.All(s => s.IsUnscrewed());
+
+    private static bool AllScrewed(ScrewController[] sc) =>
+        sc != null && sc.Length > 0 && sc.All(s => s.IsScrewed());
+
     // ── Disassembly condition checks ──────────────────────────────────────────
 
     private bool CheckDisassemblyCondition(int index)
     {
         return index switch
         {
-             0 => _ppeWristStrap  != null && _ppeWristStrap.IsActive,
-             1 => _ppeGoggles     != null && _ppeGoggles.IsActive,
-             2 => _ppeGloves      != null && _ppeGloves.IsActive,
-             3 => _ppeSafetyShoes != null && _ppeSafetyShoes.IsActive,
-             4 => _ppeDustMask    != null && _ppeDustMask.IsActive,
-             5 => suPowerButton      == null || !suPowerButton.IsPoweredOn,
-             6 => monitorPowerButton == null || !monitorPowerButton.IsPoweredOn,
-             7 => avrPowerButton     == null || !avrPowerButton.IsPoweredOn,
-             8 => psuSwitch          == null || !psuSwitch.IsOn,
-             9 => _suBackPorts      != null && _suBackPorts.Length      > 0 && _suBackPorts.All(p => p.IsUninstalled),
-            10 => _monitorBackPorts != null && _monitorBackPorts.Length > 0 && _monitorBackPorts.All(p => p.IsUninstalled),
-            11 => _avrBackPorts    != null && _avrBackPorts.Length    > 0 && _avrBackPorts.All(p => p.IsUninstalled),
-            12 => coverController != null && coverController.AreAllScrewsUnscrewed(),
-            13 => coverController != null && coverController.IsOpen(),
-            14 => _hddController != null && _hddController.SATADataPort  != null && !_hddController.SATADataPort.IsInstalled,
-            15 => _hddController != null && _hddController.SATAPowerPort != null && !_hddController.SATAPowerPort.IsInstalled,
-            16 => _hddController != null && _hddController.GetComponentsInChildren<ScrewController>(true).All(s => s.IsUnscrewed()),
-            17 => _frontPanelDetailView != null && _frontPanelDetailView.gameObject.activeSelf,
-            18 => frontPanelConnectorController != null && frontPanelConnectorController.CanDetach(),
-            19 => frontPanelConnectorController != null && !frontPanelConnectorController.IsPhase1Installed,
-            20 => _mbSATADataPort   != null && !_mbSATADataPort.IsInstalled,
-            21 => _mb4PinATX12VPort != null && !_mb4PinATX12VPort.IsInstalled,
-            22 => _mb24PinATXPort   != null && !_mb24PinATXPort.IsInstalled,
-            23 => MBScrewsUnscrewed(),
-            24 => gpuController != null && gpuController.GetComponentsInChildren<CablePort>(true).All(c => !c.IsInstalled),
-            25 => gpuController != null && gpuController.GetComponentsInChildren<ScrewController>(true).All(s => s.IsUnscrewed()),
-            26 => gpuController != null && !gpuController.IsLatched,
-            27 => gpuController != null && !gpuController.IsInSlot,
-            28 => motherboardController != null && motherboardController.IsUninstalledFromSystemUnit,
-            29 => _hddController != null && !_hddController.IsInSlot,
-            30 => psuHolder != null && psuHolder.hardwarePrefab != null && psuHolder.hardwarePrefab.GetComponentInParent<SlotContainer>() == null,
-            31 => motherboardController != null
+            // ── Group 1: Put On PPE (D1–D7) ──────────────────────────────────
+             0 => settingsPanel     != null && settingsPanel.activeSelf,
+             1 => ppeInventoryPanel != null && ppeInventoryPanel.activeSelf,
+             2 => _ppeWristStrap    != null && _ppeWristStrap.IsActive,
+             3 => _ppeGoggles       != null && _ppeGoggles.IsActive,
+             4 => _ppeGloves        != null && _ppeGloves.IsActive,
+             5 => _ppeSafetyShoes   != null && _ppeSafetyShoes.IsActive,
+             6 => _ppeDustMask      != null && _ppeDustMask.IsActive,
+
+            // ── Group 2: Terminate Power Sources (D8–D15) ────────────────────
+             7 => ppeInventoryPanel == null || !ppeInventoryPanel.activeSelf,
+             8 => IsSUEditorOpen(),
+             9 => suPowerButton   == null || !suPowerButton.IsPoweredOn,
+            10 => systemUnitController != null && systemUnitController.systemUnitBack.activeSelf,
+            11 => psuSwitch       == null || !psuSwitch.IsOn,
+            12 => GameManager.Instance == null || !GameManager.Instance.IsEditorOpen,
+            13 => _avrController  != null && IsInDetailView(_avrController.transform),
+            14 => avrPowerButton  == null || !avrPowerButton.IsPoweredOn,
+
+            // ── Group 3: Remove External Cables (D16–D28) ────────────────────
+            15 => GameManager.Instance == null || !GameManager.Instance.IsEditorOpen,
+            16 => IsSUEditorOpen(),
+            17 => systemUnitController != null && systemUnitController.systemUnitBack.activeSelf,
+            18 => _suBackPorts != null && _suBackPorts.Length > 0 && _suBackPorts[0] != null && _suBackPorts[0].IsUninstalled,
+            19 => _suBackPorts != null && _suBackPorts.Length > 1 && _suBackPorts[1] != null && _suBackPorts[1].IsUninstalled,
+            20 => GameManager.Instance == null || !GameManager.Instance.IsEditorOpen,
+            21 => _monitorController != null && IsInDetailView(_monitorController.transform),
+            22 => _monitorController != null && IsInDetailView(_monitorController.transform),
+            23 => _monitorBackPorts != null && _monitorBackPorts.Length > 0 && _monitorBackPorts[0] != null && _monitorBackPorts[0].IsUninstalled,
+            24 => _monitorBackPorts != null && _monitorBackPorts.Length > 1 && _monitorBackPorts[1] != null && _monitorBackPorts[1].IsUninstalled,
+            25 => GameManager.Instance == null || !GameManager.Instance.IsEditorOpen,
+            26 => _avrController != null && IsInDetailView(_avrController.transform),
+            27 => _avrBackPorts  != null && _avrBackPorts.Length > 0 && _avrBackPorts.All(p => p.IsUninstalled),
+
+            // ── Group 4: Remove Case Cover (D29–D34) ─────────────────────────
+            28 => GameManager.Instance == null || !GameManager.Instance.IsEditorOpen,
+            29 => IsSUEditorOpen(),
+            30 => systemUnitController != null && systemUnitController.systemUnitBack.activeSelf,
+            31 => coverController != null && coverController.AreAllScrewsUnscrewed(),
+            32 => systemUnitController != null && systemUnitController.systemUnitSide.activeSelf,
+            33 => coverController != null && coverController.IsOpen(),
+
+            // ── Group 5: Remove HDD (D35–D40) ────────────────────────────────
+            34 => _hddController != null && IsInDetailView(_hddController.transform),
+            35 => _hddController != null && _hddController.SATADataPort  != null && !_hddController.SATADataPort.IsInstalled,
+            36 => _hddController != null && _hddController.SATAPowerPort != null && !_hddController.SATAPowerPort.IsInstalled,
+            37 => _hddController != null && AllUnscrewed(_hddController.GetComponentsInChildren<ScrewController>(true)),
+            38 => systemUnitController != null && systemUnitController.systemUnitSide.activeSelf
+               && (_hddController == null || !IsInDetailView(_hddController.transform)),
+            39 => hddHolder != null && hddHolder.IsAvailable(),
+
+            // ── Group 6: Remove GPU (D41–D48) ────────────────────────────────
+            40 => motherboardController != null && !motherboardController.IsUninstalledFromSystemUnit
+               && IsInDetailView(motherboardController.transform),
+            41 => gpuController != null && IsInDetailView(gpuController.transform),
+            42 => gpuController != null
+               && gpuController.GetComponentsInChildren<CablePort>(true) is var gpuCablesD
+               && (gpuCablesD.Length == 0 || gpuCablesD.All(c => !c.IsInstalled)),
+            43 => gpuController != null && AllUnscrewed(gpuController.GetComponentsInChildren<ScrewController>(true)),
+            44 => gpuLatchSideView != null && gpuLatchSideView.activeSelf,
+            45 => gpuController != null && !gpuController.IsLatched,
+            46 => motherboardController != null && !motherboardController.IsUninstalledFromSystemUnit
+               && IsInDetailView(motherboardController.transform)
+               && (gpuController == null || !IsInDetailView(gpuController.transform)),
+            47 => gpuController != null && !gpuController.IsInSlot,
+
+            // ── Group 7: Remove MB Cables & Motherboard (D49–D62) ────────────
+            48 => _frontPanelDetailView != null && _frontPanelDetailView.gameObject.activeSelf,
+            49 => _fpPinPowerSW     != null && !_fpPinPowerSW.IsInstalled,
+            50 => _fpPinResetSW     != null && !_fpPinResetSW.IsInstalled,
+            51 => _fpPinHddLED      != null && !_fpPinHddLED.IsInstalled,
+            52 => _fpPinPowerLEDPos != null && !_fpPinPowerLEDPos.IsInstalled,
+            53 => _fpPinPowerLEDNeg != null && !_fpPinPowerLEDNeg.IsInstalled,
+            54 => motherboardController != null && !motherboardController.IsUninstalledFromSystemUnit
+               && IsInDetailView(motherboardController.transform)
+               && (_frontPanelDetailView == null || !_frontPanelDetailView.gameObject.activeSelf),
+            55 => frontPanelConnectorController != null && !frontPanelConnectorController.IsPhase1Installed,
+            56 => _mbSATADataPort   != null && !_mbSATADataPort.IsInstalled,
+            57 => _mb4PinATX12VPort != null && !_mb4PinATX12VPort.IsInstalled,
+            58 => _mb24PinATXPort   != null && !_mb24PinATXPort.IsInstalled,
+            59 => MBScrewsUnscrewed(),
+            60 => systemUnitController != null && systemUnitController.systemUnitSide.activeSelf
+               && (motherboardController == null || !IsInDetailView(motherboardController.transform)),
+            61 => motherboardController != null && motherboardController.IsUninstalledFromSystemUnit,
+
+            // ── Group 8: Remove PSU (D63–D66) ────────────────────────────────
+            62 => systemUnitController != null && systemUnitController.systemUnitBack.activeSelf,
+            63 => _psuScrews != null && _psuScrews.Length > 0 && _psuScrews.All(s => s.IsUnscrewed()),
+            64 => systemUnitController != null && systemUnitController.systemUnitSide.activeSelf,
+            65 => psuHolder != null && psuHolder.IsAvailable(),
+
+            // ── Group 9: Dismantle MB Components on Workspace (D67–D84) ──────
+            66 => GameManager.Instance == null || !GameManager.Instance.IsEditorOpen,
+            67 => motherboardController != null
                && motherboardController.IsUninstalledFromSystemUnit
-               && GameManager.Instance?.IsEditorOpen == true
-               && motherboardController.transform.parent == GameManager.Instance.firstLayer.transform,
-            32 => _ram1Controller != null && !_ram1Controller.IsInstalled
-               && _ram2Controller != null && !_ram2Controller.IsInstalled,
-            33 => ram1Holder != null && ram1Holder.IsAvailable() && ram2Holder != null && ram2Holder.IsAvailable(),
-            34 => _ssdController != null && _ssdController.GetComponentsInChildren<ScrewController>(true).All(s => s.IsUnscrewed()),
-            35 => ssdHolder != null && ssdHolder.IsAvailable(),
-            36 => _heatsinkController != null && _heatsinkController.CanBeRemoved,
-            37 => _heatsinkController != null && _heatsinkController.GetComponentsInChildren<ScrewController>(true).All(s => s.IsUnscrewed()),
-            38 => _heatsinkController != null && !_heatsinkController.IsInstalledInSlot,
-            39 => cpuSlotController != null && !cpuSlotController.IsLockClosed,
-            40 => _cpuController != null && _cpuController.CurrentPasteState == CPUController.PasteState.NoPaste,
-            41 => cpuSlotController != null && !cpuSlotController.IsCPUInstalled,
-            42 => cmosHolder != null && cmosHolder.IsAvailable(),
+               && motherboardController.gameObject.activeSelf,
+            68 => motherboardController != null
+               && motherboardController.IsUninstalledFromSystemUnit
+               && IsInDetailView(motherboardController.transform),
+            69 => motherboardController != null && motherboardController.IsUninstalledFromSystemUnit
+               && ((_ram1Controller != null && IsInDetailView(_ram1Controller.transform))
+                || (_ram2Controller != null && IsInDetailView(_ram2Controller.transform))),
+            // either RAM unlatched/removed from slot
+            70 => (_ram1Controller != null && !_ram1Controller.IsInstalled)
+               || (_ram2Controller != null && !_ram2Controller.IsInstalled),
+            // first RAM (whichever) dragged to storage
+            71 => (ram1Holder != null && ram1Holder.IsAvailable())
+               || (ram2Holder != null && ram2Holder.IsAvailable()),
+            // both RAMs now in storage
+            72 => ram1Holder != null && ram1Holder.IsAvailable()
+               && ram2Holder != null && ram2Holder.IsAvailable(),
+            73 => _heatsinkController != null && IsInDetailView(_heatsinkController.transform),
+            74 => _heatsinkController != null && _heatsinkController.CanBeRemoved,
+            75 => _heatsinkController != null && AllUnscrewed(_heatsinkController.GetComponentsInChildren<ScrewController>(true)),
+            76 => _heatsinkController != null && !_heatsinkController.IsInstalledInSlot,
+            77 => cpuSlotController != null && !cpuSlotController.IsLockClosed,
+            78 => _cpuController != null && IsInDetailView(_cpuController.transform),
+            79 => _cpuController != null && _cpuController.CurrentPasteState == CPUController.PasteState.NoPaste,
+            80 => cpuSlotController != null && !cpuSlotController.IsCPUInstalled,
+            81 => _ssdController != null && IsInDetailView(_ssdController.transform),
+            82 => _ssdController != null && AllUnscrewed(_ssdController.GetComponentsInChildren<ScrewController>(true)),
+            83 => _ssdController != null && !_ssdController.IsInSlot,
+            84 => cmosHolder != null && cmosHolder.IsAvailable(),
             _  => false
         };
     }
@@ -345,53 +475,104 @@ public class NCIITaskListManager : MonoBehaviour
     {
         return index switch
         {
+            // ── Group 1: Install MB Components (A1–A11) ───────────────────────
              0 => cmosHolder != null && !cmosHolder.IsAvailable(),
-             1 => cpuSlotController != null && cpuSlotController.IsCPUInstalled,
-             2 => _cpuController != null && _cpuController.CurrentPasteState == CPUController.PasteState.PasteApplied,
-             3 => cpuSlotController != null && cpuSlotController.IsLockClosed,
-             4 => _heatsinkController != null && _heatsinkController.IsInstalledInSlot,
-             5 => _heatsinkController != null && _heatsinkController.GetComponentsInChildren<ScrewController>(true).All(s => s.IsScrewed()),
-             6 => _heatsinkController != null && !_heatsinkController.CanBeRemoved,
-             7 => _ssdController != null && _ssdController.IsInSlot,
-             8 => _ssdController != null && _ssdController.GetComponentsInChildren<ScrewController>(true).All(s => s.IsScrewed()),
-             9 => ram1Holder != null && !ram1Holder.IsAvailable() && ram2Holder != null && !ram2Holder.IsAvailable(),
+             1 => _ssdController != null && _ssdController.IsInSlot,
+             2 => _ssdController != null && AllScrewed(_ssdController.GetComponentsInChildren<ScrewController>(true)),
+             3 => cpuSlotController != null && cpuSlotController.IsCPUInstalled,
+             4 => _cpuController != null && _cpuController.CurrentPasteState == CPUController.PasteState.PasteApplied,
+             5 => cpuSlotController != null && cpuSlotController.IsLockClosed,
+             6 => _heatsinkController != null && _heatsinkController.IsInstalledInSlot,
+             7 => _heatsinkController != null && _heatsinkController.IsFullyInstalled,
+             // either RAM placed into its slot
+             8 => (ram1Holder != null && !ram1Holder.IsAvailable())
+               || (ram2Holder != null && !ram2Holder.IsAvailable()),
+             // first RAM (whichever) fully latched
+             9 => (_ram1Controller != null && _ram1Controller.IsLeftLatched && _ram1Controller.IsRightLatched)
+               || (_ram2Controller != null && _ram2Controller.IsLeftLatched && _ram2Controller.IsRightLatched),
+             // both RAMs fully latched
             10 => _ram1Controller != null && _ram1Controller.IsLeftLatched && _ram1Controller.IsRightLatched
                && _ram2Controller != null && _ram2Controller.IsLeftLatched && _ram2Controller.IsRightLatched,
-            11 => motherboardController != null
-               && motherboardController.IsUninstalledFromSystemUnit
-               && GameManager.Instance?.IsEditorOpen != true,
-            12 => psuHolder != null && psuHolder.hardwarePrefab != null && psuHolder.hardwarePrefab.GetComponentInParent<SlotContainer>() != null,
-            13 => _hddController != null && _hddController.IsInSlot,
-            14 => motherboardController != null && !motherboardController.IsUninstalledFromSystemUnit,
-            15 => gpuController != null && gpuController.IsInSlot,
-            16 => gpuController != null && gpuController.IsLatched,
-            17 => gpuController != null && gpuController.GetComponentsInChildren<ScrewController>(true).All(s => s.IsScrewed()),
-            18 => gpuController != null && gpuController.GetComponentsInChildren<CablePort>(true).All(c => c.IsInstalled),
+
+            // ── Group 2: Install PSU (A12–A16) ────────────────────────────────
+            11 => _mbTakenOutForAssembly && motherboardHolder != null && motherboardHolder.IsAvailable(),
+            12 => systemUnitController != null && systemUnitController.systemUnitSide.activeSelf,
+            13 => psuHolder != null && psuHolder.hardwarePrefab != null
+               && psuHolder.hardwarePrefab.GetComponentInParent<SlotContainer>() != null,
+            14 => systemUnitController != null && systemUnitController.systemUnitBack.activeSelf,
+            15 => _psuScrews != null && _psuScrews.Length > 0 && _psuScrews.All(s => s.IsScrewed()),
+
+            // ── Group 3: Install Motherboard & Cables (A17–A30) ───────────────
+            16 => systemUnitController != null && systemUnitController.systemUnitSide.activeSelf,
+            17 => motherboardController != null && !motherboardController.IsUninstalledFromSystemUnit,
+            18 => motherboardController != null && !motherboardController.IsUninstalledFromSystemUnit
+               && IsInDetailView(motherboardController.transform),
             19 => MBScrewsScrewed(),
             20 => _mb24PinATXPort   != null && _mb24PinATXPort.IsInstalled,
             21 => _mb4PinATX12VPort != null && _mb4PinATX12VPort.IsInstalled,
             22 => _mbSATADataPort   != null && _mbSATADataPort.IsInstalled,
             23 => frontPanelConnectorController != null && frontPanelConnectorController.IsPhase1Installed,
             24 => _frontPanelDetailView != null && _frontPanelDetailView.gameObject.activeSelf,
-            25 => frontPanelConnectorController != null && frontPanelConnectorController.IsPhase2FullyInstalled,
-            26 => _hddController != null && _hddController.IsInSlot
-               && _hddController.GetComponentsInChildren<ScrewController>(true).All(s => s.IsScrewed()),
-            27 => _hddController != null && _hddController.SATAPowerPort != null && _hddController.SATAPowerPort.IsInstalled,
-            28 => _hddController != null && _hddController.SATADataPort  != null && _hddController.SATADataPort.IsInstalled,
-            29 => coverController != null && !coverController.IsOpen(),
-            30 => coverController != null && !coverController.IsOpen() && coverController.AreAllScrewsScrewed(),
-            31 => _avrBackPorts    != null && _avrBackPorts.Length    > 0 && _avrBackPorts.All(p => p.IsInstalled),
-            32 => _monitorBackPorts != null && _monitorBackPorts.Length > 0 && _monitorBackPorts.All(p => p.IsInstalled),
-            33 => _suBackPorts     != null && _suBackPorts.Length     > 0 && _suBackPorts.All(p => p.IsInstalled),
-            34 => psuSwitch          != null && psuSwitch.IsOn,
-            35 => avrPowerButton     != null && avrPowerButton.IsPoweredOn,
-            36 => monitorPowerButton != null && monitorPowerButton.IsPoweredOn,
-            37 => suPowerButton      != null && suPowerButton.IsPoweredOn,
-            38 => _ppeDustMask    == null || !_ppeDustMask.IsActive,
-            39 => _ppeSafetyShoes == null || !_ppeSafetyShoes.IsActive,
-            40 => _ppeGloves      == null || !_ppeGloves.IsActive,
-            41 => _ppeGoggles     == null || !_ppeGoggles.IsActive,
-            42 => _ppeWristStrap  == null || !_ppeWristStrap.IsActive,
+            25 => _fpPinPowerLEDNeg != null && _fpPinPowerLEDNeg.IsInstalled,
+            26 => _fpPinPowerLEDPos != null && _fpPinPowerLEDPos.IsInstalled,
+            27 => _fpPinHddLED      != null && _fpPinHddLED.IsInstalled,
+            28 => _fpPinResetSW     != null && _fpPinResetSW.IsInstalled,
+            29 => _fpPinPowerSW     != null && _fpPinPowerSW.IsInstalled,
+
+            // ── Group 4: Install GPU (A31–A38) ────────────────────────────────
+            30 => motherboardController != null && !motherboardController.IsUninstalledFromSystemUnit
+               && IsInDetailView(motherboardController.transform)
+               && (_frontPanelDetailView == null || !_frontPanelDetailView.gameObject.activeSelf),
+            31 => gpuController != null && gpuController.IsInSlot,
+            32 => gpuController != null && IsInDetailView(gpuController.transform),
+            33 => gpuLatchSideView != null && gpuLatchSideView.activeSelf,
+            34 => gpuController != null && gpuController.IsLatched,
+            35 => gpuController != null && IsInDetailView(gpuController.transform)
+               && (gpuLatchSideView == null || !gpuLatchSideView.activeSelf),
+            36 => gpuController != null
+               && gpuController.GetComponentsInChildren<CablePort>(true) is var gpuCablesA
+               && gpuCablesA.Length > 0
+               && gpuCablesA.All(c => c.IsInstalled),
+            37 => gpuController != null && AllScrewed(gpuController.GetComponentsInChildren<ScrewController>(true)),
+
+            // ── Group 5: Install HDD (A39–A44) ────────────────────────────────
+            38 => systemUnitController != null && systemUnitController.systemUnitSide.activeSelf
+               && (motherboardController == null || !IsInDetailView(motherboardController.transform)),
+            39 => _hddController != null && _hddController.IsInSlot,
+            40 => _hddController != null && IsInDetailView(_hddController.transform),
+            41 => _hddController != null && AllScrewed(_hddController.GetComponentsInChildren<ScrewController>(true)),
+            42 => _hddController != null && _hddController.SATAPowerPort != null && _hddController.SATAPowerPort.IsInstalled,
+            43 => _hddController != null && _hddController.SATADataPort  != null && _hddController.SATADataPort.IsInstalled,
+
+            // ── Group 6: Close Case Cover (A45–A48) ───────────────────────────
+            44 => systemUnitController != null && systemUnitController.systemUnitSide.activeSelf
+               && (_hddController == null || !IsInDetailView(_hddController.transform)),
+            45 => coverController != null && !coverController.IsOpen(),
+            46 => systemUnitController != null && systemUnitController.systemUnitBack.activeSelf,
+            47 => coverController != null && coverController.AreAllScrewsScrewed(),
+
+            // ── Group 7: Connect External Cables (A49–A55) ────────────────────
+            48 => _suBackPorts != null && _suBackPorts.Length > 0 && _suBackPorts[0] != null && _suBackPorts[0].IsInstalled,
+            49 => _suBackPorts != null && _suBackPorts.Length > 1 && _suBackPorts[1] != null && _suBackPorts[1].IsInstalled,
+            50 => _monitorController != null && IsInDetailView(_monitorController.transform),
+            51 => _monitorBackPorts != null && _monitorBackPorts.Length > 0 && _monitorBackPorts[0] != null && _monitorBackPorts[0].IsInstalled,
+            52 => _monitorBackPorts != null && _monitorBackPorts.Length > 1 && _monitorBackPorts[1] != null && _monitorBackPorts[1].IsInstalled,
+            53 => _avrController != null && IsInDetailView(_avrController.transform),
+            54 => _avrBackPorts != null && _avrBackPorts.Length > 0 && _avrBackPorts.All(p => p.IsInstalled),
+
+            // ── Group 8: Power On (A56–A58) ───────────────────────────────────
+            55 => avrPowerButton != null && avrPowerButton.IsPoweredOn,
+            56 => psuSwitch      != null && psuSwitch.IsOn,
+            57 => suPowerButton  != null && suPowerButton.IsPoweredOn,
+
+            // ── Group 9: Remove PPE (A59–A65) ─────────────────────────────────
+            58 => ppeInventoryPanel != null && ppeInventoryPanel.activeSelf,
+            59 => _ppeDustMask    == null || !_ppeDustMask.IsActive,
+            60 => _ppeSafetyShoes == null || !_ppeSafetyShoes.IsActive,
+            61 => _ppeGloves      == null || !_ppeGloves.IsActive,
+            62 => _ppeGoggles     == null || !_ppeGoggles.IsActive,
+            63 => _ppeWristStrap  == null || !_ppeWristStrap.IsActive,
+            64 => ppeInventoryPanel == null || !ppeInventoryPanel.activeSelf,
             _  => false
         };
     }
@@ -420,7 +601,7 @@ public class NCIITaskListManager : MonoBehaviour
         RefreshDisassemblyWindow();
         RefreshDisassemblyGroupTitle();
 
-        if (disassemblyGroupOverviewPopup != null && disassemblyGroupOverviewPopup.activeSelf)
+        if (ActiveGroupPopup != null && ActiveGroupPopup.activeSelf)
             RefreshDisassemblyPopup();
 
         if (!_isDisassemblyFlashing)
@@ -496,7 +677,7 @@ public class NCIITaskListManager : MonoBehaviour
         RefreshAssemblyWindow();
         RefreshAssemblyGroupTitle();
 
-        if (assemblyGroupOverviewPopup != null && assemblyGroupOverviewPopup.activeSelf)
+        if (ActiveGroupPopup != null && ActiveGroupPopup.activeSelf)
             RefreshAssemblyPopup();
 
         if (!_isAssemblyFlashing)
@@ -597,7 +778,7 @@ public class NCIITaskListManager : MonoBehaviour
             RefreshDisassemblyWindow();
         }
 
-        if (disassemblyGroupOverviewPopup != null && disassemblyGroupOverviewPopup.activeSelf)
+        if (ActiveGroupPopup != null && ActiveGroupPopup.activeSelf)
             RefreshDisassemblyPopup();
     }
 
@@ -662,7 +843,7 @@ public class NCIITaskListManager : MonoBehaviour
             RefreshAssemblyWindow();
         }
 
-        if (assemblyGroupOverviewPopup != null && assemblyGroupOverviewPopup.activeSelf)
+        if (ActiveGroupPopup != null && ActiveGroupPopup.activeSelf)
             RefreshAssemblyPopup();
     }
 
@@ -674,22 +855,52 @@ public class NCIITaskListManager : MonoBehaviour
         assemblyGroupTitleTMP.text = $"{g.Title}  {completed} / {g.TaskCount}";
     }
 
-    // ── Disassembly Popup ─────────────────────────────────────────────────────
+    // ── Phase-aware group popup ───────────────────────────────────────────────
 
-    private void OpenDisassemblyPopup()  { RefreshDisassemblyPopup(); disassemblyGroupOverviewPopup?.SetActive(true); }
-    private void CloseDisassemblyPopup() { disassemblyGroupOverviewPopup?.SetActive(false); }
+    // Returns the popup panel relevant to the current phase. Falls back to the
+    // other phase's panel when a dedicated panel isn't wired — supports a single
+    // shared popup for both phases.
+    private GameObject ActiveGroupPopup =>
+        _showingAssembly
+            ? (assemblyGroupOverviewPopup  != null ? assemblyGroupOverviewPopup  : disassemblyGroupOverviewPopup)
+            : (disassemblyGroupOverviewPopup != null ? disassemblyGroupOverviewPopup : assemblyGroupOverviewPopup);
+
+    private void OpenCurrentGroupPopup()
+    {
+        if (_showingAssembly)
+        {
+            BuildAssemblyPopupRows();
+            RefreshAssemblyPopup();
+        }
+        else
+        {
+            BuildDisassemblyPopupRows();
+            RefreshDisassemblyPopup();
+        }
+        ActiveGroupPopup?.SetActive(true);
+    }
+
+    private void CloseCurrentGroupPopup()
+    {
+        disassemblyGroupOverviewPopup?.SetActive(false);
+        assemblyGroupOverviewPopup?.SetActive(false);
+    }
+
+    // ── Disassembly Popup ─────────────────────────────────────────────────────
 
     private void BuildDisassemblyPopupRows()
     {
-        if (disassemblyGroupRowParent == null || groupRowPrefab == null || disassemblyTaskGroups == null) return;
+        // Fall back to assembly row parent when no dedicated disassembly parent is wired.
+        Transform parent = disassemblyGroupRowParent != null ? disassemblyGroupRowParent : assemblyGroupRowParent;
+        if (parent == null || groupRowPrefab == null || disassemblyTaskGroups == null) return;
 
-        foreach (Transform child in disassemblyGroupRowParent)
+        foreach (Transform child in parent)
             Destroy(child.gameObject);
 
         _disassemblyPopupRowTMPs = new TMP_Text[disassemblyTaskGroups.Length][];
         for (int g = 0; g < disassemblyTaskGroups.Length; g++)
         {
-            var row  = Instantiate(groupRowPrefab, disassemblyGroupRowParent);
+            var row  = Instantiate(groupRowPrefab, parent);
             var tmps = row.GetComponentsInChildren<TMP_Text>();
             _disassemblyPopupRowTMPs[g] = new TMP_Text[3];
             if (tmps.Length >= 3)
@@ -728,20 +939,19 @@ public class NCIITaskListManager : MonoBehaviour
 
     // ── Assembly Popup ────────────────────────────────────────────────────────
 
-    private void OpenAssemblyPopup()  { RefreshAssemblyPopup(); assemblyGroupOverviewPopup?.SetActive(true); }
-    private void CloseAssemblyPopup() { assemblyGroupOverviewPopup?.SetActive(false); }
-
     private void BuildAssemblyPopupRows()
     {
-        if (assemblyGroupRowParent == null || groupRowPrefab == null || assemblyTaskGroups == null) return;
+        // Fall back to disassembly row parent when no dedicated assembly parent is wired.
+        Transform parent = assemblyGroupRowParent != null ? assemblyGroupRowParent : disassemblyGroupRowParent;
+        if (parent == null || groupRowPrefab == null || assemblyTaskGroups == null || assemblyTaskGroups.Length == 0) return;
 
-        foreach (Transform child in assemblyGroupRowParent)
+        foreach (Transform child in parent)
             Destroy(child.gameObject);
 
         _assemblyPopupRowTMPs = new TMP_Text[assemblyTaskGroups.Length][];
         for (int g = 0; g < assemblyTaskGroups.Length; g++)
         {
-            var row  = Instantiate(groupRowPrefab, assemblyGroupRowParent);
+            var row  = Instantiate(groupRowPrefab, parent);
             var tmps = row.GetComponentsInChildren<TMP_Text>();
             _assemblyPopupRowTMPs[g] = new TMP_Text[3];
             if (tmps.Length >= 3)
@@ -785,6 +995,7 @@ public class NCIITaskListManager : MonoBehaviour
     private IEnumerator TransitionToAssembly()
     {
         _isTransitioningToAssembly = true;
+        _mbTakenOutForAssembly = false;
 
         if (transitionText != null)
         {
@@ -808,6 +1019,9 @@ public class NCIITaskListManager : MonoBehaviour
         if (disassemblyTaskParent != null) disassemblyTaskParent.gameObject.SetActive(false);
         if (assemblyTaskParent   != null) assemblyTaskParent.gameObject.SetActive(true);
 
+        BuildAssemblyPopupRows();
+        RefreshAssemblyGroupTitle();
+        RefreshAssemblyPopup();
         RefreshAssemblyWindow();
         OnTasksUpdated?.Invoke();
     }

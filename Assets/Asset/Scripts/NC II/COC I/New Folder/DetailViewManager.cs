@@ -145,6 +145,14 @@ public class DetailViewManager : MonoBehaviour
         _activeChildPrefab.transform.SetParent(_childOriginalParent, true);
         _activeChildPrefab.transform.localPosition = _childOriginalLocalPos;
 
+        // SetPhase1Interactive (called on open) enabled all phase1 and phase2 interactive
+        // elements (screws, cables, CPU/heatsink/RAM/SSD colliders and DragPrefabs).
+        // Disable them all now that the MB is back in its SU slot — the SU side view must
+        // not allow direct interaction with MB-internal components.
+        // SetPhase1Interactive will re-enable everything next time the detail view opens.
+        var phase = _activeChildPrefab.GetComponent<MotherboardPhaseManager>();
+        phase?.SetSlottedState();
+
         SystemUnitController controller = GetComponent<SystemUnitController>();
         if (controller != null)
         {
