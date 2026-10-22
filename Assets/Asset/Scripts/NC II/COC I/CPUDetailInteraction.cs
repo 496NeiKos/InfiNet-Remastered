@@ -26,11 +26,13 @@ public class CPUDetailInteraction : MonoBehaviour
         if (!_isHolding) return;
 
         _holdTimer += Time.deltaTime;
+        ActivityLogManager.UpdateLiveTimer(_holdTimer);
 
         if (_holdTimer >= holdDuration)
         {
             _holdTimer = 0f;
             _isHolding = false;
+            ActivityLogManager.StopLiveTimer();
             ApplyTool(_currentToolTag);
             _currentToolTag = "";
         }
@@ -43,6 +45,8 @@ public class CPUDetailInteraction : MonoBehaviour
             _currentToolTag = other.tag;
             _isHolding = true;
             _holdTimer = 0f;
+            string label = other.CompareTag("ThermalPaste") ? "Applying thermal paste" : "Wiping thermal paste";
+            ActivityLogManager.StartLiveTimer(label);
             Debug.Log($"[CPUDetailInteraction] {_currentToolTag} contact — holding...");
         }
     }
@@ -54,6 +58,7 @@ public class CPUDetailInteraction : MonoBehaviour
             _isHolding = false;
             _holdTimer = 0f;
             _currentToolTag = "";
+            ActivityLogManager.StopLiveTimer();
             Debug.Log($"[CPUDetailInteraction] Tool removed — timer reset.");
         }
     }
