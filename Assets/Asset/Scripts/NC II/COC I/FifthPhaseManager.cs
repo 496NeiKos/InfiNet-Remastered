@@ -83,13 +83,25 @@
  *    acceptButton             → PrivacySetting > Footer > Button (Legacy) (1)
  *
  *  BUTTON WIRING (OnClick)
- *    Region > Next                  → FifthPhaseManager.OnRegionNext()
- *    KeyboardLayout > Next          → FifthPhaseManager.OnKeyboardLayoutNext()
- *    SecondKeyboardLayout > Skip    → FifthPhaseManager.OnSkipSecondKeyboard()
- *    ConnectToInternet > NoInternet → FifthPhaseManager.OnNoInternetClicked()
- *    NoInternetPanel > ConnectNow   → FifthPhaseManager.OnConnectNowClicked()
- *    NoInternetPanel > LimitedSetup → FifthPhaseManager.OnLimitedSetupClicked()
- *    PrivacySetting > Accept        → FifthPhaseManager.OnAcceptPrivacy()
+ *    Region > Next                        → FifthPhaseManager.OnRegionNext()
+ *      (NO back button on Region — first OOBE panel)
+ *
+ *    KeyboardLayout > Back                → FifthPhaseManager.OnBackFromKeyboardLayout()
+ *    KeyboardLayout > Next                → FifthPhaseManager.OnKeyboardLayoutNext()
+ *
+ *    SecondKeyboardLayout > Back          → FifthPhaseManager.OnBackFromSecondKeyboard()
+ *    SecondKeyboardLayout > Footer > Skip → FifthPhaseManager.OnSkipSecondKeyboard()
+ *
+ *    ConnectToInternet > Back             → FifthPhaseManager.OnBackFromConnectToInternet()
+ *    ConnectToInternet > NoInternet       → FifthPhaseManager.OnNoInternetClicked()
+ *
+ *    NoInternetPanel > Back               → FifthPhaseManager.OnBackFromNoInternet()
+ *    NoInternetPanel > ConnectNow         → FifthPhaseManager.OnConnectNowClicked()
+ *    NoInternetPanel > LimitedSetup       → FifthPhaseManager.OnLimitedSetupClicked()
+ *
+ *    PrivacySetting > Back                → FifthPhaseManager.OnBackFromPrivacySetting()
+ *    PrivacySetting > Footer > Accept     → FifthPhaseManager.OnAcceptPrivacy()
+ *      (NO back button on Windows10Panel — wizard is complete)
  *
  *  NOTE: Option buttons in RegionOption, KeyboardLayoutOption, and
  *  PrivacySettingOption do NOT need OnClick wiring — the script wires

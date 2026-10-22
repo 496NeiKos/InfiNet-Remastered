@@ -79,17 +79,24 @@
  *    SetUpInitialize > FirstPhase > Footer > Next
  *      OnClick → WindowsSetupNavigator.OnNextFromInitFirstPhase()
  *
+ *    SetUpInitialize > SecondPhase > Back
+ *      OnClick → WindowsSetupNavigator.OnBackFromInitSecondPhase()
  *    SetUpInitialize > SecondPhase > Selection > InstallNow
  *      OnClick → WindowsSetupNavigator.OnInstallNow()
  *
  *    SetUpLicenseAgreement > FirstPhase > Footer > Next
  *      OnClick → WindowsSetupNavigator.OnNextFromLicenseFirstPhase()
+ *      (NO back button on FirstPhase — reached after restart animation)
  *
+ *    SetUpLicenseAgreement > SecondPhase > Back
+ *      OnClick → WindowsSetupNavigator.OnBackFromLicenseSecondPhase()
  *    SetUpLicenseAgreement > SecondPhase > InstallationOption > Upgrade
  *      OnClick → WindowsSetupNavigator.OnUpgradeSelected()
- *
  *    SetUpLicenseAgreement > SecondPhase > InstallationOption > Custom > Custom
  *      OnClick → WindowsSetupNavigator.OnCustomSelected()
+ *
+ *    SetUpLicenseAgreement > ThirdPhase > Back
+ *      OnClick → WindowsSetupNavigator.OnBackFromLicenseThirdPhase()
  * ================================================================
  */
 
