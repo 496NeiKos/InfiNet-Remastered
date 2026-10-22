@@ -109,6 +109,8 @@ public class GPUPhase1CableInteraction : MonoBehaviour
 
         // Re-enable MB BEFORE reparenting: reparenting into an inactive parent triggers OnDisable,
         // and calling SetActive inside that cascade throws "already being activated or deactivated".
+        // Re-activate the MB's Detailed child first (before RestoreMotherboard nulls the reference).
+        RestoreMotherboardDetailedView();
         RestoreMotherboard();
 
         transform.SetParent(_originalParent, false);
@@ -156,6 +158,19 @@ public class GPUPhase1CableInteraction : MonoBehaviour
         {
             _motherboard.SetActive(true);
             _motherboard = null;
+        }
+    }
+
+    private void RestoreMotherboardDetailedView()
+    {
+        if (_motherboard == null) return;
+        foreach (Transform child in _motherboard.transform)
+        {
+            if (child.name.Contains("Detailed"))
+            {
+                child.gameObject.SetActive(true);
+                return;
+            }
         }
     }
 

@@ -90,6 +90,11 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
             foreach (DragPrefab child in GetComponentsInChildren<DragPrefab>(true))
             {
                 if (child == this || !child.enabled) continue;
+                // Skip components nested inside another DragPrefab's sub-hierarchy.
+                // Those belong to the intermediate DragPrefab's own redirect, not ours.
+                // Example: CPU/Heatsink are inside Motherboard (which has DragPrefab),
+                // so the SystemUnit's redirect must not reach past the Motherboard.
+                if (HasIntermediateDragPrefab(child)) continue;
                 Collider2D col = child.GetComponent<Collider2D>()
                               ?? child.GetComponentInChildren<Collider2D>(true);
                 if (col != null && col.enabled && col.OverlapPoint(mouseWorld))
@@ -110,6 +115,7 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
             foreach (DragPrefab child in GetComponentsInChildren<DragPrefab>(true))
             {
                 if (child == this || !child.enabled) continue;
+                if (HasIntermediateDragPrefab(child)) continue; // same boundary rule
                 Collider2D col = child.GetComponent<Collider2D>()
                               ?? child.GetComponentInChildren<Collider2D>(true);
                 if (col == null || !col.enabled) continue;
@@ -595,5 +601,21 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
         }
 
         return true;
+    }
+
+    // Returns true if there is another DragPrefab in the hierarchy between this child
+    // and the current object (this). Such children belong to that intermediate DragPrefab's
+    // own redirect domain and must not be reached transitively from a higher-level redirect.
+    // Example: CPU/Heatsink live inside Motherboard — the SystemUnit's redirect must stop
+    // at Motherboard; the Motherboard's own redirect (where this==Motherboard) handles them.
+    private bool HasIntermediateDragPrefab(DragPrefab child)
+    {
+        Transform current = child.transform.parent;
+        while (current != null && current != transform)
+        {
+            if (current.GetComponent<DragPrefab>() != null) return true;
+            current = current.parent;
+        }
+        return false;
     }
 }

@@ -196,7 +196,8 @@ public class ScrewController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         if (_state != ScrewState.Empty)
             return false;
 
-        if (coverController != null && coverController.IsOpen())
+        if (coverController != null && coverController.IsOpen()
+            && GetComponentInParent<CoverController>(true) != null)
         {
             ActivityLogManager.Log("Cannot place screw — close the cover first.", ActivityLogManager.EntryType.Warning);
             Debug.Log($"[ScrewController] {name}: cannot place screw, cover is open");
@@ -217,7 +218,8 @@ public class ScrewController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
             return;
         }
 
-        if (coverController != null && coverController.IsOpen())
+        if (coverController != null && coverController.IsOpen()
+            && GetComponentInParent<CoverController>(true) != null)
         {
             ActivityLogManager.Log("Cannot move screw — close the cover first.", ActivityLogManager.EntryType.Warning);
             _isDragging = false;

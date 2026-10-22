@@ -12,6 +12,8 @@ public class ActivityLogManager : MonoBehaviour
     [SerializeField] private ScrollRect scrollRect;
 
     private string _log = "";
+    private string _timerLabel = "";
+    private string _timerLine  = null;
 
     private void Awake()
     {
@@ -25,9 +27,33 @@ public class ActivityLogManager : MonoBehaviour
         Instance.Append(message, type);
     }
 
+    // Show a live "label: Xs" line at the top of the log while an action is in progress.
+    public static void StartLiveTimer(string label)
+    {
+        if (Instance == null) return;
+        Instance._timerLabel = label;
+        Instance._timerLine  = $"<color=#0D47A1>> {label}: 0s</color>";
+        Instance.UpdateDisplay();
+    }
+
+    // Update the live timer line with the current elapsed seconds (call every frame or on change).
+    public static void UpdateLiveTimer(float elapsed)
+    {
+        if (Instance == null || Instance._timerLine == null) return;
+        Instance._timerLine = $"<color=#0D47A1>> {Instance._timerLabel}: {Mathf.FloorToInt(elapsed)}s</color>";
+        Instance.UpdateDisplay();
+    }
+
+    // Remove the live timer line (call on cancel or when the action completes).
+    public static void StopLiveTimer()
+    {
+        if (Instance == null) return;
+        Instance._timerLine = null;
+        Instance.UpdateDisplay();
+    }
+
     private void Append(string message, EntryType type)
     {
-        // Original colors: Install=#1B5E20 (dark green), Remove=#E65100 (deep orange), Action=#263238 (dark blue-grey)
         string color = type switch
         {
             EntryType.Install  => "#000000",
@@ -37,18 +63,16 @@ public class ActivityLogManager : MonoBehaviour
             _                  => "#000000",
         };
 
-        // Prepend so the newest entry is always at line 1.
         _log = $"<color={color}>> {message}</color>\n" + _log;
+        UpdateDisplay();
+    }
 
-        if (logText != null)
-        {
-            logText.text = _log;
-            // Force the Content RectTransform to resize so the ScrollRect viewport
-            // renders the text instead of clipping it.
-            LayoutRebuilder.ForceRebuildLayoutImmediate(logText.rectTransform);
-            // Newest entry is prepended, so scroll to top after each update.
-            if (scrollRect != null)
-                scrollRect.normalizedPosition = new Vector2(0f, 1f);
-        }
+    private void UpdateDisplay()
+    {
+        if (logText == null) return;
+        logText.text = _timerLine != null ? _timerLine + "\n" + _log : _log;
+        LayoutRebuilder.ForceRebuildLayoutImmediate(logText.rectTransform);
+        if (scrollRect != null)
+            scrollRect.normalizedPosition = new Vector2(0f, 1f);
     }
 }

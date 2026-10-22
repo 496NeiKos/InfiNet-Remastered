@@ -115,17 +115,25 @@ public class CPUSlotController : MonoBehaviour
             case SlotState.BothInstalled:
                 if (cpuCol != null) cpuCol.enabled = false;
                 SetInteractable(heatsink, true);
+                // Only block the heatsink collider in Phase1 (SU side view) to prevent
+                // accidental drag from that view. In Phase2 (MB detail view / workspace)
+                // the collider must stay enabled so the heatsink remains interactable.
+                if (!IsInPhase2())
+                    SetCollider(heatsink, false);
                 break;
 
             case SlotState.HeatsinkUninstalled:
                 // Only the collider gates CPU interactability. DragPrefab.OnBeginDrag already
                 // blocks the drag when the lock is closed — no need to toggle DragPrefab.enabled.
                 if (cpuCol != null) cpuCol.enabled = true;
+                // Heatsink is gone — nothing to manage for its collider.
                 break;
 
             case SlotState.CPUUninstalled:
                 if (cpuCol != null) cpuCol.enabled = false;
                 SetInteractable(heatsink, true);
+                if (!IsInPhase2())
+                    SetCollider(heatsink, false);
                 break;
 
             case SlotState.BothUninstalled:
@@ -135,12 +143,26 @@ public class CPUSlotController : MonoBehaviour
         }
     }
 
+    private bool IsInPhase2()
+    {
+        MotherboardPhaseManager pm = GetComponentInParent<MotherboardPhaseManager>();
+        return pm != null && pm.CurrentPhase == MotherboardPhaseManager.Phase.Phase2;
+    }
+
     private void SetInteractable(GameObject obj, bool interactable)
     {
         if (obj == null) return;
         DragPrefab dp = obj.GetComponent<DragPrefab>()
                      ?? obj.GetComponentInChildren<DragPrefab>(true);
         if (dp != null) dp.enabled = interactable;
+    }
+
+    private void SetCollider(GameObject obj, bool enabled)
+    {
+        if (obj == null) return;
+        Collider2D col = obj.GetComponent<Collider2D>()
+                      ?? obj.GetComponentInChildren<Collider2D>(true);
+        if (col != null) col.enabled = enabled;
     }
 
     public bool HasCPU() => IsCPUInstalled;

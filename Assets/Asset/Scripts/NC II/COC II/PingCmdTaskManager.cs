@@ -1,892 +1,594 @@
 /*
  * ================================================================
- *  UNITY SETUP GUIDE — PingCmdTaskManager  (COC II, Category 3)
+ *  UNITY SETUP GUIDE — PingCmdTaskManager  (COC II, Topic 3)
  * ================================================================
+ *  COMPONENT PLACEMENT
+ *    Add to an always-active "Managers" GameObject in the COC II scene.
  *
- *  PURPOSE
- *    Drives the 37-task "Ping Test - CMD" sequence for COC II.
- *    Mirrors the IPConfigTaskManager pattern: 3-task sliding window,
- *    latch-based conditions, flash-on-complete.
+ *  ── HIERARCHY ────────────────────────────────────────────────────
  *
- *    Requires IPConfigTaskManager to be fully complete before any
- *    task in this category can progress.
+ *    Task Panel (PingCmdPanel)
+ *      ├── Group Title Row                   (always visible above task list)
+ *      │     ├── GroupTitleTMP               TMP_Text  → groupTitleTMP
+ *      │     └── Button component            Button  → groupTitleBtn
+ *      │           OnClick → opens Group Overview Popup
+ *      │
+ *      ├── Task List                         (active task rows parented here)
+ *      │     └── [taskObjects[0..36] reparented here at runtime]
+ *      │
+ *      └── Finished Bucket                  (off-screen; latched tasks move here)
  *
- *  TASKS — SERVER DESKTOP (indices 0–12)
- *    [ 0] Execute Command Prompt of the Server Desktop device through Virtual OS
- *    [ 1] Input "ipconfig" in the CMD
- *    [ 2] Ping this Server desktop's IP address
- *    [ 3] Observe the ping request feedback if the reply is correct
- *    [ 4] Ping the other Desktop device's IP address
- *    [ 5] Observe the ping request feedback if the reply is correct
- *    [ 6] Ping the Laptop device's IP address
- *    [ 7] Observe the ping request feedback if the reply is correct
- *    [ 8] Ping the Router device's IP address
- *    [ 9] Observe the ping request feedback if the reply is correct
- *    [10] Ping the Access Point device's IP address
- *    [11] Observe the ping request feedback if the reply is correct
- *    [12] Server desktop ping test complete. Close the CMD and Server's Virtual OS
+ *    Group Overview Popup                   → groupOverviewPopup (INACTIVE)
+ *      ├── Row Parent                       → groupRowParent  (VerticalLayoutGroup)
+ *      │     └── [GroupRowPrefab × 3 spawned here at runtime]
+ *      └── CloseBtn                         Button  → closePopupBtn
  *
- *  TASKS — OTHER DESKTOP (indices 13–24)
- *    [13] Execute Command Prompt of the other Desktop device through Virtual OS
- *    [14] Ping this Desktop's IP address
- *    [15] Observe the ping request feedback if the reply is correct
- *    [16] Ping the Server Desktop device's IP address
- *    [17] Observe the ping request feedback if the reply is correct
- *    [18] Ping the Laptop device's IP address
- *    [19] Observe the ping request feedback if the reply is correct
- *    [20] Ping the Router device's IP address
- *    [21] Observe the ping request feedback if the reply is correct
- *    [22] Ping the Access Point device's IP address
- *    [23] Observe the ping request feedback if the reply is correct
- *    [24] Desktop ping test complete. Close the CMD and Desktop's Virtual OS
+ *  ── GROUP ROW PREFAB ─────────────────────────────────────────────
+ *    Root: any layout container (e.g. HorizontalLayoutGroup)
+ *      ├── NameTMP      TMP_Text  [0] — group title
+ *      ├── ProgressTMP  TMP_Text  [1] — "2 / 13"
+ *      └── StatusTMP    TMP_Text  [2] — "Pending" / "Active" / "Done"
+ *    GetComponentsInChildren<TMP_Text>() must return them in order [0][1][2].
  *
- *  TASKS — LAPTOP (indices 25–36)
- *    [25] Execute Command Prompt of the Laptop device through Virtual OS
- *    [26] Ping this Laptop's IP address
- *    [27] Observe the ping request feedback if the reply is correct
- *    [28] Ping the Server Desktop device's IP address
- *    [29] Observe the ping request feedback if the reply is correct
- *    [30] Ping the other Desktop device's IP address
- *    [31] Observe the ping request feedback if the reply is correct
- *    [32] Ping the Router device's IP address
- *    [33] Observe the ping request feedback if the reply is correct
- *    [34] Ping the Access Point device's IP address
- *    [35] Observe the ping request feedback if the reply is correct
- *    [36] Laptop ping test complete. Close the CMD and Laptop's Virtual OS
+ *  ── TASK GROUPS — 3 groups, 37 tasks total ───────────────────────
+ *    Group 0  "Server Desktop — CMD Ping Test"  tasks  0 – 12  (13 tasks)
+ *    Group 1  "Other Desktop — CMD Ping Test"   tasks 13 – 24  (12 tasks)
+ *    Group 2  "Laptop — CMD Ping Test"          tasks 25 – 36  (12 tasks)
  *
- *  INSPECTOR SETUP
- *    Task UI
- *      taskParent          → Vertical Layout Group parent inside PingCmd panel
- *      finishedParent      → off-screen sibling of taskParent (NOT nested inside it)
- *      taskObjects[0..36]  → 37 TMP text GameObjects in the order above
- *    Completion UI
- *      allTasksCompletedText → (optional) TMP shown when all 37 tasks done
- *    Completion Routing
- *      topicManagerCompletionIndex → -1 to disable
- *    CMD Reference
- *      pingCmdManager      → PingCmdManager on the CMD Panel inside Virtual OS
+ *  ── INSPECTOR ASSIGNMENTS ────────────────────────────────────────
+ *    taskParent           → VerticalLayoutGroup parent for active task rows
+ *    finishedParent       → Off-screen parent for completed task GameObjects
+ *    taskObjects[0..36]   → Task row GameObjects (TMP_Text labels)
+ *    allTasksCompletedText→ (optional) GameObject shown when all tasks done
+ *
+ *    groupTitleTMP        → TMP_Text above the task list
+ *    groupTitleBtn        → Button on / wrapping the group title TMP
+ *    flashColor           → Color flashed on group complete (default green)
+ *    flashDuration        → Seconds the flash lasts (default 1)
+ *    cocLabel             → e.g. "COC II - Ping Test"
+ *
+ *    groupOverviewPopup   → Popup panel GameObject (starts INACTIVE)
+ *    groupRowParent       → Transform inside popup where rows are spawned
+ *    groupRowPrefab       → Prefab for one popup row (3 TMP children)
+ *    closePopupBtn        → Button to close the popup
+ *    groupPendingColor    → Row color for groups not yet started
+ *    groupActiveColor     → Row color for the current active group
+ *    groupDoneColor       → Row color for completed groups
+ *
+ *    taskGroups[]         → TaskGroup array (3 entries, configure in Inspector)
+ *    topicManagerCompletionIndex → -1 to disable TopicManager call on finish
+ *
+ *    pingCmdManager       → PingCmdManager on the CMD Panel inside Virtual OS
+ *
+ *  ── PREREQUISITES ────────────────────────────────────────────────
+ *    Requires IPConfigTaskManager.IsFullyComplete before task 0 can latch.
+ *    _serverDevice and _secondDevice are read from IPConfigTaskManager at
+ *    the moment task 0 latches.
+ *
+ *  ── PATTERN ──────────────────────────────────────────────────────
+ *    Latch-based: once a task condition is true it latches permanently.
+ *    Sliding window: up to 3 unlatched tasks shown at a time, capped to
+ *    the current active group — tasks from the next group never bleed in.
+ *    One active group at a time; group advances only after all its tasks
+ *    are latched (after a 1-second green flash on the group title TMP).
  * ================================================================
  */
 
-using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class PingCmdTaskManager : MonoBehaviour, ITaskCategory
 {
     public static PingCmdTaskManager Instance { get; private set; }
 
-    public static event Action OnTasksUpdated;
+    public static event System.Action OnTasksUpdated;
 
-    private static readonly Color GoldColor = new Color(1f, 0.843f, 0f);
+    private const int TASK_COUNT = 37;
 
-    // PingResults indices — must match PingCmdManager constants
+    // PingResults indices — must match PingCmdManager constants.
     private const int IdxRouter    = 0;
     private const int IdxAP        = 1;
     private const int IdxComputer1 = 2;
     private const int IdxComputer2 = 3;
     private const int IdxLaptop    = 4;
 
-    // ── Inspector ──────────────────────────────────────────────────────────────────────
+    // ── Task UI ───────────────────────────────────────────────────────────────
 
     [Header("Task UI")]
     [SerializeField] private Transform    taskParent;
-    [Tooltip("Off-screen sibling of taskParent — do NOT nest inside taskParent.")]
     [SerializeField] private Transform    finishedParent;
-    [Tooltip("Exactly 37 task GameObjects in the order listed in the header comment.")]
-    [SerializeField] private GameObject[] taskObjects;
+    [SerializeField] private GameObject[] taskObjects = new GameObject[TASK_COUNT];
+    [SerializeField] private GameObject   allTasksCompletedText;
 
-    [Header("Completion UI")]
-    [Tooltip("(Optional) TMP shown after all 37 tasks are complete.")]
-    [SerializeField] private TextMeshProUGUI allTasksCompletedText;
+    // ── Group Title ───────────────────────────────────────────────────────────
+
+    [Header("Group Title")]
+    [SerializeField] private TMP_Text groupTitleTMP;
+    [SerializeField] private Button   groupTitleBtn;
+    [SerializeField] private Color    flashColor    = Color.green;
+    [SerializeField] private float    flashDuration = 1f;
+    [SerializeField] private string   cocLabel      = "COC II - Ping Test";
+
+    // ── Group Overview Popup ──────────────────────────────────────────────────
+
+    [Header("Group Overview Popup")]
+    [SerializeField] private GameObject groupOverviewPopup;
+    [SerializeField] private Transform  groupRowParent;
+    [SerializeField] private GameObject groupRowPrefab;
+    [SerializeField] private Button     closePopupBtn;
+    [SerializeField] private Color      groupPendingColor = Color.gray;
+    [SerializeField] private Color      groupActiveColor  = Color.yellow;
+    [SerializeField] private Color      groupDoneColor    = Color.green;
+
+    // ── Task Groups ───────────────────────────────────────────────────────────
+
+    [Header("Task Groups (configure all entries in Inspector)")]
+    [SerializeField] private TaskGroup[] taskGroups;
+
+    // ── Completion Routing ────────────────────────────────────────────────────
 
     [Header("Completion Routing")]
     [Tooltip("Index passed to TopicManager.MarkTopicComplete() on full completion. -1 = disabled.")]
     [SerializeField] private int topicManagerCompletionIndex = -1;
 
+    // ── CMD Reference ─────────────────────────────────────────────────────────
+
     [Header("CMD Reference")]
     [SerializeField] private PingCmdManager pingCmdManager;
 
-    // ── State ──────────────────────────────────────────────────────────────────────────
+    // ── Runtime ───────────────────────────────────────────────────────────────
 
-    private readonly bool[] _latched = new bool[37];
+    private bool[]       _latched           = new bool[TASK_COUNT];
+    private int          _currentTask       = 0;
+    private int          _currentGroupIndex = 0;
+    private bool         _allDone           = false;
+    private bool         _isFlashing        = false;
+    private TMP_Text[][] _popupRowTMPs;
 
-    // Captured when task [0] latches — identifies which desktop is server and which is second.
+    // Captured at task [0] latch — identifies which desktop is server and which is second.
     private DeviceID _serverDevice;
     private DeviceID _secondDevice;
 
-    // Captured when task [0] latches — baseline ipconfig run count for the server device.
-    // Task [1] fires only when the count exceeds this baseline, preventing stale CMD history
-    // from auto-completing the ipconfig task.
+    // Baseline ipconfig run count captured when task [0] latches.
+    // Task [1] fires only when count exceeds baseline, preventing stale CMD history.
     private int _serverIpconfigBaseline;
 
-    private class TaskEntry
-    {
-        public GameObject taskObject;
-        public int        originalIndex;
-        public bool       isCompleted;
-        public bool       isFlashing;
-        public Func<bool> condition;
-    }
-
-    private List<TaskEntry> _tasks;
-    private const int       WindowSize = 3;
-
-    private string _displayOverride      = null;
-    private bool   _isCompletionOverride = false;
-
-    // ── Lifecycle ──────────────────────────────────────────────────────────────────────
+    // ── Lifecycle ─────────────────────────────────────────────────────────────
 
     private void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
+
+        groupTitleBtn?.onClick.AddListener(OpenPopup);
+        closePopupBtn?.onClick.AddListener(ClosePopup);
     }
 
     private void Start()
     {
-        if (taskObjects == null || taskObjects.Length < 37)
-        {
-            Debug.LogError("[PingCmdTaskManager] Assign all 37 task objects in the inspector.");
-            return;
-        }
-
-        BuildTasks();
-
-        foreach (var task in _tasks)
-        {
-            task.taskObject.SetActive(false);
-            task.taskObject.transform.SetParent(taskParent, false);
-            task.taskObject.transform.SetSiblingIndex(task.originalIndex);
-            var tmp = task.taskObject.GetComponent<TextMeshProUGUI>();
-            if (tmp != null) tmp.color = GoldColor;
-        }
-
-        if (allTasksCompletedText != null)
-            allTasksCompletedText.gameObject.SetActive(false);
-
+        groupOverviewPopup?.SetActive(false);
+        BuildPopupRows();
+        RefreshGroupTitle();
+        RefreshPopup();
         RefreshWindow();
     }
 
-    // ── Task Definitions ───────────────────────────────────────────────────────────────
-
-    private void BuildTasks()
+    private void OnEnable()
     {
-        _tasks = new List<TaskEntry>
+        RefreshGroupTitle();
+        if (groupOverviewPopup != null && groupOverviewPopup.activeSelf)
+            RefreshPopup();
+    }
+
+    private void Update()
+    {
+        if (_allDone) return;
+        CheckCurrentTask();
+    }
+
+    // ── Task condition checks ─────────────────────────────────────────────────
+
+    private bool CheckCondition(int index)
+    {
+        switch (index)
         {
-            // ── SERVER DESKTOP FLOW (indices 0–12) ────────────────────────────────────
-            // _serverDevice and _secondDevice are captured when task [0] latches.
-
-            // [0] Open CMD on the Server Desktop
-            new TaskEntry
-            {
-                taskObject    = taskObjects[0],
-                originalIndex = 0,
-                condition     = () =>
-                {
-                    if (!_latched[0] &&
-                        IPConfigTaskManager.Instance != null &&
-                        IPConfigTaskManager.Instance.IsFullyComplete &&
-                        VirtualOSManager.Instance != null &&
-                        VirtualOSManager.Instance.IsOpen &&
-                        (VirtualOSManager.Instance.CurrentDevice == DeviceID.Computer1 ||
-                         VirtualOSManager.Instance.CurrentDevice == DeviceID.Computer2) &&
-                        pingCmdManager != null && pingCmdManager.gameObject.activeSelf)
-                    {
-                        _serverDevice = IPConfigTaskManager.Instance.ServerDevice;
-                        _secondDevice = IPConfigTaskManager.Instance.SecondDesktopDevice;
-                        _serverIpconfigBaseline = VirtualOSManager.Instance
-                            .GetState(_serverDevice).IpconfigRunCount;
-                        _latched[0] = true;
-                    }
-                    return _latched[0];
-                }
-            },
-
-            // [1] Input "ipconfig" in the CMD — fires only when ipconfig is newly executed
-            //     on the server device after task [0] latched (baseline prevents stale history)
-            new TaskEntry
-            {
-                taskObject    = taskObjects[1],
-                originalIndex = 1,
-                condition     = () =>
-                {
-                    if (!_latched[1] && _latched[0])
-                    {
-                        var s = VirtualOSManager.Instance?.GetState(_serverDevice);
-                        if (s != null && s.IpconfigRunCount > _serverIpconfigBaseline)
-                            _latched[1] = true;
-                    }
-                    return _latched[1];
-                }
-            },
-
-            // [2] Ping the server desktop's own IP address
-            new TaskEntry
-            {
-                taskObject    = taskObjects[2],
-                originalIndex = 2,
-                condition     = () =>
-                {
-                    if (!_latched[2] && _latched[1])
-                    {
-                        var s = VirtualOSManager.Instance?.GetState(_serverDevice);
-                        if (s != null && s.PingResults[DeviceIndex(_serverDevice)])
-                            _latched[2] = true;
-                    }
-                    return _latched[2];
-                }
-            },
-
-            // [3] Observe — auto-latches after the preceding ping task
-            new TaskEntry
-            {
-                taskObject    = taskObjects[3],
-                originalIndex = 3,
-                condition     = () =>
-                {
-                    if (!_latched[3] && _latched[2]) _latched[3] = true;
-                    return _latched[3];
-                }
-            },
-
-            // [4] Ping the other Desktop's IP address from the server
-            new TaskEntry
-            {
-                taskObject    = taskObjects[4],
-                originalIndex = 4,
-                condition     = () =>
-                {
-                    if (!_latched[4] && _latched[3])
-                    {
-                        var s = VirtualOSManager.Instance?.GetState(_serverDevice);
-                        if (s != null && s.PingResults[DeviceIndex(_secondDevice)])
-                            _latched[4] = true;
-                    }
-                    return _latched[4];
-                }
-            },
-
-            // [5] Observe
-            new TaskEntry
-            {
-                taskObject    = taskObjects[5],
-                originalIndex = 5,
-                condition     = () =>
-                {
-                    if (!_latched[5] && _latched[4]) _latched[5] = true;
-                    return _latched[5];
-                }
-            },
-
-            // [6] Ping the Laptop's IP address from the server
-            new TaskEntry
-            {
-                taskObject    = taskObjects[6],
-                originalIndex = 6,
-                condition     = () =>
-                {
-                    if (!_latched[6] && _latched[5])
-                    {
-                        var s = VirtualOSManager.Instance?.GetState(_serverDevice);
-                        if (s != null && s.PingResults[IdxLaptop])
-                            _latched[6] = true;
-                    }
-                    return _latched[6];
-                }
-            },
-
-            // [7] Observe
-            new TaskEntry
-            {
-                taskObject    = taskObjects[7],
-                originalIndex = 7,
-                condition     = () =>
-                {
-                    if (!_latched[7] && _latched[6]) _latched[7] = true;
-                    return _latched[7];
-                }
-            },
-
-            // [8] Ping the Router's IP address from the server
-            new TaskEntry
-            {
-                taskObject    = taskObjects[8],
-                originalIndex = 8,
-                condition     = () =>
-                {
-                    if (!_latched[8] && _latched[7])
-                    {
-                        var s = VirtualOSManager.Instance?.GetState(_serverDevice);
-                        if (s != null && s.PingResults[IdxRouter])
-                            _latched[8] = true;
-                    }
-                    return _latched[8];
-                }
-            },
-
-            // [9] Observe
-            new TaskEntry
-            {
-                taskObject    = taskObjects[9],
-                originalIndex = 9,
-                condition     = () =>
-                {
-                    if (!_latched[9] && _latched[8]) _latched[9] = true;
-                    return _latched[9];
-                }
-            },
-
-            // [10] Ping the Access Point's IP address from the server
-            new TaskEntry
-            {
-                taskObject    = taskObjects[10],
-                originalIndex = 10,
-                condition     = () =>
-                {
-                    if (!_latched[10] && _latched[9])
-                    {
-                        var s = VirtualOSManager.Instance?.GetState(_serverDevice);
-                        if (s != null && s.PingResults[IdxAP])
-                            _latched[10] = true;
-                    }
-                    return _latched[10];
-                }
-            },
-
-            // [11] Observe
-            new TaskEntry
-            {
-                taskObject    = taskObjects[11],
-                originalIndex = 11,
-                condition     = () =>
-                {
-                    if (!_latched[11] && _latched[10]) _latched[11] = true;
-                    return _latched[11];
-                }
-            },
-
-            // [12] Close the CMD and Server's Virtual OS
-            new TaskEntry
-            {
-                taskObject    = taskObjects[12],
-                originalIndex = 12,
-                condition     = () =>
-                {
-                    if (!_latched[12] && _latched[11] &&
-                        pingCmdManager != null && !pingCmdManager.gameObject.activeSelf &&
-                        VirtualOSManager.Instance != null && !VirtualOSManager.Instance.IsOpen)
-                        _latched[12] = true;
-                    return _latched[12];
-                }
-            },
-
-            // ── OTHER DESKTOP FLOW (indices 13–24) ────────────────────────────────────
-
-            // [13] Open CMD on the other Desktop
-            new TaskEntry
-            {
-                taskObject    = taskObjects[13],
-                originalIndex = 13,
-                condition     = () =>
-                {
-                    if (!_latched[13] && _latched[12] &&
-                        VirtualOSManager.Instance != null &&
-                        VirtualOSManager.Instance.IsOpen &&
-                        VirtualOSManager.Instance.CurrentDevice == _secondDevice &&
-                        pingCmdManager != null && pingCmdManager.gameObject.activeSelf)
-                        _latched[13] = true;
-                    return _latched[13];
-                }
-            },
-
-            // [14] Ping the other Desktop's own IP address
-            new TaskEntry
-            {
-                taskObject    = taskObjects[14],
-                originalIndex = 14,
-                condition     = () =>
-                {
-                    if (!_latched[14] && _latched[13])
-                    {
-                        var s = VirtualOSManager.Instance?.GetState(_secondDevice);
-                        if (s != null && s.PingResults[DeviceIndex(_secondDevice)])
-                            _latched[14] = true;
-                    }
-                    return _latched[14];
-                }
-            },
-
-            // [15] Observe
-            new TaskEntry
-            {
-                taskObject    = taskObjects[15],
-                originalIndex = 15,
-                condition     = () =>
-                {
-                    if (!_latched[15] && _latched[14]) _latched[15] = true;
-                    return _latched[15];
-                }
-            },
-
-            // [16] Ping the Server Desktop's IP address from the other Desktop
-            new TaskEntry
-            {
-                taskObject    = taskObjects[16],
-                originalIndex = 16,
-                condition     = () =>
-                {
-                    if (!_latched[16] && _latched[15])
-                    {
-                        var s = VirtualOSManager.Instance?.GetState(_secondDevice);
-                        if (s != null && s.PingResults[DeviceIndex(_serverDevice)])
-                            _latched[16] = true;
-                    }
-                    return _latched[16];
-                }
-            },
-
-            // [17] Observe
-            new TaskEntry
-            {
-                taskObject    = taskObjects[17],
-                originalIndex = 17,
-                condition     = () =>
-                {
-                    if (!_latched[17] && _latched[16]) _latched[17] = true;
-                    return _latched[17];
-                }
-            },
-
-            // [18] Ping the Laptop's IP address from the other Desktop
-            new TaskEntry
-            {
-                taskObject    = taskObjects[18],
-                originalIndex = 18,
-                condition     = () =>
-                {
-                    if (!_latched[18] && _latched[17])
-                    {
-                        var s = VirtualOSManager.Instance?.GetState(_secondDevice);
-                        if (s != null && s.PingResults[IdxLaptop])
-                            _latched[18] = true;
-                    }
-                    return _latched[18];
-                }
-            },
-
-            // [19] Observe
-            new TaskEntry
-            {
-                taskObject    = taskObjects[19],
-                originalIndex = 19,
-                condition     = () =>
-                {
-                    if (!_latched[19] && _latched[18]) _latched[19] = true;
-                    return _latched[19];
-                }
-            },
-
-            // [20] Ping the Router's IP address from the other Desktop
-            new TaskEntry
-            {
-                taskObject    = taskObjects[20],
-                originalIndex = 20,
-                condition     = () =>
-                {
-                    if (!_latched[20] && _latched[19])
-                    {
-                        var s = VirtualOSManager.Instance?.GetState(_secondDevice);
-                        if (s != null && s.PingResults[IdxRouter])
-                            _latched[20] = true;
-                    }
-                    return _latched[20];
-                }
-            },
-
-            // [21] Observe
-            new TaskEntry
-            {
-                taskObject    = taskObjects[21],
-                originalIndex = 21,
-                condition     = () =>
-                {
-                    if (!_latched[21] && _latched[20]) _latched[21] = true;
-                    return _latched[21];
-                }
-            },
-
-            // [22] Ping the Access Point's IP address from the other Desktop
-            new TaskEntry
-            {
-                taskObject    = taskObjects[22],
-                originalIndex = 22,
-                condition     = () =>
-                {
-                    if (!_latched[22] && _latched[21])
-                    {
-                        var s = VirtualOSManager.Instance?.GetState(_secondDevice);
-                        if (s != null && s.PingResults[IdxAP])
-                            _latched[22] = true;
-                    }
-                    return _latched[22];
-                }
-            },
-
-            // [23] Observe
-            new TaskEntry
-            {
-                taskObject    = taskObjects[23],
-                originalIndex = 23,
-                condition     = () =>
-                {
-                    if (!_latched[23] && _latched[22]) _latched[23] = true;
-                    return _latched[23];
-                }
-            },
-
-            // [24] Close the CMD and other Desktop's Virtual OS
-            new TaskEntry
-            {
-                taskObject    = taskObjects[24],
-                originalIndex = 24,
-                condition     = () =>
-                {
-                    if (!_latched[24] && _latched[23] &&
-                        pingCmdManager != null && !pingCmdManager.gameObject.activeSelf &&
-                        VirtualOSManager.Instance != null && !VirtualOSManager.Instance.IsOpen)
-                        _latched[24] = true;
-                    return _latched[24];
-                }
-            },
-
-            // ── LAPTOP FLOW (indices 25–36) ────────────────────────────────────────────
-
-            // [25] Open CMD on the Laptop
-            new TaskEntry
-            {
-                taskObject    = taskObjects[25],
-                originalIndex = 25,
-                condition     = () =>
-                {
-                    if (!_latched[25] && _latched[24] &&
-                        VirtualOSManager.Instance != null &&
-                        VirtualOSManager.Instance.IsOpen &&
-                        VirtualOSManager.Instance.CurrentDevice == DeviceID.Laptop &&
-                        pingCmdManager != null && pingCmdManager.gameObject.activeSelf)
-                        _latched[25] = true;
-                    return _latched[25];
-                }
-            },
-
-            // [26] Ping the Laptop's own IP address
-            new TaskEntry
-            {
-                taskObject    = taskObjects[26],
-                originalIndex = 26,
-                condition     = () =>
-                {
-                    if (!_latched[26] && _latched[25])
-                    {
-                        var s = VirtualOSManager.Instance?.GetState(DeviceID.Laptop);
-                        if (s != null && s.PingResults[IdxLaptop])
-                            _latched[26] = true;
-                    }
-                    return _latched[26];
-                }
-            },
-
-            // [27] Observe
-            new TaskEntry
-            {
-                taskObject    = taskObjects[27],
-                originalIndex = 27,
-                condition     = () =>
-                {
-                    if (!_latched[27] && _latched[26]) _latched[27] = true;
-                    return _latched[27];
-                }
-            },
-
-            // [28] Ping the Server Desktop's IP address from the Laptop
-            new TaskEntry
-            {
-                taskObject    = taskObjects[28],
-                originalIndex = 28,
-                condition     = () =>
-                {
-                    if (!_latched[28] && _latched[27])
-                    {
-                        var s = VirtualOSManager.Instance?.GetState(DeviceID.Laptop);
-                        if (s != null && s.PingResults[DeviceIndex(_serverDevice)])
-                            _latched[28] = true;
-                    }
-                    return _latched[28];
-                }
-            },
-
-            // [29] Observe
-            new TaskEntry
-            {
-                taskObject    = taskObjects[29],
-                originalIndex = 29,
-                condition     = () =>
-                {
-                    if (!_latched[29] && _latched[28]) _latched[29] = true;
-                    return _latched[29];
-                }
-            },
-
-            // [30] Ping the other Desktop's IP address from the Laptop
-            new TaskEntry
-            {
-                taskObject    = taskObjects[30],
-                originalIndex = 30,
-                condition     = () =>
-                {
-                    if (!_latched[30] && _latched[29])
-                    {
-                        var s = VirtualOSManager.Instance?.GetState(DeviceID.Laptop);
-                        if (s != null && s.PingResults[DeviceIndex(_secondDevice)])
-                            _latched[30] = true;
-                    }
-                    return _latched[30];
-                }
-            },
-
-            // [31] Observe
-            new TaskEntry
-            {
-                taskObject    = taskObjects[31],
-                originalIndex = 31,
-                condition     = () =>
-                {
-                    if (!_latched[31] && _latched[30]) _latched[31] = true;
-                    return _latched[31];
-                }
-            },
-
-            // [32] Ping the Router's IP address from the Laptop
-            new TaskEntry
-            {
-                taskObject    = taskObjects[32],
-                originalIndex = 32,
-                condition     = () =>
-                {
-                    if (!_latched[32] && _latched[31])
-                    {
-                        var s = VirtualOSManager.Instance?.GetState(DeviceID.Laptop);
-                        if (s != null && s.PingResults[IdxRouter])
-                            _latched[32] = true;
-                    }
-                    return _latched[32];
-                }
-            },
-
-            // [33] Observe
-            new TaskEntry
-            {
-                taskObject    = taskObjects[33],
-                originalIndex = 33,
-                condition     = () =>
-                {
-                    if (!_latched[33] && _latched[32]) _latched[33] = true;
-                    return _latched[33];
-                }
-            },
-
-            // [34] Ping the Access Point's IP address from the Laptop
-            new TaskEntry
-            {
-                taskObject    = taskObjects[34],
-                originalIndex = 34,
-                condition     = () =>
-                {
-                    if (!_latched[34] && _latched[33])
-                    {
-                        var s = VirtualOSManager.Instance?.GetState(DeviceID.Laptop);
-                        if (s != null && s.PingResults[IdxAP])
-                            _latched[34] = true;
-                    }
-                    return _latched[34];
-                }
-            },
-
-            // [35] Observe
-            new TaskEntry
-            {
-                taskObject    = taskObjects[35],
-                originalIndex = 35,
-                condition     = () =>
-                {
-                    if (!_latched[35] && _latched[34]) _latched[35] = true;
-                    return _latched[35];
-                }
-            },
-
-            // [36] Close the CMD and Laptop's Virtual OS
-            new TaskEntry
-            {
-                taskObject    = taskObjects[36],
-                originalIndex = 36,
-                condition     = () =>
-                {
-                    if (!_latched[36] && _latched[35] &&
-                        pingCmdManager != null && !pingCmdManager.gameObject.activeSelf &&
-                        VirtualOSManager.Instance != null && !VirtualOSManager.Instance.IsOpen)
-                        _latched[36] = true;
-                    return _latched[36];
-                }
-            },
-        };
-    }
-
-    // ── Public API (ITaskCategory) ────────────────────────────────────────────────────
-
-    public string GetNextIncompleteTaskText()
-    {
-        if (_displayOverride != null) return _displayOverride;
-        if (_tasks == null || _tasks.Count == 0) return null;
-        var next = _tasks.FirstOrDefault(t => !t.isCompleted);
-        if (next == null) return null;
-        var tmp = next.taskObject.GetComponent<TextMeshProUGUI>();
-        return tmp != null ? tmp.text : null;
-    }
-
-    public Color GetDisplayColor(Color fallback) =>
-        (_isCompletionOverride && _displayOverride != null) ? Color.green : fallback;
-
-    public void HideCompletionBanner()
-    {
-        if (allTasksCompletedText != null)
-            allTasksCompletedText.gameObject.SetActive(false);
-    }
-
-    public static void CheckConditions()
-    {
-        if (Instance == null) return;
-        Instance.EvaluateConditions();
-    }
-
-    // ── Evaluation ────────────────────────────────────────────────────────────────────
-
-    private void Update() => EvaluateConditions();
-
-    private void EvaluateConditions()
-    {
-        if (_tasks == null || !gameObject.activeInHierarchy) return;
-
-        foreach (var task in _tasks)
-        {
-            if (task.isFlashing) continue;
-
-            if (!task.isCompleted)
-            {
-                if (!task.taskObject.activeSelf) continue;
-
-                if (task.condition())
-                {
-                    task.isCompleted = true;
-                    StartCoroutine(FlashAndComplete(task));
-                }
+            // ── Group 0: Server Desktop — CMD Ping Test ───────────────────────
+            case 0:
+                return IPConfigTaskManager.Instance != null &&
+                       IPConfigTaskManager.Instance.IsFullyComplete &&
+                       VirtualOSManager.Instance != null &&
+                       VirtualOSManager.Instance.IsOpen &&
+                       (VirtualOSManager.Instance.CurrentDevice == DeviceID.Computer1 ||
+                        VirtualOSManager.Instance.CurrentDevice == DeviceID.Computer2) &&
+                       pingCmdManager != null && pingCmdManager.gameObject.activeSelf;
+            case 1: {
+                var s = VirtualOSManager.Instance?.GetState(_serverDevice);
+                return s != null && s.IpconfigRunCount > _serverIpconfigBaseline;
             }
-            else
-            {
-                if (!task.condition())
-                {
-                    task.isCompleted = false;
-                    task.taskObject.transform.SetParent(taskParent, false);
-                    task.taskObject.transform.SetSiblingIndex(task.originalIndex);
-                    var revertTmp = task.taskObject.GetComponent<TextMeshProUGUI>();
-                    if (revertTmp != null) revertTmp.color = GoldColor;
-                    task.taskObject.SetActive(false);
-                    RefreshWindow();
-                    if (task.taskObject.activeSelf)
-                        StartCoroutine(FlashRevert(task));
-                }
+            case 2: {
+                var s = VirtualOSManager.Instance?.GetState(_serverDevice);
+                return s != null && s.PingResults[DeviceIndex(_serverDevice)];
             }
+            case 3:  return true; // observe — auto-latches once task 2 is done
+            case 4: {
+                var s = VirtualOSManager.Instance?.GetState(_serverDevice);
+                return s != null && s.PingResults[DeviceIndex(_secondDevice)];
+            }
+            case 5:  return true; // observe
+            case 6: {
+                var s = VirtualOSManager.Instance?.GetState(_serverDevice);
+                return s != null && s.PingResults[IdxLaptop];
+            }
+            case 7:  return true; // observe
+            case 8: {
+                var s = VirtualOSManager.Instance?.GetState(_serverDevice);
+                return s != null && s.PingResults[IdxRouter];
+            }
+            case 9:  return true; // observe
+            case 10: {
+                var s = VirtualOSManager.Instance?.GetState(_serverDevice);
+                return s != null && s.PingResults[IdxAP];
+            }
+            case 11: return true; // observe
+            case 12:
+                return pingCmdManager != null && !pingCmdManager.gameObject.activeSelf &&
+                       VirtualOSManager.Instance != null && !VirtualOSManager.Instance.IsOpen;
+
+            // ── Group 1: Other Desktop — CMD Ping Test ────────────────────────
+            case 13:
+                return VirtualOSManager.Instance != null &&
+                       VirtualOSManager.Instance.IsOpen &&
+                       VirtualOSManager.Instance.CurrentDevice == _secondDevice &&
+                       pingCmdManager != null && pingCmdManager.gameObject.activeSelf;
+            case 14: {
+                var s = VirtualOSManager.Instance?.GetState(_secondDevice);
+                return s != null && s.PingResults[DeviceIndex(_secondDevice)];
+            }
+            case 15: return true; // observe
+            case 16: {
+                var s = VirtualOSManager.Instance?.GetState(_secondDevice);
+                return s != null && s.PingResults[DeviceIndex(_serverDevice)];
+            }
+            case 17: return true; // observe
+            case 18: {
+                var s = VirtualOSManager.Instance?.GetState(_secondDevice);
+                return s != null && s.PingResults[IdxLaptop];
+            }
+            case 19: return true; // observe
+            case 20: {
+                var s = VirtualOSManager.Instance?.GetState(_secondDevice);
+                return s != null && s.PingResults[IdxRouter];
+            }
+            case 21: return true; // observe
+            case 22: {
+                var s = VirtualOSManager.Instance?.GetState(_secondDevice);
+                return s != null && s.PingResults[IdxAP];
+            }
+            case 23: return true; // observe
+            case 24:
+                return pingCmdManager != null && !pingCmdManager.gameObject.activeSelf &&
+                       VirtualOSManager.Instance != null && !VirtualOSManager.Instance.IsOpen;
+
+            // ── Group 2: Laptop — CMD Ping Test ───────────────────────────────
+            case 25:
+                return VirtualOSManager.Instance != null &&
+                       VirtualOSManager.Instance.IsOpen &&
+                       VirtualOSManager.Instance.CurrentDevice == DeviceID.Laptop &&
+                       pingCmdManager != null && pingCmdManager.gameObject.activeSelf;
+            case 26: {
+                var s = VirtualOSManager.Instance?.GetState(DeviceID.Laptop);
+                return s != null && s.PingResults[IdxLaptop];
+            }
+            case 27: return true; // observe
+            case 28: {
+                var s = VirtualOSManager.Instance?.GetState(DeviceID.Laptop);
+                return s != null && s.PingResults[DeviceIndex(_serverDevice)];
+            }
+            case 29: return true; // observe
+            case 30: {
+                var s = VirtualOSManager.Instance?.GetState(DeviceID.Laptop);
+                return s != null && s.PingResults[DeviceIndex(_secondDevice)];
+            }
+            case 31: return true; // observe
+            case 32: {
+                var s = VirtualOSManager.Instance?.GetState(DeviceID.Laptop);
+                return s != null && s.PingResults[IdxRouter];
+            }
+            case 33: return true; // observe
+            case 34: {
+                var s = VirtualOSManager.Instance?.GetState(DeviceID.Laptop);
+                return s != null && s.PingResults[IdxAP];
+            }
+            case 35: return true; // observe
+            case 36:
+                return pingCmdManager != null && !pingCmdManager.gameObject.activeSelf &&
+                       VirtualOSManager.Instance != null && !VirtualOSManager.Instance.IsOpen;
+
+            default: return false;
         }
     }
 
-    // ── Window ────────────────────────────────────────────────────────────────────────
+    // ── Latch & window logic ──────────────────────────────────────────────────
+
+    private void CheckCurrentTask()
+    {
+        while (_currentTask < TASK_COUNT && !_allDone)
+        {
+            if (_latched[_currentTask]) { AdvanceIfPossible(); continue; }
+            if (!CheckCondition(_currentTask)) return;
+            LatchTask(_currentTask);
+        }
+    }
+
+    private void LatchTask(int index)
+    {
+        // Capture device context and baseline before setting the latch flag.
+        if (index == 0 && IPConfigTaskManager.Instance != null && VirtualOSManager.Instance != null)
+        {
+            _serverDevice             = IPConfigTaskManager.Instance.ServerDevice;
+            _secondDevice             = IPConfigTaskManager.Instance.SecondDesktopDevice;
+            _serverIpconfigBaseline   = VirtualOSManager.Instance.GetState(_serverDevice).IpconfigRunCount;
+        }
+
+        _latched[index] = true;
+        ActivityLogManager.Log($"Task completed: {GetTaskLabel(index)}", ActivityLogManager.EntryType.Action);
+
+        if (taskObjects[index] != null && finishedParent != null)
+            taskObjects[index].transform.SetParent(finishedParent, false);
+
+        AdvanceIfPossible();
+        OnTasksUpdated?.Invoke();
+        RefreshWindow();
+        RefreshGroupTitle();
+
+        if (groupOverviewPopup != null && groupOverviewPopup.activeSelf)
+            RefreshPopup();
+
+        if (!_isFlashing)
+            CheckGroupCompletion();
+    }
+
+    private void AdvanceIfPossible()
+    {
+        while (_currentTask < TASK_COUNT && _latched[_currentTask])
+            _currentTask++;
+
+        if (_currentTask >= TASK_COUNT && !_allDone)
+        {
+            _allDone = true;
+            if (allTasksCompletedText != null) allTasksCompletedText.SetActive(true);
+            if (topicManagerCompletionIndex >= 0)
+                TopicManager.Instance?.MarkTopicComplete(topicManagerCompletionIndex);
+            Debug.Log("[PingCmdTaskManager] All 37 Ping Test tasks completed.");
+        }
+    }
 
     private void RefreshWindow()
     {
-        if (_tasks == null) return;
-
-        var incomplete = _tasks
-            .Where(t => !t.isCompleted)
-            .OrderBy(t => t.originalIndex)
-            .ToList();
-
-        for (int i = 0; i < incomplete.Count; i++)
-            incomplete[i].taskObject.SetActive(i < WindowSize);
-    }
-
-    // ── Coroutines ────────────────────────────────────────────────────────────────────
-
-    private IEnumerator FlashAndComplete(TaskEntry task)
-    {
-        task.isFlashing = true;
-        var tmp = task.taskObject.GetComponent<TextMeshProUGUI>();
-        if (tmp != null) tmp.color = Color.green;
-        yield return new WaitForSeconds(0.6f);
-        task.isFlashing = false;
-        task.taskObject.transform.SetParent(finishedParent, false);
-        task.taskObject.SetActive(false);
-        RefreshWindow();
-        OnTasksUpdated?.Invoke();
-
-        if (_tasks.All(t => t.isCompleted))
+        if (taskGroups == null || taskGroups.Length == 0)
         {
-            ShowAllTasksCompleted();
-            yield break;
+            int shown = 0;
+            for (int i = _currentTask; i < TASK_COUNT && shown < 3; i++)
+            {
+                if (_latched[i]) continue;
+                if (taskObjects[i] != null)
+                {
+                    taskObjects[i].transform.SetParent(taskParent, false);
+                    taskObjects[i].SetActive(true);
+                    shown++;
+                }
+            }
+            return;
         }
 
-        EvaluateConditions();
-    }
-
-    private IEnumerator FlashRevert(TaskEntry task)
-    {
-        task.isFlashing = true;
-        var tmp = task.taskObject.GetComponent<TextMeshProUGUI>();
-        if (tmp != null) tmp.color = new Color(1f, 0.647f, 0f);
-        yield return new WaitForSeconds(0.6f);
-        task.isFlashing = false;
-        if (tmp != null) tmp.color = GoldColor;
-        OnTasksUpdated?.Invoke();
-        EvaluateConditions();
-    }
-
-    // ── Completion ────────────────────────────────────────────────────────────────────
-
-    private void ShowAllTasksCompleted()
-    {
-        _displayOverride      = "All tasks completed!";
-        _isCompletionOverride = true;
-
-        if (allTasksCompletedText != null)
+        int groupEnd  = GetCurrentGroupLastTask();
+        int displayed = 0;
+        for (int i = _currentTask; i <= groupEnd && displayed < 3; i++)
         {
-            allTasksCompletedText.text  = _displayOverride;
-            allTasksCompletedText.color = Color.green;
-            allTasksCompletedText.gameObject.SetActive(true);
+            if (_latched[i]) continue;
+            if (taskObjects[i] != null)
+            {
+                taskObjects[i].transform.SetParent(taskParent, false);
+                taskObjects[i].SetActive(true);
+                displayed++;
+            }
+        }
+    }
+
+    // ── Group logic ───────────────────────────────────────────────────────────
+
+    private int GetCurrentGroupLastTask()
+    {
+        if (taskGroups == null || _currentGroupIndex >= taskGroups.Length)
+            return TASK_COUNT - 1;
+        var g = taskGroups[_currentGroupIndex];
+        return Mathf.Min(g.FirstTask + g.TaskCount - 1, TASK_COUNT - 1);
+    }
+
+    private int CountCompletedInGroup(int groupIndex)
+    {
+        if (taskGroups == null || groupIndex >= taskGroups.Length) return 0;
+        var g    = taskGroups[groupIndex];
+        int last = Mathf.Min(g.FirstTask + g.TaskCount - 1, TASK_COUNT - 1);
+        int count = 0;
+        for (int i = g.FirstTask; i <= last; i++)
+            if (_latched[i]) count++;
+        return count;
+    }
+
+    private void CheckGroupCompletion()
+    {
+        if (taskGroups == null || _currentGroupIndex >= taskGroups.Length) return;
+        var g = taskGroups[_currentGroupIndex];
+        if (CountCompletedInGroup(_currentGroupIndex) >= g.TaskCount)
+            StartCoroutine(FlashAndAdvance());
+    }
+
+    private IEnumerator FlashAndAdvance()
+    {
+        _isFlashing = true;
+
+        Color original = groupTitleTMP != null ? groupTitleTMP.color : Color.white;
+        if (groupTitleTMP != null) groupTitleTMP.color = flashColor;
+
+        yield return new WaitForSeconds(flashDuration);
+
+        if (groupTitleTMP != null) groupTitleTMP.color = original;
+        _isFlashing = false;
+
+        if (_allDone)
+        {
+            if (groupTitleTMP != null)
+                groupTitleTMP.text = $"Objective in {cocLabel} is met, all tasks have been completed.";
+        }
+        else
+        {
+            _currentGroupIndex++;
+            RefreshGroupTitle();
+            RefreshWindow();
         }
 
-        OnTasksUpdated?.Invoke();
-
-        if (topicManagerCompletionIndex >= 0)
-            TopicManager.Instance?.MarkTopicComplete(topicManagerCompletionIndex);
-
-        Debug.Log("[PingCmdTaskManager] All 37 Ping Test tasks complete.");
+        if (groupOverviewPopup != null && groupOverviewPopup.activeSelf)
+            RefreshPopup();
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────────────
+    private void RefreshGroupTitle()
+    {
+        if (groupTitleTMP == null || taskGroups == null || _currentGroupIndex >= taskGroups.Length) return;
+        var g         = taskGroups[_currentGroupIndex];
+        int completed = CountCompletedInGroup(_currentGroupIndex);
+        groupTitleTMP.text = $"{g.Title}  {completed} / {g.TaskCount}";
+    }
 
-    // Maps a DeviceID to its index in DeviceOSState.PingResults[5].
-    // Must match PingCmdManager's IdxComputer1 / IdxComputer2 / IdxLaptop constants.
+    // ── Group Overview Popup ──────────────────────────────────────────────────
+
+    private void OpenPopup()
+    {
+        RefreshPopup();
+        groupOverviewPopup?.SetActive(true);
+    }
+
+    private void ClosePopup()
+    {
+        groupOverviewPopup?.SetActive(false);
+    }
+
+    private void BuildPopupRows()
+    {
+        if (groupRowParent == null || groupRowPrefab == null || taskGroups == null) return;
+
+        foreach (Transform child in groupRowParent)
+            Destroy(child.gameObject);
+
+        _popupRowTMPs = new TMP_Text[taskGroups.Length][];
+        for (int g = 0; g < taskGroups.Length; g++)
+        {
+            var row  = Instantiate(groupRowPrefab, groupRowParent);
+            var tmps = row.GetComponentsInChildren<TMP_Text>();
+            _popupRowTMPs[g] = new TMP_Text[3];
+            if (tmps.Length >= 3)
+            {
+                _popupRowTMPs[g][0] = tmps[0];
+                _popupRowTMPs[g][1] = tmps[1];
+                _popupRowTMPs[g][2] = tmps[2];
+            }
+        }
+    }
+
+    private void RefreshPopup()
+    {
+        if (_popupRowTMPs == null || taskGroups == null) return;
+
+        for (int g = 0; g < taskGroups.Length; g++)
+        {
+            if (_popupRowTMPs[g] == null) continue;
+
+            var   group     = taskGroups[g];
+            int   completed = CountCompletedInGroup(g);
+            bool  isDone    = completed >= group.TaskCount;
+
+            string statusText;
+            Color  rowColor;
+
+            if (isDone)
+            {
+                statusText = "Done";
+                rowColor   = groupDoneColor;
+            }
+            else if (g == _currentGroupIndex)
+            {
+                statusText = "Active";
+                rowColor   = groupActiveColor;
+            }
+            else
+            {
+                statusText = "Pending";
+                rowColor   = groupPendingColor;
+            }
+
+            if (_popupRowTMPs[g][0] != null) { _popupRowTMPs[g][0].text = group.Title;                        _popupRowTMPs[g][0].color = rowColor; }
+            if (_popupRowTMPs[g][1] != null) { _popupRowTMPs[g][1].text = $"{completed} / {group.TaskCount}"; _popupRowTMPs[g][1].color = rowColor; }
+            if (_popupRowTMPs[g][2] != null) { _popupRowTMPs[g][2].text = statusText;                         _popupRowTMPs[g][2].color = rowColor; }
+        }
+    }
+
+    // ── Task Labels ───────────────────────────────────────────────────────────
+
+    private static string GetTaskLabel(int index)
+    {
+        return index switch
+        {
+            // ── Group 0 ───────────────────────────────────────────────────────
+             0 => "Execute Command Prompt of the Server Desktop device through Virtual OS.",
+             1 => "Input \"ipconfig\" in the CMD.",
+             2 => "Ping this Server desktop's IP address.",
+             3 => "Observe the ping request feedback if the reply is correct.",
+             4 => "Ping the other Desktop device's IP address.",
+             5 => "Observe the ping request feedback if the reply is correct.",
+             6 => "Ping the Laptop device's IP address.",
+             7 => "Observe the ping request feedback if the reply is correct.",
+             8 => "Ping the Router device's IP address.",
+             9 => "Observe the ping request feedback if the reply is correct.",
+            10 => "Ping the Access Point device's IP address.",
+            11 => "Observe the ping request feedback if the reply is correct.",
+            12 => "Server desktop ping test complete. Close the CMD and Server's Virtual OS.",
+
+            // ── Group 1 ───────────────────────────────────────────────────────
+            13 => "Execute Command Prompt of the other Desktop device through Virtual OS.",
+            14 => "Ping this Desktop's IP address.",
+            15 => "Observe the ping request feedback if the reply is correct.",
+            16 => "Ping the Server Desktop device's IP address.",
+            17 => "Observe the ping request feedback if the reply is correct.",
+            18 => "Ping the Laptop device's IP address.",
+            19 => "Observe the ping request feedback if the reply is correct.",
+            20 => "Ping the Router device's IP address.",
+            21 => "Observe the ping request feedback if the reply is correct.",
+            22 => "Ping the Access Point device's IP address.",
+            23 => "Observe the ping request feedback if the reply is correct.",
+            24 => "Desktop ping test complete. Close the CMD and Desktop's Virtual OS.",
+
+            // ── Group 2 ───────────────────────────────────────────────────────
+            25 => "Execute Command Prompt of the Laptop device through Virtual OS.",
+            26 => "Ping this Laptop's IP address.",
+            27 => "Observe the ping request feedback if the reply is correct.",
+            28 => "Ping the Server Desktop device's IP address.",
+            29 => "Observe the ping request feedback if the reply is correct.",
+            30 => "Ping the other Desktop device's IP address.",
+            31 => "Observe the ping request feedback if the reply is correct.",
+            32 => "Ping the Router device's IP address.",
+            33 => "Observe the ping request feedback if the reply is correct.",
+            34 => "Ping the Access Point device's IP address.",
+            35 => "Observe the ping request feedback if the reply is correct.",
+            36 => "Laptop ping test complete. Close the CMD and Laptop's Virtual OS.",
+
+            _  => $"Task {index + 1}"
+        };
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
     private static int DeviceIndex(DeviceID d) => d switch
     {
         DeviceID.Computer1 => IdxComputer1,
@@ -894,4 +596,20 @@ public class PingCmdTaskManager : MonoBehaviour, ITaskCategory
         DeviceID.Laptop    => IdxLaptop,
         _                  => -1
     };
+
+    // ── ITaskCategory ─────────────────────────────────────────────────────────
+
+    public string GetNextIncompleteTaskText()
+    {
+        if (_allDone || _currentTask >= TASK_COUNT) return "All tasks completed!";
+        return GetTaskLabel(_currentTask);
+    }
+
+    public Color GetDisplayColor(Color fallback) => _allDone ? Color.green : fallback;
+
+    public void HideCompletionBanner()
+    {
+        if (allTasksCompletedText != null)
+            allTasksCompletedText.SetActive(false);
+    }
 }

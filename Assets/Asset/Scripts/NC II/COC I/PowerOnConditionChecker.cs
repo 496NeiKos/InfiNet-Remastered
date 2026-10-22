@@ -16,11 +16,11 @@ public class PowerOnConditionChecker : MonoBehaviour
     [SerializeField] private AVRPowerButton avrPowerButton;
 
     [Header("SystemUnit Back Ports")]
-    [SerializeField] private CablePort sUVGAPort;
+    [SerializeField] private CablePort sUHDMIPort;
     [SerializeField] private CablePort sUPSUPort;
 
     [Header("Monitor Back Ports")]
-    [SerializeField] private CablePort mVGACableSlot;
+    [SerializeField] private CablePort mHDMICableSlot;
     [SerializeField] private CablePort mPCableSlot;
 
     [Header("AVR Back Ports")]
@@ -64,10 +64,10 @@ public class PowerOnConditionChecker : MonoBehaviour
         if (avrPowerButton == null || !avrPowerButton.IsPoweredOn)
         { Warn("Cannot power on — turn on the AVR first."); pass = false; }
 
-        if (!IsPortInstalled(sUVGAPort))  { Warn("Cannot power on — plug in the VGA cable to the System Unit back."); pass = false; }
+        if (!IsPortInstalled(sUHDMIPort))  { Warn("Cannot power on — plug in the HDMI cable to the System Unit back."); pass = false; }
         if (!IsPortInstalled(sUPSUPort))  { Warn("Cannot power on — plug in the PSU cable to the System Unit back."); pass = false; }
 
-        if (!IsPortInstalled(mVGACableSlot)) { Warn("Cannot power on — plug in the VGA cable to the monitor."); pass = false; }
+        if (!IsPortInstalled(mHDMICableSlot)) { Warn("Cannot power on — plug in the HDMI cable to the monitor."); pass = false; }
         if (!IsPortInstalled(mPCableSlot))   { Warn("Cannot power on — plug in the power cable to the monitor."); pass = false; }
 
         if (!IsPortInstalled(aPSUSlot))    { Warn("Cannot power on — plug in the PSU cable to the AVR."); pass = false; }

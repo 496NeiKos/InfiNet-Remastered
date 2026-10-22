@@ -130,7 +130,18 @@ public class MotherboardDetailViewManager : MonoBehaviour
         _activeChildPrefab.transform.localPosition = _childOriginalLocalPos;
         _activeChildPrefab.transform.localScale = _childOriginalLocalScale;
 
+        // OpenInnerPanel enabled every Collider2D on the component (needed for inner-panel
+        // interaction). Re-apply CPUSlotController state so the CPU collider returns to
+        // the correct enabled/disabled value now that the inner panel is closed.
+        CPUSlotController cpuSlot = _activeChildPrefab.GetComponentInParent<CPUSlotController>();
+        cpuSlot?.ForceState(cpuSlot.State);
+
         gameObject.SetActive(true);
+
+        // Re-activate this MB's own Detailed child so the motherboard view is
+        // visible again — GPUDetailedView.OnDisable hides the angle indicator and
+        // any OnDisable callbacks on sub-objects can leave the view blank.
+        SetDetailedView(gameObject, true);
 
         if (_activePanel != null)
             _activePanel.SetActive(false);
