@@ -474,12 +474,12 @@ public class NetworkCableTaskManager : MonoBehaviour, ITaskCategory
         if (!_latched[11] && _latched[10] &&
             lanTesterPort != null && lanTesterPort.IsCableInstalled &&
             IsStraightThrough())
-            _latched[11] = true;
+            LatchTask(11);
 
         if (!_latched[24] && _latched[23] &&
             lanTesterPort != null && lanTesterPort.IsCableInstalled &&
             IsCrossover())
-            _latched[24] = true;
+            LatchTask(24);
     }
 
     // ── Cable Type Helpers ────────────────────────────────────────────────────
