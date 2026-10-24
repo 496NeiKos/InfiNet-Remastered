@@ -1464,6 +1464,7 @@ GameObject:
   - component: {fileID: 18089922}
   - component: {fileID: 18089921}
   - component: {fileID: 18089923}
+  - component: {fileID: 18089924}
   m_Layer: 0
   m_Name: MicrosoftEdgePanel
   m_TagString: Untagged
@@ -1562,6 +1563,19 @@ MonoBehaviour:
   progressLabel: {fileID: 498922956}
   downloadDuration: 10
   desktopManager: {fileID: 430704148}
+--- !u!114 &18089924
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 18089919}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c544782fcd61e442a2dd9e945310661, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::INGContextProvider
+  context: 14
 --- !u!1 &18961326
 GameObject:
   m_ObjectHideFlags: 0
@@ -20196,6 +20210,7 @@ GameObject:
   - component: {fileID: 233560593}
   - component: {fileID: 233560592}
   - component: {fileID: 233560594}
+  - component: {fileID: 233560595}
   m_Layer: 0
   m_Name: Windows10Panel
   m_TagString: Untagged
@@ -20287,6 +20302,19 @@ MonoBehaviour:
   settingController: {fileID: 1836823617}
   deviceManagerController: {fileID: 658729900}
   taskBarController: {fileID: 1694352028}
+--- !u!114 &233560595
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 233560590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c544782fcd61e442a2dd9e945310661, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::INGContextProvider
+  context: 12
 --- !u!1 &235589226
 GameObject:
   m_ObjectHideFlags: 0
@@ -21677,7 +21705,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4c544782fcd61e442a2dd9e945310661, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::INGContextProvider
-  context: 17
+  context: 7
 --- !u!1 &249942501
 GameObject:
   m_ObjectHideFlags: 0
@@ -23266,7 +23294,6 @@ GameObject:
   - component: {fileID: 264790081}
   - component: {fileID: 264790082}
   - component: {fileID: 264790083}
-  - component: {fileID: 264790084}
   m_Layer: 12
   m_Name: SystemUnitFront
   m_TagString: Untagged
@@ -23419,19 +23446,6 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 1.79, y: 4.03}
   m_EdgeRadius: 0
---- !u!114 &264790084
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 264790079}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4c544782fcd61e442a2dd9e945310661, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::INGContextProvider
-  context: 1
 --- !u!1 &264806963
 GameObject:
   m_ObjectHideFlags: 0
@@ -25469,7 +25483,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 300, y: -200}
+  m_AnchoredPosition: {x: 299.99997, y: -200}
   m_SizeDelta: {x: 80, y: 80}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &283017261
@@ -30629,8 +30643,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -40.43, y: -52.37}
-  m_SizeDelta: {x: 614.64, y: 104.75}
+  m_AnchoredPosition: {x: -50, y: -20}
+  m_SizeDelta: {x: 620, y: 150}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &332119388
 MonoBehaviour:
@@ -30679,8 +30693,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 18
-  m_fontSizeBase: 18
+  m_fontSize: 22
+  m_fontSizeBase: 22
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -31348,7 +31362,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 420, y: -320}
+  m_AnchoredPosition: {x: 419.99997, y: -320}
   m_SizeDelta: {x: 80, y: 80}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &336860561
@@ -41651,7 +41665,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 420, y: -80}
+  m_AnchoredPosition: {x: 419.99997, y: -80}
   m_SizeDelta: {x: 80, y: 80}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &435057205
@@ -47955,64 +47969,62 @@ MonoBehaviour:
   toggleButton: {fileID: 1215458956}
   entries:
   - context: 1
-    title: Power Buttons
-    description: 'Double left-click for interacting with power buttons of devices.
-      Make sure the area for disassembly is properly placed and the PPE is equipped
-      accordingly '
-  - context: 4
-    title: Power Buttons
-    description: Double left-click for interacting with power buttons of devices.
-  - context: 6
-    title: Power Buttons
-    description: Double left-click for interacting with power buttons of devices.
+    title: w t1
+    description: Before starting the disassembly, make sure the workspace or table
+      is clean, dry, and free from unnecessary objects. Place the system unit on
+      an anti-static mat and wear an anti-static wrist strap to prevent electrostatic
+      discharge. Ensure the computer is completely powered off and unplugged, and
+      handle all components carefully while disassembling to avoid damage
   - context: 2
-    title: System Unit Cover Panel
-    description: Use slide gesture input (--->)
+    title: w t2
+    description: 
   - context: 3
-    title: Cables
-    description: Left-click and hold for 1 seconds when unplugging cables installed.
+    title: w t3
+    description: 
+  - context: 4
+    title: su side cover
+    description: 
   - context: 5
-    title: Cables
-    description: Left-click and hold for 1 seconds when unplugging cables installed.
+    title: hardware detail
+    description: Set aside screws and removed equipment in an organized place to
+      prevent losing or confusing them. Check for all visible screws and connectors
+      before removing any component, and handle and store each part properly.
+  - context: 6
+    title: mb in su
+    description: 
   - context: 7
-    title: Cables
-    description: Left-click and hold for 1 seconds when unplugging cables installed.
+    title: mb in ws
+    description: 
   - context: 8
-    title: 
-    description: Make sure all screws and cables are properly removed. Look for any
-      screws that are still in place
+    title: t2 desktop
+    description: 
   - context: 9
-    title: 
-    description: Make sure all installed components are properly removed
+    title: t2 rufus
+    description: "In Rufus, the Partition Scheme determines how the disk is partitioned,
+      such as MBR or GPT, while the Target System indicates the firmware type the
+      system uses, such as BIOS or UEFI. Choose the appropriate options based on
+      the computer\u2019s system configuration."
   - context: 10
-    title: Thermal Paste
-    description: 'To apply or remove the thermal paste in the cpu, drag the paste
-      or towel from the hardware storage and drag it in the cpu to apply/remove '
+    title: t2 cmd
+    description: 
   - context: 11
-    title: Expansion slot
-    description: The ram is installed to the explansion slot, kindly input a slide
-      gesture to unlatch or latch it in from its slot using downward or upwards gesture
+    title: t3 uefi
+    description: 
   - context: 12
-    title: Expansion slot
-    description: The GPU is installed to the expansion slot, kindly remove the cable
-      and screws first before unlatching the components using downward or upward
-      slide gesture input.
-  - context: 16
-    title: Front panel cables
-    description: After unplugging each cables from the pin, drag and drop it to the
-      hinted slot visible to finish unplugging completely.
-  - context: 17
-    title: 'Virtual Simulation: Operating System'
-    description: This is a virutal simulation for operating system windows 10. For
-      the most part, it uses a point and click input for navigating throughout the
-      simulation
-  - context: 18
-    title: Browser Simulation
-    description: Download the specified files to proceed
-  - context: 23
-    title: Rufus Application
-    description: 'This UI is for setting up your bootable flashdrive. fill up values
-      to proceed '
+    title: t3 wizard
+    description: In real-life procedures, processes such as Windows Wizard can take
+      several minutes or even hours, depending on the computer and storage device.
+      The simulation should reflect these realistic loading times instead of making
+      every process load instantly.
+  - context: 13
+    title: t3 windows 10
+    description: 
+  - context: 14
+    title: t3 settings
+    description: "\t\t"
+  - context: 15
+    title: t3 microsoft edge
+    description: 
 --- !u!1 &489492728
 GameObject:
   m_ObjectHideFlags: 0
@@ -48159,7 +48171,7 @@ MonoBehaviour:
     hardwareAreaContainer: {fileID: 0}
     taskListContainer: {fileID: 1161935014}
     terminalContainer: {fileID: 0}
-  required: 1
+  required: 0
   tabBurgerButton: {fileID: 1147369718}
   tabDropdown: {fileID: 2113056850}
   tabButtons:
@@ -48900,13 +48912,14 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 496891194}
+  - component: {fileID: 496891195}
   m_Layer: 0
   m_Name: Topic3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &496891194
 Transform:
   m_ObjectHideFlags: 0
@@ -48925,6 +48938,19 @@ Transform:
   - {fileID: 220000002}
   m_Father: {fileID: 1848288931}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &496891195
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 496891193}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c544782fcd61e442a2dd9e945310661, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::INGContextProvider
+  context: 3
 --- !u!1 &497650986
 GameObject:
   m_ObjectHideFlags: 0
@@ -55042,7 +55068,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4c544782fcd61e442a2dd9e945310661, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::INGContextProvider
-  context: 23
+  context: 8
 --- !u!1 &570596905
 GameObject:
   m_ObjectHideFlags: 0
@@ -63921,7 +63947,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 300, y: -80}
+  m_AnchoredPosition: {x: 299.99997, y: -80}
   m_SizeDelta: {x: 80, y: 80}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &670210021
@@ -65313,7 +65339,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 218.14758, y: -301.88126}
+  m_AnchoredPosition: {x: 218.14761, y: -301.88126}
   m_SizeDelta: {x: 436.29517, y: 120.7525}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &682196494
@@ -66160,6 +66186,7 @@ GameObject:
   - component: {fileID: 692340052}
   - component: {fileID: 692340053}
   - component: {fileID: 692340054}
+  - component: {fileID: 692340055}
   m_Layer: 12
   m_Name: SystemUnitBack
   m_TagString: Untagged
@@ -66344,6 +66371,19 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 4.61, y: 10.44}
   m_EdgeRadius: 0
+--- !u!114 &692340055
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 692340049}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c544782fcd61e442a2dd9e945310661, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::INGContextProvider
+  context: 5
 --- !u!1 &692968725
 GameObject:
   m_ObjectHideFlags: 0
@@ -78225,7 +78265,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 180, y: -440}
+  m_AnchoredPosition: {x: 179.99997, y: -440}
   m_SizeDelta: {x: 80, y: 80}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &814758047
@@ -78978,7 +79018,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 218.14758, y: -422.63376}
+  m_AnchoredPosition: {x: 218.14761, y: -422.63376}
   m_SizeDelta: {x: 436.29517, y: 120.7525}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &818523686
@@ -81428,6 +81468,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 861349165}
+  - component: {fileID: 861349166}
   m_Layer: 0
   m_Name: Topic1
   m_TagString: Untagged
@@ -81455,6 +81496,19 @@ Transform:
   - {fileID: 472708843}
   m_Father: {fileID: 1848288931}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &861349166
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 861349164}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c544782fcd61e442a2dd9e945310661, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::INGContextProvider
+  context: 1
 --- !u!1 &861974026
 GameObject:
   m_ObjectHideFlags: 0
@@ -82334,7 +82388,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.78431374}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.98039216}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -88190,13 +88244,14 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 931906572}
+  - component: {fileID: 931906573}
   m_Layer: 0
   m_Name: Topic2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &931906572
 Transform:
   m_ObjectHideFlags: 0
@@ -88215,6 +88270,19 @@ Transform:
   - {fileID: 173113640}
   m_Father: {fileID: 1848288931}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &931906573
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 931906571}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c544782fcd61e442a2dd9e945310661, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::INGContextProvider
+  context: 2
 --- !u!1 &933491631
 GameObject:
   m_ObjectHideFlags: 0
@@ -94303,7 +94371,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 218.14758, y: -60.37625}
+  m_AnchoredPosition: {x: 218.14761, y: -60.37625}
   m_SizeDelta: {x: 436.29517, y: 120.7525}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &991132254
@@ -100257,6 +100325,7 @@ GameObject:
   - component: {fileID: 1060527843}
   - component: {fileID: 1060527845}
   - component: {fileID: 1060527844}
+  - component: {fileID: 1060527846}
   m_Layer: 0
   m_Name: SetUpInitialize
   m_TagString: Untagged
@@ -100324,6 +100393,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1060527842}
   m_CullTransparentMesh: 1
+--- !u!114 &1060527846
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1060527842}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c544782fcd61e442a2dd9e945310661, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::INGContextProvider
+  context: 11
 --- !u!1 &1061323374
 GameObject:
   m_ObjectHideFlags: 0
@@ -110707,7 +110789,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 420, y: -200}
+  m_AnchoredPosition: {x: 419.99997, y: -200}
   m_SizeDelta: {x: 80, y: 80}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1177132161
@@ -115075,6 +115157,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1222887816}
   - component: {fileID: 1222887817}
+  - component: {fileID: 1222887818}
   m_Layer: 0
   m_Name: MonitorDetailedBack
   m_TagString: Untagged
@@ -115160,6 +115243,19 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!114 &1222887818
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1222887815}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c544782fcd61e442a2dd9e945310661, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::INGContextProvider
+  context: 5
 --- !u!1 &1224513068
 GameObject:
   m_ObjectHideFlags: 0
@@ -131311,7 +131407,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 300, y: -320}
+  m_AnchoredPosition: {x: 299.99997, y: -320}
   m_SizeDelta: {x: 80, y: 80}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1398489042
@@ -137050,7 +137146,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -4553049634920380254, guid: 6cb221e7404937349af1175d14a37bfb, type: 3}
+  m_Sprite: {fileID: -3025845357989423801, guid: ea8174508c83cbc42a82a215051cac0a, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -137478,6 +137574,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1460669631}
   - component: {fileID: 1460669632}
+  - component: {fileID: 1460669633}
   m_Layer: 0
   m_Name: AVRDetailedBack
   m_TagString: Untagged
@@ -137561,6 +137658,19 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!114 &1460669633
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1460669630}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c544782fcd61e442a2dd9e945310661, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::INGContextProvider
+  context: 5
 --- !u!1 &1461057419
 GameObject:
   m_ObjectHideFlags: 0
@@ -146516,6 +146626,7 @@ GameObject:
   - component: {fileID: 1568006089}
   - component: {fileID: 1568006088}
   - component: {fileID: 1568006090}
+  - component: {fileID: 1568006091}
   m_Layer: 0
   m_Name: CommandPromptApp
   m_TagString: Untagged
@@ -146599,6 +146710,19 @@ MonoBehaviour:
   contentContainer: {fileID: 1401573157}
   scrollRect: {fileID: 836151069}
   resultDelay: 0.2
+--- !u!114 &1568006091
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1568006086}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c544782fcd61e442a2dd9e945310661, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::INGContextProvider
+  context: 9
 --- !u!1 &1572564411
 GameObject:
   m_ObjectHideFlags: 0
@@ -152572,7 +152696,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 300, y: -440}
+  m_AnchoredPosition: {x: 299.99997, y: -440}
   m_SizeDelta: {x: 80, y: 80}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1652273343
@@ -160143,7 +160267,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 218.14758, y: -181.12875}
+  m_AnchoredPosition: {x: 218.14761, y: -181.12875}
   m_SizeDelta: {x: 436.29517, y: 120.7525}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1733806439
@@ -163163,7 +163287,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 180, y: -200}
+  m_AnchoredPosition: {x: 179.99997, y: -200}
   m_SizeDelta: {x: 80, y: 80}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1774850179
@@ -164406,6 +164530,7 @@ GameObject:
   - component: {fileID: 1794036809}
   - component: {fileID: 1794036811}
   - component: {fileID: 1794036810}
+  - component: {fileID: 1794036812}
   m_Layer: 0
   m_Name: UEFIPanel
   m_TagString: Untagged
@@ -164473,6 +164598,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1794036808}
   m_CullTransparentMesh: 1
+--- !u!114 &1794036812
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1794036808}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c544782fcd61e442a2dd9e945310661, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::INGContextProvider
+  context: 10
 --- !u!1 &1794631357
 GameObject:
   m_ObjectHideFlags: 0
@@ -167338,6 +167476,7 @@ GameObject:
   - component: {fileID: 1836823616}
   - component: {fileID: 1836823615}
   - component: {fileID: 1836823617}
+  - component: {fileID: 1836823618}
   m_Layer: 0
   m_Name: SettingPanel
   m_TagString: Untagged
@@ -167436,6 +167575,19 @@ MonoBehaviour:
   downloadInstallButton: {fileID: 21906939}
   selectedColor: {r: 0.2, g: 0.55, b: 1, a: 1}
   normalColor: {r: 1, g: 1, b: 1, a: 1}
+--- !u!114 &1836823618
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1836823613}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c544782fcd61e442a2dd9e945310661, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::INGContextProvider
+  context: 13
 --- !u!1 &1837371542
 GameObject:
   m_ObjectHideFlags: 0
@@ -174791,216 +174943,21 @@ MonoBehaviour:
   sequences:
   - trigger: 0
     frames:
-    - image: {fileID: -8768951698538975796, guid: cca3153d288564a458b4be8ce01702d4, type: 3}
-      title: Introduction
-      description: 'Hello Student ! Welcome to the COC I working area. In this stage
-        we are going to simulate the process of COC I. Our objectives is to acquire
-        the knowledge required and elevate your learning experiences through familiarizing
-        the sequences of processes as well as visualize how it is done via 2D simulation. '
-    - image: {fileID: 7726488905030751599, guid: f2c63bc9d5452d446a1e8e9de84cae12, type: 3}
+    - image: {fileID: 0}
+      title: Main Interface
+      description: 'Welcome to COC I, this will be the the interface throughout all
+        COC I to IV. This application will help you understand and familiarize the
+        visuals, procedures and meaning of all COC''s through this Simulation. The
+        interface are divided into four (4) major sytems that assist you for more
+        experience. '
+    - image: {fileID: 0}
       title: Workspace
-      description: This is called a 'Workspace' where it lets you place hardware
-        components to interact to their specific functions. You can think of this
-        like a Canvas or Workbench
-    - image: {fileID: -1829268512908353109, guid: 0f89489b23b26b143bc17f17125c50ff, type: 3}
-      title: Drag & Drop System Feature
-      description: 'One of the major fucnion this system provide, is a ''Drag & Drop''
-        feature, you can click and hold to drag the components inside workspace and
-        freely adjust them to your comfort. '
-    - image: {fileID: -6854710557776830635, guid: 69ea5d94afcca1a468ce6bedc241d270, type: 3}
-      title: Drag & Drop System Feature
-      description: Try it yourself ! you will see a pre-placed components in the
-        workspace, try interacting with these components using a left-click and hold
-        to drag, releasing the drag will drop the currently dragged object.
-  - trigger: 1
-    frames:
-    - image: {fileID: -588774622884185562, guid: a793416dc107f5944aaf6a98faae8ea0, type: 3}
-      title: Drag & Drop System Feature
-      description: 'Great ! now you know how to use the ''Drag & Drop'' system. The
-        ''Workspace'' plays a huge part in the simulation. But lets leave that for
-        now and lets ''Equip'' some Personal Protective Equipment shall we? '
-    - image: {fileID: 8805718949670296377, guid: fa1508160cf15c14c94ae493c67bf22f, type: 3}
-      title: Settings Menu Window
-      description: Go to the 'Settings Menu' above, click that button and it will
-        show a small 'Pop-Up' window, it shows the Systems Navigation, lets not focus
-        on not needed part and click the 'Inventory' button, this will redirect you
-        to PPE Inventory window.
-  - trigger: 6
-    frames:
-    - image: {fileID: 8379749870104023693, guid: ebf0e9812a99be04f8e9d07d304e7065, type: 3}
-      title: Personal Protective Equipment Inventory System
-      description: Welcome to the 'Inventory' for PPE's ! this will be the main area
-        for 'Equipping' items that is currently required to the COC process.
-    - image: {fileID: 572429146345330333, guid: a6428d3731b24a043965b94d297abdff, type: 3}
-      title: Personal Protective Equipment Inventory System
-      description: Browse the Inventory to familiarize to the items it provides,
-        after browsing, you will equip those required PPE before undergoing a process
-        for COC. a PPE is a safety protocol we must follow in order to lessen or
-        avoid risk as much as possible, so that we can have a safety environment
-        !
-    - image: {fileID: 6076987937978585519, guid: a0733b5a44cda8e4dbbc24bc4bee95fa, type: 3}
-      title: Personal Protective Equipment Inventory System
-      description: 'To equip a PPE, it uses a double left-click mouse input and a
-        single left-click for ''Selecting'' a PPE, the selected shows the overview
-        of that PPE and equipping it requires double click. '
-    - image: {fileID: 6076987937978585519, guid: a0733b5a44cda8e4dbbc24bc4bee95fa, type: 3}
-      title: Computer Disassembly Phase
-      description: 'Try it yourself ! equip the required PPE. Our first topic in
-        the COC I is ''Computer Disassembly & Computer Assembly''. Our task is to
-        break down a working computer and disassemble its components, then we will
-        assemble the same broken down computer and make it working again ! '
-  - trigger: 7
-    frames:
-    - image: {fileID: 5287091621252136385, guid: fe9133a16aef6a144aeb14193e346606, type: 3}
-      title: Component Storage System Feature
-      description: 'Great ! You finished Equipping the PPE, we are back to the main
-        interface. Now we will tackle another major function system called ''Component
-        Storage'' system, this feature is for allowing students to have control of
-        the components presented in the screen, they can store the currently not
-        needed components and deploy them later on if needed ! '
-    - image: {fileID: 1351241787206299172, guid: 30eaad459cebc6e4bad7e65266479a88, type: 3}
-      title: Component Storage System Feature
-      description: This system uses a 'Drag & Drop' feature to work. Just drag the
-        components that is currently 'deployed' in the 'Workspace', while dragging,
-        you now have a control over the dragged components ! Try dropping it in the
-        'Component Storage' zone to store it temporarily.
-    - image: {fileID: 5263128837441056886, guid: 4dcc1c7b1bd7f434e849d5dca9818082, type: 3}
-      title: Component Storage System Feature
-      description: Now the item is currently stored ! This is an inactive component
-        and will only be interactable again until you deploy them to the 'Workspace'
-        ! To deploy them, you will just have to drag the icon back to the 'Workspace'
-        and it will be deployed right away.
-    - image: {fileID: -8768951698538975796, guid: cca3153d288564a458b4be8ce01702d4, type: 3}
-      title: Component Storage System Feature
-      description: Some components is able to be deployed to the 'Workspace' while
-        some does not need to. Try it yourself ! drag the component from the workspace
-        to store and drag the icon back to the workspace to deploy
-  - trigger: 8
-    frames:
-    - image: {fileID: -2794543457187828399, guid: 0b6c0ca13730be44596d97d8bb74b8da, type: 3}
-      title: 'Detail view: Component Interaction '
-      description: Great ! You have now learn how 'Component Storage' system works.
-        Going back to the workspace, it plays a huge part in the simulation, we can
-        interact to the 'specifics' of the said components becuase of the workspace.
-        another major function this system provides is called 'Detail View' system.
-        This is the actual interaction interface to which component you 'accessed'
-        their detail view.
-    - image: {fileID: 236664139576291537, guid: d4c06c63c54f39a4d9da3de2dd8b5410, type: 3}
-      title: 'Detail view: Component Interaction '
-      description: Some of the components provide detail view while some does not
-        need one. To acccess that feature is simply to right-click the component
-        then it will bring you to a different interface to start your task.
-    - image: {fileID: -5600840540132020444, guid: 487451f1ea6792e46b98b7e80f361423, type: 3}
-      title: 'Detail view: Component Interaction '
-      description: 'The ''Detail View'' system only works when you student right-click
-        the components from the ''Workspace, now try it yourself ! '
-  - trigger: 2
-    frames:
-    - image: {fileID: -7679190362862670598, guid: 646ca855b019962408ccd48763c466b0, type: 3}
-      title: 'Detail View: Detail Angle of Components'
-      description: 'Great ! you now know how ''Detail View'' system works. while
-        inside this interface (indicator via a darkened version of workspace), you
-        can now interact to the components you accessed ! '
-    - image: {fileID: -8132945462988366943, guid: 0af9340faf30e7e4aa33b431a2037093, type: 3}
-      title: 'Detail View: Detail Angle of Components'
-      description: 'On the same interface you will notice from the left side a vertically
-        arrange number, that is a visual guidelines for how many ''Detail Angle''
-        the component provides inside the ''Detail View''. a detail angle is a subsytem
-        from ''Detail View'' where you can change the viewing angle of the components
-        you interacted with. This way you are not limited for 1 angle anymore ! '
-    - image: {fileID: -2535082068273958875, guid: da611b01777c3cf45b54015645643db3, type: 3}
-      title: 'Detail View: Detail Angle of Components'
-      description: Try it yourself ! to use the 'Detail Angle' subsystem, uses a
-        keyboard shortcut number 1, 2, 3 and 4. In the guideline on the left will
-        show you how many angle it provides as well as a highlighted current active
-        angle that way you do not get lost
-    - image: {fileID: -8768951698538975796, guid: cca3153d288564a458b4be8ce01702d4, type: 3}
-      title: 'Detail View: Component Interaction'
-      description: While inside the 'Detail' View Interface, an 'esc' keyboard shortcut
-        is for 'exiting' the component's detail view, it will return you back to
-        the 'Wokrspace'
-  - trigger: 5
-    frames:
-    - image: {fileID: 7983970110870250661, guid: b600db9c3fb4cce41ab2aa60331ecbd2, type: 3}
-      title: Computer Disassembly Phase
-      description: The first task for 'Disassembly' phase is to turn off all power
-        sources of the components. Accesss the 'Detail View' of certain components
-        and find the power button which they are required to be turned off, this
-        is to make sure there that there is no electricity flowing so that we do
-        not get electrocuted
-    - image: {fileID: 7485341494369441211, guid: 81ede96f66e78c648ad9cb316aa05105, type: 3}
-      title: 'Component Interaction: Power Button'
-      description: 'Try it yourself ! Turn off the power button of all components,
-        to avoid missclicking- power off uses a double left-click mouse input. '
-  - trigger: 3
-    frames:
-    - image: {fileID: -1243892369805425323, guid: 04994a9c4c037cc49a0184f8d897da51, type: 3}
-      title: Terminal / Activity Log System
-      description: 'You may have noticed already, but under the screen, there is
-        an adaptive text display that follows your current activities ! this is called
-        a Terminal ! this will act as your guide that indicates what have you been
-        doing in the system. '
-    - image: {fileID: -6396882941856492938, guid: 430facacd687ee14d9362e9ea77aaaf7, type: 3}
-      title: Task Progression System
-      description: 'You may have also noticed this as well, to the right side of
-        the screen, a small box with a vertically arranged sentences, this is a task
-        list ! this will serve as your guide as well, it will help you the procedure
-        of the current topic you are dealing with. '
-    - image: {fileID: -7128032524453960983, guid: f9fb1f77b5b0d8545a63b6e1723a69a3, type: 3}
-      title: Task Progression System
-      description: This is also a task list ! a single text display that shows the
-        'latest' task you have to deal with, this will only show whenever you are
-        in the 'Detail View', that way it would not eat up too much space !
-    - image: {fileID: 4960204500928130433, guid: 2e1816a35c7a98f4296bcb95f1dadddb, type: 3}
-      title: Lesson Objective
-      description: 'A single text display as well that this time shows you the ''Objective''
-        of the topic, this will serve as your ''Goal'' you must complete in order
-        to progress the other stages / topics. '
-    - image: {fileID: -7041902080849675399, guid: dde955722ec8647448452f251d1960ab, type: 3}
-      title: Cables
-      description: Onto the next task ! Now that you turn off all power sources,
-        you now will unplug all cables connecting to each other. Try it yourself
-        ! to unplug a cable, you will left-click and hold, after unplugging, you
-        should drag the cable back to the hardware storage to complete the uninstallation
-        !
-  - trigger: 4
-    frames:
-    - image: {fileID: 1559704157218881296, guid: 3ca86616abf0de141bd34255c04410f5, type: 3}
-      title: 'Component Interaction : Tools '
-      description: Great ! Now we are going to use 'Tools', there are a lot of tools
-        that will assist you depending on what you are doing, it offeres a lot of
-        utility that would make your work easier instead of doing evrything using
-        only your hands !
-    - image: {fileID: 221268476745969037, guid: ecfeff190aae6ae44afad3031532aa15, type: 3}
-      title: 'Hardware Storage: Component Categories'
-      description: To find the tools, navigate through the hardware storage and click
-        the category you want to see, there are different category where the components
-        are stored,  that way they are in an organized matter !
-  - trigger: 9
-    frames:
-    - image: {fileID: -2535082068273958875, guid: da611b01777c3cf45b54015645643db3, type: 3}
-      title: Slide Gesture Mouse Input
-      description: 'Great ! You can now open the side panel of the system unit. Now
-        a segway for another system feature called "Slide Gesture Input", on some
-        cases the system will require you to do a slide gesture. Such as the: System
-        unit cover panel or Components installed to the ''expansion'' slot (PCIe).  '
-    - image: {fileID: -8768951698538975796, guid: cca3153d288564a458b4be8ce01702d4, type: 3}
-      title: Keyboard Shortcut
-      description: 'There are variations of keyboard shortcut that this system provides,
-        we already know the angle change from ''Detail View'', it uses the keyboard
-        number: ''1, ''2 ,3 or 4''. Do not forget about the ''esc'' as well for exiting. '
-  - trigger: 10
-    frames:
-    - image: {fileID: -5597989569626560140, guid: 2a95cce2d45737f4d90ab570a95654fc, type: 3}
-      title: 'System Unit: Inside Components'
-      description: Great, we now have access inside the System unit. Here you can
-        interact to these components to do you disassembly task!. Try it yourself,
-        do not forget about the task for your guides!
-    - image: {fileID: -1791832827062352882, guid: c5748b001aed78e41a55eb30ebda830e, type: 3}
-      title: Detail View Interaction
-      description: Do not also forget that to interact to a specific components,
-        you are required to be in their Detail View mode ! So some components can
-        have detail view inside a detail view ! Goodluck
+      description: This is where hardware devices are deployed, this interface is
+        mainly used for drag & drop of applicable hardwares
+    - image: {fileID: 0}
+      title: Workspace
+      description: This is where hardware devices are deployed, this interface is
+        mainly used for drag & drop of applicable hardwares
   walkthroughPanel: {fileID: 646996139}
   headerText: {fileID: 1376811619}
   imageDisplay: {fileID: 762592993}
@@ -176898,7 +176855,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 180, y: -80}
+  m_AnchoredPosition: {x: 179.99997, y: -80}
   m_SizeDelta: {x: 80, y: 80}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1951557915
@@ -177311,6 +177268,7 @@ GameObject:
   - component: {fileID: 1955840357}
   - component: {fileID: 1955840359}
   - component: {fileID: 1955840358}
+  - component: {fileID: 1955840360}
   m_Layer: 0
   m_Name: SetUpLicenseAgreement
   m_TagString: Untagged
@@ -177380,6 +177338,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1955840356}
   m_CullTransparentMesh: 1
+--- !u!114 &1955840360
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1955840356}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c544782fcd61e442a2dd9e945310661, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::INGContextProvider
+  context: 11
 --- !u!1 &1955910841
 GameObject:
   m_ObjectHideFlags: 0
@@ -182951,8 +182922,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -52.392, y: 25}
-  m_SizeDelta: {x: 638.57, y: 50}
+  m_AnchoredPosition: {x: -50, y: 80}
+  m_SizeDelta: {x: 650, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2012499596
 MonoBehaviour:
@@ -183001,13 +182972,13 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 26
-  m_fontSizeBase: 26
+  m_fontSize: 28
+  m_fontSizeBase: 28
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
   m_fontSizeMax: 72
-  m_fontStyle: 0
+  m_fontStyle: 1
   m_HorizontalAlignment: 1
   m_VerticalAlignment: 512
   m_textAlignment: 65535
@@ -190825,7 +190796,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 180, y: -320}
+  m_AnchoredPosition: {x: 179.99997, y: -320}
   m_SizeDelta: {x: 80, y: 80}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2122099235
@@ -196190,7 +196161,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4c544782fcd61e442a2dd9e945310661, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::INGContextProvider
-  context: 2
+  context: 4
 --- !u!1 &5815239590440765992
 GameObject:
   m_ObjectHideFlags: 0

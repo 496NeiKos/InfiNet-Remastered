@@ -5,58 +5,45 @@ public enum GuideContext
 {
     None,
 
-    // ── TOPIC 1 — Hardware Assembly ───────────────────────────────────
+    // ── WORKSPACE ────────────────────────────────────────────────────
+    // Pushed by INGContextProvider on each topic's worldRootContainer.
+    // Shown without an editor open; topic index matches the active topic.
+    Workspace_Topic1,
+    Workspace_Topic2,
+    Workspace_Topic3,
 
-    // System Unit views (HardwareViewController)
-    SystemUnit_Front,
-    SystemUnit_Side,
-    SystemUnit_Back,
+    // ── TOPIC 1 — Hardware Assembly ──────────────────────────────────
+    // Pushed by INGContextProvider on systemUnitSide.
+    SystemUnit_SideCoverPanel,
 
-    // Monitor views
-    Monitor_Front,
-    Monitor_Back,
+    // Pushed by INGContextProvider on SU back, Monitor back, and AVR back.
+    Hardware_DetailView,
 
-    // AVR views
-    AVR_Front,
-    AVR_Back,
-
-    // Motherboard — phase set by MotherboardPhaseManager (not INGContextProvider)
-    Motherboard_Phase1,   // MB inside System Unit — screws + cables
-    Motherboard_Phase2,   // MB standalone in workspace — components
-
-    // Inner components (Detailed child GameObjects inside MB or SU)
-    CPU,
-    RAM,
-    GPU,
-    Heatsink,
-    SSD,
-    HDD,
-
-    // Front panel connector sub-detail (FrontPanelDetailedView)
-    FrontPanel,
+    // Pushed by MotherboardPhaseManager (replace pattern, not INGContextProvider).
+    Motherboard_InSystemUnit,   // MB detail view opened while MB is inside the System Unit
+    Motherboard_InWorkspace,    // MB detail view opened while MB is in the workspace
 
     // ── TOPIC 2 — Rufus / Bootable USB ───────────────────────────────
-
-    T2_Desktop,
-    T2_Browser_Home,
-    T2_Browser_RufusSearch,
-    T2_Browser_RufusDownload,
-    T2_Browser_ISOSearch,
-    T2_Browser_ISODownload,
-    T2_Rufus_Setup,
+    // Pushed by INGContextProvider on their respective panel GameObjects.
+    T2_Desktop,         // Desktop panel (panels[0] in T2MonitorNavigator)
+    T2_Rufus,           // Rufus Set Up panel (child of Desktop)
+    T2_CommandPrompt,   // CommandPromptApp panel (child of Desktop)
 
     // ── TOPIC 3 — Windows Setup ───────────────────────────────────────
+    // Pushed by INGContextProvider on their respective panel GameObjects.
+    T3_UEFI,            // UEFIPanel
+    T3_WindowsSetup,    // SetUpInitialize or SetUpLicenseAgreement (both share this value)
+    T3_Windows10Panel,  // Windows10Panel (login + desktop root)
+    T3_SettingPanel,    // SettingPanel (Windows10Desktop > WindowsContent > SettingPanel)
+    T3_MicrosoftEdgePanel, // MicrosoftEdgePanel (Windows10Desktop > WindowsContent > MicrosoftEdgePanel)
 
-    T3_UEFI,
-    T3_PrivacySettings,
-    T3_PasswordSetup,
-    T3_PasswordLogin,
-    T3_Desktop,
-    T3_Settings,
-    T3_DeviceManager,
-    T3_CommandPrompt,
-    T3_DriverInstall,
-    T3_Partition,
+    // ── COC II ───────────────────────────────────────────────────────────
+    // Pushed by INGContextProvider on their respective panel GameObjects.
+    COCII_UTPCableDetailView,   // UTP Cable detail view panel
+
+    // ── COC III ──────────────────────────────────────────────────────────
+
+    // ── COC IV ───────────────────────────────────────────────────────────
 }
 
 [Serializable]

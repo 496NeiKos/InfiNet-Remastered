@@ -28,7 +28,7 @@ public class MotherboardPhaseManager : MonoBehaviour
     public void SetPhase1Interactive()
     {
         CurrentPhase = Phase.Phase1;
-        ReplacePhaseContext(GuideContext.Motherboard_Phase1);
+        ReplacePhaseContext(GuideContext.Motherboard_InSystemUnit);
         SetPhase1Enabled(true);
         SetPhase2Enabled(true); // Both phases active while MB is inside the system unit.
 
@@ -75,7 +75,7 @@ public class MotherboardPhaseManager : MonoBehaviour
     public void SetPhase2Interactive()
     {
         CurrentPhase = Phase.Phase2;
-        ReplacePhaseContext(GuideContext.Motherboard_Phase2);
+        ReplacePhaseContext(GuideContext.Motherboard_InWorkspace);
         // Close and fully disable GPU — all GPU work is done in Phase 1.
         if (gpuPhase1CableInteraction != null)
         {

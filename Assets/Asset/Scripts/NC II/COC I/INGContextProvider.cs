@@ -12,13 +12,25 @@ public class INGContextProvider : MonoBehaviour
 {
     [SerializeField] private GuideContext context;
 
-    private void OnEnable()
-    {
-        InlineNotificationGuide.Instance?.PushContext(context);
-    }
+    // Guards against double-push and handles the initial-load race where
+    // OnEnable fires before InlineNotificationGuide.Awake sets Instance.
+    private bool _pushed;
+
+    private void OnEnable()  => TryPush();
+    private void Start()     => TryPush(); // catches the OnEnable null-Instance case
 
     private void OnDisable()
     {
+        if (!_pushed) return;
+        _pushed = false;
         InlineNotificationGuide.Instance?.PopContext(context);
+    }
+
+    private void TryPush()
+    {
+        if (_pushed) return;
+        if (InlineNotificationGuide.Instance == null) return;
+        _pushed = true;
+        InlineNotificationGuide.Instance.PushContext(context);
     }
 }
