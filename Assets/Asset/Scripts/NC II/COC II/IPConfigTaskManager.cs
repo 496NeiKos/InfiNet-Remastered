@@ -75,6 +75,7 @@
  */
 
 using System.Collections;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -197,6 +198,12 @@ public class IPConfigTaskManager : MonoBehaviour, ITaskCategory
     private bool         _isFlashing        = false;
     private TMP_Text[][] _popupRowTMPs;
 
+    private static readonly Color DefaultTaskColor  = new Color(1.000f, 0.886f, 0.596f);
+    private static readonly Color DefaultTitleColor = new Color(0.953f, 0.839f, 0.020f);
+
+    private Queue<int>   _taskFlashQueue = new Queue<int>();
+    private bool         _isTaskFlashing = false;
+
     // Captured when tasks 21 and 38 latch — used to gate device-specific tasks.
     private DeviceID _serverDevice;
     private DeviceID _secondDesktopDevice;
@@ -214,6 +221,14 @@ public class IPConfigTaskManager : MonoBehaviour, ITaskCategory
 
     private void Start()
     {
+        for (int i = 0; i < TASK_COUNT; i++)
+        {
+            if (taskObjects[i] == null) continue;
+            var tmp = taskObjects[i].GetComponent<TMP_Text>();
+            if (tmp != null) tmp.color = DefaultTaskColor;
+        }
+        if (groupTitleTMP != null) groupTitleTMP.color = DefaultTitleColor;
+
         groupOverviewPopup?.SetActive(false);
         BuildPopupRows();
         RefreshGroupTitle();
@@ -608,12 +623,25 @@ public class IPConfigTaskManager : MonoBehaviour, ITaskCategory
         _latched[index] = true;
         ActivityLogManager.Log($"Task completed: {GetTaskLabel(index)}", ActivityLogManager.EntryType.Action);
 
-        if (taskObjects[index] != null && finishedParent != null)
-            taskObjects[index].transform.SetParent(finishedParent, false);
+        bool wasVisible = taskObjects[index] != null
+                       && taskObjects[index].activeSelf
+                       && taskObjects[index].transform.parent == taskParent;
 
         AdvanceIfPossible();
         OnTasksUpdated?.Invoke();
-        RefreshWindow();
+
+        if (wasVisible)
+        {
+            _taskFlashQueue.Enqueue(index);
+            if (!_isTaskFlashing) StartCoroutine(ProcessTaskFlashQueue());
+        }
+        else
+        {
+            if (taskObjects[index] != null && finishedParent != null)
+                taskObjects[index].transform.SetParent(finishedParent, false);
+            RefreshWindow();
+        }
+
         RefreshGroupTitle();
 
         if (groupOverviewPopup != null && groupOverviewPopup.activeSelf)
@@ -640,10 +668,13 @@ public class IPConfigTaskManager : MonoBehaviour, ITaskCategory
 
     private void RefreshWindow()
     {
+        int occupied   = (_isTaskFlashing ? 1 : 0) + _taskFlashQueue.Count;
+        int maxDisplay = Mathf.Max(0, 3 - occupied);
+
         if (taskGroups == null || taskGroups.Length == 0)
         {
             int shown = 0;
-            for (int i = _currentTask; i < TASK_COUNT && shown < 3; i++)
+            for (int i = _currentTask; i < TASK_COUNT && shown < maxDisplay; i++)
             {
                 if (_latched[i]) continue;
                 if (taskObjects[i] != null)
@@ -658,7 +689,7 @@ public class IPConfigTaskManager : MonoBehaviour, ITaskCategory
 
         int groupEnd  = GetCurrentGroupLastTask();
         int displayed = 0;
-        for (int i = _currentTask; i <= groupEnd && displayed < 3; i++)
+        for (int i = _currentTask; i <= groupEnd && displayed < maxDisplay; i++)
         {
             if (_latched[i]) continue;
             if (taskObjects[i] != null)
@@ -668,6 +699,27 @@ public class IPConfigTaskManager : MonoBehaviour, ITaskCategory
                 displayed++;
             }
         }
+    }
+
+    private IEnumerator ProcessTaskFlashQueue()
+    {
+        _isTaskFlashing = true;
+        while (_taskFlashQueue.Count > 0)
+        {
+            int idx = _taskFlashQueue.Dequeue();
+            RefreshWindow();
+            var tmp = taskObjects[idx]?.GetComponent<TMP_Text>();
+            if (tmp != null)
+            {
+                tmp.color     = Color.green;
+                tmp.fontStyle |= FontStyles.Strikethrough;
+            }
+            yield return new WaitForSeconds(flashDuration);
+            if (taskObjects[idx] != null && finishedParent != null)
+                taskObjects[idx].transform.SetParent(finishedParent, false);
+        }
+        _isTaskFlashing = false;
+        RefreshWindow();
     }
 
     // ── Group logic ───────────────────────────────────────────────────────────
@@ -704,11 +756,19 @@ public class IPConfigTaskManager : MonoBehaviour, ITaskCategory
         _isFlashing = true;
 
         Color original = groupTitleTMP != null ? groupTitleTMP.color : Color.white;
-        if (groupTitleTMP != null) groupTitleTMP.color = flashColor;
+        if (groupTitleTMP != null)
+        {
+            groupTitleTMP.color     = flashColor;
+            groupTitleTMP.fontStyle |= FontStyles.Strikethrough;
+        }
 
         yield return new WaitForSeconds(flashDuration);
 
-        if (groupTitleTMP != null) groupTitleTMP.color = original;
+        if (groupTitleTMP != null)
+        {
+            groupTitleTMP.color     = original;
+            groupTitleTMP.fontStyle &= ~FontStyles.Strikethrough;
+        }
         _isFlashing = false;
 
         if (_allDone)

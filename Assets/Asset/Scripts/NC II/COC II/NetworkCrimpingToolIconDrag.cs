@@ -120,7 +120,32 @@ public class NetworkCrimpingToolIconDrag : MonoBehaviour, IBeginDragHandler, IDr
         if (crimpTarget != null)
         {
             crimpTarget.Crimp();
-            ActivityLogManager.Log($"RJ45 crimped — {crimpTarget.name}", ActivityLogManager.EntryType.Install);
+            ActivityLogManager.Log($"RJ45 succuesfully crimped — {crimpTarget.name}", ActivityLogManager.EntryType.Install);
+            CrimpingFeedbackPopup.Instance?.ShowMessage("You have successfully crimped the RJ45.");
+            return;
+        }
+
+        // Priority 1b: already-crimped RJ45 nearby — give feedback and skip the reset path.
+        NetworkCableEndController alreadyCrimped = FindNearestAlreadyCrimpedEnd(dropPos);
+        if (alreadyCrimped != null)
+        {
+            CrimpingFeedbackPopup.Instance?.ShowMessage("This RJ45 has already been crimped.");
+            return;
+        }
+
+        // Priority 1c: stripped cable end with no RJ45 installed yet.
+        NetworkCableEndController strippedNoRJ45 = FindNearestStrippedNoRJ45End(dropPos);
+        if (strippedNoRJ45 != null)
+        {
+            CrimpingFeedbackPopup.Instance?.ShowMessage("Install the RJ45 first to crimp.");
+            return;
+        }
+
+        // Priority 1d: unstripped cable end — wire stripper has not been used yet.
+        NetworkCableEndController unstripped = FindNearestUnstrippedEnd(dropPos);
+        if (unstripped != null)
+        {
+            CrimpingFeedbackPopup.Instance?.ShowMessage("Use wire stripper first to expose the inner wire.");
             return;
         }
 
@@ -146,6 +171,63 @@ public class NetworkCrimpingToolIconDrag : MonoBehaviour, IBeginDragHandler, IDr
             if (!end.gameObject.activeInHierarchy) continue;
             if (!end.IsStripped || !end.IsRJ45Installed || end.IsCrimped) continue;
             float dist = Vector3.Distance(worldPos, end.SlotWorldPosition);
+            if (dist < bestDist) { bestDist = dist; closest = end; }
+        }
+
+        return closest;
+    }
+
+    private NetworkCableEndController FindNearestAlreadyCrimpedEnd(Vector3 worldPos)
+    {
+        NetworkCableEndController[] ends =
+            FindObjectsByType<NetworkCableEndController>(FindObjectsSortMode.None);
+
+        NetworkCableEndController closest = null;
+        float bestDist = rj45CrimpRadius;
+
+        foreach (var end in ends)
+        {
+            if (!end.gameObject.activeInHierarchy) continue;
+            if (!end.IsRJ45Installed || !end.IsCrimped) continue;
+            float dist = Vector3.Distance(worldPos, end.SlotWorldPosition);
+            if (dist < bestDist) { bestDist = dist; closest = end; }
+        }
+
+        return closest;
+    }
+
+    private NetworkCableEndController FindNearestStrippedNoRJ45End(Vector3 worldPos)
+    {
+        NetworkCableEndController[] ends =
+            FindObjectsByType<NetworkCableEndController>(FindObjectsSortMode.None);
+
+        NetworkCableEndController closest = null;
+        float bestDist = rj45CrimpRadius;
+
+        foreach (var end in ends)
+        {
+            if (!end.gameObject.activeInHierarchy) continue;
+            if (!end.IsStripped || end.IsRJ45Installed) continue;
+            float dist = Vector3.Distance(worldPos, end.SlotWorldPosition);
+            if (dist < bestDist) { bestDist = dist; closest = end; }
+        }
+
+        return closest;
+    }
+
+    private NetworkCableEndController FindNearestUnstrippedEnd(Vector3 worldPos)
+    {
+        NetworkCableEndController[] ends =
+            FindObjectsByType<NetworkCableEndController>(FindObjectsSortMode.None);
+
+        NetworkCableEndController closest = null;
+        float bestDist = bodyResetRadius;
+
+        foreach (var end in ends)
+        {
+            if (!end.gameObject.activeInHierarchy) continue;
+            if (end.IsStripped) continue;
+            float dist = Vector3.Distance(worldPos, end.BodyWorldPosition);
             if (dist < bestDist) { bestDist = dist; closest = end; }
         }
 

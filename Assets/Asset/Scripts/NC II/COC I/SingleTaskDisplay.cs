@@ -108,7 +108,8 @@ public class SingleTaskDisplay : MonoBehaviour
             displayPanel.SetActive(false);
         }
 
-        _defaultTextColor = taskText != null ? taskText.color : Color.white;
+        if (taskText != null) taskText.color = new Color(1.000f, 0.886f, 0.596f);
+        _defaultTextColor = new Color(1.000f, 0.886f, 0.596f);
 
         NCIITaskListManager.OnTasksUpdated += Refresh;
         T2TaskListManager.OnTasksUpdated   += Refresh;
@@ -250,21 +251,22 @@ public class SingleTaskDisplay : MonoBehaviour
 
     private IEnumerator FlashThenReplace(string newText, Color restoreColor)
     {
-        if (taskText != null) taskText.color = Color.green;
+        if (taskText != null) { taskText.color = Color.green; taskText.fontStyle |= FontStyles.Strikethrough; }
         yield return new WaitForSeconds(0.6f);
         if (taskText != null)
         {
-            taskText.color = restoreColor;
-            taskText.text  = newText;
+            taskText.color     = restoreColor;
+            taskText.fontStyle &= ~FontStyles.Strikethrough;
+            taskText.text      = newText;
         }
         _flashCoroutine = null;
     }
 
     private IEnumerator FlashThenHide()
     {
-        if (taskText != null) taskText.color = Color.green;
+        if (taskText != null) { taskText.color = Color.green; taskText.fontStyle |= FontStyles.Strikethrough; }
         yield return new WaitForSeconds(0.6f);
-        if (taskText != null) taskText.color = _defaultTextColor;
+        if (taskText != null) { taskText.color = _defaultTextColor; taskText.fontStyle &= ~FontStyles.Strikethrough; }
         displayPanel?.SetActive(false);
         _flashCoroutine = null;
     }

@@ -48,6 +48,7 @@
  */
 
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
@@ -232,6 +233,14 @@ public class NCIITaskListManager : MonoBehaviour
     private bool   _isAssemblyFlashing   = false;
     private TMP_Text[][] _assemblyPopupRowTMPs;
 
+    private static readonly Color DefaultTaskColor  = new Color(1.000f, 0.886f, 0.596f);
+    private static readonly Color DefaultTitleColor = new Color(0.953f, 0.839f, 0.020f);
+
+    private Queue<int>   _disassemblyFlashQueue = new Queue<int>();
+    private bool         _isDisassemblyTaskFlashing = false;
+    private Queue<int>   _assemblyFlashQueue    = new Queue<int>();
+    private bool         _isAssemblyTaskFlashing    = false;
+
     // Phase control
     private bool   _showingAssembly           = false;
     private bool   _isTransitioningToAssembly = false;
@@ -277,9 +286,21 @@ public class NCIITaskListManager : MonoBehaviour
         { Debug.LogError("[NCIITaskListManager] Assign all 65 assembly task objects."); return; }
 
         for (int i = 0; i < DISASSEMBLY_COUNT; i++)
-            if (disassemblyTaskObjects[i] != null) disassemblyTaskObjects[i].SetActive(false);
+        {
+            if (disassemblyTaskObjects[i] == null) continue;
+            disassemblyTaskObjects[i].SetActive(false);
+            var tmp = disassemblyTaskObjects[i].GetComponent<TMP_Text>();
+            if (tmp != null) tmp.color = DefaultTaskColor;
+        }
         for (int i = 0; i < ASSEMBLY_COUNT; i++)
-            if (assemblyTaskObjects[i] != null) assemblyTaskObjects[i].SetActive(false);
+        {
+            if (assemblyTaskObjects[i] == null) continue;
+            assemblyTaskObjects[i].SetActive(false);
+            var tmp = assemblyTaskObjects[i].GetComponent<TMP_Text>();
+            if (tmp != null) tmp.color = DefaultTaskColor;
+        }
+        if (disassemblyGroupTitleTMP != null) disassemblyGroupTitleTMP.color = DefaultTitleColor;
+        if (assemblyGroupTitleTMP    != null) assemblyGroupTitleTMP.color    = DefaultTitleColor;
 
         disassemblyGroupOverviewPopup?.SetActive(false);
         assemblyGroupOverviewPopup?.SetActive(false);
@@ -593,12 +614,25 @@ public class NCIITaskListManager : MonoBehaviour
     {
         _disassemblyLatched[index] = true;
 
-        if (disassemblyTaskObjects[index] != null && disassemblyFinishedParent != null)
-            disassemblyTaskObjects[index].transform.SetParent(disassemblyFinishedParent, false);
+        bool wasVisible = disassemblyTaskObjects[index] != null
+                       && disassemblyTaskObjects[index].activeSelf
+                       && disassemblyTaskObjects[index].transform.parent == disassemblyTaskParent;
 
         AdvanceDisassemblyIfPossible();
         OnTasksUpdated?.Invoke();
-        RefreshDisassemblyWindow();
+
+        if (wasVisible)
+        {
+            _disassemblyFlashQueue.Enqueue(index);
+            if (!_isDisassemblyTaskFlashing) StartCoroutine(ProcessDisassemblyFlashQueue());
+        }
+        else
+        {
+            if (disassemblyTaskObjects[index] != null && disassemblyFinishedParent != null)
+                disassemblyTaskObjects[index].transform.SetParent(disassemblyFinishedParent, false);
+            RefreshDisassemblyWindow();
+        }
+
         RefreshDisassemblyGroupTitle();
 
         if (ActiveGroupPopup != null && ActiveGroupPopup.activeSelf)
@@ -623,10 +657,13 @@ public class NCIITaskListManager : MonoBehaviour
 
     private void RefreshDisassemblyWindow()
     {
+        int occupied   = (_isDisassemblyTaskFlashing ? 1 : 0) + _disassemblyFlashQueue.Count;
+        int maxDisplay = Mathf.Max(0, 3 - occupied);
+
         if (disassemblyTaskGroups == null || disassemblyTaskGroups.Length == 0)
         {
             int shown = 0;
-            for (int i = _currentDisassemblyTask; i < DISASSEMBLY_COUNT && shown < 3; i++)
+            for (int i = _currentDisassemblyTask; i < DISASSEMBLY_COUNT && shown < maxDisplay; i++)
             {
                 if (_disassemblyLatched[i]) continue;
                 if (disassemblyTaskObjects[i] != null)
@@ -641,7 +678,7 @@ public class NCIITaskListManager : MonoBehaviour
 
         int groupEnd  = GetDisassemblyGroupLastTask();
         int displayed = 0;
-        for (int i = _currentDisassemblyTask; i <= groupEnd && displayed < 3; i++)
+        for (int i = _currentDisassemblyTask; i <= groupEnd && displayed < maxDisplay; i++)
         {
             if (_disassemblyLatched[i]) continue;
             if (disassemblyTaskObjects[i] != null)
@@ -651,6 +688,27 @@ public class NCIITaskListManager : MonoBehaviour
                 displayed++;
             }
         }
+    }
+
+    private IEnumerator ProcessDisassemblyFlashQueue()
+    {
+        _isDisassemblyTaskFlashing = true;
+        while (_disassemblyFlashQueue.Count > 0)
+        {
+            int idx = _disassemblyFlashQueue.Dequeue();
+            RefreshDisassemblyWindow();
+            var tmp = disassemblyTaskObjects[idx]?.GetComponent<TMP_Text>();
+            if (tmp != null)
+            {
+                tmp.color     = Color.green;
+                tmp.fontStyle |= FontStyles.Strikethrough;
+            }
+            yield return new WaitForSeconds(flashDuration);
+            if (disassemblyTaskObjects[idx] != null && disassemblyFinishedParent != null)
+                disassemblyTaskObjects[idx].transform.SetParent(disassemblyFinishedParent, false);
+        }
+        _isDisassemblyTaskFlashing = false;
+        RefreshDisassemblyWindow();
     }
 
     // ── Assembly latch & window ───────────────────────────────────────────────
@@ -669,12 +727,25 @@ public class NCIITaskListManager : MonoBehaviour
     {
         _assemblyLatched[index] = true;
 
-        if (assemblyTaskObjects[index] != null && assemblyFinishedParent != null)
-            assemblyTaskObjects[index].transform.SetParent(assemblyFinishedParent, false);
+        bool wasVisible = assemblyTaskObjects[index] != null
+                       && assemblyTaskObjects[index].activeSelf
+                       && assemblyTaskObjects[index].transform.parent == assemblyTaskParent;
 
         AdvanceAssemblyIfPossible();
         OnTasksUpdated?.Invoke();
-        RefreshAssemblyWindow();
+
+        if (wasVisible)
+        {
+            _assemblyFlashQueue.Enqueue(index);
+            if (!_isAssemblyTaskFlashing) StartCoroutine(ProcessAssemblyFlashQueue());
+        }
+        else
+        {
+            if (assemblyTaskObjects[index] != null && assemblyFinishedParent != null)
+                assemblyTaskObjects[index].transform.SetParent(assemblyFinishedParent, false);
+            RefreshAssemblyWindow();
+        }
+
         RefreshAssemblyGroupTitle();
 
         if (ActiveGroupPopup != null && ActiveGroupPopup.activeSelf)
@@ -700,10 +771,13 @@ public class NCIITaskListManager : MonoBehaviour
 
     private void RefreshAssemblyWindow()
     {
+        int occupied   = (_isAssemblyTaskFlashing ? 1 : 0) + _assemblyFlashQueue.Count;
+        int maxDisplay = Mathf.Max(0, 3 - occupied);
+
         if (assemblyTaskGroups == null || assemblyTaskGroups.Length == 0)
         {
             int shown = 0;
-            for (int i = _currentAssemblyTask; i < ASSEMBLY_COUNT && shown < 3; i++)
+            for (int i = _currentAssemblyTask; i < ASSEMBLY_COUNT && shown < maxDisplay; i++)
             {
                 if (_assemblyLatched[i]) continue;
                 if (assemblyTaskObjects[i] != null)
@@ -718,7 +792,7 @@ public class NCIITaskListManager : MonoBehaviour
 
         int groupEnd  = GetAssemblyGroupLastTask();
         int displayed = 0;
-        for (int i = _currentAssemblyTask; i <= groupEnd && displayed < 3; i++)
+        for (int i = _currentAssemblyTask; i <= groupEnd && displayed < maxDisplay; i++)
         {
             if (_assemblyLatched[i]) continue;
             if (assemblyTaskObjects[i] != null)
@@ -728,6 +802,27 @@ public class NCIITaskListManager : MonoBehaviour
                 displayed++;
             }
         }
+    }
+
+    private IEnumerator ProcessAssemblyFlashQueue()
+    {
+        _isAssemblyTaskFlashing = true;
+        while (_assemblyFlashQueue.Count > 0)
+        {
+            int idx = _assemblyFlashQueue.Dequeue();
+            RefreshAssemblyWindow();
+            var tmp = assemblyTaskObjects[idx]?.GetComponent<TMP_Text>();
+            if (tmp != null)
+            {
+                tmp.color     = Color.green;
+                tmp.fontStyle |= FontStyles.Strikethrough;
+            }
+            yield return new WaitForSeconds(flashDuration);
+            if (assemblyTaskObjects[idx] != null && assemblyFinishedParent != null)
+                assemblyTaskObjects[idx].transform.SetParent(assemblyFinishedParent, false);
+        }
+        _isAssemblyTaskFlashing = false;
+        RefreshAssemblyWindow();
     }
 
     // ── Disassembly group logic ───────────────────────────────────────────────
@@ -764,11 +859,19 @@ public class NCIITaskListManager : MonoBehaviour
         _isDisassemblyFlashing = true;
 
         Color original = disassemblyGroupTitleTMP != null ? disassemblyGroupTitleTMP.color : Color.white;
-        if (disassemblyGroupTitleTMP != null) disassemblyGroupTitleTMP.color = flashColor;
+        if (disassemblyGroupTitleTMP != null)
+        {
+            disassemblyGroupTitleTMP.color     = flashColor;
+            disassemblyGroupTitleTMP.fontStyle |= FontStyles.Strikethrough;
+        }
 
         yield return new WaitForSeconds(flashDuration);
 
-        if (disassemblyGroupTitleTMP != null) disassemblyGroupTitleTMP.color = original;
+        if (disassemblyGroupTitleTMP != null)
+        {
+            disassemblyGroupTitleTMP.color     = original;
+            disassemblyGroupTitleTMP.fontStyle &= ~FontStyles.Strikethrough;
+        }
         _isDisassemblyFlashing = false;
 
         if (!_disassemblyAllDone)
@@ -824,11 +927,19 @@ public class NCIITaskListManager : MonoBehaviour
         _isAssemblyFlashing = true;
 
         Color original = assemblyGroupTitleTMP != null ? assemblyGroupTitleTMP.color : Color.white;
-        if (assemblyGroupTitleTMP != null) assemblyGroupTitleTMP.color = flashColor;
+        if (assemblyGroupTitleTMP != null)
+        {
+            assemblyGroupTitleTMP.color     = flashColor;
+            assemblyGroupTitleTMP.fontStyle |= FontStyles.Strikethrough;
+        }
 
         yield return new WaitForSeconds(flashDuration);
 
-        if (assemblyGroupTitleTMP != null) assemblyGroupTitleTMP.color = original;
+        if (assemblyGroupTitleTMP != null)
+        {
+            assemblyGroupTitleTMP.color     = original;
+            assemblyGroupTitleTMP.fontStyle &= ~FontStyles.Strikethrough;
+        }
         _isAssemblyFlashing = false;
 
         if (_assemblyAllDone)
