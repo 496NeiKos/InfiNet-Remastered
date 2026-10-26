@@ -133,6 +133,9 @@ public class FifthPhaseManager : MonoBehaviour
     [Header("Restart Animation")]
     [SerializeField] private T3MonitorController monitorController;
 
+    [Header("Getting Ready Panel")]
+    [SerializeField] private GettingReadyPanelController gettingReadyController;
+
     // ----------------------------------------------------------------
     //  Option containers — children are auto-wired on Start
     // ----------------------------------------------------------------
@@ -464,12 +467,18 @@ public class FifthPhaseManager : MonoBehaviour
                 if (mgr == null && windows10Panel != null)
                     mgr = windows10Panel.GetComponent<Windows10Manager>();
 
-                if (mgr != null)
-                    mgr.InitWindows10Panel();
-                else
+                if (mgr == null)
+                {
                     Debug.LogError("[FifthPhaseManager] Windows10Manager not found — assign it in the Inspector or place it on Windows10Panel.");
+                    return;
+                }
 
-                Debug.Log("[FifthPhaseManager] Privacy accepted → Windows10Panel");
+                Debug.Log("[FifthPhaseManager] Privacy accepted → Getting Ready → Windows10Panel");
+
+                if (gettingReadyController != null)
+                    gettingReadyController.Show(() => mgr.InitWindows10Panel());
+                else
+                    mgr.InitWindows10Panel();
             });
         }
         else
@@ -482,12 +491,18 @@ public class FifthPhaseManager : MonoBehaviour
             if (mgr == null && windows10Panel != null)
                 mgr = windows10Panel.GetComponent<Windows10Manager>();
 
-            if (mgr != null)
-                mgr.InitWindows10Panel();
-            else
+            if (mgr == null)
+            {
                 Debug.LogError("[FifthPhaseManager] Windows10Manager not found — assign it in the Inspector or place it on Windows10Panel.");
+                return;
+            }
 
-            Debug.Log("[FifthPhaseManager] Privacy accepted → Windows10Panel (no restart — monitorController not assigned).");
+            Debug.Log("[FifthPhaseManager] Privacy accepted → Getting Ready → Windows10Panel (no restart — monitorController not assigned).");
+
+            if (gettingReadyController != null)
+                gettingReadyController.Show(() => mgr.InitWindows10Panel());
+            else
+                mgr.InitWindows10Panel();
         }
     }
 }
