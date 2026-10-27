@@ -167,19 +167,26 @@ public class SearchWindowController : MonoBehaviour
     private void OnSearchChanged(string value)
     {
         string lower = value.ToLowerInvariant().Trim();
-        bool   ready = lower.Length >= 3;
 
-        restorePointEntry?.SetActive(ready && Matches(lower, RestorePointKeywords));
-        diskCleanupEntry?.SetActive(ready && Matches(lower, DiskCleanupKeywords));
-        defragEntry?.SetActive(ready && Matches(lower, DefragKeywords));
-        windowsSecurityEntry?.SetActive(ready && Matches(lower, WindowsSecurityKeywords));
-        systemRestoreEntry?.SetActive(ready && Matches(lower, SystemRestoreKeywords));
+        restorePointEntry?.SetActive(false);
+        diskCleanupEntry?.SetActive(false);
+        defragEntry?.SetActive(false);
+        windowsSecurityEntry?.SetActive(false);
+        systemRestoreEntry?.SetActive(false);
+
+        if (lower.Length < 3) return;
+
+        if (Matches(lower, RestorePointKeywords))    { restorePointEntry?.SetActive(true);    return; }
+        if (Matches(lower, DiskCleanupKeywords))     { diskCleanupEntry?.SetActive(true);     return; }
+        if (Matches(lower, DefragKeywords))          { defragEntry?.SetActive(true);          return; }
+        if (Matches(lower, WindowsSecurityKeywords)) { windowsSecurityEntry?.SetActive(true); return; }
+        if (Matches(lower, SystemRestoreKeywords))   { systemRestoreEntry?.SetActive(true);   return; }
     }
 
     private static bool Matches(string input, string[] keywords)
     {
         foreach (string keyword in keywords)
-            if (keyword.Contains(input))
+            if (keyword.StartsWith(input))
                 return true;
         return false;
     }

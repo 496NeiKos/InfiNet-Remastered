@@ -75,14 +75,13 @@ public class LanTesterPortController : MonoBehaviour
         foreach (var end in ends)
             if (!end.IsCrimped) return false;
 
-        IsCableInstalled  = true;
-        _hardwareHolder   = source;
-        _installedCable   = source.hardwarePrefab;
-        _cachedWorldScale = _installedCable.transform.lossyScale;
+        IsCableInstalled = true;
+        _hardwareHolder  = source;
+        _installedCable  = source.hardwarePrefab;
 
         _installedCable.SetActive(true);
         _installedCable.transform.SetParent(transform, false);
-        RestoreWorldScale(_installedCable.transform, _cachedWorldScale);
+        _installedCable.transform.localScale    = Vector3.one;
         _installedCable.transform.localPosition = Vector3.zero;
 
         var cableSR = _installedCable.GetComponentInChildren<SpriteRenderer>(true);
@@ -123,7 +122,9 @@ public class LanTesterPortController : MonoBehaviour
 
         if (Mouse.current.leftButton.wasPressedThisFrame)
         {
-            Vector2 worldPt = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
+            Vector2 mousePos = Mouse.current.position.ReadValue();
+            if (float.IsNaN(mousePos.x) || float.IsNaN(mousePos.y)) return;
+            Vector2 worldPt = Camera.main.ScreenToWorldPoint(mousePos);
             if (IsCableHit(worldPt))
             {
                 _holding   = true;
@@ -217,8 +218,9 @@ public class LanTesterPortController : MonoBehaviour
 
         if (mouse.leftButton.isPressed)
         {
-            Vector3 worldPos = Camera.main.ScreenToWorldPoint(
-                new Vector3(mouse.position.ReadValue().x, mouse.position.ReadValue().y, 10f));
+            Vector2 mp = mouse.position.ReadValue();
+            if (float.IsNaN(mp.x) || float.IsNaN(mp.y)) return;
+            Vector3 worldPos = Camera.main.ScreenToWorldPoint(new Vector3(mp.x, mp.y, 10f));
             worldPos.z = 0f;
             _installedCable.transform.position = worldPos;
             if (_dragIndicator != null)
@@ -271,7 +273,7 @@ public class LanTesterPortController : MonoBehaviour
         IsCableInstalled = true;
 
         _installedCable.transform.SetParent(transform, false);
-        RestoreWorldScale(_installedCable.transform, _cachedWorldScale);
+        _installedCable.transform.localScale    = Vector3.one;
         _installedCable.transform.localPosition = Vector3.zero;
 
         var cableSR = _installedCable.GetComponentInChildren<SpriteRenderer>(true);
@@ -303,13 +305,4 @@ public class LanTesterPortController : MonoBehaviour
         if (interact != null) interact.enabled = on;
     }
 
-    private static void RestoreWorldScale(Transform t, Vector3 targetWorldScale)
-    {
-        t.localScale = Vector3.one;
-        Vector3 ls = t.lossyScale;
-        t.localScale = new Vector3(
-            targetWorldScale.x / (ls.x != 0f ? ls.x : 1f),
-            targetWorldScale.y / (ls.y != 0f ? ls.y : 1f),
-            targetWorldScale.z / (ls.z != 0f ? ls.z : 1f));
-    }
 }
