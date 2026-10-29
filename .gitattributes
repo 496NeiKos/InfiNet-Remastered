@@ -1,0 +1,11 @@
+# Unity YAML merge driver (requires com.unity.collab-proxy or manual setup)
+# Falls back to standard merge if driver not configured.
+*.unity merge=unityyamlmerge
+*.prefab merge=unityyamlmerge
+*.asset merge=unityyamlmerge
+*.meta merge=unityyamlmerge
+
+# TextMesh Pro dynamic font assets contain embedded binary texture data
+# (_typelessdata hex blobs) and auto-generated glyph tables that Unity
+# regenerates at runtime. Treat as binary to prevent text merge conflicts.
+"Assets/TextMesh Pro/**/*.asset" binary
