@@ -58,6 +58,11 @@ public class RestartUIController : MonoBehaviour
     private IEnumerator RunTimer(Action onComplete)
     {
         yield return new WaitForSeconds(restartDuration);
+
+        var state = ServerVirtualOSManager.Instance?.ServerState;
+        if (state != null && state.RemoteDesktopEnabled)
+            state.ServerRestartCompleted = true;
+
         gameObject.SetActive(false);
         onComplete?.Invoke();
     }

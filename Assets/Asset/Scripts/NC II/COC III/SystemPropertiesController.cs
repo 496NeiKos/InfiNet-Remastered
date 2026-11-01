@@ -201,7 +201,10 @@ public class SystemPropertiesController : MonoBehaviour
     {
         systemPropertiesPanel?.SetActive(false);
 
-        string pcName = ServerVirtualOSManager.Instance?.ClientState?.ComputerName ?? "CLIENT-PC";
+        var _client = ServerVirtualOSManager.Instance?.ClientState;
+        if (_client != null) _client.ClientDomainChangeOpened = true;
+
+        string pcName = _client?.ComputerName ?? "CLIENT-PC";
         if (computerNameInput      != null) { computerNameInput.text = pcName; computerNameInput.interactable = false; }
         if (compChangesFullNameTMP != null) compChangesFullNameTMP.text = pcName;
 
@@ -251,6 +254,9 @@ public class SystemPropertiesController : MonoBehaviour
             return;
         }
 
+        var _clientDN = ServerVirtualOSManager.Instance?.ClientState;
+        if (_clientDN != null) _clientDN.ClientDomainNameEntered = true;
+
         computerNameChangesPanel?.SetActive(false);
 
         if (credentialsPromptTMP != null)
@@ -268,6 +274,9 @@ public class SystemPropertiesController : MonoBehaviour
 
     private void OnCredentialsOK()
     {
+        var _clientCreds = ServerVirtualOSManager.Instance?.ClientState;
+        if (_clientCreds != null) _clientCreds.ClientDomainCredsEntered = true;
+
         string typedDomain   = domainInput       != null ? domainInput.text.Trim()        : "";
         string typedUsername = credUsernameInput  != null ? credUsernameInput.text.Trim()  : "";
         string typedPassword = credPasswordInput  != null ? credPasswordInput.text         : "";

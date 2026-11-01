@@ -192,6 +192,12 @@ public class ADUCController : MonoBehaviour
         cannotChangeToggle  ?.onValueChanged.AddListener(_ => ApplyToggleConstraints(cannotChangeToggle));
         mustChangeToggle    ?.onValueChanged.AddListener(_ => ApplyToggleConstraints(mustChangeToggle));
 
+        addToDomainAdminsToggle?.onValueChanged.AddListener(on =>
+        {
+            var _s = ServerVirtualOSManager.Instance?.ServerState;
+            if (_s != null) _s.UserWizardAdminToggled = true;
+        });
+
         newUserDialog?.SetActive(false);
         gameObject.SetActive(false);
     }
@@ -209,7 +215,11 @@ public class ADUCController : MonoBehaviour
         newUserDialog?.SetActive(false);
 
         var state = ServerVirtualOSManager.Instance?.ServerState;
-        if (state != null) state.ADUCOpened = true;
+        if (state != null)
+        {
+            state.ADUCOpened = true;
+            if (state.RDSessionOpened) state.ADUCOpenedInRDSSession = true;
+        }
 
         gameObject.SetActive(true);
         RebuildTree();
@@ -324,7 +334,16 @@ public class ADUCController : MonoBehaviour
         contextMenu?.SetActive(false);
 
         if (id == "Domain" || id.StartsWith("OU:"))
-            _expanded[id] = !GetExpanded(id);
+        {
+            bool nowExpanded = !GetExpanded(id);
+            _expanded[id] = nowExpanded;
+
+            if (id == "Domain" && nowExpanded)
+            {
+                var _s = ServerVirtualOSManager.Instance?.ServerState;
+                if (_s != null && _s.RDSessionOpened) _s.DomainNodeExpandedInRDS = true;
+            }
+        }
 
         _selectedNodeId = id;
 
@@ -439,6 +458,10 @@ public class ADUCController : MonoBehaviour
     {
         contextMenu?.SetActive(false);
         if (ouNameInput != null) ouNameInput.text = "";
+
+        var state = ServerVirtualOSManager.Instance?.ServerState;
+        if (state != null) state.OUWizardOpened = true;
+
         newOUDialog?.SetActive(true);
     }
 
@@ -474,7 +497,9 @@ public class ADUCController : MonoBehaviour
         contextMenu?.SetActive(false);
         _currentStep = 0;
 
-        var state   = ServerVirtualOSManager.Instance?.ServerState;
+        var state = ServerVirtualOSManager.Instance?.ServerState;
+        if (state != null) state.UserWizardOpened = true;
+
         string domain  = !string.IsNullOrEmpty(state?.DomainName) ? state.DomainName : "css.com";
         string netbios = GetNetBIOSName(state);
 
@@ -521,6 +546,8 @@ public class ADUCController : MonoBehaviour
         if (_currentStep == 0)
         {
             if (!ValidateStep0()) return;
+            var state = ServerVirtualOSManager.Instance?.ServerState;
+            if (state != null) state.UserWizardNameEntered = true;
             _currentStep = 1;
             RefreshStep();
         }

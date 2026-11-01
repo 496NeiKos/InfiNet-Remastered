@@ -232,6 +232,9 @@ public class SettingsAppController : MonoBehaviour
         // Advanced system settings (domain join — client PC only)
         advancedSettingsBtn?.onClick.AddListener(() =>
         {
+            var _mgr = ServerVirtualOSManager.Instance;
+            if (_mgr != null && _mgr.CurrentPC == ActivePC.Client && _mgr.ClientState != null)
+                _mgr.ClientState.ClientAdvancedSysOpened = true;
             systemPropertiesController?.OpenSystemProperties();
             ActivityLogManager.Log("Opened Advanced System Settings", ActivityLogManager.EntryType.Action);
         });
@@ -251,8 +254,21 @@ public class SettingsAppController : MonoBehaviour
     {
         gameObject.SetActive(true);
         GoToLevel0();
-        var state = ServerVirtualOSManager.Instance?.ServerState;
-        if (state != null) state.SettingsOpened = true;
+
+        var mgr = ServerVirtualOSManager.Instance;
+        if (mgr != null)
+        {
+            if (mgr.CurrentPC == ActivePC.Server)
+            {
+                mgr.ServerState.SettingsOpened = true;
+            }
+            else
+            {
+                var client = mgr.ClientState;
+                if (client != null) client.ClientSettingsOpened = true;
+            }
+        }
+
         ActivityLogManager.Log("Opened Settings", ActivityLogManager.EntryType.Action);
     }
 
@@ -360,8 +376,16 @@ public class SettingsAppController : MonoBehaviour
         HideAllContent();
         aboutPanel?.SetActive(true);
         RefreshAboutPage();
-        var state = ServerVirtualOSManager.Instance?.ServerState;
-        if (state != null) state.SettingsAboutOpened = true;
+
+        var mgr = ServerVirtualOSManager.Instance;
+        if (mgr != null)
+        {
+            if (mgr.CurrentPC == ActivePC.Server)
+                mgr.ServerState.SettingsAboutOpened = true;
+            else if (mgr.ClientState != null)
+                mgr.ClientState.ClientSettingsAboutOpened = true;
+        }
+
         ActivityLogManager.Log("Navigated to Settings → About", ActivityLogManager.EntryType.Action);
     }
 

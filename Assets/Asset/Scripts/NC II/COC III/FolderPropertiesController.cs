@@ -131,10 +131,19 @@ public class FolderPropertiesController : MonoBehaviour
         gameObject.SetActive(true);
         ShowGeneralTab();
         RefreshAll();
+
+        var state = ServerVirtualOSManager.Instance?.ServerState;
+        if (state != null) state.FolderPropertiesOpened = true;
+
         ActivityLogManager.Log($"Properties opened: {folder.FullPath}", ActivityLogManager.EntryType.Action);
     }
 
-    public void Close() => gameObject.SetActive(false);
+    public void Close()
+    {
+        var state = ServerVirtualOSManager.Instance?.ServerState;
+        if (state != null) state.FolderPropertiesClosed = true;
+        gameObject.SetActive(false);
+    }
 
     public void RefreshSharingTab()
     {
@@ -157,6 +166,10 @@ public class FolderPropertiesController : MonoBehaviour
         generalTab?.SetActive(false);
         sharingTab?.SetActive(true);
         RefreshSharingTab();
+
+        var state = ServerVirtualOSManager.Instance?.ServerState;
+        if (state != null) state.FolderSharingTabOpened = true;
+
         ActivityLogManager.Log($"Viewing Sharing tab: {_folder?.Name}", ActivityLogManager.EntryType.Action);
     }
 

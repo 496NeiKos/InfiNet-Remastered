@@ -275,10 +275,22 @@ public class NewScopeWizardController : MonoBehaviour
                 break;
             case WizardPanel.ScopeName:
                 if (!ValidateScopeName()) return;
+                {
+                    var _s = ServerVirtualOSManager.Instance?.ServerState;
+                    if (_s != null) _s.DHCPScopeName = scopeNameInput != null ? scopeNameInput.text.Trim() : "";
+                }
                 ShowPanel(WizardPanel.IPRange);
                 break;
             case WizardPanel.IPRange:
                 if (!ValidateIPRange()) return;
+                {
+                    var _s = ServerVirtualOSManager.Instance?.ServerState;
+                    if (_s != null)
+                    {
+                        _s.DHCPScopeStart = startIPInput != null ? startIPInput.text.Trim() : "";
+                        _s.DHCPScopeEnd   = endIPInput   != null ? endIPInput.text.Trim()   : "";
+                    }
+                }
                 ShowPanel(WizardPanel.Exclusions);
                 break;
             case WizardPanel.Exclusions:
@@ -386,6 +398,17 @@ public class NewScopeWizardController : MonoBehaviour
 
         if (panel == WizardPanel.LeaseDuration) OnEnterLeaseDurationPanel();
         if (panel == WizardPanel.DNS)           OnEnterDNSPanel();
+
+        var _latchState = ServerVirtualOSManager.Instance?.ServerState;
+        if (_latchState != null)
+        {
+            switch (panel)
+            {
+                case WizardPanel.Exclusions:    _latchState.DHCPExclusionsPageVisited   = true; break;
+                case WizardPanel.LeaseDuration: _latchState.DHCPLeaseDurationPageVisited = true; break;
+                case WizardPanel.WINS:          _latchState.DHCPWINSPageVisited         = true; break;
+            }
+        }
 
         RefreshButtons();
     }

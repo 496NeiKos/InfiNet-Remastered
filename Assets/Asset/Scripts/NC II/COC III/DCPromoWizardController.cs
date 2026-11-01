@@ -397,11 +397,28 @@ public class DCPromoWizardController : MonoBehaviour
         {
             case DCPromoStep.DeploymentConfig:
                 if (!ValidateDeploymentConfig()) return;
+                {
+                    var _s = ServerVirtualOSManager.Instance?.ServerState;
+                    if (_s != null)
+                    {
+                        _s.DCPromoDeploymentType = GetDeploymentTypeString();
+                        _s.DomainName            = _enteredDomainName;
+                    }
+                }
                 ShowStep(DCPromoStep.DCOptions);
                 break;
 
             case DCPromoStep.DCOptions:
                 if (!ValidateDCOptions()) return;
+                {
+                    var _s = ServerVirtualOSManager.Instance?.ServerState;
+                    if (_s != null)
+                    {
+                        _s.ForestFunctionalLevel = GetDropdownText(forestLevelDropdown);
+                        _s.DomainFunctionalLevel = GetDropdownText(domainLevelDropdown);
+                        _s.DSRMPassword          = dsrmPasswordInput != null ? dsrmPasswordInput.text : "";
+                    }
+                }
                 _dnsInstallSelected = dnsToggle != null && dnsToggle.isOn;
                 ShowStep(_dnsInstallSelected ? DCPromoStep.DNSOptions : DCPromoStep.AdditionalOptions);
                 break;
@@ -489,6 +506,12 @@ public class DCPromoWizardController : MonoBehaviour
         if (step == DCPromoStep.AdditionalOptions)  OnEnterAdditionalOptions();
         if (step == DCPromoStep.Paths)              OnEnterPaths();
         if (step == DCPromoStep.PrerequisitesCheck) OnEnterPrerequisites();
+
+        if (step == DCPromoStep.DNSOptions)
+        {
+            var _latchState = ServerVirtualOSManager.Instance?.ServerState;
+            if (_latchState != null) _latchState.DNSOptionsPageVisited = true;
+        }
 
         RefreshButtons();
         RefreshTracker(step);
@@ -628,6 +651,9 @@ public class DCPromoWizardController : MonoBehaviour
 
     private void StartInstall()
     {
+        var state = ServerVirtualOSManager.Instance?.ServerState;
+        if (state != null) state.DCPromoInstallStarted = true;
+
         ShowStep(DCPromoStep.InstallProgress);
         StartCoroutine(RunInstallProgress());
     }

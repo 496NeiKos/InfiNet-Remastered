@@ -181,6 +181,9 @@ public class SystemPropertiesRemoteController : MonoBehaviour
         if (!on) return;
         allowToggle?.SetIsOnWithoutNotify(false);
         nlaGroup?.SetActive(false);
+
+        var state = ServerVirtualOSManager.Instance?.ServerState;
+        if (state != null) state.RemoteDesktopCheckboxToggled = true;
     }
 
     private void OnAllowChanged(bool on)
@@ -188,6 +191,9 @@ public class SystemPropertiesRemoteController : MonoBehaviour
         if (!on) return;
         dontAllowToggle?.SetIsOnWithoutNotify(false);
         nlaGroup?.SetActive(true);
+
+        var state = ServerVirtualOSManager.Instance?.ServerState;
+        if (state != null) state.RemoteDesktopCheckboxToggled = true;
     }
 
     // ── Button handlers ───────────────────────────────────────────────────────

@@ -123,7 +123,12 @@ public class LocalServerPanelController : MonoBehaviour
 
     private void Awake()
     {
-        remoteDesktopBtn?.onClick.AddListener(() => systemPropertiesRemote?.Open());
+        remoteDesktopBtn?.onClick.AddListener(() =>
+        {
+            var state = ServerVirtualOSManager.Instance?.ServerState;
+            if (state != null) state.RemoteDesktopPropertyClicked = true;
+            systemPropertiesRemote?.Open();
+        });
     }
 
     // ── Public API ────────────────────────────────────────────────────────────

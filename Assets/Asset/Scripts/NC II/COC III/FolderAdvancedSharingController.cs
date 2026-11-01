@@ -121,6 +121,9 @@ public class FolderAdvancedSharingController : MonoBehaviour
         _onApplied = onApplied;
         gameObject.SetActive(true);
         RefreshFromFolder();
+
+        var state = ServerVirtualOSManager.Instance?.ServerState;
+        if (state != null) state.AdvancedSharingOpened = true;
     }
 
     public void Close() => gameObject.SetActive(false);
@@ -145,7 +148,12 @@ public class FolderAdvancedSharingController : MonoBehaviour
 
     // ── Share Toggle ──────────────────────────────────────────────────────────
 
-    private void OnShareToggle(bool isOn) => settingsGroup?.SetActive(isOn);
+    private void OnShareToggle(bool isOn)
+    {
+        settingsGroup?.SetActive(isOn);
+        var state = ServerVirtualOSManager.Instance?.ServerState;
+        if (state != null) state.ShareFolderToggled = true;
+    }
 
     // ── Apply / OK / Cancel ───────────────────────────────────────────────────
 
@@ -179,6 +187,9 @@ public class FolderAdvancedSharingController : MonoBehaviour
 
     private void OpenPermissions()
     {
+        var state = ServerVirtualOSManager.Instance?.ServerState;
+        if (state != null) state.FolderPermissionsDialogOpened = true;
+
         permissionsController?.Open(_folder);
         ActivityLogManager.Log("Opened Permissions panel", ActivityLogManager.EntryType.Action);
     }

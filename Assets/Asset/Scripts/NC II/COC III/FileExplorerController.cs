@@ -267,7 +267,12 @@ public class FileExplorerController : MonoBehaviour
 
         var btn = go.GetComponentInChildren<Button>();
         if (btn == null) Debug.LogWarning("[FileExplorer] contentNodePrefab has no Button component.");
-        btn?.onClick.AddListener(() => NavigateTo(drivePath));
+        btn?.onClick.AddListener(() =>
+        {
+            var _s = ServerVirtualOSManager.Instance?.ServerState;
+            if (_s != null) _s.ThisPCDriveSelected = true;
+            NavigateTo(drivePath);
+        });
     }
 
     private void SpawnFolderNode(string name, string fullPath, bool isInteractive, FolderData data)
@@ -325,6 +330,9 @@ public class FileExplorerController : MonoBehaviour
     {
         if (_isNaming) return;
         _isNaming = true;
+
+        var state = ServerVirtualOSManager.Instance?.ServerState;
+        if (state != null) state.NewFolderOptionClicked = true;
         if (newFolderBtn != null) newFolderBtn.interactable = false;
 
         string parentPath = _currentPath;

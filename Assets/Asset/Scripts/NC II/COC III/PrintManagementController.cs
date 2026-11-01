@@ -266,13 +266,33 @@ public class PrintManagementController : MonoBehaviour
         // Step 1 toggle listeners — mutual exclusivity handled manually
         s1Toggle1?.onValueChanged.AddListener(on => { if (on) { _step1Toggle = 0; DeactivateStep1Others(s1Toggle1); UpdateStep1Dropdowns(); } });
         s1Toggle2?.onValueChanged.AddListener(on => { if (on) { _step1Toggle = 1; DeactivateStep1Others(s1Toggle2); UpdateStep1Dropdowns(); } });
-        s1Toggle3?.onValueChanged.AddListener(on => { if (on) { _step1Toggle = 2; DeactivateStep1Others(s1Toggle3); UpdateStep1Dropdowns(); } });
+        s1Toggle3?.onValueChanged.AddListener(on =>
+        {
+            if (on)
+            {
+                _step1Toggle = 2;
+                DeactivateStep1Others(s1Toggle3);
+                UpdateStep1Dropdowns();
+                var _s = ServerVirtualOSManager.Instance?.ServerState;
+                if (_s != null) _s.ExistingPortOptionSelected = true;
+            }
+        });
         s1Toggle4?.onValueChanged.AddListener(on => { if (on) { _step1Toggle = 3; DeactivateStep1Others(s1Toggle4); UpdateStep1Dropdowns(); } });
 
         // Step 2 toggle listeners — mutual exclusivity handled manually
         s2Toggle1?.onValueChanged.AddListener(on => { if (on) { _step2Toggle = 0; DeactivateStep2Others(s2Toggle1); UpdateStep2Dropdown(); } });
         s2Toggle2?.onValueChanged.AddListener(on => { if (on) { _step2Toggle = 1; DeactivateStep2Others(s2Toggle2); UpdateStep2Dropdown(); } });
-        s2Toggle3?.onValueChanged.AddListener(on => { if (on) { _step2Toggle = 2; DeactivateStep2Others(s2Toggle3); UpdateStep2Dropdown(); } });
+        s2Toggle3?.onValueChanged.AddListener(on =>
+        {
+            if (on)
+            {
+                _step2Toggle = 2;
+                DeactivateStep2Others(s2Toggle3);
+                UpdateStep2Dropdown();
+                var _s = ServerVirtualOSManager.Instance?.ServerState;
+                if (_s != null) _s.InstallNewDriverSelected = true;
+            }
+        });
 
         // Step 2 Toggle1 is always non-interactable (no driver auto-detected)
         if (s2Toggle1 != null) s2Toggle1.interactable = false;
@@ -301,6 +321,11 @@ public class PrintManagementController : MonoBehaviour
             s1PortDropdown.AddOptions(portList);
             s1PortDropdown.value        = 0;
             s1PortDropdown.interactable = false;
+            s1PortDropdown.onValueChanged.AddListener(_ =>
+            {
+                var _s = ServerVirtualOSManager.Instance?.ServerState;
+                if (_s != null) _s.PrinterPortSelected = true;
+            });
         }
         if (s1T4Dropdown != null)
         {
@@ -438,7 +463,16 @@ public class PrintManagementController : MonoBehaviour
 
         bool isParent = id == "ROOT" || id == "CF" || id == "PS" || id == "PS_SERVER";
         if (isParent)
-            _expanded[id] = !GetExpanded(id);
+        {
+            bool nowExpanded = !GetExpanded(id);
+            _expanded[id] = nowExpanded;
+
+            if (id == "PS_SERVER" && nowExpanded)
+            {
+                var _s = ServerVirtualOSManager.Instance?.ServerState;
+                if (_s != null) _s.PrintServerNodeExpanded = true;
+            }
+        }
 
         _selectedNodeId = id;
         RebuildTree();
@@ -554,6 +588,9 @@ public class PrintManagementController : MonoBehaviour
         wizardPanel?.SetActive(true);
         ShowWizardStep(0);
 
+        var state = ServerVirtualOSManager.Instance?.ServerState;
+        if (state != null) state.AddPrinterWizardOpened = true;
+
         ActivityLogManager.Log("Opened Network Printer Installation Wizard", ActivityLogManager.EntryType.Action);
     }
 
@@ -629,6 +666,10 @@ public class PrintManagementController : MonoBehaviour
     {
         _step3Tab            = tab;
         _step3SelectedDriver = "";
+
+        var state = ServerVirtualOSManager.Instance?.ServerState;
+        if (state != null) state.PrinterManufacturerSelected = true;
+
         RefreshDriverList();
     }
 
@@ -665,6 +706,9 @@ public class PrintManagementController : MonoBehaviour
         handler.onLeftClick = () =>
         {
             _step3SelectedDriver = capturedName;
+
+            var _s = ServerVirtualOSManager.Instance?.ServerState;
+            if (_s != null) _s.PrinterTypeSelected = true;
 
             foreach (Transform t in s3DriverListParent)
             {

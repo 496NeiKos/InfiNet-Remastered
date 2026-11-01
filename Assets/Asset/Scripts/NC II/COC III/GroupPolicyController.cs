@@ -272,6 +272,13 @@ public class GroupPolicyController : MonoBehaviour
         addUserOKBtn         ?.onClick.AddListener(OnAddUserOK);
         addUserCancelBtn     ?.onClick.AddListener(CloseAddUserPopup);
 
+        addUserSearchInput?.onValueChanged.AddListener(_ =>
+        {
+            var _s = ServerVirtualOSManager.Instance?.ServerState;
+            if (_s != null && !string.IsNullOrEmpty(addUserSearchInput.text))
+                _s.SecurityFilterNameTyped = true;
+        });
+
         // Properties is always non-interactive — visual only
         if (scopePropertiesBtn != null) scopePropertiesBtn.interactable = false;
 
@@ -642,6 +649,9 @@ public class GroupPolicyController : MonoBehaviour
         if (addUserResultsParent != null)
             foreach (Transform t in addUserResultsParent) Destroy(t.gameObject);
 
+        var _sfState = ServerVirtualOSManager.Instance?.ServerState;
+        if (_sfState != null) _sfState.SecurityFilterAddDialogOpened = true;
+
         addUserPopup?.SetActive(true);
     }
 
@@ -750,6 +760,10 @@ public class GroupPolicyController : MonoBehaviour
     private void OpenCreateGPODialog()
     {
         if (gpoNameInput != null) gpoNameInput.text = "";
+
+        var state = ServerVirtualOSManager.Instance?.ServerState;
+        if (state != null) state.GPOWizardOpened = true;
+
         createGPODialog?.SetActive(true);
     }
 

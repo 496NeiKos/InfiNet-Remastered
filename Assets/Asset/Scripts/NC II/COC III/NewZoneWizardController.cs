@@ -286,6 +286,36 @@ public class NewZoneWizardController : MonoBehaviour
         if (panel == WizardPanel.ZoneFile)    OnEnterZoneFilePanel();
         if (panel == WizardPanel.Summary)     BuildSummary();
 
+        var _latchState = ServerVirtualOSManager.Instance?.ServerState;
+        if (_latchState != null)
+        {
+            bool isFirstRun = !_latchState.DNSForwardZoneCreated;
+            switch (panel)
+            {
+                case WizardPanel.ZoneType:
+                    if (isFirstRun) _latchState.ForwardZoneTypeSelected = true;
+                    else            _latchState.ReverseZoneTypeSelected = true;
+                    break;
+                case WizardPanel.LookupChoice:
+                    if (isFirstRun) _latchState.ForwardZoneLookupTypeSelected = true;
+                    else            _latchState.ReverseZoneLookupTypeSelected = true;
+                    break;
+                case WizardPanel.ForwardZoneName:
+                    _latchState.ForwardZoneNameEntered = true;
+                    break;
+                case WizardPanel.ReverseIPVersion:
+                    _latchState.ReverseZoneIPv4Selected = true;
+                    break;
+                case WizardPanel.ReverseNetworkID:
+                    _latchState.ReverseZoneNameEntered = true;
+                    break;
+                case WizardPanel.ZoneFile:
+                    if (_isForwardPath) _latchState.ForwardZoneFileCreated = true;
+                    else                _latchState.ReverseZoneFileCreated = true;
+                    break;
+            }
+        }
+
         RefreshButtons();
     }
 

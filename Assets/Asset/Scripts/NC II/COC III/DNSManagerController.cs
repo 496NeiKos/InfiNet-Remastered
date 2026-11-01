@@ -264,6 +264,16 @@ public class DNSManagerController : MonoBehaviour
     {
         contextMenu?.SetActive(false);
         if (newZoneWizard == null) { Debug.LogWarning("[DNS] newZoneWizard not assigned."); return; }
+
+        var state = ServerVirtualOSManager.Instance?.ServerState;
+        if (state != null)
+        {
+            if (!state.DNSForwardZoneCreated)
+                state.ForwardZoneWizardOpened = true;
+            else
+                state.ReverseZoneWizardOpened = true;
+        }
+
         newZoneWizard.Open();
     }
 

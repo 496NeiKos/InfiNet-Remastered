@@ -212,6 +212,9 @@ public class ServerVirtualOSManager : MonoBehaviour, IVirtualOSManager
     /// </summary>
     public void TriggerRestart()
     {
+        if (_currentPC == ActivePC.Server && _state != null && _state.RemoteDesktopEnabled)
+            _state.ServerRestartInitiated = true;
+
         CloseAllApps();
         desktopPanel?.SetActive(false);
         restartUI?.Show(ShowLoginUI);
@@ -238,9 +241,17 @@ public class ServerVirtualOSManager : MonoBehaviour, IVirtualOSManager
     public void OnLoginSuccess(string username)
     {
         if (_currentPC == ActivePC.Server)
+        {
             _state.CurrentLoggedInUser = username;
+            if (_state.DCPromoCompleted)
+                _state.SignedInAfterPromotion = true;
+        }
         else
+        {
             _clientState.CurrentLoggedInUser = username;
+            if (!_clientState.DomainJoined)
+                _clientState.ClientLocalUserLoggedIn = true;
+        }
 
         TryCreateUserRedirectionFolder(username);
 

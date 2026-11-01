@@ -516,7 +516,9 @@ public class NCIITaskListManager : MonoBehaviour
                && _ram2Controller != null && _ram2Controller.IsLeftLatched && _ram2Controller.IsRightLatched,
 
             // ── Group 2: Install PSU (A12–A16) ────────────────────────────────
-            11 => _mbTakenOutForAssembly && motherboardHolder != null && motherboardHolder.IsAvailable(),
+            11 => _mbTakenOutForAssembly
+               && (GameManager.Instance == null || !GameManager.Instance.IsEditorOpen)
+               && motherboardHolder != null && motherboardHolder.IsAvailable(),
             12 => systemUnitController != null && systemUnitController.systemUnitSide.activeSelf,
             13 => psuHolder != null && psuHolder.hardwarePrefab != null
                && psuHolder.hardwarePrefab.GetComponentInParent<SlotContainer>() != null,
@@ -602,8 +604,10 @@ public class NCIITaskListManager : MonoBehaviour
 
     private void CheckCurrentDisassemblyTask()
     {
+        int groupEnd = GetDisassemblyGroupLastTask();
         while (_currentDisassemblyTask < DISASSEMBLY_COUNT && !_disassemblyAllDone)
         {
+            if (_currentDisassemblyTask > groupEnd) return;
             if (_disassemblyLatched[_currentDisassemblyTask]) { AdvanceDisassemblyIfPossible(); continue; }
             if (!CheckDisassemblyCondition(_currentDisassemblyTask)) return;
             LatchDisassemblyTask(_currentDisassemblyTask);
@@ -715,8 +719,10 @@ public class NCIITaskListManager : MonoBehaviour
 
     private void CheckCurrentAssemblyTask()
     {
+        int groupEnd = GetAssemblyGroupLastTask();
         while (_currentAssemblyTask < ASSEMBLY_COUNT && !_assemblyAllDone)
         {
+            if (_currentAssemblyTask > groupEnd) return;
             if (_assemblyLatched[_currentAssemblyTask]) { AdvanceAssemblyIfPossible(); continue; }
             if (!CheckAssemblyCondition(_currentAssemblyTask)) return;
             LatchAssemblyTask(_currentAssemblyTask);

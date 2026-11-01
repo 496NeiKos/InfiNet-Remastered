@@ -328,6 +328,9 @@ public class ServerManagerController : MonoBehaviour
         SetMainPanel(localServerPanelGO);
         SelectTreeButton(localServerTreeBtn);
         localServerPanel?.Open();
+
+        var state = ServerVirtualOSManager.Instance?.ServerState;
+        if (state != null) state.LocalServerTabVisited = true;
     }
 
     public void ShowRolePlaceholder(Button selectedBtn)

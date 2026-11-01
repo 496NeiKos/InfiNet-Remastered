@@ -46,7 +46,7 @@ public class PowerOnConditionChecker : MonoBehaviour
     [SerializeField] private CablePort cableSlot3;
 
     [Header("Motherboard Front Panel Cables")]
-    [SerializeField] private CablePort frontPanelConnectorPort;
+    [SerializeField] private FrontPanelConnectorController frontPanelConnector;
 
     public bool CanTurnOn()
     {
@@ -107,7 +107,10 @@ public class PowerOnConditionChecker : MonoBehaviour
         if (!IsPortInstalled(cableSlot2)) { Warn("Cannot power on — connect motherboard cable 2 first."); pass = false; }
         if (!IsPortInstalled(cableSlot3)) { Warn("Cannot power on — connect motherboard cable 3 first."); pass = false; }
 
-        if (!IsPortInstalled(frontPanelConnectorPort)) { Warn("Cannot power on — connect the front panel connector cable first."); pass = false; }
+        if (frontPanelConnector == null || !frontPanelConnector.IsPhase1Installed)
+        { Warn("Cannot power on — connect the front panel connector cable first."); pass = false; }
+        else if (!frontPanelConnector.IsPhase2FullyInstalled)
+        { Warn("Cannot power on — connect all front panel pin cables (HDD LED, Power LED, Power SW, Reset SW, Speaker) first."); pass = false; }
 
         if (pass) Debug.Log("[PowerOn] All conditions met — power on allowed.");
         return pass;

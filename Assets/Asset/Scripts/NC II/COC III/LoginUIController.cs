@@ -296,6 +296,18 @@ public class LoginUIController : MonoBehaviour
     {
         SelectUser(username);
         userListPanel?.SetActive(false);
+
+        var mgr = ServerVirtualOSManager.Instance;
+        if (mgr != null && mgr.CurrentPC == ActivePC.Client)
+        {
+            var client = mgr.ClientState;
+            if (client != null && client.DomainJoined)
+            {
+                bool isDomainUser = mgr.ServerState?.UserAccounts
+                    .Exists(u => string.Equals(u.Username, username, System.StringComparison.OrdinalIgnoreCase)) ?? false;
+                if (isDomainUser) client.ClientDomainUserSelected = true;
+            }
+        }
     }
 
     private void ToggleUserList()
@@ -303,7 +315,16 @@ public class LoginUIController : MonoBehaviour
         if (userListPanel == null) return;
         bool show = !userListPanel.activeSelf;
         userListPanel.SetActive(show);
-        if (show) pcListPanel?.SetActive(false);
+        if (show)
+        {
+            pcListPanel?.SetActive(false);
+            var mgr = ServerVirtualOSManager.Instance;
+            if (mgr != null && mgr.CurrentPC == ActivePC.Client)
+            {
+                var client = mgr.ClientState;
+                if (client != null) client.ClientOtherUserClicked = true;
+            }
+        }
     }
 
     // ── PC Switch ─────────────────────────────────────────────────────────────
@@ -331,6 +352,11 @@ public class LoginUIController : MonoBehaviour
         if (pcListPanel == null) return;
         bool show = !pcListPanel.activeSelf;
         pcListPanel.SetActive(show);
-        if (show) userListPanel?.SetActive(false);
+        if (show)
+        {
+            userListPanel?.SetActive(false);
+            var state = ServerVirtualOSManager.Instance?.ServerState;
+            if (state != null) state.SwitchPCButtonClicked = true;
+        }
     }
 }

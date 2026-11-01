@@ -134,6 +134,15 @@ public class FolderRedirectPropertiesController : MonoBehaviour
 
         settingDropdown?.onValueChanged.AddListener(OnSettingChanged);
 
+        rootPathInput?.onValueChanged.AddListener(v =>
+        {
+            if (!string.IsNullOrEmpty(v))
+            {
+                var _s = ServerVirtualOSManager.Instance?.ServerState;
+                if (_s != null) _s.FolderRedirectionRootPathEntered = true;
+            }
+        });
+
         if (settingDropdown != null)
         {
             settingDropdown.ClearOptions();
@@ -192,14 +201,22 @@ public class FolderRedirectPropertiesController : MonoBehaviour
     {
         targetTab ?.SetActive(false);
         settingsTab?.SetActive(true);
+
+        var state = ServerVirtualOSManager.Instance?.ServerState;
+        if (state != null) state.FolderRedirectionSettingsTabOpened = true;
     }
 
     // ── Dropdown ──────────────────────────────────────────────────────────────
 
     private void OnSettingChanged(int val)
     {
-        // Show root path row only when "Basic" is selected
         rootPathRow?.SetActive(val == 1);
+
+        if (val == 1)
+        {
+            var state = ServerVirtualOSManager.Instance?.ServerState;
+            if (state != null) state.FolderRedirectionSettingChanged = true;
+        }
     }
 
     // ── Apply / OK ────────────────────────────────────────────────────────────

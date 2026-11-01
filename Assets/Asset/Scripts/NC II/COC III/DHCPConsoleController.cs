@@ -302,6 +302,10 @@ public class DHCPConsoleController : MonoBehaviour
     {
         contextMenu?.SetActive(false);
         if (newScopeWizard == null) { Debug.LogWarning("[DHCP] newScopeWizard not assigned."); return; }
+
+        var state = ServerVirtualOSManager.Instance?.ServerState;
+        if (state != null) state.DHCPScopeWizardStarted = true;
+
         newScopeWizard.Open();
     }
 

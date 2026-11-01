@@ -278,6 +278,12 @@ public class GPOEditorController : MonoBehaviour
 
         _selectedNodeId = id;
 
+        if (id == "UC.P.WS.FR")
+        {
+            var _s = ServerVirtualOSManager.Instance?.ServerState;
+            if (_s != null) _s.FolderRedirectionNodeOpened = true;
+        }
+
         RebuildEditorTree();
         ShowContentForNode(id);
     }
@@ -397,6 +403,9 @@ public class GPOEditorController : MonoBehaviour
 
     private void OpenFolderProperties(string folderName)
     {
+        var state = ServerVirtualOSManager.Instance?.ServerState;
+        if (state != null) state.FolderRedirectionPropertiesOpened = true;
+
         folderPropsController?.Open(folderName, _gpoIndex, RefreshContent);
         ActivityLogManager.Log($"Opened Properties: {folderName}", ActivityLogManager.EntryType.Action);
     }
