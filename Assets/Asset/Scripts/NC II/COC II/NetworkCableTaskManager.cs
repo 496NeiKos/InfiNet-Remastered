@@ -785,4 +785,11 @@ public class NetworkCableTaskManager : MonoBehaviour, ITaskCategory
         if (allTasksCompletedText != null)
             allTasksCompletedText.SetActive(false);
     }
+
+    public int GetCompletedTaskCount()
+    {
+        int count = 0;
+        for (int i = 0; i < TASK_COUNT; i++) if (_latched[i]) count++;
+        return count;
+    }
 }

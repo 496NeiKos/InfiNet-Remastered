@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class SettingsMenu : MonoBehaviour
 {
@@ -13,12 +14,22 @@ public class SettingsMenu : MonoBehaviour
     [Header("Music Volume")]
     public Slider musicVolumeSlider;
 
+    [Header("Volume Labels")]
+    public TMP_Text menuVolumeLabel;
+    public TMP_Text ingameVolumeLabel;
+    public TMP_Text musicVolumeLabel;
+
     void Start()
     {
         // ✅ Initialize sliders
         menuVolumeSlider.value = SoundManager.instance.menuVolume;
         ingameVolumeSlider.value = SoundManager.instance.ingameVolume;
         musicVolumeSlider.value = PlayerPrefs.GetFloat("MusicVolume", 1f);
+
+        // ✅ Initialize labels
+        UpdateLabel(menuVolumeLabel, menuVolumeSlider.value);
+        UpdateLabel(ingameVolumeLabel, ingameVolumeSlider.value);
+        UpdateLabel(musicVolumeLabel, musicVolumeSlider.value);
 
         // ✅ Add listeners for sliders
         menuVolumeSlider.onValueChanged.AddListener(OnMenuVolumeChanged);
@@ -30,9 +41,26 @@ public class SettingsMenu : MonoBehaviour
         ingameTestButton.onClick.AddListener(TestIngameSFX);
     }
 
-    void OnMenuVolumeChanged(float value) => SoundManager.instance.SetMenuVolume(value);
-    void OnIngameVolumeChanged(float value) => SoundManager.instance.SetIngameVolume(value);
-    void OnMusicVolumeChanged(float value) => MusicManager.Instance.SetMusicVolume(value);
+    void UpdateLabel(TMP_Text label, float value) =>
+        label.text = Mathf.RoundToInt(value * 100) + "%";
+
+    void OnMenuVolumeChanged(float value)
+    {
+        SoundManager.instance.SetMenuVolume(value);
+        UpdateLabel(menuVolumeLabel, value);
+    }
+
+    void OnIngameVolumeChanged(float value)
+    {
+        SoundManager.instance.SetIngameVolume(value);
+        UpdateLabel(ingameVolumeLabel, value);
+    }
+
+    void OnMusicVolumeChanged(float value)
+    {
+        MusicManager.Instance.SetMusicVolume(value);
+        UpdateLabel(musicVolumeLabel, value);
+    }
 
     // ✅ Test buttons
     void TestMenuSFX()

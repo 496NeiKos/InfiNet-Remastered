@@ -827,5 +827,12 @@ public class ServerSetupTaskManager : MonoBehaviour
         return GetTaskLabel(_currentTask);
     }
 
+    public int GetCompletedTaskCount()
+    {
+        int count = 0;
+        for (int i = 0; i < TASK_COUNT; i++) if (_latched[i]) count++;
+        return count;
+    }
+
     public void NotifyStateChanged() { }
 }

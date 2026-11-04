@@ -623,17 +623,17 @@ public class DCPromoWizardController : MonoBehaviour
         if (resultsTMP != null)
         {
             resultsTMP.text =
-                "<color=#FFD700>⚠ Windows Server 2019 domain controllers have a default for the " +
+                "⚠ Windows Server 2019 domain controllers have a default for the " +
                 "security setting \"Allow cryptography algorithms compatible with Windows NT 4.0\" that " +
                 "prevents weaker cryptography algorithms when establishing Security Channel sessions. " +
-                "For more information about this setting, see Knowledge Base article 942564.</color>\n\n" +
-                "<color=#FFD700>⚠ A delegation for this DNS server cannot be created because the " +
+                "For more information about this setting, see Knowledge Base article 942564.\n\n" +
+                "⚠ A delegation for this DNS server cannot be created because the " +
                 "authoritative parent zone cannot be found or it does not run Windows DNS server. " +
                 "If you are integrating with an existing DNS infrastructure, you should manually create " +
                 "a delegation to this DNS server in the parent zone to ensure reliable name resolution " +
-                "from outside the domain. Otherwise, no action is required.</color>\n\n" +
-                "<color=#00CC00>✓ All prerequisite checks passed successfully. " +
-                "Click 'Install' to begin installation.</color>";
+                "from outside the domain. Otherwise, no action is required.\n\n" +
+                "✓ All prerequisite checks passed successfully. " +
+                "Click 'Install' to begin installation.";
             resultsTMP.gameObject.SetActive(true);
         }
 

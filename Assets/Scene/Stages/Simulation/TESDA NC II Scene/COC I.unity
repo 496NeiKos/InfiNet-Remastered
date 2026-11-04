@@ -20900,6 +20900,8 @@ MonoBehaviour:
   headerText: {fileID: 452195496}
   bodyText: {fileID: 1901844776}
   closeButton: {fileID: 92476021}
+  bodyTemplate: ' has been completed, proceed to other topic of this COC if not yet
+    finished.'
 --- !u!1 &242737373
 GameObject:
   m_ObjectHideFlags: 0
@@ -48347,7 +48349,7 @@ MonoBehaviour:
   toggleButton: {fileID: 1215458956}
   entries:
   - context: 1
-    title: Assemble & Disassemble
+    title: Disassembly & Assembly
     description: Before starting the disassembly, ensure the workspace is clean,
       dry, and free from unnecessary objects. Place the system unit on an anti-static
       mat and wear an anti-static wrist strap to prevent electrostatic discharge.
@@ -49338,7 +49340,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &496891194
 Transform:
   m_ObjectHideFlags: 0
@@ -65456,7 +65458,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
+  m_Offset: {x: 0.022337034, y: -0.10928774}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
@@ -65466,7 +65468,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 1.4, y: 1.43}
+  m_Size: {x: 0.80958307, y: 1.2114246}
   m_EdgeRadius: 0
 --- !u!114 &679522247
 MonoBehaviour:
@@ -76479,7 +76481,7 @@ GameObject:
   - component: {fileID: 788086391}
   - component: {fileID: 788086390}
   m_Layer: 0
-  m_Name: GPUSideView
+  m_Name: GPUSFrontView
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -81975,7 +81977,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &861349165
 Transform:
   m_ObjectHideFlags: 0
@@ -133297,7 +133299,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_text: Interact with heatsink and install the screw and plug the cable (slide
-    to up)
+    up mouse gesture)
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 5302535af1044152a457ed104f1f4b91, type: 2}
   m_sharedMaterial: {fileID: 2164040, guid: 5302535af1044152a457ed104f1f4b91, type: 2}
@@ -165060,7 +165062,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Uplug SATA Data Cable
+  m_text: Unplug SATA Data Cable
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 5302535af1044152a457ed104f1f4b91, type: 2}
   m_sharedMaterial: {fileID: 2164040, guid: 5302535af1044152a457ed104f1f4b91, type: 2}
@@ -175045,7 +175047,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 15
+  m_SortingOrder: 13
   m_MaskInteraction: 0
   m_Sprite: {fileID: -2959178932220512929, guid: 308e1adff1614934aa3b65f9941967f3, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -177702,7 +177704,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Go to System unit back
+  m_text: Go to System unit back angle
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 5302535af1044152a457ed104f1f4b91, type: 2}
   m_sharedMaterial: {fileID: 2164040, guid: 5302535af1044152a457ed104f1f4b91, type: 2}
@@ -179437,7 +179439,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Slide to down the cable to unplug
+  m_text: Slide down mouse gesture the cable to unplug
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 5302535af1044152a457ed104f1f4b91, type: 2}
   m_sharedMaterial: {fileID: 2164040, guid: 5302535af1044152a457ed104f1f4b91, type: 2}
@@ -182477,7 +182479,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Go to System unit side
+  m_text: Go to System unit side angle
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 5302535af1044152a457ed104f1f4b91, type: 2}
   m_sharedMaterial: {fileID: 2164040, guid: 5302535af1044152a457ed104f1f4b91, type: 2}
@@ -194369,7 +194371,7 @@ MonoBehaviour:
   taskListArrow: {fileID: 320869924}
   detailLayerRects:
   - {fileID: 736571174}
-  animDuration: 0.2
+  animDuration: 0.001
 --- !u!1 &2144778601
 GameObject:
   m_ObjectHideFlags: 0

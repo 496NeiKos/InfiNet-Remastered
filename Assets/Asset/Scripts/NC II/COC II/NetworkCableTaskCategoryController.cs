@@ -202,6 +202,7 @@ public class NetworkCableTaskCategoryController : MonoBehaviour
     // ── Public API (consumed by NetworkCableTaskDisplay and T568HintVisibility) ─────────
 
     public bool IsNetworkCableActive => _activeCategory == 0;
+    public int  ActiveCategoryIndex  => _activeCategory;
 
     // ── Public API (consumed by NetworkCableTaskDisplay) ──────────────────────────────
 

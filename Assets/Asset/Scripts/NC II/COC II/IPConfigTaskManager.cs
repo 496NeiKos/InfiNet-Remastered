@@ -1054,4 +1054,11 @@ public class IPConfigTaskManager : MonoBehaviour, ITaskCategory
     public bool     IsFullyComplete      => _allDone;
     public DeviceID ServerDevice         => _serverDevice;
     public DeviceID SecondDesktopDevice  => _secondDesktopDevice;
+
+    public int GetCompletedTaskCount()
+    {
+        int count = 0;
+        for (int i = 0; i < TASK_COUNT; i++) if (_latched[i]) count++;
+        return count;
+    }
 }

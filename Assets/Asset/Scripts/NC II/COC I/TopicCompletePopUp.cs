@@ -56,7 +56,8 @@ public class TopicCompletePopUp : MonoBehaviour
     [SerializeField] private TMP_Text bodyText;
     [SerializeField] private Button closeButton;
 
-    private const string BodyTemplate = " has been completed, proceed to other topic of this COC if not yet finished.";
+    [Header("Body Text")]
+    [SerializeField] private string bodyTemplate = " has been completed, proceed to other topic of this COC if not yet finished.";
 
     private void Start()
     {
@@ -80,7 +81,7 @@ public class TopicCompletePopUp : MonoBehaviour
             headerText.text = "Topic Completed";
 
         if (bodyText != null)
-            bodyText.text = objectiveName + BodyTemplate;
+            bodyText.text = objectiveName + bodyTemplate;
 
         if (popupPanel != null)
             popupPanel.SetActive(true);

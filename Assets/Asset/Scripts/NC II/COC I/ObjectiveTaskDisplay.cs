@@ -62,6 +62,9 @@ public class ObjectiveTaskDisplay : MonoBehaviour
 {
     // Fires with the completed objective's name each time a group finishes.
     public static event Action<string> OnObjectiveGroupComplete;
+
+    // Relay for COC II/III/IV display scripts so TopicCompletePopUp needs no changes.
+    public static void FireGroupComplete(string name) => OnObjectiveGroupComplete?.Invoke(name);
     [Serializable]
     public class ObjectiveEntry
     {

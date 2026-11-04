@@ -12,7 +12,7 @@ public class GPUDetailedView : MonoBehaviour
     [SerializeField] private GameObject topView;
     [SerializeField] private GameObject sideView;
 
-    private static readonly string[] Labels = { "Top", "Side" };
+    private static readonly string[] Labels = { "Top", "Front" };
 
     private HardwareAngleIndicator Indicator => GameManager.Instance?.angleIndicator;
 
