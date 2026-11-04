@@ -8323,7 +8323,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 259.99994, y: -305}
+  m_AnchoredPosition: {x: 260, y: -305}
   m_SizeDelta: {x: 490, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &85923668
@@ -10006,7 +10006,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 259.99994, y: -25}
+  m_AnchoredPosition: {x: 260, y: -25}
   m_SizeDelta: {x: 490, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &110854425
@@ -22470,24 +22470,28 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::UserGuideManager
   entries:
   - title: Workspace / Canvas
-    description: A certain area of the screen that acts as a canvas for hardware
-      components, its purpose is to work on the placed components to interact to
-      their contents it provides
+    description: A designated workspace on the screen that serves as a canvas for
+      hardware components. It allows users to place, arrange, and interact with these
+      components, providing an environment where they can access, manipulate, and
+      explore the functionalities and contents of each placed component.
     images:
-    - {fileID: -1548875187287816032, guid: caf1fda0cd2222e4989f14f29fb2856d, type: 3}
+    - {fileID: 7227094586058309666, guid: 955b3fa43c2dced4c81f1eaea4ef979f, type: 3}
   - title: Hardware Area
-    description: A storage room for components that is not currently active in the
-      workspace, dragging components inside hardware area and dropping to the workspace
-      will activate the hardware so that player can interact with it.
+    description: A dedicated storage area that holds hardware components that are
+      not currently active in the workspace. Users can activate components by dragging
+      and dropping them from the storage area into the hardware workspace. Once placed,
+      the components become active and available for interaction, allowing players
+      to access and utilize their respective functionalities.
     images:
-    - {fileID: -2063781512671078472, guid: 6d1f3d4bd3ae2fa4cbe73f4917459106, type: 3}
+    - {fileID: 6635972969210493566, guid: 4ad0d97c2a50c8843b8627f1078d1913, type: 3}
   - title: Terminal / User Log
-    description: 'A text display that shows the current log of the players recent
-      interactions to the hardware, its purpose is to give feedback to the player
-      if the actions is either: completed or not possible; requires other actions
-      first.'
+    description: A text-based notification panel that displays a real-time log of
+      the player's recent interactions with hardware components. Its purpose is to
+      provide immediate feedback on the player's actions, indicating whether an operation
+      was successfully completed, is not possible, or requires additional actions
+      or prerequisites before it can be performed.
     images:
-    - {fileID: -1240907655283256226, guid: c1c6d302509f2de408c4753be149d9fb, type: 3}
+    - {fileID: -1243892369805425323, guid: 09d07b062e7837843ac239c429aea636, type: 3}
   - title: 'Task List '
     description: 'A progression task that guides the player on what steps they should
       follow that is inline to the required processses on a specified topic. It helps
@@ -22502,17 +22506,22 @@ MonoBehaviour:
       as well as player can still see the task without having to exit the detail
       view. (Refer to guide No. 6)'
     images:
-    - {fileID: -1751934493417674604, guid: 01b618ea3a3d08a43b06b781a686039d, type: 3}
+    - {fileID: 5628512261087851205, guid: 14aae70a2573a3e42a08b10cc41e4b11, type: 3}
   - title: Drag & Drop
-    description: When holding a left click on a component, it will invoke a drag
-      function wherein you can manipulate its position on your commnad, releasing
-      the hold will drop the currently dragged component
-    images: []
+    description: Clicking and holding the left mouse button on a component activates
+      the drag-and-drop function, allowing the player to freely move and reposition
+      the selected component within the workspace. Releasing the left mouse button
+      drops the component at its current position, finalizing its placement.
+    images:
+    - {fileID: -8262404708797516621, guid: f150e5bf006f50d4b97069fb5edb80f4, type: 3}
   - title: Detail View
-    description: Invoking right-click input on some component will activate their
-      "Detail View", while inside the detail view; the player can now interact to
-      certain content it provides depending on the components.
-    images: []
+    description: Right-clicking on a component activates its Detail View, providing
+      the player with an expanded interface that displays the component's specific
+      contents and functionalities. Within this view, the player can interact with
+      the available features, access additional information, and perform component-specific
+      actions depending on the hardware's intended purpose.
+    images:
+    - {fileID: -303166995517356226, guid: 3ba65663724576046ab10660d58a6513, type: 3}
   - title: Power Switches
     description: 'Some Hardware components posseses power switches. It has two states:
       power on and power off. In some most cases, before interacting to its component;
@@ -22523,7 +22532,8 @@ MonoBehaviour:
       and off the power switches, requires the player to some cases either: double
       mouse left-click or single mouse left-click input. A visual input will display
       the state of the power if it is at powered on or powered off state. '
-    images: []
+    images:
+    - {fileID: -3892093240934911624, guid: 24da8c152537dbb47a8c817cd8c76367, type: 3}
   - title: Cables
     description: "A connectors on which users must connect or disconnect the cables.
       In some cases, its component requires the cable to be first remove in order
@@ -22532,7 +22542,8 @@ MonoBehaviour:
       it until the cable is uninstalled, while holding, you have now the capicity
       to either drop it from the hardware are to completely uninstall, otherwise
       it will snap back to its port."
-    images: []
+    images:
+    - {fileID: 7084060711741569152, guid: 7d091d88147d10a4088751f31540d40f, type: 3}
   - title: Screws
     description: "A lock-mechanism, its purpose is to pin down the said components
       that is needed to be screwed. \n\nTo unscrew, drag the \"Screwdriver\" from
@@ -22541,14 +22552,20 @@ MonoBehaviour:
       screw from the hardware area and drop it from the screwhole to first place
       an unscrewed screw to the screwhole, then drag the screwdriver again to screw
       the screw from the screwhole to screw the screw. "
-    images: []
+    images:
+    - {fileID: 3673038513167197069, guid: d0e65296c27565445b2dbdbc459326cb, type: 3}
   - title: Latch/Lock
-    description: 'In similiar of screws, the latch is also another lock-mechanism
-      that does not require a screw but rather a snap installation method. In some
-      cases, hardware will require their components to be latched on to their slot
-      in order to lock its postition. Latching on a components requires a swipe-down
-      gesture input, latching off requires swipe up. '
-    images: []
+    description: 'Similar to screws, latches serve as an alternative locking mechanism
+      that secures hardware components through a snap-in installation method rather
+      than rotational fastening. Certain hardware components require their latches
+      to be engaged in designated slots to secure their position. The latching and
+      locking mechanisms are controlled through directional swipe gestures, with
+      the required input varying depending on the component: the GPU requires a downward
+      swipe to engage the latch and an upward swipe to release it, the CPU uses a
+      rightward swipe to activate its locking mechanism, while the RAM requires a
+      leftward swipe to lock it and a rightward swipe to unlock it.'
+    images:
+    - {fileID: 7654272231878461080, guid: e398b19a1054d4d4a8ca3cfed9df8e50, type: 3}
   toggleButton: {fileID: 301020518}
   closeButton: {fileID: 1067989090}
   guidePanel: {fileID: 1752239172}
@@ -44159,7 +44176,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 3525320255299373166, guid: 5e32b5f2631878c46b6b9060b4f345dc, type: 3}
+  m_Sprite: {fileID: 3901928251099475577, guid: 5e292787e3dad9148b13e61d689f2544, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -44189,7 +44206,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: da07a6633ba38a44d8b7b3ce0dea09f4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PPEItemSlot
-  itemSprite: {fileID: 3525320255299373166, guid: 5e32b5f2631878c46b6b9060b4f345dc, type: 3}
+  itemSprite: {fileID: 3901928251099475577, guid: 5e292787e3dad9148b13e61d689f2544, type: 3}
   itemName: Knee Pads
   itemDescription: Protects knees during cable installation or when working under
     desks and raised floors.
@@ -89027,7 +89044,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &931906572
 Transform:
   m_ObjectHideFlags: 0
@@ -99569,7 +99586,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 259.99994, y: -65}
+  m_AnchoredPosition: {x: 260, y: -65}
   m_SizeDelta: {x: 490, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1048897931
@@ -116070,7 +116087,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 259.99994, y: -105}
+  m_AnchoredPosition: {x: 260, y: -105}
   m_SizeDelta: {x: 490, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1224513070
@@ -134278,7 +134295,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 259.99994, y: -185}
+  m_AnchoredPosition: {x: 260, y: -185}
   m_SizeDelta: {x: 490, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1420824561
@@ -154637,7 +154654,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 259.99994, y: -345}
+  m_AnchoredPosition: {x: 260, y: -345}
   m_SizeDelta: {x: 490, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1654712881
@@ -170961,7 +170978,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 259.99994, y: -225}
+  m_AnchoredPosition: {x: 260, y: -225}
   m_SizeDelta: {x: 490, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1852754780
@@ -175095,7 +175112,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 259.99994, y: -265}
+  m_AnchoredPosition: {x: 260, y: -265}
   m_SizeDelta: {x: 490, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1901842688
@@ -181129,7 +181146,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 259.99994, y: -385}
+  m_AnchoredPosition: {x: 260, y: -385}
   m_SizeDelta: {x: 490, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1982491475
@@ -184927,7 +184944,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 259.99994, y: -145}
+  m_AnchoredPosition: {x: 260, y: -145}
   m_SizeDelta: {x: 490, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2023897043
