@@ -187,7 +187,7 @@ Canvas:
   m_GameObject: {fileID: 491862465}
   m_Enabled: 1
   serializedVersion: 3
-  m_RenderMode: 0
+  m_RenderMode: 1
   m_Camera: {fileID: 0}
   m_PlaneDistance: 100
   m_PixelPerfect: 0
@@ -664,12 +664,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d0d1a51f9e74ab74bafdec0d04c2444c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SoundManager
+  startSFX: {fileID: 8300000, guid: dc9a6dbb65dc72f4dbb11149f3f6c2de, type: 3}
+  quitSFX: {fileID: 8300000, guid: 5e2f6180ded253843a7e2ab5dfc40b8e, type: 3}
+  errorSFX: {fileID: 0}
   clickSFX: {fileID: 8300000, guid: dc9a6dbb65dc72f4dbb11149f3f6c2de, type: 3}
   backSFX: {fileID: 8300000, guid: d07584b8490bcc747ac870079b433560, type: 3}
   confirmSFX: {fileID: 8300000, guid: 425f16109015cb444b3399dd5415b1c6, type: 3}
-  errorSFX: {fileID: 0}
-  startSFX: {fileID: 8300000, guid: dc9a6dbb65dc72f4dbb11149f3f6c2de, type: 3}
-  quitSFX: {fileID: 8300000, guid: 5e2f6180ded253843a7e2ab5dfc40b8e, type: 3}
+  menuVolume: 1
+  avrSFX: {fileID: 0}
+  vgaSFX: {fileID: 0}
+  dropSFX: {fileID: 0}
+  mbSFX: {fileID: 0}
+  ingameVolume: 1
 --- !u!4 &2012770903
 Transform:
   m_ObjectHideFlags: 0

@@ -279,7 +279,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 27.545012, y: 0}
+  m_AnchoredPosition: {x: 27.545013, y: 0}
   m_SizeDelta: {x: -55.089977, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &159000361
@@ -295,7 +295,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0, g: 0, b: 0, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -487,7 +487,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -6796610086888433154, guid: 7bd1e4472a499f84092b49b5fa58758d, type: 3}
+  m_Sprite: {fileID: -1480448990660316844, guid: e55548ba6abf8694ea30ab4ba9f3c166, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -632,7 +632,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -6796610086888433154, guid: 7bd1e4472a499f84092b49b5fa58758d, type: 3}
+  m_Sprite: {fileID: -1480448990660316844, guid: e55548ba6abf8694ea30ab4ba9f3c166, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -710,9 +710,9 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 421142931}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.582, y: 0.158, z: 0}
-  m_LocalScale: {x: 0.93, y: 0.93, z: 0.93}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.5820063, y: 0.1381, z: 0}
+  m_LocalScale: {x: 0.911493, y: 0.9565017, z: 0.93}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 1382356007}
@@ -766,7 +766,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 2080364843440467321, guid: c0e49a1f6d796774db19c88f10988aa9, type: 3}
+  m_Sprite: {fileID: -5131120537863414566, guid: 7b05abe63460b644dac5b5c01a173b9b, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -814,7 +814,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -239}
+  m_AnchoredPosition: {x: -64.385, y: -241}
   m_SizeDelta: {x: 1114.5, y: 354}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &466616244
@@ -919,7 +919,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 27.545012, y: 0}
+  m_AnchoredPosition: {x: 27.545013, y: 0}
   m_SizeDelta: {x: -55.089977, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &546086622
@@ -935,7 +935,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0, g: 0, b: 0, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -963,6 +963,143 @@ CanvasRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 546086620}
+  m_CullTransparentMesh: 1
+--- !u!1 &577803885
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 577803886}
+  - component: {fileID: 577803888}
+  - component: {fileID: 577803887}
+  m_Layer: 5
+  m_Name: Text (TMP)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &577803886
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 577803885}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 738029652}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: -703, y: 384}
+  m_SizeDelta: {x: 436.3, y: 50}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &577803887
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 577803885}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_text: HARDWARE TOOLS
+  m_isRightToLeft: 0
+  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontSharedMaterials: []
+  m_fontMaterial: {fileID: 0}
+  m_fontMaterials: []
+  m_fontColor32:
+    serializedVersion: 2
+    rgba: 4294967295
+  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+  m_enableVertexGradient: 0
+  m_colorMode: 3
+  m_fontColorGradient:
+    topLeft: {r: 1, g: 1, b: 1, a: 1}
+    topRight: {r: 1, g: 1, b: 1, a: 1}
+    bottomLeft: {r: 1, g: 1, b: 1, a: 1}
+    bottomRight: {r: 1, g: 1, b: 1, a: 1}
+  m_fontColorGradientPreset: {fileID: 0}
+  m_spriteAsset: {fileID: 0}
+  m_tintAllSprites: 0
+  m_StyleSheet: {fileID: 0}
+  m_TextStyleHashCode: -1183493901
+  m_overrideHtmlColors: 0
+  m_faceColor:
+    serializedVersion: 2
+    rgba: 4294967295
+  m_fontSize: 36
+  m_fontSizeBase: 36
+  m_fontWeight: 400
+  m_enableAutoSizing: 0
+  m_fontSizeMin: 18
+  m_fontSizeMax: 72
+  m_fontStyle: 0
+  m_HorizontalAlignment: 1
+  m_VerticalAlignment: 512
+  m_textAlignment: 65535
+  m_characterSpacing: 0
+  m_characterHorizontalScale: 1
+  m_wordSpacing: 0
+  m_lineSpacing: 0
+  m_lineSpacingMax: 0
+  m_paragraphSpacing: 0
+  m_charWidthMaxAdj: 0
+  m_TextWrappingMode: 1
+  m_wordWrappingRatios: 0.4
+  m_overflowMode: 0
+  m_linkedTextComponent: {fileID: 0}
+  parentLinkedComponent: {fileID: 0}
+  m_enableKerning: 0
+  m_ActiveFontFeatures: 6e72656b
+  m_enableExtraPadding: 0
+  checkPaddingRequired: 0
+  m_isRichText: 1
+  m_EmojiFallbackSupport: 1
+  m_parseCtrlCharacters: 1
+  m_isOrthographic: 1
+  m_isCullingEnabled: 0
+  m_horizontalMapping: 0
+  m_verticalMapping: 0
+  m_uvLineOffset: 0
+  m_geometrySortingOrder: 0
+  m_IsTextObjectScaleStatic: 0
+  m_VertexBufferAutoSizeReduction: 0
+  m_useMaxVisibleDescender: 1
+  m_pageToDisplay: 1
+  m_margin: {x: 0, y: 0, z: 0, w: 0}
+  m_isUsingLegacyAnimationComponent: 0
+  m_isVolumetricText: 0
+  m_hasFontAssetChanged: 0
+  m_baseMaterial: {fileID: 0}
+  m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!222 &577803888
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 577803885}
   m_CullTransparentMesh: 1
 --- !u!1 &611760857
 GameObject:
@@ -1022,21 +1159,22 @@ MonoBehaviour:
   - {fileID: -8977564786713292925, guid: 29cf8e1fbaebc2245973778b64cd5e15, type: 3}
   - {fileID: -5941888252667042314, guid: 1cc82261c3ee3b54699479db4af4cf60, type: 3}
   descriptions:
-  - "Meaning\r\nA Phillips screwdriver is a hand tool with a cross-shaped tip designed
+  - "Meaning:\r\nA Phillips screwdriver is a hand tool with a cross-shaped tip designed
     to fit screws with a \u201C+\u201D head. It is one of the most commonly used
-    tools in computer assembly and repair.\r\nPurpose\r\nIts purpose is to tighten
+    tools in computer assembly and repair.\n\r\nPurpose:\r\nIts purpose is to tighten
     or loosen Phillips-head screws found in computer cases, motherboards, power supplies,
     and other hardware components.\r\nWhy This is Needed\r\nMost computer parts are
     secured using Phillips screws. Without this tool, it would be difficult or impossible
     to properly assemble or disassemble a computer system.\r\nUses\r\nRemoving and
     installing computer case screws\r\nOpening power supply units (PSU)\r\nSecuring
     motherboard and storage devices\r\nGeneral computer assembly and repair tasks\r\n"
-  - 'Meaning
+  - 'Meaning:
 
     A flat-head screwdriver is a tool with a straight, flat tip designed
     for screws with a single horizontal slot.
 
-    Purpose
+
+    Purpose:
 
     It is used to loosen
     or tighten flat-head screws and sometimes for prying small components carefully.
@@ -1060,12 +1198,13 @@ MonoBehaviour:
     Supporting general hardware repair
 
 '
-  - 'Meaning
+  - 'Meaning:
 
     A hex or Allen wrench is a tool with a six-sided tip used to turn
     hexagonal screws and bolts.
 
-    Purpose
+
+    Purpose:
 
     It is used to tighten or loosen
     hex screws commonly found in computer cases, racks, and mounting brackets.
@@ -1089,71 +1228,74 @@ MonoBehaviour:
     Adjusting mounted components
 
 '
-  - 'Meaning
+  - 'Meaning:
 
     Long nose pliers are hand tools with long, pointed jaws used for
     gripping small parts and reaching tight spaces.
 
-    Purpose
 
-    They are used
-    to hold, bend, or pull small components inside a computer system.
+    Purpose:
 
-    Why This
-    is Needed
+    They are
+    used to hold, bend, or pull small components inside a computer system.
 
-    Computer components are small and delicate. This tool helps technicians
-    handle parts in narrow or hard-to-reach areas.
+    Why
+    This is Needed
+
+    Computer components are small and delicate. This tool helps
+    technicians handle parts in narrow or hard-to-reach areas.
 
     Uses
 
-    Pulling small screws
-    or wires
+    Pulling
+    small screws or wires
 
     Bending cables or pins
 
-    Holding components in tight spaces
+    Holding components in
+    tight spaces
 
-    Assisting
-    in cable management
+    Assisting in cable management
 
 
 
 '
-  - 'Meaning
+  - 'Meaning:
 
-    Side cutting pliers are tools designed to cut wires and small cables
-    cleanly.
+    Side cutting pliers are tools designed to cut wires and small
+    cables cleanly.
 
-    Purpose
 
-    To cut electrical wires, cable ties, and connectors
-    during installation or repair.
+    Purpose:
+
+    To cut electrical wires, cable ties, and
+    connectors during installation or repair.
 
     Why This is Needed
 
-    Proper cable cutting
-    ensures clean installations and prevents messy or unsafe wiring inside a computer
-    system.
+    Proper
+    cable cutting ensures clean installations and prevents messy or unsafe wiring
+    inside a computer system.
 
     Uses
 
     Cutting cables and wires
 
-    Removing zip ties
+    Removing
+    zip ties
 
-    Trimming
-    excess wire length
+    Trimming excess wire length
 
     Supporting cable management
 
 '
-  - 'Meaning
+  - 'Meaning:
 
     A wire stripper is a tool used to remove the protective insulation
     from electrical wires without damaging the metal inside.
 
-    Purpose
+
+    Purpose:
 
     To
     prepare wires for connection, crimping, or installation.
@@ -1176,15 +1318,16 @@ MonoBehaviour:
     Electrical installations
 
 '
-  - 'Meaning
+  - 'Meaning:
 
     A crimping tool is a device used to attach connectors to the ends
     of wires or cables by pressing them tightly together.
 
-    Purpose
 
-    To create
-    strong and stable connections, especially for network cables like Ethernet.
+    Purpose:
+
+    To
+    create strong and stable connections, especially for network cables like Ethernet.
 
     Why
     This is Needed
@@ -1205,12 +1348,13 @@ MonoBehaviour:
     network systems
 
 '
-  - 'Meaning
+  - 'Meaning:
 
     Tweezers are small precision tools used to pick up or handle tiny
     components.
 
-    Purpose
+
+    Purpose:
 
     To handle delicate or small parts that fingers
     cannot easily reach or grip.
@@ -1233,12 +1377,13 @@ MonoBehaviour:
     Precision repair tasks
 
 '
-  - 'Meaning
+  - 'Meaning:
 
     An anti-static wrist strap is a safety device worn on the wrist
     to prevent static electricity buildup.
 
-    Purpose
+
+    Purpose:
 
     To protect sensitive
     computer components from electrostatic discharge (ESD) damage.
@@ -1262,12 +1407,13 @@ MonoBehaviour:
     sensitive electronics
 
 '
-  - 'Meaning
+  - 'Meaning:
 
     A screw organizer or parts tray is a container used to store and
     organize screws and small components during repair or assembly.
 
-    Purpose
+
+    Purpose:
 
     To
     prevent losing small parts and keep them organized during computer servicing.
@@ -1418,7 +1564,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -6796610086888433154, guid: 7bd1e4472a499f84092b49b5fa58758d, type: 3}
+  m_Sprite: {fileID: -1480448990660316844, guid: e55548ba6abf8694ea30ab4ba9f3c166, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -1548,7 +1694,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 27.545012, y: 0}
+  m_AnchoredPosition: {x: 27.545013, y: 0}
   m_SizeDelta: {x: -55.089977, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &660330918
@@ -1564,7 +1710,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0, g: 0, b: 0, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1760,6 +1906,7 @@ RectTransform:
   m_Children:
   - {fileID: 1591498484}
   - {fileID: 1660164245}
+  - {fileID: 577803886}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -1816,8 +1963,8 @@ Canvas:
   m_GameObject: {fileID: 738029651}
   m_Enabled: 1
   serializedVersion: 3
-  m_RenderMode: 0
-  m_Camera: {fileID: 0}
+  m_RenderMode: 1
+  m_Camera: {fileID: 1750015773}
   m_PlaneDistance: 100
   m_PixelPerfect: 0
   m_ReceivesEvents: 1
@@ -1828,7 +1975,7 @@ Canvas:
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 20
   m_TargetDisplay: 0
 --- !u!1 &786458035
 GameObject:
@@ -1864,7 +2011,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 27.545012, y: 0}
+  m_AnchoredPosition: {x: 27.545013, y: 0}
   m_SizeDelta: {x: -55.089977, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &786458037
@@ -1880,7 +2027,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0, g: 0, b: 0, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1943,7 +2090,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 27.545012, y: 0}
+  m_AnchoredPosition: {x: 27.545013, y: 0}
   m_SizeDelta: {x: -55.089977, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &931275041
@@ -1959,7 +2106,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0, g: 0, b: 0, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -2115,7 +2262,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -6796610086888433154, guid: 7bd1e4472a499f84092b49b5fa58758d, type: 3}
+  m_Sprite: {fileID: -1480448990660316844, guid: e55548ba6abf8694ea30ab4ba9f3c166, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -2260,7 +2407,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -6796610086888433154, guid: 7bd1e4472a499f84092b49b5fa58758d, type: 3}
+  m_Sprite: {fileID: -1480448990660316844, guid: e55548ba6abf8694ea30ab4ba9f3c166, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -2318,15 +2465,15 @@ MonoBehaviour:
       m_Calls: []
   m_text: 
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: dc36b3fdc14f47ebb36fd484a67e268a, type: 2}
-  m_sharedMaterial: {fileID: 2140032, guid: dc36b3fdc14f47ebb36fd484a67e268a, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontColor: {r: 1, g: 0.92156863, b: 0.72156864, a: 1}
+  m_fontColor: {r: 0, g: 0, b: 0, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -2413,7 +2560,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 335.4718}
+  m_SizeDelta: {x: 0, y: 335.47}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1124889878
 GameObject:
@@ -2449,7 +2596,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 27.545012, y: 0}
+  m_AnchoredPosition: {x: 27.545013, y: 0}
   m_SizeDelta: {x: -55.089977, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1124889880
@@ -2465,7 +2612,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0, g: 0, b: 0, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -2539,8 +2686,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -620.9836, y: 0}
-  m_SizeDelta: {x: -1241.9672, y: 0}
+  m_AnchoredPosition: {x: -630.9799, y: 0}
+  m_SizeDelta: {x: -1261.95, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1217441963
 MonoBehaviour:
@@ -2555,7 +2702,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -2655,7 +2802,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -2965,7 +3112,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -6796610086888433154, guid: 7bd1e4472a499f84092b49b5fa58758d, type: 3}
+  m_Sprite: {fileID: -1480448990660316844, guid: e55548ba6abf8694ea30ab4ba9f3c166, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -3205,7 +3352,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 27.545012, y: 0}
+  m_AnchoredPosition: {x: 27.545013, y: 0}
   m_SizeDelta: {x: -55.089977, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1652617810
@@ -3221,7 +3368,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0, g: 0, b: 0, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -3286,8 +3433,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -866.5, y: 487}
-  m_SizeDelta: {x: 160, y: 80}
+  m_AnchoredPosition: {x: -820, y: 460}
+  m_SizeDelta: {x: 200, y: 75}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1660164246
 MonoBehaviour:
@@ -3365,7 +3512,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 909454856004693264, guid: e507f5c7f518c3743ba877b8d0ddd096, type: 3}
+  m_Sprite: {fileID: -9007981542807625382, guid: a00b16094a940ac4aaf368fa17b09567, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -3510,7 +3657,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -6796610086888433154, guid: 7bd1e4472a499f84092b49b5fa58758d, type: 3}
+  m_Sprite: {fileID: -1480448990660316844, guid: e55548ba6abf8694ea30ab4ba9f3c166, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -3734,7 +3881,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -6796610086888433154, guid: 7bd1e4472a499f84092b49b5fa58758d, type: 3}
+  m_Sprite: {fileID: -1480448990660316844, guid: e55548ba6abf8694ea30ab4ba9f3c166, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -3879,7 +4026,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -6796610086888433154, guid: 7bd1e4472a499f84092b49b5fa58758d, type: 3}
+  m_Sprite: {fileID: -1480448990660316844, guid: e55548ba6abf8694ea30ab4ba9f3c166, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -4407,12 +4554,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d0d1a51f9e74ab74bafdec0d04c2444c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SoundManager
+  startSFX: {fileID: 8300000, guid: dc9a6dbb65dc72f4dbb11149f3f6c2de, type: 3}
+  quitSFX: {fileID: 8300000, guid: 5e2f6180ded253843a7e2ab5dfc40b8e, type: 3}
+  errorSFX: {fileID: 0}
   clickSFX: {fileID: 8300000, guid: dc9a6dbb65dc72f4dbb11149f3f6c2de, type: 3}
   backSFX: {fileID: 8300000, guid: d07584b8490bcc747ac870079b433560, type: 3}
   confirmSFX: {fileID: 8300000, guid: 425f16109015cb444b3399dd5415b1c6, type: 3}
-  errorSFX: {fileID: 0}
-  startSFX: {fileID: 8300000, guid: dc9a6dbb65dc72f4dbb11149f3f6c2de, type: 3}
-  quitSFX: {fileID: 8300000, guid: 5e2f6180ded253843a7e2ab5dfc40b8e, type: 3}
+  menuVolume: 1
+  avrSFX: {fileID: 0}
+  vgaSFX: {fileID: 0}
+  dropSFX: {fileID: 0}
+  mbSFX: {fileID: 0}
+  ingameVolume: 1
 --- !u!1 &2088878999
 GameObject:
   m_ObjectHideFlags: 0
@@ -4447,7 +4600,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 621.64, y: -246.9}
+  m_AnchoredPosition: {x: 557.25, y: -235}
   m_SizeDelta: {x: 600, y: 400}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2088879001
@@ -4522,7 +4675,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 27.545012, y: 0}
+  m_AnchoredPosition: {x: 27.545013, y: 0}
   m_SizeDelta: {x: -55.089977, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2089116369
@@ -4538,7 +4691,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0, g: 0, b: 0, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -4601,7 +4754,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 27.545012, y: 0}
+  m_AnchoredPosition: {x: 27.545013, y: 0}
   m_SizeDelta: {x: -55.089977, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2090273898
@@ -4617,7 +4770,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0, g: 0, b: 0, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -4680,7 +4833,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 27.545012, y: 0}
+  m_AnchoredPosition: {x: 27.545013, y: 0}
   m_SizeDelta: {x: -55.089977, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2119771309
@@ -4696,7 +4849,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0, g: 0, b: 0, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -4852,7 +5005,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -6796610086888433154, guid: 7bd1e4472a499f84092b49b5fa58758d, type: 3}
+  m_Sprite: {fileID: -1480448990660316844, guid: e55548ba6abf8694ea30ab4ba9f3c166, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
