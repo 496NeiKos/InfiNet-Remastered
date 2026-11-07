@@ -198,15 +198,31 @@ public class NetworkHardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHand
         foreach (var end in ends)
         {
             if (!end.gameObject.activeInHierarchy) continue;
-            if (!end.IsStripped || end.IsRJ45Installed) continue;
+            if (!end.IsStripped || !end.IsTrimmed || end.IsRJ45Installed) continue;
             float dist = Vector3.Distance(dropWorldPos, end.SlotWorldPosition);
             if (dist < bestDist) { bestDist = dist; closest = end; }
         }
 
-        if (closest == null) return;
+        if (closest != null)
+        {
+            closest.InstallRJ45(this);
+            gameObject.SetActive(false);
+            return;
+        }
 
-        closest.InstallRJ45(this);
-        gameObject.SetActive(false);
+        // Check if the user dropped near a stripped-but-untrimmed end — give feedback without consuming the RJ45.
+        NetworkCableEndController untrimmed = null;
+        float untrimmedBest = slotInstallRadius;
+        foreach (var end in ends)
+        {
+            if (!end.gameObject.activeInHierarchy) continue;
+            if (!end.IsStripped || end.IsTrimmed || end.IsRJ45Installed) continue;
+            float dist = Vector3.Distance(dropWorldPos, end.SlotWorldPosition);
+            if (dist < untrimmedBest) { untrimmedBest = dist; untrimmed = end; }
+        }
+
+        if (untrimmed != null)
+            CrimpingFeedbackPopup.Instance?.ShowMessage("Trim the wires first before installing the RJ45.");
     }
 
     private void ApplyWorldScale(Transform t, Vector3 targetWorldScale)

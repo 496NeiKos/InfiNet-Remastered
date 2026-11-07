@@ -4,22 +4,26 @@ using UnityEngine;
 
 /// <summary>
 /// Controls state for one cable end (CableEnd1 or CableEnd2).
-/// Manages sprite toggling, wire shuffle, and RJ45 slot install/uninstall.
 ///
 /// Hierarchy expected:
 ///   CableEnd (this)
-///   ├── CableEnd_DefaultSprite   (SpriteRenderer, active initially)
-///   ├── CableEnd_StrippedSprite  (SpriteRenderer, disabled initially)
-///   ├── CableEnd_Wires           (container, disabled initially — 8 WireController children)
-///   └── CableEnd_RJ45Slot        (empty slot object, disabled initially)
+///   ├── CableEnd_Body        (SpriteRenderer — always enabled, sprite never changes)
+///   ├── CableEnd_Head        (GameObject — starts enabled; disabled when stripped)
+///   ├── CableEnd_Wires       (container — starts disabled; enabled when stripped)
+///   └── CableEnd_RJ45Slot    (starts disabled; enabled when RJ45 installed)
+///
+/// State flow: Intact → Stripped → Trimmed → RJ45 Installed → Crimped
+/// Reset (crimper on body) always returns to Intact from any state.
 /// </summary>
 public class NetworkCableEndController : MonoBehaviour
 {
     [Header("Cable Body")]
-    [Tooltip("SpriteRenderer on Cable1Body (the single merged body object).")]
+    [Tooltip("SpriteRenderer on the cable body — always enabled, sprite never changes.")]
     [SerializeField] private SpriteRenderer cableBody;
-    [SerializeField] private Sprite defaultSprite;
-    [SerializeField] private Sprite strippedSprite;
+
+    [Header("Cable Head")]
+    [Tooltip("The jacket tip GO — enabled when intact, disabled when stripped.")]
+    [SerializeField] private GameObject cableHead;
 
     [Header("Wires")]
     [SerializeField] private Transform wiresContainer;
@@ -34,32 +38,32 @@ public class NetworkCableEndController : MonoBehaviour
     [SerializeField] private float slideDuration = 0.3f;
 
     [Header("Slot Layout")]
-    [Tooltip("Local X positions for wire slots 0-7 relative to wiresContainer. Match the editor wire spacing.")]
+    [Tooltip("Local X positions for wire slots 0-7 relative to wiresContainer.")]
     [SerializeField] private float[] slotLocalXPositions = new float[] { -0.4f, -0.3f, -0.2f, -0.1f, 0f, 0.1f, 0.2f, 0.3f };
 
     public bool IsStripped      { get; private set; }
+    public bool IsTrimmed       { get; private set; }
     public bool IsRJ45Installed { get; private set; }
     public bool IsCrimped       { get; private set; }
 
     /// <summary>
     /// Increments each time Expose() is called.
-    /// 0 = never stripped, 1 = Phase-1 strip, 2 = Phase-2 re-strip, etc.
     /// Used by NetworkCableTaskManager to distinguish Phase-1 from Phase-2 wire state.
     /// </summary>
     public int StripCycleCount { get; private set; }
 
-    /// <summary>World position of the RJ45 slot object — used for proximity snap detection.</summary>
+    /// <summary>World position of the RJ45 slot object — used for proximity snap/crimp detection.</summary>
     public Vector3 SlotWorldPosition =>
         rj45SlotObject != null ? rj45SlotObject.transform.position : transform.position;
 
-    /// <summary>World position of the cable body — used by the crimping tool's cut/reset detection.</summary>
+    /// <summary>World position of the cable body — used by the crimping tool's reset detection.</summary>
     public Vector3 BodyWorldPosition =>
         cableBody != null ? cableBody.transform.position : transform.position;
 
-    /// <summary>
-    /// Returns the wireColorIndex of whichever wire currently occupies the given slot (0–7),
-    /// or -1 if no wire is assigned there. Used by LanTesterLEDDisplay for per-pin LED checking.
-    /// </summary>
+    /// <summary>World position of the wires container — used by the crimping tool's trim detection.</summary>
+    public Vector3 WiresWorldPosition =>
+        wiresContainer != null ? wiresContainer.position : transform.position;
+
     public int GetWireColorAtSlot(int slotIndex)
     {
         if (_wires == null) return -1;
@@ -69,11 +73,6 @@ public class NetworkCableEndController : MonoBehaviour
         return -1;
     }
 
-    /// <summary>
-    /// Reverse lookup — returns the slot index currently occupied by the wire with the given color,
-    /// or -1 if no wire with that color exists. Used by LanTesterLEDDisplay remote panel to trace
-    /// which pin on this end receives the signal the master is sending on a given pin.
-    /// </summary>
     public int GetSlotForWireColor(int colorIndex)
     {
         if (_wires == null || colorIndex < 0) return -1;
@@ -96,21 +95,26 @@ public class NetworkCableEndController : MonoBehaviour
     private void Start()
     {
         IsStripped      = false;
+        IsTrimmed       = false;
         IsRJ45Installed = false;
         IsCrimped       = false;
-        if (cableBody      != null) cableBody.sprite = defaultSprite;
+
+        if (cableHead      != null) cableHead.SetActive(true);
         if (wiresContainer != null) wiresContainer.gameObject.SetActive(false);
         if (rj45SlotObject != null) rj45SlotObject.SetActive(false);
     }
 
-    /// <summary>Called by wire stripper on a fresh cable end. Enables stripped view and shuffles wires.</summary>
+    /// <summary>
+    /// Called by wire stripper. Disables the cable head and exposes the inner wires (randomized).
+    /// Does nothing if already stripped.
+    /// </summary>
     public void Expose()
     {
         if (IsStripped) return;
         IsStripped = true;
         StripCycleCount++;
 
-        if (cableBody      != null) cableBody.sprite = strippedSprite;
+        if (cableHead      != null) cableHead.SetActive(false);
         if (wiresContainer != null) wiresContainer.gameObject.SetActive(true);
 
         ShuffleWires();
@@ -118,18 +122,29 @@ public class NetworkCableEndController : MonoBehaviour
     }
 
     /// <summary>
-    /// Cuts the cable end back to its original unstripped state.
-    /// Called by the crimping tool when aimed at the cable body (not the RJ45 slot).
-    /// Works even if the RJ45 is already crimped — the connector is returned to hardware storage.
-    /// The wire stripper must be used again to re-strip and get new randomized wires.
+    /// Called by the crimping tool on the wires area. Marks wires as trimmed (equal length).
+    /// Requires the cable to be stripped first. Does nothing if already trimmed.
+    /// </summary>
+    public void Trim()
+    {
+        if (!IsStripped || IsTrimmed) return;
+        IsTrimmed = true;
+        NetworkCableTaskManager.CheckConditions();
+    }
+
+    /// <summary>
+    /// Fully resets the cable end back to its intact state.
+    /// Called by the crimping tool on the cable body. Works from any state.
     /// </summary>
     public void ResetEnd()
     {
-        IsCrimped = false; // Clear before UninstallRJ45 so its guard doesn't block.
+        IsCrimped = false;
         if (IsRJ45Installed) UninstallRJ45(notify: false);
 
         IsStripped = false;
-        if (cableBody      != null) cableBody.sprite = defaultSprite;
+        IsTrimmed  = false;
+
+        if (cableHead      != null) cableHead.SetActive(true);
         if (wiresContainer != null) wiresContainer.gameObject.SetActive(false);
         if (rj45SlotObject != null) rj45SlotObject.SetActive(false);
 
@@ -137,8 +152,7 @@ public class NetworkCableEndController : MonoBehaviour
     }
 
     /// <summary>
-    /// Locks the installed RJ45 in place. Requires wire stripper to reset.
-    /// Called by the crimping tool after a successful snap-install.
+    /// Locks the installed RJ45 in place. Requires RJ45 to be installed and not yet crimped.
     /// </summary>
     public void Crimp()
     {
@@ -149,11 +163,11 @@ public class NetworkCableEndController : MonoBehaviour
 
     /// <summary>
     /// Reparents the actual RJ45 hardware object into the slot and plays the slide-in animation.
-    /// Called by NetworkHardwareHolder.SnapToSlot.
+    /// Requires both IsStripped and IsTrimmed.
     /// </summary>
     public void InstallRJ45(NetworkHardwareHolder source = null)
     {
-        if (!IsStripped || IsRJ45Installed) return;
+        if (!IsStripped || !IsTrimmed || IsRJ45Installed) return;
         if (source == null || source.hardwarePrefab == null) return;
 
         IsRJ45Installed = true;
@@ -161,13 +175,11 @@ public class NetworkCableEndController : MonoBehaviour
 
         rj45SlotObject.SetActive(true);
 
-        // Preserve world scale across the reparent
         Vector3 worldScale = _installedRJ45.transform.lossyScale;
         _installedRJ45.SetActive(true);
         _installedRJ45.transform.SetParent(rj45SlotObject.transform, false);
         RestoreWorldScale(_installedRJ45.transform, worldScale);
 
-        // Slide from above (slideStartYOffset) down to rest (0,0,0) in slot-local space
         _installedRJ45.transform.localPosition = new Vector3(0f, slideStartYOffset, 0f);
         if (_slideRoutine != null) StopCoroutine(_slideRoutine);
         _slideRoutine = StartCoroutine(SlideRJ45(_installedRJ45, Vector3.zero));
@@ -179,55 +191,13 @@ public class NetworkCableEndController : MonoBehaviour
     }
 
     /// <summary>
-    /// Uninstalls the RJ45 from the slot and returns it to hardware storage,
-    /// restoring the icon proxy. Called by the wire-stripper reset path.
-    /// </summary>
-    public void UninstallRJ45(bool notify = true)
-    {
-        if (IsCrimped) return;
-        IsRJ45Installed = false;
-
-        if (_slideRoutine != null) { StopCoroutine(_slideRoutine); _slideRoutine = null; }
-
-        if (_installedRJ45 != null)
-        {
-            _installedRJ45.GetComponent<RJ45HoldUninstall>()?.StoreImmediately();
-            _installedRJ45 = null;
-        }
-
-        rj45SlotObject.SetActive(false);
-        SetWiresInteractable(true);
-        if (notify) NetworkCableTaskManager.CheckConditions();
-    }
-
-    /// <summary>
-    /// Marks the slot as uninstalled and disables the slot object WITHOUT touching the RJ45
-    /// GameObject — the caller (RJ45HoldUninstall) has already reparented it to the world root
-    /// so disabling rj45SlotObject will not hide it.
-    /// Returns false if the slot is crimped (uninstall blocked).
-    /// </summary>
-    public bool DetachRJ45ForDrag()
-    {
-        if (IsCrimped || !IsRJ45Installed) return false;
-
-        IsRJ45Installed = false;
-        if (_slideRoutine != null) { StopCoroutine(_slideRoutine); _slideRoutine = null; }
-
-        _installedRJ45 = null;
-        rj45SlotObject.SetActive(false);
-        SetWiresInteractable(true);
-        NetworkCableTaskManager.CheckConditions();
-        return true;
-    }
-
-    /// <summary>
     /// Installs an already-active RJ45 GameObject into this slot.
-    /// Used by the drag-uninstall path when the player drops the RJ45 onto a valid slot
-    /// or snaps it back to its home slot — no NetworkHardwareHolder needed.
+    /// Used by the drag-uninstall path when the player drops the RJ45 onto a valid slot.
+    /// Requires both IsStripped and IsTrimmed.
     /// </summary>
     public void InstallRJ45(GameObject rj45)
     {
-        if (!IsStripped || IsRJ45Installed || rj45 == null) return;
+        if (!IsStripped || !IsTrimmed || IsRJ45Installed || rj45 == null) return;
 
         IsRJ45Installed = true;
         _installedRJ45  = rj45;
@@ -248,7 +218,39 @@ public class NetworkCableEndController : MonoBehaviour
         NetworkCableTaskManager.CheckConditions();
     }
 
-private IEnumerator SlideRJ45(GameObject rj45, Vector3 restLocalPos)
+    public void UninstallRJ45(bool notify = true)
+    {
+        if (IsCrimped) return;
+        IsRJ45Installed = false;
+
+        if (_slideRoutine != null) { StopCoroutine(_slideRoutine); _slideRoutine = null; }
+
+        if (_installedRJ45 != null)
+        {
+            _installedRJ45.GetComponent<RJ45HoldUninstall>()?.StoreImmediately();
+            _installedRJ45 = null;
+        }
+
+        rj45SlotObject.SetActive(false);
+        SetWiresInteractable(true);
+        if (notify) NetworkCableTaskManager.CheckConditions();
+    }
+
+    public bool DetachRJ45ForDrag()
+    {
+        if (IsCrimped || !IsRJ45Installed) return false;
+
+        IsRJ45Installed = false;
+        if (_slideRoutine != null) { StopCoroutine(_slideRoutine); _slideRoutine = null; }
+
+        _installedRJ45 = null;
+        rj45SlotObject.SetActive(false);
+        SetWiresInteractable(true);
+        NetworkCableTaskManager.CheckConditions();
+        return true;
+    }
+
+    private IEnumerator SlideRJ45(GameObject rj45, Vector3 restLocalPos)
     {
         Vector3 start   = rj45.transform.localPosition;
         float   elapsed = 0f;
@@ -286,16 +288,10 @@ private IEnumerator SlideRJ45(GameObject rj45, Vector3 restLocalPos)
             WireSwapManager.Instance?.ForceDeselect();
     }
 
-    /// <summary>
-    /// Returns true if the wires match either T568A or T568B standard.
-    /// T568A slot order by wireColorIndex: 0,1,2,3,4,5,6,7
-    /// T568B slot order by wireColorIndex: 2,5,0,3,4,1,6,7
-    /// </summary>
     public bool IsWireOrderCorrect()
     {
         if (_wires == null || _wires.Length != 8) return false;
 
-        // Build a map: slotIndex → wireColorIndex
         int[] slotToColor = new int[8];
         foreach (var w in _wires)
             slotToColor[w.CurrentSlotIndex] = w.wireColorIndex;
@@ -317,7 +313,6 @@ private IEnumerator SlideRJ45(GameObject rj45, Vector3 restLocalPos)
     {
         if (_wires == null || _wires.Length == 0) return;
 
-        // Fisher-Yates shuffle of slot assignments
         List<int> slots = new List<int> { 0, 1, 2, 3, 4, 5, 6, 7 };
         for (int i = slots.Count - 1; i > 0; i--)
         {

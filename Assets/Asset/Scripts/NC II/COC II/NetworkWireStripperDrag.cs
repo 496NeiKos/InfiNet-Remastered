@@ -1,19 +1,23 @@
 using UnityEngine;
 
 /// <summary>
-/// Wire stripper drag behavior for COC II network cable simulation.
-/// Drag to a cable end to strip the jacket and expose the 8 inner wires (randomized).
-/// Does nothing if the cable end is already stripped — use the crimping tool on the
-/// cable body to cut and reset an end before stripping again.
-/// Returns to storage after each use — player must re-fetch.
+/// Wire stripper drag behavior for COC II — world-space version (stored in scene).
+/// Drag to a cable end body or head to strip the jacket and expose the 8 inner wires.
 ///
-/// Attach to: WireStripper (world-space SpriteRenderer with Collider2D in HardwareStorage).
+/// Drop targets and results:
+///   - Body or head area, cable intact  → Expose() (strip the jacket)
+///   - Body area, already stripped      → Feedback: "Cable jacket has already been stripped."
+///   - Wires area, already stripped     → Feedback: "Cable jacket stripped, internal wires shown."
+///
+/// Returns to storage after each use.
 /// </summary>
 public class NetworkWireStripperDrag : MonoBehaviour
 {
     [Header("Detection")]
-    [Tooltip("Radius to search for cable ends when dropped.")]
+    [Tooltip("Radius to detect the cable end body/head zone when dropped.")]
     [SerializeField] private float dropRadius = 1.5f;
+    [Tooltip("Radius to detect the wires container zone for the 'already stripped' feedback.")]
+    [SerializeField] private float wiresRadius = 1.5f;
 
     private Vector3 _homePosition;
     private bool _isDragging;
@@ -43,9 +47,34 @@ public class NetworkWireStripperDrag : MonoBehaviour
         if (!_isDragging) return;
         _isDragging = false;
 
-        NetworkCableEndController hit = FindCableEndAtPosition(transform.position);
-        if (hit != null && !hit.IsStripped)
-            hit.Expose();
+        Vector3 dropPos = transform.position;
+
+        // Check body/head zone first (root position covers both since they're adjacent).
+        NetworkCableEndController bodyHit = FindNearestCableEnd(dropPos, e => e.BodyWorldPosition, dropRadius);
+
+        if (bodyHit != null)
+        {
+            if (!bodyHit.IsStripped)
+            {
+                bodyHit.Expose();
+                ActivityLogManager.Log($"Cable jacket stripped — {bodyHit.name}", ActivityLogManager.EntryType.Action);
+            }
+            else
+            {
+                CrimpingFeedbackPopup.Instance?.ShowMessage("Cable jacket has already been stripped.");
+            }
+
+            ReturnToStorage();
+            return;
+        }
+
+        // Check wires zone — only reachable when already stripped.
+        NetworkCableEndController wiresHit = FindNearestCableEnd(dropPos, e => e.WiresWorldPosition, wiresRadius);
+
+        if (wiresHit != null && wiresHit.IsStripped)
+        {
+            CrimpingFeedbackPopup.Instance?.ShowMessage("Cable jacket stripped, internal wires shown.");
+        }
 
         ReturnToStorage();
     }
@@ -55,16 +84,18 @@ public class NetworkWireStripperDrag : MonoBehaviour
         transform.position = _homePosition;
     }
 
-    private NetworkCableEndController FindCableEndAtPosition(Vector3 worldPos)
+    private NetworkCableEndController FindNearestCableEnd(
+        Vector3 worldPos,
+        System.Func<NetworkCableEndController, Vector3> positionSelector,
+        float radius)
     {
-        // Find all cable ends in the scene and return the closest one within dropRadius
         NetworkCableEndController[] ends = FindObjectsByType<NetworkCableEndController>(FindObjectsSortMode.None);
         NetworkCableEndController closest = null;
-        float bestDist = dropRadius;
+        float bestDist = radius;
 
         foreach (var end in ends)
         {
-            float dist = Vector3.Distance(worldPos, end.transform.position);
+            float dist = Vector3.Distance(worldPos, positionSelector(end));
             if (dist < bestDist)
             {
                 bestDist = dist;

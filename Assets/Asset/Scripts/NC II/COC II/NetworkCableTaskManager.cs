@@ -30,14 +30,14 @@
  *      └── StatusTMP    TMP_Text  [2] — "Pending" / "Active" / "Done"
  *    GetComponentsInChildren<TMP_Text>() must return them in order [0][1][2].
  *
- *  ── TASK GROUPS — 2 groups, 45 tasks total ───────────────────────
- *    Group 0  "Phase 1 — Straight-Through Cable"  tasks  0 – 22  (23 tasks)
- *    Group 1  "Phase 2 — Crossover Cable"         tasks 23 – 44  (22 tasks)
+ *  ── TASK GROUPS — 2 groups, 49 tasks total ───────────────────────
+ *    Group 0  "Phase 1 — Straight-Through Cable"  tasks  0 – 24  (25 tasks)
+ *    Group 1  "Phase 2 — Crossover Cable"         tasks 25 – 48  (24 tasks)
  *
  *  ── INSPECTOR ASSIGNMENTS ────────────────────────────────────────
  *    taskParent           → VerticalLayoutGroup parent for active task rows
  *    finishedParent       → Off-screen parent for completed task GameObjects
- *    taskObjects[0..44]   → Task row GameObjects (TMP_Text labels)
+ *    taskObjects[0..48]   → Task row GameObjects (TMP_Text labels)
  *    allTasksCompletedText→ (optional) GameObject shown when all tasks done
  *
  *    groupTitleTMP        → TMP_Text above the task list
@@ -55,8 +55,8 @@
  *    groupDoneColor       → Row color for completed groups
  *
  *    taskGroups[]         → TaskGroup array (2 entries, configure in Inspector)
- *                           Group 0: Title="Phase 1 — Straight-Through Cable", FirstTask=0,  TaskCount=23
- *                           Group 1: Title="Phase 2 — Crossover Cable",         FirstTask=23, TaskCount=22
+ *                           Group 0: Title="Phase 1 — Straight-Through Cable", FirstTask=0,  TaskCount=25
+ *                           Group 1: Title="Phase 2 — Crossover Cable",         FirstTask=25, TaskCount=24
  *    topicManagerCompletionIndex → -1 to disable TopicManager call on finish
  *
  *    networkCableHolder   → NetworkHardwareHolder on the UTP cable icon proxy
@@ -77,7 +77,7 @@
  *    One active group at a time; group advances only after all its tasks
  *    are latched (after a 1-second green flash on the group title TMP).
  *
- *    View detection (tasks 14, 16, 37, 39) uses activeInHierarchy — NOT
+ *    View detection (tasks 16, 18, 41, 43) uses activeInHierarchy — NOT
  *    activeSelf — because the detail view container is disabled when the
  *    editor is closed, which would leave individual view activeSelf flags
  *    stale and cause false positives.
@@ -96,7 +96,7 @@ public class NetworkCableTaskManager : MonoBehaviour, ITaskCategory
 
     public static event System.Action OnTasksUpdated;
 
-    private const int TASK_COUNT = 45;
+    private const int TASK_COUNT = 49;
 
     private static readonly int[] T568A = { 0, 1, 2, 3, 4, 5, 6, 7 };
     private static readonly int[] T568B = { 2, 5, 0, 3, 4, 1, 6, 7 };
@@ -106,7 +106,7 @@ public class NetworkCableTaskManager : MonoBehaviour, ITaskCategory
     [Header("Task UI")]
     [SerializeField] private Transform    taskParent;
     [SerializeField] private Transform    finishedParent;
-    [SerializeField] private GameObject[] taskObjects = new GameObject[TASK_COUNT];
+    [SerializeField] private GameObject[] taskObjects = new GameObject[49];
     [SerializeField] private GameObject   allTasksCompletedText;
 
     // ── Group Title ───────────────────────────────────────────────────────────
@@ -244,156 +244,174 @@ public class NetworkCableTaskManager : MonoBehaviour, ITaskCategory
              3 => WireSwapManager.Instance != null && WireSwapManager.Instance.TotalSwapCount >= 1,
 
             // 4: First end has a valid T-568 standard
-             4 => (cableEnd1 != null && cableEnd1.IsStripped  && EndMatchesAnyStandard(cableEnd1)) ||
-                  (cableEnd2 != null && cableEnd2.IsStripped  && EndMatchesAnyStandard(cableEnd2)),
+             4 => (cableEnd1 != null && cableEnd1.IsStripped && EndMatchesAnyStandard(cableEnd1)) ||
+                  (cableEnd2 != null && cableEnd2.IsStripped && EndMatchesAnyStandard(cableEnd2)),
 
-            // 5: RJ45 installed on an end that has correct wiring
-             5 => (cableEnd1 != null && cableEnd1.IsRJ45Installed && EndMatchesAnyStandard(cableEnd1)) ||
+            // 5: First end trimmed with valid T-568 standard
+             5 => (cableEnd1 != null && cableEnd1.IsTrimmed && EndMatchesAnyStandard(cableEnd1)) ||
+                  (cableEnd2 != null && cableEnd2.IsTrimmed && EndMatchesAnyStandard(cableEnd2)),
+
+            // 6: RJ45 installed on an end that has correct wiring
+             6 => (cableEnd1 != null && cableEnd1.IsRJ45Installed && EndMatchesAnyStandard(cableEnd1)) ||
                   (cableEnd2 != null && cableEnd2.IsRJ45Installed && EndMatchesAnyStandard(cableEnd2)),
 
-            // 6: First end crimped with correct wiring
-             6 => (cableEnd1 != null && cableEnd1.IsCrimped && EndMatchesAnyStandard(cableEnd1)) ||
+            // 7: First end crimped with correct wiring
+             7 => (cableEnd1 != null && cableEnd1.IsCrimped && EndMatchesAnyStandard(cableEnd1)) ||
                   (cableEnd2 != null && cableEnd2.IsCrimped && EndMatchesAnyStandard(cableEnd2)),
 
-            // 7: Other end also stripped (both stripped)
-             7 => cableEnd1 != null && cableEnd1.IsStripped &&
+            // 8: Other end also stripped (both stripped)
+             8 => cableEnd1 != null && cableEnd1.IsStripped &&
                   cableEnd2 != null && cableEnd2.IsStripped,
 
-            // 8: Both ends match the same standard (straight-through)
-             8 => IsStraightThrough(),
+            // 9: Both ends match the same standard (straight-through)
+             9 => IsStraightThrough(),
 
-            // 9: Both RJ45 installed and straight-through confirmed
-             9 => cableEnd1 != null && cableEnd1.IsRJ45Installed &&
+            // 10: Both ends trimmed and straight-through confirmed
+            10 => cableEnd1 != null && cableEnd1.IsTrimmed &&
+                  cableEnd2 != null && cableEnd2.IsTrimmed &&
+                  IsStraightThrough(),
+
+            // 11: Both RJ45 installed and straight-through confirmed
+            11 => cableEnd1 != null && cableEnd1.IsRJ45Installed &&
                   cableEnd2 != null && cableEnd2.IsRJ45Installed &&
                   IsStraightThrough(),
 
-            // 10: Both ends crimped and straight-through confirmed
-            10 => cableEnd1 != null && cableEnd1.IsCrimped &&
+            // 12: Both ends crimped and straight-through confirmed
+            12 => cableEnd1 != null && cableEnd1.IsCrimped &&
                   cableEnd2 != null && cableEnd2.IsCrimped &&
                   IsStraightThrough(),
 
-            // 11: Exit detail view
-            11 => GameManager.Instance != null && !GameManager.Instance.IsEditorOpen,
+            // 13: Exit detail view
+            13 => GameManager.Instance != null && !GameManager.Instance.IsEditorOpen,
 
-            // 12: Cable stored
-            12 => networkCableHolder != null && networkCableHolder.IsAvailable(),
+            // 14: Cable stored
+            14 => networkCableHolder != null && networkCableHolder.IsAvailable(),
 
-            // 13: Deploy LAN Tester
-            13 => lanTesterHolder?.hardwarePrefab != null &&
+            // 15: Deploy LAN Tester
+            15 => lanTesterHolder?.hardwarePrefab != null &&
                   lanTesterHolder.hardwarePrefab.activeSelf &&
                   GameManager.Instance != null &&
                   lanTesterHolder.hardwarePrefab.transform.IsChildOf(GameManager.Instance.ActiveWorldContainer),
 
-            // 14: Top view of LAN Tester active (activeInHierarchy guards against stale activeSelf)
-            14 => lanTesterTopDetail != null && lanTesterTopDetail.activeInHierarchy,
+            // 16: Top view of LAN Tester active (activeInHierarchy guards against stale activeSelf)
+            16 => lanTesterTopDetail != null && lanTesterTopDetail.activeInHierarchy,
 
-            // 15: Cable installed to port
-            15 => lanTesterPort != null && lanTesterPort.IsCableInstalled,
+            // 17: Cable installed to port
+            17 => lanTesterPort != null && lanTesterPort.IsCableInstalled,
 
-            // 16: Front view of LAN Tester active
-            16 => lanTesterFrontDetail != null && lanTesterFrontDetail.activeInHierarchy,
+            // 18: Front view of LAN Tester active
+            18 => lanTesterFrontDetail != null && lanTesterFrontDetail.activeInHierarchy,
 
-            // 17: Power switch on
-            17 => lanTesterSwitch != null && lanTesterSwitch.IsOn,
+            // 19: Power switch on
+            19 => lanTesterSwitch != null && lanTesterSwitch.IsOn,
 
-            // 18: LED sequence confirmed straight-through (latched by event handler)
-            18 => _latched[18],
+            // 20: LED sequence confirmed straight-through (latched by event handler)
+            20 => _latched[20],
 
-            // 19: Power switch off
-            19 => lanTesterSwitch != null && !lanTesterSwitch.IsOn,
+            // 21: Power switch off
+            21 => lanTesterSwitch != null && !lanTesterSwitch.IsOn,
 
-            // 20: Cable unplugged from port
-            20 => lanTesterPort != null && !lanTesterPort.IsCableInstalled,
+            // 22: Cable unplugged from port
+            22 => lanTesterPort != null && !lanTesterPort.IsCableInstalled,
 
-            // 21: Exit LAN Tester detail view
-            21 => GameManager.Instance != null && !GameManager.Instance.IsEditorOpen,
+            // 23: Exit LAN Tester detail view
+            23 => GameManager.Instance != null && !GameManager.Instance.IsEditorOpen,
 
-            // 22: LAN Tester stored
-            22 => lanTesterHolder != null && lanTesterHolder.IsAvailable(),
+            // 24: LAN Tester stored
+            24 => lanTesterHolder != null && lanTesterHolder.IsAvailable(),
 
             // ── Group 1: Phase 2 — Crossover Cable ───────────────────────────
 
-            // 23: Re-deploy UTP Cable
-            23 => networkCableHolder?.hardwarePrefab != null &&
+            // 25: Re-deploy UTP Cable
+            25 => networkCableHolder?.hardwarePrefab != null &&
                   networkCableHolder.hardwarePrefab.activeSelf &&
                   GameManager.Instance != null &&
                   networkCableHolder.hardwarePrefab.transform.IsChildOf(GameManager.Instance.ActiveWorldContainer),
 
-            // 24: Open detail view
-            24 => GameManager.Instance != null && GameManager.Instance.IsEditorOpen,
+            // 26: Open detail view
+            26 => GameManager.Instance != null && GameManager.Instance.IsEditorOpen,
 
-            // 25: Both ends cut by crimper (reset from Phase 1 crimp)
-            25 => cableEnd1 != null && !cableEnd1.IsStripped && cableEnd1.StripCycleCount >= 1 &&
+            // 27: Both ends cut by crimper (reset from Phase 1 crimp)
+            27 => cableEnd1 != null && !cableEnd1.IsStripped && cableEnd1.StripCycleCount >= 1 &&
                   cableEnd2 != null && !cableEnd2.IsStripped && cableEnd2.StripCycleCount >= 1,
 
-            // 26: Strip any end (Phase 2 — StripCycleCount will become 2)
-            26 => (cableEnd1 != null && cableEnd1.IsStripped) ||
+            // 28: Strip any end (Phase 2 — StripCycleCount will become 2)
+            28 => (cableEnd1 != null && cableEnd1.IsStripped) ||
                   (cableEnd2 != null && cableEnd2.IsStripped),
 
-            // 27: First end arranged to T-568 standard (Phase 2 strip confirmed)
-            27 => (cableEnd1 != null && cableEnd1.IsStripped && cableEnd1.StripCycleCount >= 2 && EndMatchesAnyStandard(cableEnd1)) ||
+            // 29: First end arranged to T-568 standard (Phase 2 strip confirmed)
+            29 => (cableEnd1 != null && cableEnd1.IsStripped && cableEnd1.StripCycleCount >= 2 && EndMatchesAnyStandard(cableEnd1)) ||
                   (cableEnd2 != null && cableEnd2.IsStripped && cableEnd2.StripCycleCount >= 2 && EndMatchesAnyStandard(cableEnd2)),
 
-            // 28: RJ45 installed on Phase 2 end with correct wiring
-            28 => (cableEnd1 != null && cableEnd1.IsRJ45Installed && cableEnd1.StripCycleCount >= 2 && EndMatchesAnyStandard(cableEnd1)) ||
+            // 30: First end trimmed with valid T-568 standard (Phase 2)
+            30 => (cableEnd1 != null && cableEnd1.IsTrimmed && cableEnd1.StripCycleCount >= 2 && EndMatchesAnyStandard(cableEnd1)) ||
+                  (cableEnd2 != null && cableEnd2.IsTrimmed && cableEnd2.StripCycleCount >= 2 && EndMatchesAnyStandard(cableEnd2)),
+
+            // 31: RJ45 installed on Phase 2 end with correct wiring
+            31 => (cableEnd1 != null && cableEnd1.IsRJ45Installed && cableEnd1.StripCycleCount >= 2 && EndMatchesAnyStandard(cableEnd1)) ||
                   (cableEnd2 != null && cableEnd2.IsRJ45Installed && cableEnd2.StripCycleCount >= 2 && EndMatchesAnyStandard(cableEnd2)),
 
-            // 29: First end crimped with correct wiring (Phase 2)
-            29 => (cableEnd1 != null && cableEnd1.IsCrimped && cableEnd1.StripCycleCount >= 2 && EndMatchesAnyStandard(cableEnd1)) ||
+            // 32: First end crimped with correct wiring (Phase 2)
+            32 => (cableEnd1 != null && cableEnd1.IsCrimped && cableEnd1.StripCycleCount >= 2 && EndMatchesAnyStandard(cableEnd1)) ||
                   (cableEnd2 != null && cableEnd2.IsCrimped && cableEnd2.StripCycleCount >= 2 && EndMatchesAnyStandard(cableEnd2)),
 
-            // 30: Both ends stripped at Phase 2 strip count
-            30 => cableEnd1 != null && cableEnd1.IsStripped && cableEnd1.StripCycleCount >= 2 &&
+            // 33: Both ends stripped at Phase 2 strip count
+            33 => cableEnd1 != null && cableEnd1.IsStripped && cableEnd1.StripCycleCount >= 2 &&
                   cableEnd2 != null && cableEnd2.IsStripped && cableEnd2.StripCycleCount >= 2,
 
-            // 31: Both ends form a crossover (opposite standards)
-            31 => IsCrossover(),
+            // 34: Both ends form a crossover (opposite standards)
+            34 => IsCrossover(),
 
-            // 32: Both RJ45 installed and crossover confirmed
-            32 => cableEnd1 != null && cableEnd1.IsRJ45Installed &&
+            // 35: Both ends trimmed, Phase 2, crossover confirmed
+            35 => cableEnd1 != null && cableEnd1.IsTrimmed && cableEnd1.StripCycleCount >= 2 &&
+                  cableEnd2 != null && cableEnd2.IsTrimmed && cableEnd2.StripCycleCount >= 2 &&
+                  IsCrossover(),
+
+            // 36: Both RJ45 installed and crossover confirmed
+            36 => cableEnd1 != null && cableEnd1.IsRJ45Installed &&
                   cableEnd2 != null && cableEnd2.IsRJ45Installed &&
                   IsCrossover(),
 
-            // 33: Both ends crimped, crossover confirmed, Phase 2 strip confirmed
-            33 => cableEnd1 != null && cableEnd1.IsCrimped && cableEnd1.StripCycleCount >= 2 &&
+            // 37: Both ends crimped, crossover confirmed, Phase 2 strip confirmed
+            37 => cableEnd1 != null && cableEnd1.IsCrimped && cableEnd1.StripCycleCount >= 2 &&
                   cableEnd2 != null && cableEnd2.IsCrimped && cableEnd2.StripCycleCount >= 2 &&
                   IsCrossover(),
 
-            // 34: Exit detail view
-            34 => GameManager.Instance != null && !GameManager.Instance.IsEditorOpen,
+            // 38: Exit detail view
+            38 => GameManager.Instance != null && !GameManager.Instance.IsEditorOpen,
 
-            // 35: Cable stored
-            35 => networkCableHolder != null && networkCableHolder.IsAvailable(),
+            // 39: Cable stored
+            39 => networkCableHolder != null && networkCableHolder.IsAvailable(),
 
-            // 36: Deploy LAN Tester
-            36 => lanTesterHolder?.hardwarePrefab != null &&
+            // 40: Deploy LAN Tester
+            40 => lanTesterHolder?.hardwarePrefab != null &&
                   lanTesterHolder.hardwarePrefab.activeSelf &&
                   GameManager.Instance != null &&
                   lanTesterHolder.hardwarePrefab.transform.IsChildOf(GameManager.Instance.ActiveWorldContainer),
 
-            // 37: Top view of LAN Tester active
-            37 => lanTesterTopDetail != null && lanTesterTopDetail.activeInHierarchy,
+            // 41: Top view of LAN Tester active
+            41 => lanTesterTopDetail != null && lanTesterTopDetail.activeInHierarchy,
 
-            // 38: Cable installed to port
-            38 => lanTesterPort != null && lanTesterPort.IsCableInstalled,
+            // 42: Cable installed to port
+            42 => lanTesterPort != null && lanTesterPort.IsCableInstalled,
 
-            // 39: Front view of LAN Tester active
-            39 => lanTesterFrontDetail != null && lanTesterFrontDetail.activeInHierarchy,
+            // 43: Front view of LAN Tester active
+            43 => lanTesterFrontDetail != null && lanTesterFrontDetail.activeInHierarchy,
 
-            // 40: Power switch on
-            40 => lanTesterSwitch != null && lanTesterSwitch.IsOn,
+            // 44: Power switch on
+            44 => lanTesterSwitch != null && lanTesterSwitch.IsOn,
 
-            // 41: LED sequence confirmed crossover (latched by event handler)
-            41 => _latched[41],
+            // 45: LED sequence confirmed crossover (latched by event handler)
+            45 => _latched[45],
 
-            // 42: Power switch off
-            42 => lanTesterSwitch != null && !lanTesterSwitch.IsOn,
+            // 46: Power switch off
+            46 => lanTesterSwitch != null && !lanTesterSwitch.IsOn,
 
-            // 43: Cable unplugged from port
-            43 => lanTesterPort != null && !lanTesterPort.IsCableInstalled,
+            // 47: Cable unplugged from port
+            47 => lanTesterPort != null && !lanTesterPort.IsCableInstalled,
 
-            // 44: LAN Tester stored
-            44 => lanTesterHolder != null && lanTesterHolder.IsAvailable(),
+            // 48: LAN Tester stored
+            48 => lanTesterHolder != null && lanTesterHolder.IsAvailable(),
 
             _ => false
         };
@@ -664,17 +682,17 @@ public class NetworkCableTaskManager : MonoBehaviour, ITaskCategory
 
     private void OnLEDSequenceComplete()
     {
-        // Phase 1: latch task 18 when straight-through is confirmed
-        if (!_latched[18] && _latched[17] &&
+        // Phase 1: latch task 20 when straight-through is confirmed
+        if (!_latched[20] && _latched[19] &&
             lanTesterPort != null && lanTesterPort.IsCableInstalled &&
             IsStraightThrough())
-            LatchTask(18);
+            LatchTask(20);
 
-        // Phase 2: latch task 41 when crossover is confirmed
-        if (!_latched[41] && _latched[40] &&
+        // Phase 2: latch task 45 when crossover is confirmed
+        if (!_latched[45] && _latched[44] &&
             lanTesterPort != null && lanTesterPort.IsCableInstalled &&
             IsCrossover())
-            LatchTask(41);
+            LatchTask(45);
     }
 
     // ── Cable Type Helpers ────────────────────────────────────────────────────
@@ -715,48 +733,52 @@ public class NetworkCableTaskManager : MonoBehaviour, ITaskCategory
              2 => "Use the Wire Stripper to cut the cable jacket (any end).",
              3 => "Click two different wires to swap the color sequence.",
              4 => "Create T-568A or T-568B wiring on the first cable end.",
-             5 => "Install RJ45 to the cable's first end.",
-             6 => "Use Crimper to crimp the RJ45 on the first end.",
-             7 => "Do the same to the other end: Use Wire Stripper to cut the cable jacket.",
-             8 => "Do the same to the other end: Create the SAME wiring standard (Straight-Through).",
-             9 => "Do the same to the other end: Install RJ45.",
-            10 => "Do the same to the other end: Use Crimper to crimp the RJ45.",
-            11 => "Exit the UTP Cable's detail view.",
-            12 => "Store the UTP Cable back to hardware storage.",
-            13 => "Deploy LAN Tester to the workspace.",
-            14 => "Go to Top view angle of the LAN Tester.",
-            15 => "Install the UTP Cable to the LAN Tester port.",
-            16 => "Go to Front view angle of the LAN Tester.",
-            17 => "Turn on the power switch of the LAN Tester.",
-            18 => "Observe the LAN Tester LED sequence — confirm Straight-Through pattern.",
-            19 => "You have finished the Straight-Through cable. Turn off the LAN Tester power switch.",
-            20 => "Go to Top view angle of LAN Tester then unplug the UTP Cable.",
-            21 => "Exit the LAN Tester's detail view.",
-            22 => "Store the LAN Tester back to hardware storage.",
+             5 => "Trim the length of all wires using Crimper.",
+             6 => "Install RJ45 to the cable's first end.",
+             7 => "Use Crimper to crimp the RJ45 on the first end.",
+             8 => "Do the same to the other end: Use Wire Stripper to cut the cable jacket.",
+             9 => "Do the same to the other end: Create the SAME wiring standard (Straight-Through).",
+            10 => "Do the same to the other end: Trim the length of all wires using Crimper.",
+            11 => "Do the same to the other end: Install RJ45.",
+            12 => "Do the same to the other end: Use Crimper to crimp the RJ45.",
+            13 => "Exit the UTP Cable's detail view.",
+            14 => "Store the UTP Cable back to hardware storage.",
+            15 => "Deploy LAN Tester to the workspace.",
+            16 => "Go to Top view angle of the LAN Tester.",
+            17 => "Install the UTP Cable to the LAN Tester port.",
+            18 => "Go to Front view angle of the LAN Tester.",
+            19 => "Turn on the power switch of the LAN Tester.",
+            20 => "Observe the LAN Tester LED sequence — confirm Straight-Through pattern.",
+            21 => "You have finished the Straight-Through cable. Turn off the LAN Tester power switch.",
+            22 => "Go to Top view angle of LAN Tester then unplug the UTP Cable.",
+            23 => "Exit the LAN Tester's detail view.",
+            24 => "Store the LAN Tester back to hardware storage.",
 
             // ── Group 1: Phase 2 — Crossover ─────────────────────────────────
-            23 => "Re-deploy the UTP Cable to the workspace to start Cross-Over.",
-            24 => "Interact with the UTP Cable's detail view.",
-            25 => "Use the Crimper to cut the Straight-Through ends (both ends).",
-            26 => "Use the Wire Stripper to cut the cable jacket.",
-            27 => "Create T-568A or T-568B wiring on the first cable end.",
-            28 => "Install RJ45 on the cable's first end.",
-            29 => "Use Crimper to crimp the RJ45 on the first end.",
-            30 => "Do the same to the other end: Use Wire Stripper to cut the cable jacket.",
-            31 => "Do the same to the other end: Create the DIFFERENT wiring standard (Cross-Over).",
-            32 => "Do the same to the other end: Install RJ45.",
-            33 => "Do the same to the other end: Use Crimper to crimp the RJ45.",
-            34 => "Exit the UTP Cable's detail view.",
-            35 => "Store the UTP Cable back to hardware storage.",
-            36 => "Deploy LAN Tester to the workspace.",
-            37 => "Go to Top view angle of the LAN Tester.",
-            38 => "Install the UTP Cable to the LAN Tester port.",
-            39 => "Go to Front view angle of the LAN Tester.",
-            40 => "Turn on the power switch of the LAN Tester.",
-            41 => "Observe the LAN Tester LED sequence — confirm Cross-Over pattern.",
-            42 => "Cross-Over cable complete. Turn off the LAN Tester power switch.",
-            43 => "Unplug the UTP Cable from the LAN Tester port.",
-            44 => "Store the LAN Tester back to hardware storage.",
+            25 => "Re-deploy the UTP Cable to the workspace to start Cross-Over.",
+            26 => "Interact with the UTP Cable's detail view.",
+            27 => "Use the Crimper to cut the Straight-Through ends (both ends).",
+            28 => "Use the Wire Stripper to cut the cable jacket.",
+            29 => "Create T-568A or T-568B wiring on the first cable end.",
+            30 => "Trim the length of all wires using Crimper.",
+            31 => "Install RJ45 on the cable's first end.",
+            32 => "Use Crimper to crimp the RJ45 on the first end.",
+            33 => "Do the same to the other end: Use Wire Stripper to cut the cable jacket.",
+            34 => "Do the same to the other end: Create the DIFFERENT wiring standard (Cross-Over).",
+            35 => "Do the same to the other end: Trim the length of all wires using Crimper.",
+            36 => "Do the same to the other end: Install RJ45.",
+            37 => "Do the same to the other end: Use Crimper to crimp the RJ45.",
+            38 => "Exit the UTP Cable's detail view.",
+            39 => "Store the UTP Cable back to hardware storage.",
+            40 => "Deploy LAN Tester to the workspace.",
+            41 => "Go to Top view angle of the LAN Tester.",
+            42 => "Install the UTP Cable to the LAN Tester port.",
+            43 => "Go to Front view angle of the LAN Tester.",
+            44 => "Turn on the power switch of the LAN Tester.",
+            45 => "Observe the LAN Tester LED sequence — confirm Cross-Over pattern.",
+            46 => "Cross-Over cable complete. Turn off the LAN Tester power switch.",
+            47 => "Unplug the UTP Cable from the LAN Tester port.",
+            48 => "Store the LAN Tester back to hardware storage.",
 
             _  => $"Task {index + 1}"
         };
