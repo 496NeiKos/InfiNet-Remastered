@@ -84,18 +84,25 @@ public class NavigationController : MonoBehaviour
     {
         AudioClip sfx = SoundManager.instance.clickSFX;
         SoundManager.instance.PlaySFX(sfx);
-        StartCoroutine(WaitAndLoadScene("umHardware", sfx.length));
+        StartCoroutine(WaitAndLoadScene("UM User Interface", sfx.length));
     }
     public void ProceedToUserManual2()
     {
         AudioClip sfx = SoundManager.instance.clickSFX;
         SoundManager.instance.PlaySFX(sfx);
-        StartCoroutine(WaitAndLoadScene("umSoftware", sfx.length));
+        StartCoroutine(WaitAndLoadScene("UM Hardware Components", sfx.length));
     }
     public void ProceedToUserManual3()
     {
         AudioClip sfx = SoundManager.instance.clickSFX;
         SoundManager.instance.PlaySFX(sfx);
-        StartCoroutine(WaitAndLoadScene("umNetworking", sfx.length));
+        StartCoroutine(WaitAndLoadScene("UM Input Interaction", sfx.length));
+    }
+
+    public void ProceedToUserManual4()
+    {
+        AudioClip sfx = SoundManager.instance.clickSFX;
+        SoundManager.instance.PlaySFX(sfx);
+        StartCoroutine(WaitAndLoadScene("UM Virtual OS", sfx.length));
     }
 }
