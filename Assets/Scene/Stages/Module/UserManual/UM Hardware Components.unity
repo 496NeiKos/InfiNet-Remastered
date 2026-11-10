@@ -409,7 +409,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Workspace
+  m_Text: COC 1 Tools
 --- !u!222 &155906391
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -488,7 +488,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Start Button
+  m_Text: COC 2 Cables
 --- !u!222 &207141615
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -496,151 +496,6 @@ CanvasRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 207141612}
-  m_CullTransparentMesh: 1
---- !u!1 &307904393
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 307904394}
-  - component: {fileID: 307904397}
-  - component: {fileID: 307904396}
-  - component: {fileID: 307904395}
-  m_Layer: 5
-  m_Name: b9
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &307904394
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 307904393}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1553788070}
-  m_Father: {fileID: 1943345520}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &307904395
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 307904393}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
-  m_Navigation:
-    m_Mode: 3
-    m_WrapAround: 0
-    m_SelectOnUp: {fileID: 0}
-    m_SelectOnDown: {fileID: 0}
-    m_SelectOnLeft: {fileID: 0}
-    m_SelectOnRight: {fileID: 0}
-  m_Transition: 1
-  m_Colors:
-    m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
-    m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
-    m_PressedColor: {r: 0.381132, g: 0.381132, b: 0.381132, a: 1}
-    m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
-    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
-    m_ColorMultiplier: 1
-    m_FadeDuration: 0.1
-  m_SpriteState:
-    m_HighlightedSprite: {fileID: 0}
-    m_PressedSprite: {fileID: 0}
-    m_SelectedSprite: {fileID: 0}
-    m_DisabledSprite: {fileID: 0}
-  m_AnimationTriggers:
-    m_NormalTrigger: Normal
-    m_HighlightedTrigger: Highlighted
-    m_PressedTrigger: Pressed
-    m_SelectedTrigger: Selected
-    m_DisabledTrigger: Disabled
-  m_Interactable: 1
-  m_TargetGraphic: {fileID: 307904396}
-  m_OnClick:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1067702342}
-        m_TargetAssemblyTypeName: ModuleContentController, Assembly-CSharp
-        m_MethodName: ShowContent
-        m_Mode: 3
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 8
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-      - m_Target: {fileID: 1133005029}
-        m_TargetAssemblyTypeName: SoundManager, Assembly-CSharp
-        m_MethodName: PlaySFX
-        m_Mode: 2
-        m_Arguments:
-          m_ObjectArgument: {fileID: 8300000, guid: 425f16109015cb444b3399dd5415b1c6, type: 3}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.AudioClip, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
---- !u!114 &307904396
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 307904393}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_Sprite: {fileID: -1480448990660316844, guid: e55548ba6abf8694ea30ab4ba9f3c166, type: 3}
-  m_Type: 0
-  m_PreserveAspect: 0
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
-  m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1
---- !u!222 &307904397
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 307904393}
   m_CullTransparentMesh: 1
 --- !u!1 &316053922
 GameObject:
@@ -791,8 +646,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 542, y: -246.9}
-  m_SizeDelta: {x: 600, y: 400}
+  m_AnchoredPosition: {x: 575, y: -270.73}
+  m_SizeDelta: {x: 924.24, y: 541.47}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &389737255
 CanvasRenderer:
@@ -902,7 +757,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Device Area
+  m_Text: COC 1 Hardware Device
 --- !u!222 &489753510
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -981,7 +836,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Movement
+  m_Text: COC 2 Devices
 --- !u!222 &516765900
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1633,7 +1488,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: PC Installation
+  m_Text: COC 2 Tools
 --- !u!222 &888770849
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1680,7 +1535,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -64.385, y: -243}
+  m_AnchoredPosition: {x: -64.385, y: -332}
   m_SizeDelta: {x: 1114.5, y: 354}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &915684704
@@ -1750,151 +1605,6 @@ CanvasRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 915684702}
-  m_CullTransparentMesh: 1
---- !u!1 &924483950
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 924483951}
-  - component: {fileID: 924483954}
-  - component: {fileID: 924483953}
-  - component: {fileID: 924483952}
-  m_Layer: 5
-  m_Name: b8
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &924483951
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 924483950}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1779574206}
-  m_Father: {fileID: 1943345520}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &924483952
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 924483950}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
-  m_Navigation:
-    m_Mode: 3
-    m_WrapAround: 0
-    m_SelectOnUp: {fileID: 0}
-    m_SelectOnDown: {fileID: 0}
-    m_SelectOnLeft: {fileID: 0}
-    m_SelectOnRight: {fileID: 0}
-  m_Transition: 1
-  m_Colors:
-    m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
-    m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
-    m_PressedColor: {r: 0.381132, g: 0.381132, b: 0.381132, a: 1}
-    m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
-    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
-    m_ColorMultiplier: 1
-    m_FadeDuration: 0.1
-  m_SpriteState:
-    m_HighlightedSprite: {fileID: 0}
-    m_PressedSprite: {fileID: 0}
-    m_SelectedSprite: {fileID: 0}
-    m_DisabledSprite: {fileID: 0}
-  m_AnimationTriggers:
-    m_NormalTrigger: Normal
-    m_HighlightedTrigger: Highlighted
-    m_PressedTrigger: Pressed
-    m_SelectedTrigger: Selected
-    m_DisabledTrigger: Disabled
-  m_Interactable: 1
-  m_TargetGraphic: {fileID: 924483953}
-  m_OnClick:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1067702342}
-        m_TargetAssemblyTypeName: ModuleContentController, Assembly-CSharp
-        m_MethodName: ShowContent
-        m_Mode: 3
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 7
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-      - m_Target: {fileID: 1133005029}
-        m_TargetAssemblyTypeName: SoundManager, Assembly-CSharp
-        m_MethodName: PlaySFX
-        m_Mode: 2
-        m_Arguments:
-          m_ObjectArgument: {fileID: 8300000, guid: 425f16109015cb444b3399dd5415b1c6, type: 3}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.AudioClip, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
---- !u!114 &924483953
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 924483950}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_Sprite: {fileID: -1480448990660316844, guid: e55548ba6abf8694ea30ab4ba9f3c166, type: 3}
-  m_Type: 0
-  m_PreserveAspect: 0
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
-  m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1
---- !u!222 &924483954
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 924483950}
   m_CullTransparentMesh: 1
 --- !u!1 &969550243
 GameObject:
@@ -1966,7 +1676,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Terminal Area
+  m_Text: COC 1 Cables
 --- !u!222 &969550246
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -2167,44 +1877,51 @@ MonoBehaviour:
   moduleImage: {fileID: 389737256}
   descriptionText: {fileID: 1386805885}
   moduleImages:
-  - {fileID: -3509744016396952904, guid: 0d002fa15b2107a45ba222051c44e0f9, type: 3}
-  - {fileID: -1428842927867859598, guid: 51641c21f0a91994c97aa00380e2368c, type: 3}
-  - {fileID: -279384441923056290, guid: ad76f1582c1d3db4aaf6118cf42684aa, type: 3}
-  - {fileID: 8060290372991731381, guid: 39210c3a2cd82cc45a82f1214540fe3e, type: 3}
-  - {fileID: -1183258822137341215, guid: 35106df7141a8064ab869c647f2a74ba, type: 3}
-  - {fileID: -3879085592048706892, guid: c49efe31438787542b6fe36862ad4ce2, type: 3}
-  - {fileID: -831882446358543753, guid: 217ef956fd10a894196eb09c57ca4b93, type: 3}
+  - {fileID: 8025617013104005196, guid: cf744f2c7524ee74b85d91dc4c918cf5, type: 3}
+  - {fileID: -8637038317583662818, guid: d568c8e2ec6442847a6f96d09d3d7b74, type: 3}
+  - {fileID: 6918928893702417737, guid: 72ba3fc5d23a26742b0139dd0389be3a, type: 3}
+  - {fileID: 7567614857518613151, guid: 10e8b4334679ebc46bdfbd1600e4c8ac, type: 3}
+  - {fileID: 3782443016341983082, guid: 788cb23f0e298fb4f846ec1ac8f5956d, type: 3}
+  - {fileID: 6862138482818934697, guid: 9be7bf009fcca0941b66061ced098ead, type: 3}
+  - {fileID: 9007696318581552669, guid: 6c89cc138f25ffd41a8679e9ff4068b6, type: 3}
   - {fileID: 591839109534253858, guid: 5d36ebb6c469a044ba54ffae0e73da60, type: 3}
   - {fileID: 4174409966628935797, guid: fe117d71edb7a35478550d8ac68b7109, type: 3}
   descriptions:
-  - This area contains all the components and devices needed to complete your tasks.
-  - This is the area where you perform tasks such as building a PC and setting up
-    networks.
-  - 'This area provides immediate feedback on your actions within the workspace.
-
-    By
-    dragging a component to the left side of the Terminal Area, you can view its
-    description.'
-  - 'This is where all assigned tasks are displayed. Tasks may vary depending on
-    the lesson.
-
-'
-  - 'To complete a task, press and hold M1 (left mouse button)to drag a selected
-    component or device. Release M1 to drop the item into the workspace.
-
-'
-  - "Select a component (e.g., CPU) and drag it to its corresponding slot (CPU slot).
-    \r\nRepeat the same process for other components (BIOS chip, GPU, RAM, SSD) by
-    placing them in their respective slots. \r\nOnce all components are correctly
-    installed, drag and drop the completed motherboard into the PC case to assemble
-    the system unit. \r\nConnect the system unit to the monitor by dragging the VGA
-    cable and attaching it to both devices. \r\nPress the AVR buttonto complete the
-    installation. The process will only succeed if all components and connections
-    are correct. \r\nNote:\r\nIf a mistake is made, press the Eject Button on top
-    of the PC case to remove the motherboard and return all components to their original
-    positions."
-  - "Opens the main menu where you can:\r\nSelect levels \r\nReview lessons in the
-    Lesson Book \r\nAccess the User Manual \r\n"
+  - These are the hardware devices that will be used in COC 1, including the motherboard,
+    hard disk drive (HDD), power supply unit (PSU), and flash drive. These devices
+    will serve as materials for the upcoming activities and topics to help students
+    familiarize themselves with the different computer hardware components and their
+    functions.
+  - These are the tools and materials introduced in COC 1, including a Phillips screwdriver,
+    a flathead screwdriver, thermal paste, and a towel cloth. These will serve as
+    references in the virtual learning activities to help students identify the different
+    tools and understand their uses in computer hardware assembly and maintenance.
+  - These are the different cables used in computer hardware components, including
+    the system unit, hard disk drive (HDD), motherboard, automatic voltage regulator
+    (AVR), monitor, and power supply unit (PSU). These cables will serve as learning
+    references to help students identify their types, connections, and functions
+    in a computer system.
+  - This section contains the different components of a motherboard, including the
+    Graphics Processing Unit (GPU), fan, Central Processing Unit (CPU), Solid-State
+    Drive (SSD), Random Access Memory (RAM), and Basic Input/Output System (BIOS).
+    These components will serve as learning references to help students identify
+    each part, understand its function, and learn how it contributes to the overall
+    operation of a computer system.
+  - This section contains the different devices used in COC 2, including a desktop
+    computer, laptop, router, patch panel, access point, and network switch. These
+    devices will serve as learning references for the upcoming topics to help students
+    identify each device, understand its functions, and learn its role in computer
+    networking and network installation.
+  - These are the different tools and materials used in COC 2, including an RJ45
+    connector, crimping tool, wire stripper, and LAN cable tester. These will serve
+    as learning references to help students identify each tool, understand its purpose,
+    and learn how it is used in preparing, connecting, and testing network cables.
+  - This section contains the different network cables used in COC 2, including Unshielded
+    Twisted Pair (UTP) cables for creating straight-through and crossover cables,
+    as well as LAN cables for connecting various network devices. These will serve
+    as learning references to help students understand the different types of network
+    cables, their wiring configurations, and their functions in establishing network
+    connections.
   - "Allows you to customize the game based on your preferences, such as:\r\nSound
     and music volume \r\ndrag the slider left and right depending on how loud you
     want it to be.\r\nScreen resolution \r\nA pre-selected choices are provided what
@@ -2280,7 +1997,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Task Area
+  m_Text: COC 1 Motherboard
 --- !u!222 &1116337943
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -3423,85 +3140,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1460365086}
   m_CullTransparentMesh: 1
---- !u!1 &1553788069
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1553788070}
-  - component: {fileID: 1553788072}
-  - component: {fileID: 1553788071}
-  m_Layer: 5
-  m_Name: Text (Legacy)
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &1553788070
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1553788069}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 307904394}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 27.545013, y: 0}
-  m_SizeDelta: {x: -55.089977, y: 0}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1553788071
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1553788069}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
-  m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 1}
-  m_RaycastTarget: 1
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_FontData:
-    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
-    m_FontSize: 22
-    m_FontStyle: 0
-    m_BestFit: 0
-    m_MinSize: 2
-    m_MaxSize: 40
-    m_Alignment: 3
-    m_AlignByGeometry: 0
-    m_RichText: 1
-    m_HorizontalOverflow: 0
-    m_VerticalOverflow: 0
-    m_LineSpacing: 1
-  m_Text: Quit Button
---- !u!222 &1553788072
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1553788069}
-  m_CullTransparentMesh: 1
 --- !u!1 &1644994154
 GameObject:
   m_ObjectHideFlags: 0
@@ -3798,85 +3436,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1748107335}
   m_CullTransparentMesh: 1
---- !u!1 &1779574205
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1779574206}
-  - component: {fileID: 1779574208}
-  - component: {fileID: 1779574207}
-  m_Layer: 5
-  m_Name: Text (Legacy)
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &1779574206
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1779574205}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 924483951}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 27.545013, y: 0}
-  m_SizeDelta: {x: -55.089977, y: 0}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1779574207
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1779574205}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
-  m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 1}
-  m_RaycastTarget: 1
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_FontData:
-    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
-    m_FontSize: 22
-    m_FontStyle: 0
-    m_BestFit: 0
-    m_MinSize: 2
-    m_MaxSize: 40
-    m_Alignment: 3
-    m_AlignByGeometry: 0
-    m_RichText: 1
-    m_HorizontalOverflow: 0
-    m_VerticalOverflow: 0
-    m_LineSpacing: 1
-  m_Text: Settings Button
---- !u!222 &1779574208
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1779574205}
-  m_CullTransparentMesh: 1
 --- !u!1 &1811930487
 GameObject:
   m_ObjectHideFlags: 0
@@ -4131,14 +3690,12 @@ RectTransform:
   - {fileID: 981524540}
   - {fileID: 1460365087}
   - {fileID: 1337817754}
-  - {fileID: 924483951}
-  - {fileID: 307904394}
   m_Father: {fileID: 1930897005}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -627.42, y: 0}
-  m_SizeDelta: {x: -1254.84, y: 0}
+  m_AnchoredPosition: {x: -627.42, y: 102.880005}
+  m_SizeDelta: {x: -1254.84, y: -205.76}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1943345521
 MonoBehaviour:
