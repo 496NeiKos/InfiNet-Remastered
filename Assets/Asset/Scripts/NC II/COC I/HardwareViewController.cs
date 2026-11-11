@@ -54,8 +54,7 @@ public class HardwareViewController : MonoBehaviour
         {
             if (kb[NumberKeys[i]].wasPressedThisFrame)
             {
-                ShowViewAt(i);
-                WalkthroughGuideManager.Instance?.NotifyViewAngleChanged();
+                OnAngleSelected(i);
                 break;
             }
         }
@@ -84,7 +83,15 @@ public class HardwareViewController : MonoBehaviour
         if (idx >= 0) ShowViewAt(idx);
     }
 
-    private void ShowViewAt(int index)
+    /// <summary>Called by the angle indicator buttons and keyboard path.</summary>
+    public void OnAngleSelected(int index)
+    {
+        if (WalkthroughGuideManager.Instance != null && WalkthroughGuideManager.Instance.IsShowing) return;
+        ShowViewAt(index);
+        WalkthroughGuideManager.Instance?.NotifyViewAngleChanged();
+    }
+
+    public void ShowViewAt(int index)
     {
         if (index < 0 || index >= _views.Count) return;
 
@@ -103,7 +110,7 @@ public class HardwareViewController : MonoBehaviour
         var labels = new string[_views.Count];
         for (int i = 0; i < _views.Count; i++)
             labels[i] = _views[i].label;
-        Indicator.Setup(labels);
+        Indicator.Setup(labels, OnAngleSelected);
     }
 
     private void CenterView(GameObject view)

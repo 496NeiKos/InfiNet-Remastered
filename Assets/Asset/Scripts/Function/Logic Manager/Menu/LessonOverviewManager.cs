@@ -15,6 +15,7 @@ public class LessonOverviewManager : MonoBehaviour
     public Sprite lesson1Sprite;
     public Sprite lesson2Sprite;
     public Sprite lesson3Sprite;
+    public Sprite lesson4Sprite;
 
     private string targetSceneName;
 
@@ -63,7 +64,7 @@ public class LessonOverviewManager : MonoBehaviour
 
     public void ShowLesson4()
     {
-        ShowOverview(lesson3Sprite,
+        ShowOverview(lesson4Sprite,
             "Certificate of Competency IV",
             "Objective Goal: To train learners to inspect, diagnose, maintain, troubleshoot, and repair computer systems and networks. It focuses on performing preventive maintenance, identifying hardware and software faults, replacing defective components, restoring normal system operation, documenting repair activities, and ensuring that all work complies with established procedures, safety regulations, and quality standards.",
             "COC IV"); // replace with your actual scene name

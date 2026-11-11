@@ -26,7 +26,7 @@ public class GPUDetailedView : MonoBehaviour
 
     private void OnEnable()
     {
-        Indicator?.Setup(Labels);
+        Indicator?.Setup(Labels, ShowViewAt);
 
         ShowViewAt(_activeIndex);
         ApplyHardwareInteractable();
@@ -65,7 +65,7 @@ public class GPUDetailedView : MonoBehaviour
         }
     }
 
-    private void ShowViewAt(int index)
+    public void ShowViewAt(int index)
     {
         topView?.SetActive(false);
         sideView?.SetActive(false);
