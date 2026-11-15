@@ -68,8 +68,7 @@ public class ServerManagerSingleTaskDisplay : MonoBehaviour
             displayPanel.SetActive(false);
         }
 
-        if (taskText != null) taskText.color = new Color(1.000f, 0.886f, 0.596f);
-        _defaultTextColor = new Color(1.000f, 0.886f, 0.596f);
+        _defaultTextColor = taskText != null ? taskText.color : Color.white;
 
         ServerSetupTaskManager.OnTaskLatched += Refresh;
     }

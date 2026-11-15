@@ -10,6 +10,9 @@ public class TopicManager : MonoBehaviour
 
     public static event System.Action OnDropdownClosed;
     public static event System.Action OnAllTopicsComplete;
+    public static event System.Action<int> OnTopicSwitched;
+
+    public int ActiveTopicIndex => _activeTopicIndex;
 
     [System.Serializable]
     public class TopicEntry
@@ -175,12 +178,19 @@ public class TopicManager : MonoBehaviour
         if (GameManager.Instance != null && GameManager.Instance.IsEditorOpen)
             GameManager.Instance.CloseEditor();
 
+        // Each topic manager owns its own popup. Close all of them so whichever
+        // one is currently open gets dismissed before the topic containers swap.
+        NCIITaskListManager.Instance?.CloseCurrentGroupPopup();
+        T2TaskListManager.Instance?.CloseGroupOverviewPopup();
+        T3TaskListManager.Instance?.CloseGroupOverviewPopup();
+
         SetTopicContainersActive(_activeTopicIndex, false);
         _activeTopicIndex = index;
         SetTopicContainersActive(_activeTopicIndex, true);
 
         CloseDropdown();
         RefreshTabUI();
+        OnTopicSwitched?.Invoke(_activeTopicIndex);
 
         Debug.Log($"[TopicManager] Switched to: {topics[_activeTopicIndex].topicName}");
     }

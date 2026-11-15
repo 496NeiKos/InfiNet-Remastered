@@ -210,6 +210,14 @@ public class NCIITaskListManager : MonoBehaviour
     [Header("PSU Screws")]
     [SerializeField] private ScrewController[] _psuScrews;
 
+    [Header("Phase Panel Roots")]
+    [Tooltip("Root GameObject of the entire Disassembly Panel (Group Title Row + Task List). " +
+             "Deactivated when transitioning to Assembly.")]
+    [SerializeField] private GameObject disassemblyPanelRoot;
+    [Tooltip("Root GameObject of the entire Assembly Panel (Group Title Row + Task List). " +
+             "Starts inactive; activated when transitioning from Disassembly.")]
+    [SerializeField] private GameObject assemblyPanelRoot;
+
     [Header("UI Panels")]
     [SerializeField] private GameObject settingsPanel;
     [SerializeField] private GameObject ppeInventoryPanel;
@@ -304,8 +312,9 @@ public class NCIITaskListManager : MonoBehaviour
 
         disassemblyGroupOverviewPopup?.SetActive(false);
         assemblyGroupOverviewPopup?.SetActive(false);
-        if (assemblyTaskParent != null) assemblyTaskParent.gameObject.SetActive(false);
-        if (transitionText != null)     transitionText.gameObject.SetActive(false);
+        if (assemblyPanelRoot != null)   assemblyPanelRoot.SetActive(false);
+        if (assemblyTaskParent != null)  assemblyTaskParent.gameObject.SetActive(false);
+        if (transitionText != null)      transitionText.gameObject.SetActive(false);
         if (allTasksCompletedText != null) allTasksCompletedText.gameObject.SetActive(false);
 
         RefreshDisassemblyGroupTitle();
@@ -984,6 +993,8 @@ public class NCIITaskListManager : MonoBehaviour
 
     private void OpenCurrentGroupPopup()
     {
+        if (TopicManager.Instance != null && TopicManager.Instance.ActiveTopicIndex != 0) return;
+
         if (_showingAssembly)
         {
             BuildAssemblyPopupRows();
@@ -997,10 +1008,26 @@ public class NCIITaskListManager : MonoBehaviour
         ActiveGroupPopup?.SetActive(true);
     }
 
-    private void CloseCurrentGroupPopup()
+    public void CloseCurrentGroupPopup()
     {
         disassemblyGroupOverviewPopup?.SetActive(false);
         assemblyGroupOverviewPopup?.SetActive(false);
+    }
+
+    // Called by TopicGroupOverviewController to repopulate the shared popup
+    // when the user switches back to Topic 1 while the popup is open.
+    public void RebuildOverview()
+    {
+        if (_showingAssembly)
+        {
+            BuildAssemblyPopupRows();
+            RefreshAssemblyPopup();
+        }
+        else
+        {
+            BuildDisassemblyPopupRows();
+            RefreshDisassemblyPopup();
+        }
     }
 
     // ── Disassembly Popup ─────────────────────────────────────────────────────
@@ -1114,6 +1141,9 @@ public class NCIITaskListManager : MonoBehaviour
         _isTransitioningToAssembly = true;
         _mbTakenOutForAssembly = false;
 
+        // Close any open overview popup so it doesn't stay open showing stale disassembly groups.
+        CloseCurrentGroupPopup();
+
         if (transitionText != null)
         {
             transitionText.text = transitionMessage;
@@ -1133,8 +1163,17 @@ public class NCIITaskListManager : MonoBehaviour
         _isCompletionOverride = false;
         _showingAssembly      = true;
 
-        if (disassemblyTaskParent != null) disassemblyTaskParent.gameObject.SetActive(false);
-        if (assemblyTaskParent   != null) assemblyTaskParent.gameObject.SetActive(true);
+        // Swap panels. If panel roots are wired, toggle the whole panel (group title + task list).
+        // Fall back to toggling only the task list when roots are not wired.
+        if (disassemblyPanelRoot != null)
+            disassemblyPanelRoot.SetActive(false);
+        else if (disassemblyTaskParent != null)
+            disassemblyTaskParent.gameObject.SetActive(false);
+
+        if (assemblyPanelRoot != null)
+            assemblyPanelRoot.SetActive(true);
+        else if (assemblyTaskParent != null)
+            assemblyTaskParent.gameObject.SetActive(true);
 
         BuildAssemblyPopupRows();
         RefreshAssemblyGroupTitle();

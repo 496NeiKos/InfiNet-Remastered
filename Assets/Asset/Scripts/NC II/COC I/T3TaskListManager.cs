@@ -380,8 +380,22 @@ public class T3TaskListManager : MonoBehaviour
 
     // ── Group Overview Popup ──────────────────────────────────────────────────
 
-    private void OpenPopup()  { RefreshPopup(); groupOverviewPopup?.SetActive(true); }
-    private void ClosePopup() { groupOverviewPopup?.SetActive(false); }
+    private void OpenPopup()
+    {
+        if (TopicManager.Instance != null && TopicManager.Instance.ActiveTopicIndex != 2) return;
+        RefreshPopup();
+        groupOverviewPopup?.SetActive(true);
+    }
+    private void ClosePopup()        { groupOverviewPopup?.SetActive(false); }
+    public  void CloseGroupOverviewPopup() => ClosePopup();
+
+    // Called by TopicGroupOverviewController to repopulate the shared popup
+    // when the user switches to Topic 3 while the popup is open.
+    public void RebuildOverview()
+    {
+        BuildPopupRows();
+        RefreshPopup();
+    }
 
     private void BuildPopupRows()
     {

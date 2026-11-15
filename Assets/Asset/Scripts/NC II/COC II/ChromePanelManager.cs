@@ -98,7 +98,8 @@ public class ChromePanelManager : MonoBehaviour
 
     [Header("Settings")]
     [SerializeField] [TextArea(2, 4)] private string defaultWelcomeText =
-        "Welcome!\nType an IP address in the address bar to navigate to a device.";
+        "Welcome!\nType the default IP address of Router that was reset (192.168.1.1)";
+
 
     [Header("Device Search Keywords (set in Inspector)")]
     [Tooltip("Keyword that routes to the AP DLink page (typed after AP reset).")]

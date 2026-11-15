@@ -31,6 +31,7 @@ public class HoverLabelManager : MonoBehaviour
 
     public void ShowLabel(string itemName)
     {
+        if (VirtualOSManager.Instance != null && VirtualOSManager.Instance.IsOpen) return;
         hoverLabel.text = itemName;
         gameObject.SetActive(true);
     }

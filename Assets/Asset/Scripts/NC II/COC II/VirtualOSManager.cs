@@ -163,6 +163,9 @@ public class VirtualOSManager : MonoBehaviour, IVirtualOSManager
         virtualOSCanvas?.SetActive(true);
         _isOpen = true;
 
+        if (HoverLabelManager.Instance != null)
+            HoverLabelManager.Instance.gameObject.SetActive(false);
+
         Debug.Log($"[VirtualOSManager] Opened for {device}{(resumingSameDevice ? " (resumed)" : "")}.");
     }
 
@@ -173,6 +176,10 @@ public class VirtualOSManager : MonoBehaviour, IVirtualOSManager
         _wasJustHidden = true;
         virtualOSCanvas?.SetActive(false);
         _isOpen = false;
+
+        if (HoverLabelManager.Instance != null)
+            HoverLabelManager.Instance.gameObject.SetActive(false);
+
         Debug.Log($"[VirtualOSManager] Canvas hidden. State preserved for {_currentDevice}.");
     }
 

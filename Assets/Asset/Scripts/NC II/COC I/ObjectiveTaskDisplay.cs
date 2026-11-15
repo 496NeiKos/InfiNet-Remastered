@@ -115,6 +115,7 @@ public class ObjectiveTaskDisplay : MonoBehaviour
         NCIITaskListManager.OnTasksUpdated += Refresh;
         T2TaskListManager.OnTasksUpdated   += Refresh;
         T3TaskListManager.OnTasksUpdated   += Refresh;
+        TopicManager.OnTopicSwitched       += OnTopicChanged;
 
         if (hideWhenEditorOpen && objectiveText != null)
         {
@@ -125,6 +126,8 @@ public class ObjectiveTaskDisplay : MonoBehaviour
 
         Refresh();
     }
+
+    private void OnTopicChanged(int _) => Refresh();
 
     private void Update()
     {
@@ -143,12 +146,19 @@ public class ObjectiveTaskDisplay : MonoBehaviour
         NCIITaskListManager.OnTasksUpdated -= Refresh;
         T2TaskListManager.OnTasksUpdated   -= Refresh;
         T3TaskListManager.OnTasksUpdated   -= Refresh;
+        TopicManager.OnTopicSwitched       -= OnTopicChanged;
     }
 
     private void Refresh()
     {
-        if (topic1Manager != null && topic1Manager.gameObject.activeInHierarchy)
+        // Use TopicManager.ActiveTopicIndex as the single source of truth.
+        // Avoids relying on activeInHierarchy, which is unreliable when T1's manager
+        // lives on an always-active Managers object rather than the topic container.
+        int activeIndex = TopicManager.Instance != null ? TopicManager.Instance.ActiveTopicIndex : 0;
+
+        if (activeIndex == 0)
         {
+            if (topic1Manager == null) return;
             if (topic1Manager.IsTransitioningToAssembly)
             {
                 if (objectiveText != null)
@@ -157,9 +167,9 @@ public class ObjectiveTaskDisplay : MonoBehaviour
             }
             RefreshForTopic(topic1Objectives, topic1Manager.GetCompletedTaskCount(), ref _t1Index, ref _t1AllDone);
         }
-        else if (topic2Manager != null && topic2Manager.gameObject.activeInHierarchy)
+        else if (activeIndex == 1 && topic2Manager != null)
             RefreshForTopic(topic2Objectives, topic2Manager.GetCompletedTaskCount(), ref _t2Index, ref _t2AllDone);
-        else if (topic3Manager != null && topic3Manager.gameObject.activeInHierarchy)
+        else if (activeIndex == 2 && topic3Manager != null)
             RefreshForTopic(topic3Objectives, topic3Manager.GetCompletedTaskCount(), ref _t3Index, ref _t3AllDone);
     }
 

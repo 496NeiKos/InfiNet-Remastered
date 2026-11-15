@@ -146,9 +146,6 @@ public class ServerSetupTaskManager : MonoBehaviour
     private bool         _isFlashing        = false;
     private TMP_Text[][] _popupRowTMPs;
 
-    private static readonly Color DefaultTaskColor  = new Color(1.000f, 0.886f, 0.596f);
-    private static readonly Color DefaultTitleColor = new Color(0.953f, 0.839f, 0.020f);
-
     private Queue<int>   _taskFlashQueue = new Queue<int>();
     private bool         _isTaskFlashing = false;
 
@@ -165,14 +162,6 @@ public class ServerSetupTaskManager : MonoBehaviour
 
     private void Start()
     {
-        for (int i = 0; i < TASK_COUNT; i++)
-        {
-            if (taskObjects[i] == null) continue;
-            var tmp = taskObjects[i].GetComponent<TMP_Text>();
-            if (tmp != null) tmp.color = DefaultTaskColor;
-        }
-        if (groupTitleTMP != null) groupTitleTMP.color = DefaultTitleColor;
-
         groupOverviewPopup?.SetActive(false);
         BuildPopupRows();
         RefreshGroupTitle();
@@ -383,7 +372,7 @@ public class ServerSetupTaskManager : MonoBehaviour
     private void LatchTask(int index)
     {
         _latched[index] = true;
-        ActivityLogManager.Log($"Task completed: {GetTaskLabel(index)}", ActivityLogManager.EntryType.Action);
+        ActivityLogManager.Log($"Task completed: Task {index + 1}", ActivityLogManager.EntryType.Action);
 
         bool wasVisible = taskObjects[index] != null
                        && taskObjects[index].activeSelf
@@ -629,6 +618,7 @@ public class ServerSetupTaskManager : MonoBehaviour
 
     // ── Task labels ───────────────────────────────────────────────────────────
 
+    /*
     private static string GetTaskLabel(int index)
     {
         return index switch
@@ -800,6 +790,7 @@ public class ServerSetupTaskManager : MonoBehaviour
             _  => $"Task {index + 1}"
         };
     }
+    */
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
@@ -824,7 +815,9 @@ public class ServerSetupTaskManager : MonoBehaviour
     public string GetCurrentTaskLabel()
     {
         if (_allDone || _currentTask >= TASK_COUNT) return null;
-        return GetTaskLabel(_currentTask);
+        if (taskObjects[_currentTask] == null) return null;
+        var tmp = taskObjects[_currentTask].GetComponent<TMP_Text>();
+        return tmp != null ? tmp.text : null;
     }
 
     public int GetCompletedTaskCount()
