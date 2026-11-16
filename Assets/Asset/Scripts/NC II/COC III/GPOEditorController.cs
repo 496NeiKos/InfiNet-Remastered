@@ -149,7 +149,6 @@ public class GPOEditorController : MonoBehaviour
     private void Awake()
     {
         closeBtn?.onClick.AddListener(Close);
-        gameObject.SetActive(false);
     }
 
     // ── Public API ────────────────────────────────────────────────────────────

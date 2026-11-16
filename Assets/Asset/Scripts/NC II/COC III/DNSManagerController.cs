@@ -96,7 +96,6 @@ public class DNSManagerController : MonoBehaviour
         ctxNewZoneBtn?.onClick.AddListener(OnNewZoneClicked);
 
         contextMenu?.SetActive(false);
-        gameObject.SetActive(false);
     }
 
     // ── Public API ────────────────────────────────────────────────────────────

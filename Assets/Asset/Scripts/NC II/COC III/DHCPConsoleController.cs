@@ -99,7 +99,6 @@ public class DHCPConsoleController : MonoBehaviour
         ctxAuthorizeBtn?.onClick.AddListener(OnAuthorizeClicked);
 
         contextMenu?.SetActive(false);
-        gameObject.SetActive(false);
     }
 
     // ── Public API ────────────────────────────────────────────────────────────

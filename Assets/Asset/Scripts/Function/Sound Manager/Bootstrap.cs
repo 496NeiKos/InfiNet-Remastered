@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class Bootstrap : MonoBehaviour
 {
@@ -7,7 +8,8 @@ public class Bootstrap : MonoBehaviour
 
     private void Awake()
     {
-        // ✅ Spawn MusicManager only once
+        InputSystem.settings.backgroundBehavior = InputSettings.BackgroundBehavior.IgnoreFocus;
+
         if (MusicManager.Instance == null)
         {
             GameObject mm = Instantiate(musicManagerPrefab);

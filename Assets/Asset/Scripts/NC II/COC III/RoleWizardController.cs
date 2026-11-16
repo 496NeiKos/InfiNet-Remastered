@@ -53,7 +53,10 @@
  *      │     └── ConfirmLabel            → confirmLabelTMP
  *      │
  *      ├── Step 6 — Results              → steps[6]
- *      │     └── ResultLabel             → resultLabelTMP
+ *      │     ├── InstallProgressSlider  → installProgressSlider
+ *      │     ├── PercentageLabel        → installPercentageTMP  ("0%" … "100%")
+ *      │     ├── InstallFeaturesListTMP → installFeaturesListTMP  (mirrors popup FeaturesListTMP)
+ *      │     └── ResultLabel             → resultLabelTMP  (STARTS INACTIVE — shown after progress)
  *      │
  *      ├── Add Features Popup            → addFeaturesPopup (STARTS INACTIVE)
  *      │     ├── FeaturesHeaderTMP       → featuresHeaderTMP
@@ -90,6 +93,7 @@
  */
 
 using System;
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -146,6 +150,10 @@ public class RoleWizardController : MonoBehaviour
 
     [Header("Step 6 — Results")]
     [SerializeField] private TMP_Text resultLabelTMP;
+    [SerializeField] private Slider   installProgressSlider;
+    [SerializeField] private TMP_Text installPercentageTMP;
+    [SerializeField] private TMP_Text installFeaturesListTMP;
+    [SerializeField] private float    installDuration = 5f;
 
     [Header("Buttons")]
     [SerializeField] private Button prevBtn;
@@ -170,6 +178,7 @@ public class RoleWizardController : MonoBehaviour
     private bool       _roleSelected     = false;
     private string     _selectedRoleName = "";
     private RoleOption _pendingOption    = null;
+    private Coroutine  _installRoutine   = null;
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
@@ -190,8 +199,6 @@ public class RoleWizardController : MonoBehaviour
         installTypeRDSToggle?.onValueChanged.AddListener(OnInstallTypeRDSChanged);
         serverPoolToggle?.onValueChanged.AddListener(OnServerPoolToggleChanged);
         vhdToggle?.onValueChanged.AddListener(OnVHDToggleChanged);
-
-        gameObject.SetActive(false);
     }
 
     // ── Public API ────────────────────────────────────────────────────────────
@@ -284,10 +291,12 @@ public class RoleWizardController : MonoBehaviour
         ServerManagerController.Instance?.RefreshTreeRoleButtons();
         ServerManagerController.Instance?.RefreshDashboard();
 
+        // Pre-fill result text; the label is hidden by ShowStep(6) until progress completes.
         if (resultLabelTMP != null)
             resultLabelTMP.text = $"{_selectedRoleName}\nInstallation succeeded.";
-        ShowStep(6);
+
         ActivityLogManager.Log($"Role installed: {_selectedRoleName}", ActivityLogManager.EntryType.Action);
+        ShowStep(6);
     }
 
     private void CloseWizard()
@@ -482,7 +491,41 @@ public class RoleWizardController : MonoBehaviour
             RefreshServerPoolVisibility();
         }
 
+        if (index == 6)
+        {
+            // Populate the features list with the role being installed.
+            if (installFeaturesListTMP != null)
+                installFeaturesListTMP.text = GetFeaturesText(_selectedRole);
+
+            // Hide result and close button; show them only after progress completes.
+            resultLabelTMP?.gameObject.SetActive(false);
+            closeWizardBtn?.gameObject.SetActive(false);
+            if (installProgressSlider != null) installProgressSlider.value = 0f;
+            if (installPercentageTMP  != null) installPercentageTMP.text   = "0%";
+            if (_installRoutine != null) StopCoroutine(_installRoutine);
+            _installRoutine = StartCoroutine(InstallProgressRoutine());
+        }
+
         RefreshTracker(index);
+    }
+
+    private IEnumerator InstallProgressRoutine()
+    {
+        float elapsed = 0f;
+        while (elapsed < installDuration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / installDuration);
+            if (installProgressSlider != null) installProgressSlider.value = t;
+            if (installPercentageTMP  != null) installPercentageTMP.text   = $"{Mathf.RoundToInt(t * 100)}%";
+            yield return null;
+        }
+        if (installProgressSlider != null) installProgressSlider.value = 1f;
+        if (installPercentageTMP  != null) installPercentageTMP.text   = "100%";
+
+        resultLabelTMP?.gameObject.SetActive(true);
+        closeWizardBtn?.gameObject.SetActive(true);
+        _installRoutine = null;
     }
 
     private void RefreshTracker(int currentStep)

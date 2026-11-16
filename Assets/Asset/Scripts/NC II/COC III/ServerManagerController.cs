@@ -192,7 +192,7 @@ public class ServerManagerController : MonoBehaviour
     [Header("Notification & Gate")]
     [SerializeField] private GameObject notificationArea;
     [SerializeField] private Button     promotionFlag;
-    [SerializeField] private GameObject gateOverlay;
+    //[SerializeField] private GameObject gateOverlay;
 
     // ── Tree Panel ────────────────────────────────────────────────────────────
 
@@ -235,6 +235,7 @@ public class ServerManagerController : MonoBehaviour
     [SerializeField] private DHCPConsoleController     dhcp;
     [SerializeField] private GroupPolicyController     gpm;
     [SerializeField] private PrintManagementController printMgmt;
+    [SerializeField] private DNSManagerController      dnsManager;
 
     // ── Runtime ───────────────────────────────────────────────────────────────
 
@@ -254,7 +255,7 @@ public class ServerManagerController : MonoBehaviour
         promotionFlag?.onClick.AddListener(OpenDCPromo);
 
         // Tools dropdown
-        toolDNSBtn?.onClick.AddListener(() => { CloseToolsMenu(); DNSManagerController.Instance?.Open(); });
+        toolDNSBtn?.onClick.AddListener(() => { CloseToolsMenu(); dnsManager?.Open(); });
         toolADUCBtn?.onClick.AddListener(()  => { CloseToolsMenu(); aduc?.Open(); });
         toolDHCPBtn?.onClick.AddListener(()  => { CloseToolsMenu(); dhcp?.Open(); });
         toolGPMBtn?.onClick.AddListener(()   => { CloseToolsMenu(); gpm?.Open(); });
@@ -272,13 +273,12 @@ public class ServerManagerController : MonoBehaviour
         localServerTreeBtn?.onClick.AddListener(ShowLocalServer);
 
         toolsDropdown?.SetActive(false);
-        gameObject.SetActive(false);
     }
 
     private void Update()
     {
         if (!gameObject.activeSelf) return;
-        RefreshGate();
+        //RefreshGate();
         RefreshNotification();
         RefreshToolsVisibility();
     }
@@ -454,15 +454,15 @@ public class ServerManagerController : MonoBehaviour
         _                                => false
     };
 
-    private void RefreshGate()
-    {
-        if (gateOverlay == null) return;
-        var state = ServerVirtualOSManager.Instance?.ServerState;
-        bool ready = state != null && state.PCRenamed && state.IPConfigured;
-        gateOverlay.SetActive(!ready);
-        if (addRolesBtn  != null) addRolesBtn.interactable  = ready;
-        if (toolsMenuBtn != null) toolsMenuBtn.interactable = ready;
-    }
+   //private void RefreshGate()
+   // {
+   //     if (gateOverlay == null) return;
+   //     var state = ServerVirtualOSManager.Instance?.ServerState;
+   //     bool ready = state != null && state.PCRenamed && state.IPConfigured;
+   //     gateOverlay.SetActive(!ready);
+   //     if (addRolesBtn  != null) addRolesBtn.interactable  = ready;
+   //     if (toolsMenuBtn != null) toolsMenuBtn.interactable = ready;
+   // }
 
     private void RefreshNotification()
     {

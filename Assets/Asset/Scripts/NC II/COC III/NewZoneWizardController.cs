@@ -176,8 +176,6 @@ public class NewZoneWizardController : MonoBehaviour
         WireReverseNetworkIDToggles();
         WireZoneFileToggles();
         WireDynamicUpdatesToggle();
-
-        gameObject.SetActive(false);
     }
 
     // ── Public API ────────────────────────────────────────────────────────────
