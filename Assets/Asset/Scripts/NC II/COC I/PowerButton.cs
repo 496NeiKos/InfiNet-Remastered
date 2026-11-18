@@ -54,7 +54,7 @@ public class PowerButton : MonoBehaviour, IPowerButton
             conditionChecker = GetComponentInParent<PowerOnConditionChecker>();
 
         if (monitorPowerButton == null)
-            monitorPowerButton = FindObjectOfType<MonitorPowerButton>(true);
+            monitorPowerButton = FindFirstObjectByType<MonitorPowerButton>(FindObjectsInactive.Include);
 
         _state = startOn ? PowerState.On : PowerState.Off;
         _initialized = true;

@@ -52,7 +52,7 @@ public class TaskListManager : MonoBehaviour
         // Special case: first task = motherboard installation
         if (index == 0)
         {
-            Motherboard mb = FindObjectOfType<Motherboard>();
+            Motherboard mb = FindFirstObjectByType<Motherboard>();
             if (mb != null && mb.AreAllSlotsCorrect())
             {
                 tasks[index].isCompleted = true;
@@ -125,55 +125,55 @@ public class TaskListManager : MonoBehaviour
 
     public void LockStage()
     {
-        foreach (var avr in FindObjectsOfType<AVR>(true))
+        foreach (var avr in FindObjectsByType<AVR>(FindObjectsInactive.Include, FindObjectsSortMode.None))
             avr.enabled = false;
 
-        foreach (var button in FindObjectsOfType<Button>(true))
+        foreach (var button in FindObjectsByType<Button>(FindObjectsInactive.Include, FindObjectsSortMode.None))
         {
             if (button.gameObject.name == "AVR") // or tag it "AVR"
                 button.interactable = false;
         }
 
-foreach (var descslot in FindObjectsOfType<DescSlot>(true))
+foreach (var descslot in FindObjectsByType<DescSlot>(FindObjectsInactive.Include, FindObjectsSortMode.None))
             descslot.enabled = false;
 
-        foreach (var componentitem in FindObjectsOfType<ComponentItem>(true))
+        foreach (var componentitem in FindObjectsByType<ComponentItem>(FindObjectsInactive.Include, FindObjectsSortMode.None))
             componentitem.enabled = false;
 
-        foreach (var dragitem in FindObjectsOfType<DragItem>(true))
+        foreach (var dragitem in FindObjectsByType<DragItem>(FindObjectsInactive.Include, FindObjectsSortMode.None))
             dragitem.enabled = false;
 
-        foreach (var systemUnit in FindObjectsOfType<SystemUnit>(true))
+        foreach (var systemUnit in FindObjectsByType<SystemUnit>(FindObjectsInactive.Include, FindObjectsSortMode.None))
             systemUnit.enabled = false;
 
-        foreach (var motherboard in FindObjectsOfType<Motherboard>(true))
+        foreach (var motherboard in FindObjectsByType<Motherboard>(FindObjectsInactive.Include, FindObjectsSortMode.None))
             motherboard.enabled = false;
     }
 
     public void UnlockStage()
     {
-        foreach (var avr in FindObjectsOfType<AVR>(true))
+        foreach (var avr in FindObjectsByType<AVR>(FindObjectsInactive.Include, FindObjectsSortMode.None))
             avr.enabled = true;
 
-        foreach (var button in FindObjectsOfType<Button>(true))
+        foreach (var button in FindObjectsByType<Button>(FindObjectsInactive.Include, FindObjectsSortMode.None))
         {
             if (button.gameObject.name == "AVR") // or tag it "AVR"
                 button.interactable = true;
         }
 
-foreach (var descslot in FindObjectsOfType<DescSlot>(true))
+foreach (var descslot in FindObjectsByType<DescSlot>(FindObjectsInactive.Include, FindObjectsSortMode.None))
             descslot.enabled = true;
 
-        foreach (var componentitem in FindObjectsOfType<ComponentItem>(true))
+        foreach (var componentitem in FindObjectsByType<ComponentItem>(FindObjectsInactive.Include, FindObjectsSortMode.None))
             componentitem.enabled = true;
 
-        foreach (var dragitem in FindObjectsOfType<DragItem>(true))
+        foreach (var dragitem in FindObjectsByType<DragItem>(FindObjectsInactive.Include, FindObjectsSortMode.None))
             dragitem.enabled = true;
 
-        foreach (var systemUnit in FindObjectsOfType<SystemUnit>(true))
+        foreach (var systemUnit in FindObjectsByType<SystemUnit>(FindObjectsInactive.Include, FindObjectsSortMode.None))
             systemUnit.enabled = true;
 
-        foreach (var motherboard in FindObjectsOfType<Motherboard>(true))
+        foreach (var motherboard in FindObjectsByType<Motherboard>(FindObjectsInactive.Include, FindObjectsSortMode.None))
             motherboard.enabled = true;
     }
 

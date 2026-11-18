@@ -155,7 +155,7 @@ public class NetworkDragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler,
             return;
         }
 
-        NetworkHardwareHolder[] allHolders = FindObjectsOfType<NetworkHardwareHolder>(true);
+        NetworkHardwareHolder[] allHolders = FindObjectsByType<NetworkHardwareHolder>(FindObjectsInactive.Include, FindObjectsSortMode.None);
         foreach (NetworkHardwareHolder h in allHolders)
         {
             if (h.hardwarePrefab != null && h.hardwarePrefab.name == gameObject.name)

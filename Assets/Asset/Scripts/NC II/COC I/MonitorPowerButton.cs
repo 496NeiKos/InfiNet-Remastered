@@ -49,7 +49,7 @@ public class MonitorPowerButton : MonoBehaviour, IPowerButton
         _sr = GetComponent<SpriteRenderer>();
 
         if (avrPowerButton == null)
-            avrPowerButton = FindObjectOfType<AVRPowerButton>(true);
+            avrPowerButton = FindFirstObjectByType<AVRPowerButton>(FindObjectsInactive.Include);
 
         // Guard: ForceOff/ForceOn may have been called before Awake ran (because this
         // GameObject starts inactive and PowerButton finds it via FindObjectOfType with

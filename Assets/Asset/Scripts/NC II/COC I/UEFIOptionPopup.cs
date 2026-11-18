@@ -75,7 +75,7 @@ public class UEFIOptionPopup : MonoBehaviour
         {
             if (_instance == null)
             {
-                _instance = FindObjectOfType<UEFIOptionPopup>(true);
+                _instance = FindFirstObjectByType<UEFIOptionPopup>(FindObjectsInactive.Include);
                 Debug.Log(_instance != null
                     ? $"[UEFIOptionPopup] Instance found: {_instance.gameObject.name}"
                     : "[UEFIOptionPopup] Instance NOT FOUND — is UEFIOptionPopup in the scene?");

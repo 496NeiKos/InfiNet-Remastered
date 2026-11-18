@@ -134,7 +134,6 @@ public class Windows10Manager : MonoBehaviour
     // ----------------------------------------------------------------
 
     private string _pendingPassword;
-    private bool _awaitingConfirm;           // true after create-password Enter; false until then
     private TMP_InputField _lastFocusedField; // field that was focused the frame before Enter fires
 
     public bool IsPasswordSetUp => _sessionPasswordSet;
@@ -165,7 +164,6 @@ public class Windows10Manager : MonoBehaviour
         T3TaskListManager.CheckConditions();
 
         _pendingPassword  = "";
-        _awaitingConfirm  = false;
         _lastFocusedField = null;
 
         if (isSetUp)
@@ -249,7 +247,6 @@ public class Windows10Manager : MonoBehaviour
         }
 
         _pendingPassword = value;
-        _awaitingConfirm = true;
         SetActive(setupWrongText, false);
 
         confirmPasswordInput?.ActivateInputField();
@@ -267,8 +264,6 @@ public class Windows10Manager : MonoBehaviour
 
         _sessionPassword   = _pendingPassword;
         _sessionPasswordSet = true;
-
-        _awaitingConfirm = false;
 
         setupPasswordPanel?.SetActive(false);
         defaultPanel?.SetActive(false);
@@ -337,7 +332,6 @@ public class Windows10Manager : MonoBehaviour
 
         _sessionPassword    = create;
         _sessionPasswordSet = true;
-        _awaitingConfirm    = false;
 
         setupPasswordPanel?.SetActive(false);
         passwordLoginPanel?.SetActive(false);

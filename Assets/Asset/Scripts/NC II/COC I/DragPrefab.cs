@@ -134,7 +134,7 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
             return;
         }
 
-        var dvm = FindObjectOfType<DetailViewManager>();
+        var dvm = FindFirstObjectByType<DetailViewManager>();
         if (dvm != null && dvm.IsInnerPanelOpen)
         {
             ActivityLogManager.Log($"Cannot drag {LogDisplayName} — close the detail panel first.", ActivityLogManager.EntryType.Warning);
@@ -144,7 +144,7 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
             return;
         }
 
-        var mbdvm = FindObjectOfType<MotherboardDetailViewManager>();
+        var mbdvm = FindFirstObjectByType<MotherboardDetailViewManager>();
         if (mbdvm != null && mbdvm.IsInnerPanelOpen)
         {
             ActivityLogManager.Log($"Cannot drag {LogDisplayName} — close the component panel first.", ActivityLogManager.EntryType.Warning);
@@ -522,7 +522,7 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
             return;
         }
 
-        HardwareHolder[] allHolders = FindObjectsOfType<HardwareHolder>(true);
+        HardwareHolder[] allHolders = FindObjectsByType<HardwareHolder>(FindObjectsInactive.Include, FindObjectsSortMode.None);
         foreach (HardwareHolder h in allHolders)
         {
             if (h.hardwarePrefab != null && h.hardwarePrefab.name == gameObject.name)

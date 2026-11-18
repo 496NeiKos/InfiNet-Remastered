@@ -358,7 +358,7 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         // ── Multi-cable path ──────────────────────────────────────────────
         if (IsMultiCableMode)
         {
-            CablePort[] allPorts = FindObjectsOfType<CablePort>(true);
+            CablePort[] allPorts = FindObjectsByType<CablePort>(FindObjectsInactive.Include, FindObjectsSortMode.None);
 
             CablePort bestPort = null;
             float bestDist = float.MaxValue;
@@ -426,7 +426,7 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         if (cable != null)
         {
             string cableType = cable.GetCableType();
-            CablePort[] allPorts = FindObjectsOfType<CablePort>(true);
+            CablePort[] allPorts = FindObjectsByType<CablePort>(FindObjectsInactive.Include, FindObjectsSortMode.None);
 
             CablePort bestPort = null;
             float bestDist = float.MaxValue;
@@ -471,7 +471,7 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         HeatsinkController heatsink = hardwarePrefab.GetComponent<HeatsinkController>();
         if (heatsink != null)
         {
-            CPUSlotController[] allSlots = FindObjectsOfType<CPUSlotController>(true);
+            CPUSlotController[] allSlots = FindObjectsByType<CPUSlotController>(FindObjectsInactive.Include, FindObjectsSortMode.None);
             CPUSlotController bestSlot = null;
             float bestDist = float.MaxValue;
 
@@ -515,7 +515,7 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         CPUController cpuCtrl = hardwarePrefab.GetComponent<CPUController>();
         if (cpuCtrl != null)
         {
-            CPUSlotController[] allSlots = FindObjectsOfType<CPUSlotController>(true);
+            CPUSlotController[] allSlots = FindObjectsByType<CPUSlotController>(FindObjectsInactive.Include, FindObjectsSortMode.None);
             CPUSlotController bestSlot = null;
             float bestDist = float.MaxValue;
 
@@ -560,7 +560,7 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
             return;
         }
 
-        SlotContainer[] allSlotContainers = FindObjectsOfType<SlotContainer>();
+        SlotContainer[] allSlotContainers = FindObjectsByType<SlotContainer>(FindObjectsSortMode.None);
         SlotContainer bestSlotContainer = null;
         float bestSlotDist = float.MaxValue;
 
@@ -650,7 +650,7 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
 
     private CablePort FindNearestPortIgnoreValidity(Vector3 worldPos)
     {
-        CablePort[] allPorts = FindObjectsOfType<CablePort>(true);
+        CablePort[] allPorts = FindObjectsByType<CablePort>(FindObjectsInactive.Include, FindObjectsSortMode.None);
         CablePort best = null;
         float bestDist = float.MaxValue;
         foreach (CablePort port in allPorts)

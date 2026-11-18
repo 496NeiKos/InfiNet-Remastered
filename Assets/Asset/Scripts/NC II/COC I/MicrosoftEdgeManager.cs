@@ -152,7 +152,7 @@ public class MicrosoftEdgeManager : MonoBehaviour
 
         // Auto-resolve desktopManager if not wired in the Inspector
         if (desktopManager == null)
-            desktopManager = FindObjectOfType<DesktopManager>();
+            desktopManager = FindFirstObjectByType<DesktopManager>();
     }
 
     private void OnDestroy()

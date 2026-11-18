@@ -18,8 +18,8 @@ public class SystemUnit : MonoBehaviour
     }
     public void ToggleMotherboard()
     {
-        AVR avr = FindObjectOfType<AVR>();
-        Motherboard mb = FindObjectOfType<Motherboard>();
+        AVR avr = FindFirstObjectByType<AVR>();
+        Motherboard mb = FindFirstObjectByType<Motherboard>();
 
         if (!motherboardInstalled)
         {
@@ -68,7 +68,7 @@ public class SystemUnit : MonoBehaviour
 
     public void EjectMotherboard()
     {
-        AVR avr = FindObjectOfType<AVR>();
+        AVR avr = FindFirstObjectByType<AVR>();
 
         if (!motherboardInstalled)
         {
@@ -110,7 +110,7 @@ public class SystemUnit : MonoBehaviour
 
     void Start()
     {
-        motherboard = FindObjectOfType<Motherboard>();
+        motherboard = FindFirstObjectByType<Motherboard>();
         if (motherboard != null)
         {
             motherboardOriginalPosition = motherboard.transform.position;

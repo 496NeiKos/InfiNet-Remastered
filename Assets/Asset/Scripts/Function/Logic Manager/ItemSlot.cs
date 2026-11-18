@@ -72,7 +72,7 @@ public class ItemSlot : MonoBehaviour
         }
 
         // ✅ Block motherboard removal if AVR is ON
-        AVR avr = FindObjectOfType<AVR>();
+        AVR avr = FindFirstObjectByType<AVR>();
         if (avr != null && avr.IsOn() &&
             string.Equals(expectedItemName.Trim(), "Motherboard", System.StringComparison.OrdinalIgnoreCase))
         {
@@ -113,7 +113,7 @@ public class ItemSlot : MonoBehaviour
     private bool HasDependentItem()
     {
         // ✅ Check if another slot depends on this one and is occupied
-        ItemSlot[] allSlots = FindObjectsOfType<ItemSlot>();
+        ItemSlot[] allSlots = FindObjectsByType<ItemSlot>(FindObjectsSortMode.None);
         foreach (ItemSlot slot in allSlots)
         {
             if (slot.requiredItemSlot == this && slot.currentItem != null)
@@ -127,7 +127,7 @@ public class ItemSlot : MonoBehaviour
     private void ValidateMotherboardTasks()
     {
         // Find all slots in the scene
-        ItemSlot[] allSlots = FindObjectsOfType<ItemSlot>();
+        ItemSlot[] allSlots = FindObjectsByType<ItemSlot>(FindObjectsSortMode.None);
 
         bool allInstalled = true;
 

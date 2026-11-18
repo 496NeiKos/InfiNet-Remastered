@@ -50,7 +50,7 @@ public class AVRPowerButton : MonoBehaviour, IPowerButton
         _sr = GetComponent<SpriteRenderer>();
 
         if (monitorPowerButton == null)
-            monitorPowerButton = FindObjectOfType<MonitorPowerButton>(true);
+            monitorPowerButton = FindFirstObjectByType<MonitorPowerButton>(FindObjectsInactive.Include);
 
         _state = startOn ? PowerState.On : PowerState.Off;
         _initialized = true;

@@ -88,7 +88,7 @@ public class DragItem : MonoBehaviour
                 currentlyDraggedItem = this;
 
                 // ✅ Show description immediately when drag begins
-                DescSlot descSlot = FindObjectOfType<DescSlot>();
+                DescSlot descSlot = FindFirstObjectByType<DescSlot>();
                 if (descSlot != null)
                 {
                     descSlot.ShowDescription(this);
@@ -149,7 +149,7 @@ public class DragItem : MonoBehaviour
         {
             Debug.Log($"StopDrag: Colliding with ItemSlot {itemSlot.name}");
 
-            AVR avr = FindObjectOfType<AVR>();
+            AVR avr = FindFirstObjectByType<AVR>();
             if (avr != null && avr.IsOn() &&
                 string.Equals(itemSlot.expectedItemName.Trim(), "Motherboard", System.StringComparison.OrdinalIgnoreCase))
             {
@@ -164,7 +164,7 @@ public class DragItem : MonoBehaviour
                 return;
             }
 
-            SystemUnit systemUnit = FindObjectOfType<SystemUnit>();
+            SystemUnit systemUnit = FindFirstObjectByType<SystemUnit>();
             if (systemUnit != null && systemUnit.IsMotherboardInstalled())
             {
                 TroubleshootManager.Instance.ShowMessage(
@@ -229,7 +229,7 @@ public class DragItem : MonoBehaviour
 
         currentlyDraggedItem = null;
         // ✅ Clear description when drag ends
-        DescSlot descSlot = FindObjectOfType<DescSlot>();
+        DescSlot descSlot = FindFirstObjectByType<DescSlot>();
         if (descSlot != null)
         {
             descSlot.ClearDescription();

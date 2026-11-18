@@ -126,7 +126,7 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         _isMonitorCable = homePort != null &&
                           homePort.GetComponentInParent<MonitorController>(true) != null;
         if (_isMonitorCable && monitorPowerGate == null)
-            monitorPowerGate = FindObjectOfType<MonitorPowerButton>(true);
+            monitorPowerGate = FindFirstObjectByType<MonitorPowerButton>(FindObjectsInactive.Include);
     }
 
     // Finds the HardwareHolder that owns this cable.
@@ -139,12 +139,12 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
     private HardwareHolder FindHardwareHolderForThis()
     {
         // Pass 0: multi-cable proxy that explicitly lists this cable.
-        foreach (HardwareHolder h in FindObjectsOfType<HardwareHolder>(true))
+        foreach (HardwareHolder h in FindObjectsByType<HardwareHolder>(FindObjectsInactive.Include, FindObjectsSortMode.None))
         {
             if (h.ContainsManagedCable(this)) return h;
         }
         // Pass 1: direct reference + parent container is active.
-        foreach (HardwareHolder h in FindObjectsOfType<HardwareHolder>(true))
+        foreach (HardwareHolder h in FindObjectsByType<HardwareHolder>(FindObjectsInactive.Include, FindObjectsSortMode.None))
         {
             if (h.hardwarePrefab != gameObject) continue;
             Transform p = h.transform.parent;
@@ -152,12 +152,12 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
             if (parentActive) return h;
         }
         // Pass 2: direct reference, any hierarchy.
-        foreach (HardwareHolder h in FindObjectsOfType<HardwareHolder>(true))
+        foreach (HardwareHolder h in FindObjectsByType<HardwareHolder>(FindObjectsInactive.Include, FindObjectsSortMode.None))
         {
             if (h.hardwarePrefab == gameObject) return h;
         }
         // Pass 3: name match (legacy cables without a direct scene-object reference).
-        foreach (HardwareHolder h in FindObjectsOfType<HardwareHolder>(true))
+        foreach (HardwareHolder h in FindObjectsByType<HardwareHolder>(FindObjectsInactive.Include, FindObjectsSortMode.None))
         {
             if (h.hardwarePrefab != null && h.hardwarePrefab.name == gameObject.name)
                 return h;
@@ -398,7 +398,7 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
     private CablePort FindNearestPortIgnoreValidity(Vector3 worldPos)
     {
         const float radius = 1.5f;
-        CablePort[] allPorts = FindObjectsOfType<CablePort>(true);
+        CablePort[] allPorts = FindObjectsByType<CablePort>(FindObjectsInactive.Include, FindObjectsSortMode.None);
         CablePort best = null;
         float bestDist = float.MaxValue;
         foreach (CablePort port in allPorts)
@@ -413,7 +413,7 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
     private CablePort FindPortAtPosition(Vector3 worldPos)
     {
         const float radius = 1.5f;
-        CablePort[] allPorts = FindObjectsOfType<CablePort>(true);
+        CablePort[] allPorts = FindObjectsByType<CablePort>(FindObjectsInactive.Include, FindObjectsSortMode.None);
 
         CablePort best = null;
         float bestDist = float.MaxValue;
