@@ -14,7 +14,10 @@ public class FrontPanelConnectorController : MonoBehaviour, IDetachGate
 
     private CablePort _phase1Port;
 
-    public bool IsPhase1Installed => _phase1Port != null && _phase1Port.IsInstalled;
+    // Lazy so this works even if Awake hasn't fired yet (panel inactive at game start).
+    private CablePort Phase1Port => _phase1Port != null ? _phase1Port : (_phase1Port = GetComponent<CablePort>());
+
+    public bool IsPhase1Installed => Phase1Port != null && Phase1Port.IsInstalled;
 
     public bool IsFullyInstalled
     {
@@ -50,8 +53,4 @@ public class FrontPanelConnectorController : MonoBehaviour, IDetachGate
 
     public string BlockedReason => "disconnect the front panel pins first";
 
-    private void Awake()
-    {
-        _phase1Port = GetComponent<CablePort>();
-    }
 }

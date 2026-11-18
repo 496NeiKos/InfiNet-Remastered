@@ -317,8 +317,10 @@ public class PrintManagementController : MonoBehaviour
         var portList = new List<string>(WizardPortOptions);
         if (s1PortDropdown != null)
         {
+            var portListWithNone = new List<string> { "None" };
+            portListWithNone.AddRange(WizardPortOptions);
             s1PortDropdown.ClearOptions();
-            s1PortDropdown.AddOptions(portList);
+            s1PortDropdown.AddOptions(portListWithNone);
             s1PortDropdown.value        = 0;
             s1PortDropdown.interactable = false;
             s1PortDropdown.onValueChanged.AddListener(_ =>
@@ -811,7 +813,7 @@ public class PrintManagementController : MonoBehaviour
         return _wizardStep switch
         {
             0 => s1Toggle3 != null && s1Toggle3.isOn
-                 && s1PortDropdown != null && s1PortDropdown.value == 0,
+                 && s1PortDropdown != null && s1PortDropdown.value == 1,
             1 => s2Toggle3 != null && s2Toggle3.isOn,
             2 => _step3Tab == 1 && _step3SelectedDriver == RequiredDriver,
             3 => s4PrinterNameInput != null

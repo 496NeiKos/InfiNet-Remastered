@@ -169,7 +169,7 @@ public class GPOEditorController : MonoBehaviour
                              ? state.ComputerName.ToUpper() : "SERVER";
             string domain  = !string.IsNullOrEmpty(state.DomainName)
                              ? state.DomainName.ToUpper() : "DOMAIN";
-            rootLabelTMP.text = $"{gpoName} [{server}.{domain}] Policy";
+            rootLabelTMP.text = $"   {gpoName} [{server}.{domain}] Policy";
         }
 
         RebuildEditorTree();

@@ -424,6 +424,10 @@ public class DCPromoWizardController : MonoBehaviour
                 break;
 
             case DCPromoStep.DNSOptions:
+                {
+                    var _s = ServerVirtualOSManager.Instance?.ServerState;
+                    if (_s != null) _s.DNSOptionsPageVisited = true;
+                }
                 ShowStep(DCPromoStep.AdditionalOptions);
                 break;
 
@@ -506,12 +510,6 @@ public class DCPromoWizardController : MonoBehaviour
         if (step == DCPromoStep.AdditionalOptions)  OnEnterAdditionalOptions();
         if (step == DCPromoStep.Paths)              OnEnterPaths();
         if (step == DCPromoStep.PrerequisitesCheck) OnEnterPrerequisites();
-
-        if (step == DCPromoStep.DNSOptions)
-        {
-            var _latchState = ServerVirtualOSManager.Instance?.ServerState;
-            if (_latchState != null) _latchState.DNSOptionsPageVisited = true;
-        }
 
         RefreshButtons();
         RefreshTracker(step);

@@ -142,6 +142,8 @@ public class IPv4PropertiesController : MonoBehaviour
     public void ClickObtainIPAuto()
     {
         _useStaticIP = false;
+        var _s = VirtualOSManagerLocator.Current?.CurrentState;
+        if (_s != null) _s.UseStaticIP = false;
         // Clear all IP fields — real Windows resets them when switching back to auto
         ClearOctets(ipOctets);
         ClearOctets(subnetOctets);
@@ -157,6 +159,8 @@ public class IPv4PropertiesController : MonoBehaviour
     {
         _useStaticIP  = true;
         _useStaticDNS = true; // auto-switch DNS to static
+        var _s = VirtualOSManagerLocator.Current?.CurrentState;
+        if (_s != null) _s.UseStaticIP = true;
         SetIPFieldsInteractable(true);
         SetIPRadio(true);
         SetDNSFieldsInteractable(true);

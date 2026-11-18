@@ -193,7 +193,7 @@ public class ServerDeviceState : DeviceOSState
     public int    DHCPLeaseDays              = 8;
     public int    DHCPLeaseHours             = 0;
     public int    DHCPLeaseMinutes           = 0;
-    public bool   DHCPConfigureNow           = true;
+    public bool   DHCPConfigureNow           = false;
     public List<string> DHCPRouterList       = new List<string>();
     public string DHCPParentDomain           = "";
     public List<string> DHCPDNSList          = new List<string>();

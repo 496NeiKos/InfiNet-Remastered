@@ -104,7 +104,7 @@ public class SharedContextMenuController : MonoBehaviour
         SetVisible(btnProperties, false);
 
         if (btnEnforcedLabel != null)
-            btnEnforcedLabel.text = isCurrentlyEnforced ? "✓ Enforced" : "Enforced";
+            btnEnforcedLabel.text = isCurrentlyEnforced ? "✓ Enforced" : "Enforce";
 
         PositionAndShow(screenPos, parentRect);
     }

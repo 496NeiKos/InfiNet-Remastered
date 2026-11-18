@@ -294,25 +294,53 @@ public class NewScopeWizardController : MonoBehaviour
                 ShowPanel(WizardPanel.Exclusions);
                 break;
             case WizardPanel.Exclusions:
+                {
+                    var _s = ServerVirtualOSManager.Instance?.ServerState;
+                    if (_s != null) _s.DHCPExclusionsPageVisited = true;
+                }
                 ShowPanel(WizardPanel.LeaseDuration);
                 break;
             case WizardPanel.LeaseDuration:
                 if (!ValidateLeaseDuration()) return;
+                {
+                    var _s = ServerVirtualOSManager.Instance?.ServerState;
+                    if (_s != null) _s.DHCPLeaseDurationPageVisited = true;
+                }
                 ShowPanel(WizardPanel.ConfigureOptions);
                 break;
             case WizardPanel.ConfigureOptions:
                 _configureOptionsNow = yesConfigNowToggle != null && yesConfigNowToggle.isOn;
+                {
+                    var _s = ServerVirtualOSManager.Instance?.ServerState;
+                    if (_s != null) _s.DHCPConfigureNow = _configureOptionsNow;
+                }
                 ShowPanel(_configureOptionsNow ? WizardPanel.Router : WizardPanel.Activate);
                 break;
             case WizardPanel.Router:
                 if (!ValidateRouterList()) return;
+                {
+                    var _s = ServerVirtualOSManager.Instance?.ServerState;
+                    if (_s != null) _s.DHCPRouterList = new System.Collections.Generic.List<string>(_routerList);
+                }
                 ShowPanel(WizardPanel.DNS);
                 break;
             case WizardPanel.DNS:
                 if (!ValidateDNSList()) return;
+                {
+                    var _s = ServerVirtualOSManager.Instance?.ServerState;
+                    if (_s != null)
+                    {
+                        _s.DHCPParentDomain = parentDomainInput != null ? parentDomainInput.text.Trim() : "";
+                        _s.DHCPDNSList      = new System.Collections.Generic.List<string>(_dnsList);
+                    }
+                }
                 ShowPanel(WizardPanel.WINS);
                 break;
             case WizardPanel.WINS:
+                {
+                    var _s = ServerVirtualOSManager.Instance?.ServerState;
+                    if (_s != null) _s.DHCPWINSPageVisited = true;
+                }
                 ShowPanel(WizardPanel.Activate);
                 break;
             case WizardPanel.Activate:
@@ -398,17 +426,6 @@ public class NewScopeWizardController : MonoBehaviour
 
         if (panel == WizardPanel.LeaseDuration) OnEnterLeaseDurationPanel();
         if (panel == WizardPanel.DNS)           OnEnterDNSPanel();
-
-        var _latchState = ServerVirtualOSManager.Instance?.ServerState;
-        if (_latchState != null)
-        {
-            switch (panel)
-            {
-                case WizardPanel.Exclusions:    _latchState.DHCPExclusionsPageVisited   = true; break;
-                case WizardPanel.LeaseDuration: _latchState.DHCPLeaseDurationPageVisited = true; break;
-                case WizardPanel.WINS:          _latchState.DHCPWINSPageVisited         = true; break;
-            }
-        }
 
         RefreshButtons();
     }

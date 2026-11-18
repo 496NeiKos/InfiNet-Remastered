@@ -22,8 +22,8 @@ public class MonitorPowerButton : MonoBehaviour, IPowerButton
     [Header("Turn On Conditions")]
     [Tooltip("AVR must be powered on before the monitor can turn on.")]
     [SerializeField] private AVRPowerButton avrPowerButton;
-    [Tooltip("Monitor back VGA cable port must be installed.")]
-    [SerializeField] private CablePort monitorVGAPort;
+    [Tooltip("Monitor back HDMI cable port must be installed.")]
+    [SerializeField] private CablePort monitorHDMIPort;
     [Tooltip("Monitor back power cable port must be installed.")]
     [SerializeField] private CablePort monitorPowerCablePort;
 
@@ -113,10 +113,10 @@ public class MonitorPowerButton : MonoBehaviour, IPowerButton
             return;
         }
 
-        if (monitorVGAPort == null || monitorVGAPort.IsUninstalled)
+        if (monitorHDMIPort == null || monitorHDMIPort.IsUninstalled)
         {
-            ActivityLogManager.Log("Cannot turn on monitor — connect the VGA cable to the monitor first.", ActivityLogManager.EntryType.Warning);
-            Debug.Log("[MonitorPowerButton] FAIL — monitor VGA port cable not connected.");
+            ActivityLogManager.Log("Cannot turn on monitor — connect the HDMI cable to the monitor first.", ActivityLogManager.EntryType.Warning);
+            Debug.Log("[MonitorPowerButton] FAIL — monitor HDMI port cable not connected.");
             return;
         }
 

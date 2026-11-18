@@ -285,17 +285,11 @@ public class RoleWizardController : MonoBehaviour
 
     private void Install()
     {
-        ApplyRoleToState(_selectedRole);
-
-        // Notify Server Manager so tree panel and dashboard tiles update immediately
-        ServerManagerController.Instance?.RefreshTreeRoleButtons();
-        ServerManagerController.Instance?.RefreshDashboard();
-
         // Pre-fill result text; the label is hidden by ShowStep(6) until progress completes.
         if (resultLabelTMP != null)
             resultLabelTMP.text = $"{_selectedRoleName}\nInstallation succeeded.";
 
-        ActivityLogManager.Log($"Role installed: {_selectedRoleName}", ActivityLogManager.EntryType.Action);
+        ActivityLogManager.Log($"Installing role: {_selectedRoleName}", ActivityLogManager.EntryType.Action);
         ShowStep(6);
     }
 
@@ -522,6 +516,13 @@ public class RoleWizardController : MonoBehaviour
         }
         if (installProgressSlider != null) installProgressSlider.value = 1f;
         if (installPercentageTMP  != null) installPercentageTMP.text   = "100%";
+
+        // Commit role state only after the progress bar finishes so the promotion
+        // flag and tree buttons don't appear while installation is still in progress.
+        ApplyRoleToState(_selectedRole);
+        ServerManagerController.Instance?.RefreshTreeRoleButtons();
+        ServerManagerController.Instance?.RefreshDashboard();
+        ActivityLogManager.Log($"Role installed: {_selectedRoleName}", ActivityLogManager.EntryType.Action);
 
         resultLabelTMP?.gameObject.SetActive(true);
         closeWizardBtn?.gameObject.SetActive(true);

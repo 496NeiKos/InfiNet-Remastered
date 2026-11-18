@@ -73,6 +73,7 @@ public class ServerVirtualOSManager : MonoBehaviour, IVirtualOSManager
     [Header("Boot UI")]
     [SerializeField] private RestartUIController restartUI;
     [SerializeField] private LoginUIController   loginUI;
+    [SerializeField] private GameObject          startMenuPanel;
 
     // ── Desktop Icon References ───────────────────────────────────────────────
 
@@ -215,6 +216,7 @@ public class ServerVirtualOSManager : MonoBehaviour, IVirtualOSManager
         if (_currentPC == ActivePC.Server && _state != null && _state.RemoteDesktopEnabled)
             _state.ServerRestartInitiated = true;
 
+        startMenuPanel?.SetActive(false);
         CloseAllApps();
         desktopPanel?.SetActive(false);
         restartUI?.Show(ShowLoginUI);

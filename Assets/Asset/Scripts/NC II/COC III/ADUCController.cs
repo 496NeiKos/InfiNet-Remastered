@@ -192,12 +192,6 @@ public class ADUCController : MonoBehaviour
         cannotChangeToggle  ?.onValueChanged.AddListener(_ => ApplyToggleConstraints(cannotChangeToggle));
         mustChangeToggle    ?.onValueChanged.AddListener(_ => ApplyToggleConstraints(mustChangeToggle));
 
-        addToDomainAdminsToggle?.onValueChanged.AddListener(on =>
-        {
-            var _s = ServerVirtualOSManager.Instance?.ServerState;
-            if (_s != null) _s.UserWizardAdminToggled = true;
-        });
-
         newUserDialog?.SetActive(false);
         gameObject.SetActive(false);
     }
@@ -554,6 +548,9 @@ public class ADUCController : MonoBehaviour
         else if (_currentStep == 1)
         {
             if (!ValidateStep1()) return;
+            var state = ServerVirtualOSManager.Instance?.ServerState;
+            if (state != null && addToDomainAdminsToggle != null && addToDomainAdminsToggle.isOn)
+                state.UserWizardAdminToggled = true;
             BuildSummary();
             _currentStep = 2;
             RefreshStep();
