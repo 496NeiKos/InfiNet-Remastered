@@ -1051,7 +1051,8 @@ public class IPConfigTaskManager : MonoBehaviour, ITaskCategory
 
     // ── Public API ────────────────────────────────────────────────────────────
 
-    public bool     IsFullyComplete      => _allDone;
+    public bool     IsFullyComplete => _allDone;
+    public bool     IsAllDone       => _allDone;
     public DeviceID ServerDevice         => _serverDevice;
     public DeviceID SecondDesktopDevice  => _secondDesktopDevice;
 

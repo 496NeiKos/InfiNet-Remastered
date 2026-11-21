@@ -43,5 +43,11 @@ public class LessonSelectionController : MonoBehaviour
         StartCoroutine(WaitAndLoadScene("Networking", sfx.length));
     }
 
-    
+
+    public void OpenScoreOverview()
+    {
+        AudioClip sfx = SoundManager.instance.clickSFX;
+        SoundManager.instance.PlaySFX(sfx);
+        ScoreOverviewPanelController.Instance?.Open();
+    }
 }

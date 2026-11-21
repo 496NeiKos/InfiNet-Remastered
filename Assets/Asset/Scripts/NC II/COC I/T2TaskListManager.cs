@@ -478,13 +478,15 @@ public class T2TaskListManager : MonoBehaviour
 
     public Color GetDisplayColor(Color fallback) => fallback;
 
-    public int GetCompletedTaskCount()
+    public int  GetCompletedTaskCount()
     {
         int count = 0;
         for (int i = 0; i < TASK_COUNT; i++)
             if (_latched[i]) count++;
         return count;
     }
+
+    public bool IsAllDone => _allDone;
 
     public static void CheckConditions() { } // No-op; Update() handles polling
 }

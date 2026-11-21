@@ -1,8 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using UnityEngine.SceneManagement;
-using System.Collections;
+
 public class LessonOverviewManager : MonoBehaviour
 {
     [Header("UI References")]
@@ -18,12 +17,6 @@ public class LessonOverviewManager : MonoBehaviour
     public Sprite lesson4Sprite;
 
     private string targetSceneName;
-
-    private IEnumerator WaitAndLoadScene(string sceneName, float delay)
-    {
-        yield return new WaitForSeconds(delay);
-        SceneManager.LoadScene(sceneName);
-    }
 
     // Generic method to show overview
     public void ShowOverview(Sprite image, string title, string description, string sceneName)
@@ -76,13 +69,21 @@ public class LessonOverviewManager : MonoBehaviour
         overviewPanel.SetActive(false);
     }
 
-    // Called by Proceed button
+    // Called by Proceed button — opens difficulty panel instead of loading directly
     public void ProceedToLesson()
     {
-        AudioClip sfx = SoundManager.instance.confirmSFX;
-        SoundManager.instance.PlaySFX(sfx);
+        if (string.IsNullOrEmpty(targetSceneName)) return;
 
-        if (!string.IsNullOrEmpty(targetSceneName))
-            StartCoroutine(WaitAndLoadScene(targetSceneName, sfx.length));
+        int cocIndex = targetSceneName switch
+        {
+            "COC I"   => 0,
+            "COC II"  => 1,
+            "COC III" => 2,
+            "COC IV"  => 3,
+            _         => -1
+        };
+
+        overviewPanel.SetActive(false);
+        ScoringDifficultyPanelController.Instance?.Open(targetSceneName, cocIndex);
     }
 }

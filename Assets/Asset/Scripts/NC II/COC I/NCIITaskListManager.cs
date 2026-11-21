@@ -1279,13 +1279,15 @@ public class NCIITaskListManager : MonoBehaviour
     public Color GetDisplayColor(Color fallback) =>
         (_isCompletionOverride && _displayOverride != null) ? Color.green : fallback;
 
-    public int GetCompletedTaskCount()
+    public int  GetCompletedTaskCount()
     {
         int count = 0;
         for (int i = 0; i < DISASSEMBLY_COUNT; i++) if (_disassemblyLatched[i]) count++;
         for (int i = 0; i < ASSEMBLY_COUNT;    i++) if (_assemblyLatched[i])    count++;
         return count;
     }
+
+    public bool IsAllDone => _disassemblyAllDone && _assemblyAllDone;
 
     public static void CheckConditions() { } // No-op; Update() handles polling
 }

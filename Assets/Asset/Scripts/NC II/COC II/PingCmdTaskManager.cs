@@ -673,10 +673,12 @@ public class PingCmdTaskManager : MonoBehaviour, ITaskCategory
             allTasksCompletedText.SetActive(false);
     }
 
-    public int GetCompletedTaskCount()
+    public int  GetCompletedTaskCount()
     {
         int count = 0;
         for (int i = 0; i < TASK_COUNT; i++) if (_latched[i]) count++;
         return count;
     }
+
+    public bool IsAllDone => _allDone;
 }

@@ -19,6 +19,9 @@ public class MainSettingPanelController : MonoBehaviour
     [SerializeField] private Button resetButton;
     [SerializeField] private Button exitButton;
 
+    [Header("Score Progress")]
+    [SerializeField] private ScoreProgressPanelController scoreProgressPanel;
+
     private void Awake()
     {
         Instance = this;
@@ -61,11 +64,18 @@ public class MainSettingPanelController : MonoBehaviour
     public void OpenPanel()
     {
         mainSettingPanel.SetActive(true);
+        COCScoreManager.Instance?.PauseTimer();
     }
 
     public void ClosePanel()
     {
         mainSettingPanel.SetActive(false);
+        COCScoreManager.Instance?.ResumeTimer();
+    }
+
+    public void OpenScoreProgress()
+    {
+        scoreProgressPanel?.Open();
     }
 
     private void ResetScene()

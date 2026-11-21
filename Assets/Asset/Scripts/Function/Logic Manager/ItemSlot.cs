@@ -30,6 +30,7 @@ public class ItemSlot : MonoBehaviour
 
                 // ✅ Revert sprite since install failed
                 item.SetToDefaultSprite();
+                COCScoreManager.Instance?.ReportWrong();
                 return;
             }
         }

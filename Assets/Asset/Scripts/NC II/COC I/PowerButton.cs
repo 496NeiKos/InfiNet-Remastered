@@ -143,6 +143,7 @@ public class PowerButton : MonoBehaviour, IPowerButton
         if (conditionChecker != null && !conditionChecker.CanTurnOn())
         {
             Debug.Log("[PowerButton] Cannot turn on — conditions not met. Check logs above.");
+            COCScoreManager.Instance?.ReportWrong();
             return;
         }
 
