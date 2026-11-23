@@ -205,6 +205,7 @@ public class IPv4PropertiesController : MonoBehaviour
         if (!string.IsNullOrEmpty(error))
         {
             Debug.LogWarning($"[IPv4PropertiesController] Validation failed: {error}");
+            COCScoreManager.Instance?.ReportWrong();
             return;
         }
         SaveToState();

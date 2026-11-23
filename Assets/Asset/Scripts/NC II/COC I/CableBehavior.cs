@@ -232,6 +232,7 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         {
             ActivityLogManager.Log($"Cannot unplug {LogName} — {gate.BlockedReason}.", ActivityLogManager.EntryType.Warning);
             UnableAnimation.Shake(transform);
+            COCScoreManager.Instance?.ReportWrong();
             return false;
         }
 
@@ -246,24 +247,28 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         {
             ActivityLogManager.Log($"Cannot unplug {LogName} — turn off its power source first.", ActivityLogManager.EntryType.Warning);
             UnableAnimation.Shake(transform);
+            COCScoreManager.Instance?.ReportWrong();
             return false;
         }
         if (secondaryPowerGate != null && secondaryPowerGate.IsPoweredOn)
         {
             ActivityLogManager.Log($"Cannot unplug {LogName} — turn off the System Unit first.", ActivityLogManager.EntryType.Warning);
             UnableAnimation.Shake(transform);
+            COCScoreManager.Instance?.ReportWrong();
             return false;
         }
         if (monitorPowerGate != null && monitorPowerGate.IsPoweredOn)
         {
             ActivityLogManager.Log($"Cannot unplug {LogName} — turn off the Monitor first.", ActivityLogManager.EntryType.Warning);
             UnableAnimation.Shake(transform);
+            COCScoreManager.Instance?.ReportWrong();
             return false;
         }
         if (psuSwitchGate != null && psuSwitchGate.IsOn)
         {
             ActivityLogManager.Log($"Cannot unplug {LogName} — turn off the PSU switch first.", ActivityLogManager.EntryType.Warning);
             UnableAnimation.Shake(transform);
+            COCScoreManager.Instance?.ReportWrong();
             return false;
         }
         return true;
@@ -390,7 +395,10 @@ public class CableBehavior : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         {
             CablePort nearestWrong = FindNearestPortIgnoreValidity(dropPos);
             if (nearestWrong != null)
+            {
                 ActivityLogManager.Log($"{LogName} cannot be installed, make sure you match correctly the installation", ActivityLogManager.EntryType.Warning);
+                COCScoreManager.Instance?.ReportWrong();
+            }
             SnapBack();
         }
     }

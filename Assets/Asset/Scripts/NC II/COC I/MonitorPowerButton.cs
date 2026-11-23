@@ -110,6 +110,7 @@ public class MonitorPowerButton : MonoBehaviour, IPowerButton
         {
             ActivityLogManager.Log("Cannot turn on monitor — turn on the AVR first.", ActivityLogManager.EntryType.Warning);
             Debug.Log("[MonitorPowerButton] FAIL — AVR power button is off.");
+            COCScoreManager.Instance?.ReportWrong();
             return;
         }
 
@@ -117,6 +118,7 @@ public class MonitorPowerButton : MonoBehaviour, IPowerButton
         {
             ActivityLogManager.Log("Cannot turn on monitor — connect the HDMI cable to the monitor first.", ActivityLogManager.EntryType.Warning);
             Debug.Log("[MonitorPowerButton] FAIL — monitor HDMI port cable not connected.");
+            COCScoreManager.Instance?.ReportWrong();
             return;
         }
 
@@ -124,6 +126,7 @@ public class MonitorPowerButton : MonoBehaviour, IPowerButton
         {
             ActivityLogManager.Log("Cannot turn on monitor — connect the power cable to the monitor first.", ActivityLogManager.EntryType.Warning);
             Debug.Log("[MonitorPowerButton] FAIL — monitor power cable port not connected.");
+            COCScoreManager.Instance?.ReportWrong();
             return;
         }
 

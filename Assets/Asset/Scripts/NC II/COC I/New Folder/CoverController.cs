@@ -128,6 +128,7 @@ public class CoverController : MonoBehaviour,
             ActivityLogManager.Log("Cannot slide cover — remove the screws first.", ActivityLogManager.EntryType.Warning);
             Debug.Log("[CoverController] Cannot open: not all screws are unscrewed.");
             UnableAnimation.Shake(transform);
+            COCScoreManager.Instance?.ReportWrong();
             return;
         }
 

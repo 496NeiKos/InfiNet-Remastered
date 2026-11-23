@@ -108,6 +108,7 @@ public class AVRPowerButton : MonoBehaviour, IPowerButton
         {
             ActivityLogManager.Log("Cannot turn off AVR — turn off the System Unit first.", ActivityLogManager.EntryType.Warning);
             Debug.Log("[AVRPowerButton] Cannot turn off — System Unit power button is still on.");
+            COCScoreManager.Instance?.ReportWrong();
             return;
         }
 
@@ -115,6 +116,7 @@ public class AVRPowerButton : MonoBehaviour, IPowerButton
         {
             ActivityLogManager.Log("Cannot turn off AVR — turn off the Monitor first.", ActivityLogManager.EntryType.Warning);
             Debug.Log("[AVRPowerButton] Cannot turn off — Monitor power button is still on.");
+            COCScoreManager.Instance?.ReportWrong();
             return;
         }
 

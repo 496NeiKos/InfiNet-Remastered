@@ -33,6 +33,7 @@ public class SceneResetManager : MonoBehaviour
         if (confirmationPanel != null)
             confirmationPanel.SetActive(false);
 
+        COCScoreManager.Instance?.ResetCurrentRun();
         SceneController.Instance?.ReloadScene();
     }
 

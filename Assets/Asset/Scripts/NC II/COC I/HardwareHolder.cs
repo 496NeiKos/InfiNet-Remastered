@@ -379,6 +379,7 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
                 {
                     string cableDisplayName = managedCables.FirstOrDefault(c => c != null)?.DisplayName ?? proxyCableType;
                     ActivityLogManager.Log($"{cableDisplayName} cannot be installed, make sure you match correctly the installation", ActivityLogManager.EntryType.Warning);
+                    COCScoreManager.Instance?.ReportWrong();
                 }
                 Debug.Log($"[HardwareHolder] Multi-cable proxy '{name}' (type='{proxyCableType}') — no valid port in range.");
                 return;
@@ -458,7 +459,10 @@ public class HardwareHolder : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
             {
                 CablePort nearestWrong = FindNearestPortIgnoreValidity(dropWorldPos);
                 if (nearestWrong != null)
+                {
                     ActivityLogManager.Log($"{cable.DisplayName} cannot be installed, make sure you match correctly the installation", ActivityLogManager.EntryType.Warning);
+                    COCScoreManager.Instance?.ReportWrong();
+                }
                 Debug.Log($"[HardwareHolder] {prefabName} (cableType='{cableType}') failed.\n" +
                           $"  Inactive: [{string.Join(", ", rejectedActive)}]\n" +
                           $"  Already installed: [{string.Join(", ", rejectedInstalled)}]\n" +

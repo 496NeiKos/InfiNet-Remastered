@@ -54,30 +54,14 @@ public class NavigationController : MonoBehaviour
     }
 
     //Lesson Book Scenes
-    public void ProceedToLessonBook1()
+    public void ProceedToCSSModule(int moduleIndex)
     {
+        ModuleSessionData.SelectedModuleIndex = moduleIndex;
         AudioClip sfx = SoundManager.instance.clickSFX;
         SoundManager.instance.PlaySFX(sfx);
-        StartCoroutine(WaitAndLoadScene("Introduction", sfx.length));
+        StartCoroutine(WaitAndLoadScene("CSSModule", sfx.length));
     }
-    public void ProceedToLessonBook2()
-    {
-        AudioClip sfx = SoundManager.instance.clickSFX;
-        SoundManager.instance.PlaySFX(sfx);
-        StartCoroutine(WaitAndLoadScene("HandTools", sfx.length));
-    }
-    public void ProceedToLessonBook3()
-    {
-        AudioClip sfx = SoundManager.instance.clickSFX;
-        SoundManager.instance.PlaySFX(sfx);
-        StartCoroutine(WaitAndLoadScene("OSInstallation", sfx.length));
-    }
-    public void ProceedToLessonBook4()
-    {
-        AudioClip sfx = SoundManager.instance.clickSFX;
-        SoundManager.instance.PlaySFX(sfx);
-        StartCoroutine(WaitAndLoadScene("PatchPanel", sfx.length));
-    }
+
 
     //Usern Manual Scenes
     public void ProceedToUserManual1()

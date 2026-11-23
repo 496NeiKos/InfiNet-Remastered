@@ -144,6 +144,18 @@ public class COCScoreManager : MonoBehaviour
         _setupDone      = true;
     }
 
+    // ── Scene reset ───────────────────────────────────────────────────────────
+
+    public void ResetCurrentRun()
+    {
+        _elapsedSeconds = 0f;
+        _wrongCount     = 0;
+        _scoreSaved     = false;
+        _timerRunning   = false;
+        // _activeCOC, _difficulty, _isRetainMode, _setupDone, and _scores[] are
+        // intentionally preserved — they belong to the meta-session, not the run.
+    }
+
     // ── Timer control ─────────────────────────────────────────────────────────
 
     private void StartTimer()
@@ -257,9 +269,9 @@ public class COCScoreManager : MonoBehaviour
     private static float CalcAccuracy(int wrongs, Difficulty d)
     {
         float penalty = d == Difficulty.Hard
-            ? wrongs
-            : Mathf.Floor(wrongs * 0.5f);
-        return Mathf.Max(0f, 100f - penalty);
+            ? wrongs * 5f
+            : wrongs * 2f;
+        return Mathf.Clamp(100f - penalty, 0f, 100f);
     }
 
     private static float CalcTime(float elapsed)
@@ -270,8 +282,9 @@ public class COCScoreManager : MonoBehaviour
 
     private static float CalcTotal(float perf, float acc, float time, Difficulty d)
     {
-        return d == Difficulty.Hard
+        float total = d == Difficulty.Hard
             ? (perf + acc + time) / 3f
             : (perf + acc) / 2f;
+        return Mathf.Max(0f, total);
     }
 }

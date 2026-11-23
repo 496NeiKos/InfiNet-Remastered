@@ -69,6 +69,7 @@ public class ItemSlot : MonoBehaviour
                 currentItem.transform.position = transform.position;
                 currentItem.transform.SetParent(transform);
             }
+            COCScoreManager.Instance?.ReportWrong();
             return;
         }
 
@@ -87,6 +88,7 @@ public class ItemSlot : MonoBehaviour
                 currentItem.transform.position = transform.position;
                 currentItem.transform.SetParent(transform);
             }
+            COCScoreManager.Instance?.ReportWrong();
             return;
         }
 

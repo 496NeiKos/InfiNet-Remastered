@@ -84,6 +84,7 @@ public class PSUSwitchController : MonoBehaviour
         {
             ActivityLogManager.Log("Cannot toggle PSU switch — plug in the PSU cable first.", ActivityLogManager.EntryType.Warning);
             Debug.Log("[PSUSwitchController] Cannot toggle — PSU cable not installed.");
+            COCScoreManager.Instance?.ReportWrong();
             return;
         }
 

@@ -48,6 +48,7 @@ public class FrontPanelConnectorInteraction : MonoBehaviour
         if (port != null && port.IsUninstalled)
         {
             ActivityLogManager.Log("Connect the front panel cable before accessing the sub-pins.", ActivityLogManager.EntryType.Warning);
+            COCScoreManager.Instance?.ReportWrong();
             return;
         }
 

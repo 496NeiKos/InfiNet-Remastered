@@ -169,6 +169,7 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
             ActivityLogManager.Log($"Cannot remove {LogDisplayName} — unscrew all screws first.", ActivityLogManager.EntryType.Warning);
             Debug.Log($"[DragPrefab:{name}] BLOCKED — screws not empty.");
             UnableAnimation.Shake(transform);
+            COCScoreManager.Instance?.ReportWrong();
             _isDragging = false;
             return;
         }
@@ -178,6 +179,7 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
             ActivityLogManager.Log($"Cannot remove {LogDisplayName} — disconnect all cables first.", ActivityLogManager.EntryType.Warning);
             Debug.Log($"[DragPrefab:{name}] BLOCKED — cables not detached.");
             UnableAnimation.Shake(transform);
+            COCScoreManager.Instance?.ReportWrong();
             _isDragging = false;
             return;
         }
@@ -189,6 +191,7 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
             ActivityLogManager.Log("Cannot remove CPU — open the lock lever first.", ActivityLogManager.EntryType.Warning);
             Debug.Log($"[DragPrefab:{name}] BLOCKED — CPU lock is closed.");
             UnableAnimation.Shake(transform);
+            COCScoreManager.Instance?.ReportWrong();
             _isDragging = false;
             return;
         }
@@ -199,6 +202,7 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
             ActivityLogManager.Log("Cannot remove CPU — remove the heatsink first.", ActivityLogManager.EntryType.Warning);
             Debug.Log($"[DragPrefab:{name}] BLOCKED — heatsink is still installed.");
             UnableAnimation.Shake(transform);
+            COCScoreManager.Instance?.ReportWrong();
             _isDragging = false;
             return;
         }
@@ -210,6 +214,7 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
             ActivityLogManager.Log("Cannot remove Heatsink — disconnect the fan cable first.", ActivityLogManager.EntryType.Warning);
             Debug.Log($"[DragPrefab:{name}] BLOCKED — heatsink cable still connected.");
             UnableAnimation.Shake(transform);
+            COCScoreManager.Instance?.ReportWrong();
             _isDragging = false;
             return;
         }
@@ -223,6 +228,7 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
                 ActivityLogManager.EntryType.Warning);
             Debug.Log($"[DragPrefab:{name}] BLOCKED — RAM latch is still engaged.");
             UnableAnimation.Shake(transform);
+            COCScoreManager.Instance?.ReportWrong();
             _isDragging = false;
             return;
         }
@@ -234,6 +240,7 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
             ActivityLogManager.Log("Cannot remove GPU — release the PCIe latch first.", ActivityLogManager.EntryType.Warning);
             Debug.Log($"[DragPrefab:{name}] BLOCKED — GPU is still latched.");
             UnableAnimation.Shake(transform);
+            COCScoreManager.Instance?.ReportWrong();
             _isDragging = false;
             return;
         }
@@ -245,6 +252,7 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
             ActivityLogManager.Log("Cannot remove PSU — disconnect all PSU cables and unscrew the mounting screws first.", ActivityLogManager.EntryType.Warning);
             Debug.Log($"[DragPrefab:{name}] BLOCKED — PSU cables still connected.");
             UnableAnimation.Shake(transform);
+            COCScoreManager.Instance?.ReportWrong();
             _isDragging = false;
             return;
         }
@@ -256,6 +264,7 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
             ActivityLogManager.Log("Cannot remove HDD — disconnect all HDD cables first.", ActivityLogManager.EntryType.Warning);
             Debug.Log($"[DragPrefab:{name}] BLOCKED — HDD cables still connected.");
             UnableAnimation.Shake(transform);
+            COCScoreManager.Instance?.ReportWrong();
             _isDragging = false;
             return;
         }
@@ -271,6 +280,7 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
                 ActivityLogManager.Log("Cannot remove Motherboard — remove the GPU from its slot first.", ActivityLogManager.EntryType.Warning);
                 Debug.Log($"[DragPrefab:{name}] BLOCKED — GPU must be removed before dragging the motherboard.");
                 UnableAnimation.Shake(transform);
+                COCScoreManager.Instance?.ReportWrong();
                 _isDragging = false;
                 return;
             }
@@ -286,6 +296,7 @@ public class DragPrefab : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
                 ActivityLogManager.Log($"Cannot remove {LogDisplayName} — unplug the back panel cables first.", ActivityLogManager.EntryType.Warning);
                 Debug.Log($"[DragPrefab:{name}] BLOCKED — SU back cables still connected.");
                 UnableAnimation.Shake(transform);
+                COCScoreManager.Instance?.ReportWrong();
                 _isDragging = false;
                 return;
             }
