@@ -17,11 +17,13 @@ public class GPUDetailedView : MonoBehaviour
     private HardwareAngleIndicator Indicator => GameManager.Instance?.angleIndicator;
 
     private GPUController _gpuController;
+    private DragPrefab _dragPrefab;
     private int _activeIndex;
 
     private void Awake()
     {
         _gpuController = GetComponentInParent<GPUController>();
+        _dragPrefab = GetComponentInParent<DragPrefab>();
     }
 
     private void OnEnable()
@@ -50,6 +52,7 @@ public class GPUDetailedView : MonoBehaviour
         sideView?.SetActive(false);
         Indicator?.Hide();
         _gpuController?.RefreshCableSprite();
+        _dragPrefab?.SetOutlineIndicator(true);
     }
 
     public void ApplyHardwareInteractable()
@@ -84,5 +87,6 @@ public class GPUDetailedView : MonoBehaviour
 
         Indicator?.SetActive(_activeIndex);
         _gpuController?.SetCableIndicatorForView(showSide);
+        _dragPrefab?.SetOutlineIndicator(!showSide);
     }
 }

@@ -18,12 +18,17 @@ public class MotherboardDetailViewManager : MonoBehaviour
     private Vector3 _childOriginalLocalPos;
     private Vector3 _childOriginalLocalScale;
     private bool _isInnerPanelOpen = false;
+    private bool _prevEditorOpen = false;
 
     public bool IsInnerPanelOpen => _isInnerPanelOpen;
 
     private void Update()
     {
-        if (GameManager.Instance == null || !GameManager.Instance.IsEditorOpen) return;
+        bool editorOpen = GameManager.Instance != null && GameManager.Instance.IsEditorOpen;
+        bool justOpened = editorOpen && !_prevEditorOpen;
+        _prevEditorOpen = editorOpen;
+
+        if (!editorOpen) return;
         if (_isInnerPanelOpen) return;
 
         // Motherboard may be in FirstLayer (Phase 2 — edited directly) or
@@ -33,6 +38,10 @@ public class MotherboardDetailViewManager : MonoBehaviour
         bool inSecondLayer = GameManager.Instance.secondLayer != null &&
                              transform.IsChildOf(GameManager.Instance.secondLayer.transform);
         if (!inFirstLayer && !inSecondLayer) return;
+
+        // Skip the frame the editor opened — the opening right-click would otherwise
+        // be re-processed here and immediately open an inner component panel.
+        if (justOpened) return;
 
         if (Mouse.current.rightButton.wasPressedThisFrame)
             CheckComponentRightClick();

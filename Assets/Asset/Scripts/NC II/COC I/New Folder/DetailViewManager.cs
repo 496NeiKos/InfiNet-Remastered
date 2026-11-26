@@ -106,6 +106,7 @@ public class DetailViewManager : MonoBehaviour
         _childOriginalParent = childPrefab.transform.parent;
         _childOriginalLocalPos = childPrefab.transform.localPosition;
 
+        GameManager.Instance?.angleIndicator?.Hide();
         gameObject.SetActive(false);
         panel.SetActive(true);
 
